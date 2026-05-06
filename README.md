@@ -36,6 +36,8 @@
 
 查看 [analyzed.json](./analyzed.json) 获取完整列表。
 
+**已分析项目数**: 21
+
 ---
 
 🤖 由 AI 自动分析生成 | Powered by Claude Code
