@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Agency - AI Agent Orchestration | GitHub Trending Deep Dive</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-secondary: #111827;
+    --bg-card: #1a2332;
+    --bg-card-hover: #1f2b3d;
+    --accent-purple: #a855f7;
+    --accent-pink: #ec4899;
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: rgba(148, 163, 184, 0.1);
+    --glow-purple: rgba(168, 85, 247, 0.3);
+    --glow-pink: rgba(236, 72, 153, 0.3);
+    --glow-cyan: rgba(6, 182, 212, 0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', 'Space Grotesk', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse at 20% 50%, var(--glow-purple) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, var(--glow-pink) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, var(--glow-cyan) 0%, transparent 50%);
+    animation: bgFloat 20s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  @keyframes bgFloat {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(2%, -1%) rotate(1deg); }
+    66% { transform: translate(-1%, 1%) rotate(-0.5deg); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 100px;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.85rem;
+    color: var(--accent-purple);
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f1f5f9 0%, var(--accent-purple) 50%, var(--accent-pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero .subtitle {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    font-weight: 300;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+    color: #fff;
+    box-shadow: 0 4px 20px var(--glow-purple);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px var(--glow-purple); }
+
+  .btn-secondary {
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .btn-secondary:hover { background: rgba(148, 163, 184, 0.2); }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  section { padding: 5rem 0; }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+  }
+
+  .section-tag {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.8rem;
+  }
+
+  .section-tag.purple { color: var(--accent-purple); }
+  .section-tag.pink { color: var(--accent-pink); }
+  .section-tag.cyan { color: var(--accent-cyan); }
+  .section-tag.emerald { color: var(--accent-emerald); }
+  .section-tag.amber { color: var(--accent-amber); }
+
+  .section-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+  }
+
+  .section-header p {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .card-grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
+  .card-grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card-grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-icon.purple { background: rgba(168, 85, 247, 0.15); }
+  .card-icon.pink { background: rgba(236, 72, 153, 0.15); }
+  .card-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+  .card-icon.emerald { background: rgba(16, 185, 129, 0.15); }
+  .card-icon.amber { background: rgba(245, 158, 11, 0.15); }
+
+  .card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+  }
+
+  .card p {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .info-banner {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.08));
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin: 2rem 0;
+  }
+
+  .info-banner h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .division-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .division-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .division-item:hover {
+    background: rgba(168, 85, 247, 0.08);
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+
+  .division-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .division-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .division-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .arch-diagram {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    overflow-x: auto;
+  }
+
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.5rem 0;
+  }
+
+  .arch-node {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.1));
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 140px;
+  }
+
+  .arch-node .icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+  .arch-node .label { font-weight: 600; font-size: 0.9rem; }
+  .arch-node .sublabel { font-size: 0.75rem; color: var(--text-muted); }
+
+  .arch-arrow {
+    color: var(--accent-purple);
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .compare-table th {
+    background: rgba(168, 85, 247, 0.1);
+    padding: 1rem 1.2rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--accent-purple);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compare-table td {
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .tag-yes {
+    display: inline-block;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-emerald);
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .tag-no {
+    display: inline-block;
+    background: rgba(244, 63, 94, 0.15);
+    color: var(--accent-rose);
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .tag-partial {
+    display: inline-block;
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .code-dots span:nth-child(1) { background: #f43f5e; }
+  .code-dots span:nth-child(2) { background: #f59e0b; }
+  .code-dots span:nth-child(3) { background: #10b981; }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .code-body {
+    padding: 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: #e6edf3;
+    overflow-x: auto;
+  }
+
+  .code-body .comment { color: #6e7681; }
+  .code-body .command { color: #79c0ff; }
+  .code-body .string { color: #a5d6ff; }
+  .code-body .keyword { color: #ff7b72; }
+
+  .star-chart {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 180px;
+    padding-top: 1rem;
+  }
+
+  .chart-bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    min-height: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .chart-bar:hover { opacity: 0.8; }
+
+  .chart-bar .tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .chart-bar:hover .tooltip { opacity: 1; }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .use-case-scenario {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .scenario-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .scenario-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .scenario-header h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .agent-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.8rem 0;
+  }
+
+  .agent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  .scenario-result {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid var(--accent-emerald);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+    color: var(--accent-emerald);
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .tool-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .tool-item:hover {
+    background: rgba(6, 182, 212, 0.08);
+    border-color: rgba(6, 182, 212, 0.3);
+  }
+
+  .tool-item .icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+  .tool-item .name { font-weight: 600; font-size: 0.9rem; }
+
+  .trending-reasons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .reason-card {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(236, 72, 153, 0.05));
+    border: 1px solid rgba(168, 85, 247, 0.15);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  .reason-card .num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-purple);
+    opacity: 0.4;
+    margin-bottom: 0.5rem;
+  }
+
+  .reason-card h4 {
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .reason-card p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+
+  .audience-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .audience-item {
+    display: flex;
+    gap: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  .audience-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .audience-item h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .audience-item p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  footer a {
+    color: var(--accent-purple);
+    text-decoration: none;
+  }
+
+  @media (max-width: 768px) {
+    .hero-stats { gap: 1.2rem; }
+    .stat-value { font-size: 1.4rem; }
+    .card-grid.cols-2, .card-grid.cols-3, .card-grid.cols-4 {
+      grid-template-columns: 1fr;
+    }
+    .arch-flow { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+    .compare-table { font-size: 0.8rem; }
+    .compare-table th, .compare-table td { padding: 0.6rem 0.8rem; }
+    .tools-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span>🔥</span> GitHub Trending · 2026-05-05
+    </div>
+    <h1>The Agency: AI Agent Orchestration</h1>
+    <p class="subtitle">一个完整的 AI 代理机构 — 144+ 专业 AI Agent，覆盖 12 个部门，支持 11+ 主流 AI 编码工具</p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-value">91.9K</span>
+        <span class="stat-label">GitHub Stars</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">+828</span>
+        <span class="stat-label">今日新增</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">144+</span>
+        <span class="stat-label">专业 Agent</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">12</span>
+        <span class="stat-label">专业部门</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">11+</span>
+        <span class="stat-label">工具集成</span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <a href="https://github.com/msitarzewski/agency-agents" target="_blank" class="btn btn-primary">
+        ⭐ GitHub 仓库
+      </a>
+      <a href="#quickstart" class="btn btn-secondary">
+        🚀 快速上手
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Project Overview -->
+<section id="overview">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag purple">项目概述</div>
+      <h2>什么是 The Agency?</h2>
+      <p>源自 Reddit 讨论帖，历经数月迭代打造的全栈 AI 代理团队</p>
+    </div>
+
+    <div class="info-banner">
+      <h3>🎯 项目简介</h3>
+      <p style="color: var(--text-secondary); line-height: 1.8;">
+        <strong>The Agency</strong> 由 Michael Sitarzewski 创建，是一个精心策划的 AI Agent 人格集合库。每个 Agent 都具有独特的<strong>专业领域</strong>、<strong>个性特征</strong>、<strong>工作流程</strong>和<strong>可交付成果</strong>。它不是简单的 Prompt 模板合集，而是一整套经过实战验证的专业 AI 团队体系。项目从 Reddit 的 r/ClaudeAI 社区讨论中诞生，在发布 12 小时内就收到了 50+ 功能请求，目前已经发展成为一个拥有 144 个专业 Agent、覆盖软件开发全生命周期的大型开源项目。
+      </p>
+    </div>
+
+    <div class="card-grid cols-4">
+      <div class="card">
+        <div class="card-icon purple">🎯</div>
+        <h3>深度专业化</h3>
+        <p>每个 Agent 都在特定领域拥有深厚专业知识，而非通用 Prompt 模板</p>
+      </div>
+      <div class="card">
+        <div class="card-icon pink">🧠</div>
+        <h3>个性驱动</h3>
+        <p>独特的声音、沟通风格和工作方式，像真正的团队成员</p>
+      </div>
+      <div class="card">
+        <div class="card-icon cyan">📋</div>
+        <h3>成果导向</h3>
+        <p>每个 Agent 都有明确的可交付成果和成功度量标准</p>
+      </div>
+      <div class="card">
+        <div class="card-icon emerald">✅</div>
+        <h3>生产就绪</h3>
+        <p>经过实战验证的工作流和质量标准，可直接投入生产使用</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Divisions -->
+<section id="divisions">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag pink">组织架构</div>
+      <h2>12 个专业部门</h2>
+      <p>涵盖从工程开发到市场营销的全栈 AI 代理团队</p>
+    </div>
+
+    <div class="division-grid">
+      <div class="division-item">
+        <div class="division-icon">💻</div>
+        <div class="division-name">工程部</div>
+        <div class="division-count">27 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">🎨</div>
+        <div class="division-name">设计部</div>
+        <div class="division-count">8 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">💰</div>
+        <div class="division-name">付费媒体部</div>
+        <div class="division-count">7 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">💼</div>
+        <div class="division-name">销售部</div>
+        <div class="division-count">9 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">📢</div>
+        <div class="division-name">市场营销部</div>
+        <div class="division-count">28 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">📊</div>
+        <div class="division-name">产品部</div>
+        <div class="division-count">5 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">🎬</div>
+        <div class="division-name">项目管理部</div>
+        <div class="division-count">6 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">🧪</div>
+        <div class="division-name">测试部</div>
+        <div class="division-count">8 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">🛟</div>
+        <div class="division-name">支持部</div>
+        <div class="division-count">6 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">🥽</div>
+        <div class="division-name">空间计算部</div>
+        <div class="division-count">6 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">🎮</div>
+        <div class="division-name">游戏开发部</div>
+        <div class="division-count">17 个 Agent</div>
+      </div>
+      <div class="division-item">
+        <div class="division-icon">📚</div>
+        <div class="division-name">学术部</div>
+        <div class="division-count">5 个 Agent</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag cyan">技术架构</div>
+      <h2>架构与集成</h2>
+      <p>从 Agent 定义到多工具部署的完整流程</p>
+    </div>
+
+    <div class="arch-diagram">
+      <div class="arch-flow">
+        <div class="arch-node">
+          <div class="icon">📝</div>
+          <div class="label">Agent 定义</div>
+          <div class="sublabel">Markdown 格式</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="icon">🔄</div>
+          <div class="label">convert.sh</div>
+          <div class="sublabel">格式转换引擎</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="icon">📦</div>
+          <div class="label">install.sh</div>
+          <div class="sublabel">交互式安装器</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="icon">🛠️</div>
+          <div class="label">目标工具</div>
+          <div class="sublabel">11+ 平台适配</div>
+        </div>
+      </div>
+      <p style="text-align: center; color: var(--text-muted); margin-top: 1rem; font-size: 0.9rem;">
+        每个 Agent 包含：身份与个性 → 核心使命 → 关键规则 → 技术交付物 → 工作流 → 成功指标
+      </p>
+    </div>
+
+    <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; margin: 2.5rem 0 1rem; text-align: center;">
+      支持的工具平台
+    </h3>
+    <div class="tools-grid">
+      <div class="tool-item">
+        <div class="icon">🤖</div>
+        <div class="name">Claude Code</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🐙</div>
+        <div class="name">GitHub Copilot</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">✨</div>
+        <div class="name">Cursor</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🌊</div>
+        <div class="name">Windsurf</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">💎</div>
+        <div class="name">Gemini CLI</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🚀</div>
+        <div class="name">Antigravity</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">📖</div>
+        <div class="name">OpenCode</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🤝</div>
+        <div class="name">Aider</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🐾</div>
+        <div class="name">OpenClaw</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🔮</div>
+        <div class="name">Qwen Code</div>
+      </div>
+      <div class="tool-item">
+        <div class="icon">🌙</div>
+        <div class="name">Kimi Code</div>
+      </div>
+    </div>
+
+    <div class="star-chart">
+      <h4 style="font-family: 'Space Grotesk', sans-serif; margin-bottom: 1rem;">📈 Star 增长趋势</h4>
+      <div class="chart-bars">
+        <div class="chart-bar" style="height: 15%; background: linear-gradient(to top, rgba(168,85,247,0.3), rgba(168,85,247,0.6));">
+          <div class="tooltip">初始发布</div>
+        </div>
+        <div class="chart-bar" style="height: 22%; background: linear-gradient(to top, rgba(168,85,247,0.3), rgba(168,85,247,0.6));">
+          <div class="tooltip">社区传播</div>
+        </div>
+        <div class="chart-bar" style="height: 35%; background: linear-gradient(to top, rgba(168,85,247,0.3), rgba(168,85,247,0.7));">
+          <div class="tooltip">Reddit 热议</div>
+        </div>
+        <div class="chart-bar" style="height: 48%; background: linear-gradient(to top, rgba(168,85,247,0.3), rgba(236,72,153,0.7));">
+          <div class="tooltip">多工具支持</div>
+        </div>
+        <div class="chart-bar" style="height: 60%; background: linear-gradient(to top, rgba(168,85,247,0.4), rgba(236,72,153,0.7));">
+          <div class="tooltip">社区翻译</div>
+        </div>
+        <div class="chart-bar" style="height: 72%; background: linear-gradient(to top, rgba(236,72,153,0.4), rgba(236,72,153,0.8));">
+          <div class="tooltip">游戏开发部</div>
+        </div>
+        <div class="chart-bar" style="height: 82%; background: linear-gradient(to top, rgba(236,72,153,0.5), rgba(6,182,212,0.8));">
+          <div class="tooltip">100+ Agent</div>
+        </div>
+        <div class="chart-bar" style="height: 90%; background: linear-gradient(to top, rgba(6,182,212,0.5), rgba(6,182,212,0.9));">
+          <div class="tooltip">140+ Agent</div>
+        </div>
+        <div class="chart-bar" style="height: 100%; background: linear-gradient(to top, rgba(6,182,212,0.6), rgba(16,185,129,0.9));">
+          <div class="tooltip">91.9K ⭐</div>
+        </div>
+      </div>
+      <div class="chart-labels">
+        <span>Reddit 起源</span>
+        <span>社区增长</span>
+        <span>工具扩展</span>
+        <span>今日 Trending</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why Trending -->
+<section id="trending">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag amber">🔥 Trending 原因</div>
+      <h2>为什么火?</h2>
+      <p>解析 91.9K Star 背后的驱动力</p>
+    </div>
+
+    <div class="trending-reasons">
+      <div class="reason-card">
+        <div class="num">01</div>
+        <h4>AI Agent 时代的基础设施</h4>
+        <p>随着 AI 编码工具爆发式增长，开发者急需标准化的 Agent 定义和部署方案。The Agency 填补了这个空白，成为 AI Agent 人格管理的"事实标准"。</p>
+      </div>
+      <div class="reason-card">
+        <div class="num">02</div>
+        <h4>极致的多工具兼容</h4>
+        <p>支持 11+ 主流 AI 编码工具（Claude Code、Cursor、Copilot 等），用户不需要绑定单一工具链。convert.sh + install.sh 的一键转换安装体验极其流畅。</p>
+      </div>
+      <div class="reason-card">
+        <div class="num">03</div>
+        <h4>社区驱动 + 中国本地化</h4>
+        <p>源自 Reddit 社区讨论，天然具备社区基因。社区贡献了简体中文翻译版（141 个翻译 + 46 个原创中国本地化 Agent），覆盖小红书、B站、微信等平台。</p>
+      </div>
+      <div class="reason-card">
+        <div class="num">04</div>
+        <h4>不只是 Prompt — 是完整的"员工"</h4>
+        <p>每个 Agent 有个性、工作流、交付物、成功指标。这不是 Prompt 工程集合，更像是"AI 代理人才市场"的蓝图，直接解决了 AI 辅助工作中的角色定义痛点。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section id="comparison">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag emerald">竞品对比</div>
+      <h2>同类项目对比</h2>
+      <p>与其他 AI Agent/Prompt 方案的横向比较</p>
+    </div>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>特性</th>
+          <th>The Agency</th>
+          <th>awesome-chatgpt-prompts</th>
+          <th>LangChain Agents</th>
+          <th>Claude Code 内置</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Agent 数量</td>
+          <td><strong>144+ 个</strong></td>
+          <td>~160 个 Prompt</td>
+          <td>框架级</td>
+          <td>系统级</td>
+        </tr>
+        <tr>
+          <td>个性与人格</td>
+          <td><span class="tag-yes">✅ 深度定制</span></td>
+          <td><span class="tag-partial">⚡ 基础角色</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+        </tr>
+        <tr>
+          <td>工作流定义</td>
+          <td><span class="tag-yes">✅ 完整流程</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+          <td><span class="tag-yes">✅ Chain 模式</span></td>
+          <td><span class="tag-partial">⚡ 有限</span></td>
+        </tr>
+        <tr>
+          <td>多工具支持</td>
+          <td><span class="tag-yes">✅ 11+ 平台</span></td>
+          <td><span class="tag-no">❌ 仅 ChatGPT</span></td>
+          <td><span class="tag-yes">✅ Python 生态</span></td>
+          <td><span class="tag-no">❌ 仅 Claude</span></td>
+        </tr>
+        <tr>
+          <td>可交付物定义</td>
+          <td><span class="tag-yes">✅ 含代码示例</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+          <td><span class="tag-partial">⚡ 工具输出</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+        </tr>
+        <tr>
+          <td>成功指标</td>
+          <td><span class="tag-yes">✅ 每个Agent</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+        </tr>
+        <tr>
+          <td>中国本地化</td>
+          <td><span class="tag-yes">✅ 社区翻译</span></td>
+          <td><span class="tag-partial">⚡ 部分</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+          <td><span class="tag-no">❌ 无</span></td>
+        </tr>
+        <tr>
+          <td>使用门槛</td>
+          <td>极低（复制即用）</td>
+          <td>极低</td>
+          <td>高（需编程）</td>
+          <td>低</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Use Cases -->
+<section id="usecases">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag purple">应用场景</div>
+      <h2>真实世界用例</h2>
+      <p>看看"AI 团队"如何协作完成复杂任务</p>
+    </div>
+
+    <div class="use-case-scenario">
+      <div class="scenario-header">
+        <div class="scenario-num" style="background: rgba(168, 85, 247, 0.15); color: var(--accent-purple);">1</div>
+        <h4>创业 MVP 快速开发</h4>
+      </div>
+      <p style="color: var(--text-secondary); font-size: 0.92rem;">从零到 MVP 的全流程 AI 协作</p>
+      <div class="agent-chips">
+        <span class="agent-chip">🎨 Frontend Developer</span>
+        <span class="agent-chip">🏗️ Backend Architect</span>
+        <span class="agent-chip">🚀 Growth Hacker</span>
+        <span class="agent-chip">⚡ Rapid Prototyper</span>
+        <span class="agent-chip">🔍 Reality Checker</span>
+      </div>
+      <div class="scenario-result">成果：每个阶段都有专业 AI 支撑，显著加速交付速度</div>
+    </div>
+
+    <div class="use-case-scenario">
+      <div class="scenario-header">
+        <div class="scenario-num" style="background: rgba(236, 72, 153, 0.15); color: var(--accent-pink);">2</div>
+        <h4>多渠道营销活动</h4>
+      </div>
+      <p style="color: var(--text-secondary); font-size: 0.92rem;">跨平台协调的专业营销团队</p>
+      <div class="agent-chips">
+        <span class="agent-chip">📝 Content Creator</span>
+        <span class="agent-chip">🐦 Twitter Engager</span>
+        <span class="agent-chip">📸 Instagram Curator</span>
+        <span class="agent-chip">🤝 Reddit Community Builder</span>
+        <span class="agent-chip">📊 Analytics Reporter</span>
+      </div>
+      <div class="scenario-result">成果：多平台协同作战，平台专属策略优化</div>
+    </div>
+
+    <div class="use-case-scenario">
+      <div class="scenario-header">
+        <div class="scenario-num" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan);">3</div>
+        <h4>付费媒体账户接管</h4>
+      </div>
+      <p style="color: var(--text-secondary); font-size: 0.92rem;">系统化的广告账户审计与优化</p>
+      <div class="agent-chips">
+        <span class="agent-chip">📋 Paid Media Auditor</span>
+        <span class="agent-chip">📡 Tracking Specialist</span>
+        <span class="agent-chip">💰 PPC Strategist</span>
+        <span class="agent-chip">🔍 Query Analyst</span>
+        <span class="agent-chip">✍️ Creative Strategist</span>
+      </div>
+      <div class="scenario-result">成果：30 天内完成系统化账户重构与优化</div>
+    </div>
+  </div>
+</section>
+
+<!-- Who Should Use -->
+<section id="audience">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag pink">适合人群</div>
+      <h2>谁应该使用 The Agency?</h2>
+    </div>
+
+    <div class="audience-list">
+      <div class="audience-item">
+        <div class="audience-icon" style="background: rgba(168, 85, 247, 0.15);">👨‍💻</div>
+        <div>
+          <h4>独立开发者 / Indie Hacker</h4>
+          <p>一人企业也能拥有完整的"AI 团队"，从开发到营销全覆盖</p>
+        </div>
+      </div>
+      <div class="audience-item">
+        <div class="audience-icon" style="background: rgba(236, 72, 153, 0.15);">🏢</div>
+        <div>
+          <h4>初创团队</h4>
+          <p>用 AI Agent 补充人力资源不足，快速迭代产品</p>
+        </div>
+      </div>
+      <div class="audience-item">
+        <div class="audience-icon" style="background: rgba(6, 182, 212, 0.15);">🎯</div>
+        <div>
+          <h4>AI 工具重度用户</h4>
+          <p>使用 Claude Code / Cursor / Copilot 等工具，希望提升 AI 辅助质量</p>
+        </div>
+      </div>
+      <div class="audience-item">
+        <div class="audience-icon" style="background: rgba(16, 185, 129, 0.15);">📊</div>
+        <div>
+          <h4>营销 / 销售从业者</h4>
+          <p>利用专业化 Agent 提升工作效率，特别是在社交媒体运营方面</p>
+        </div>
+      </div>
+      <div class="audience-item">
+        <div class="audience-icon" style="background: rgba(245, 158, 11, 0.15);">🎮</div>
+        <div>
+          <h4>游戏开发者</h4>
+          <p>17 个游戏开发 Agent 覆盖 Unity、Unreal、Godot、Roblox 全引擎</p>
+        </div>
+      </div>
+      <div class="audience-item">
+        <div class="audience-icon" style="background: rgba(244, 63, 94, 0.15);">🌏</div>
+        <div>
+          <h4>中国市场运营者</h4>
+          <p>原生支持小红书、B站、抖音、微信、知乎等中国平台 Agent</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section id="quickstart">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag emerald">快速上手</div>
+      <h2>3 分钟开始使用</h2>
+      <p>从克隆到部署，几步搞定</p>
+    </div>
+
+    <div class="card-grid cols-2">
+      <div>
+        <h4 style="font-family: 'Space Grotesk'; margin-bottom: 1rem; color: var(--accent-purple);">方式一：Claude Code（推荐）</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-lang">bash</span>
+          </div>
+          <div class="code-body">
+<span class="comment"># 克隆仓库</span>
+<span class="command">git</span> clone https://github.com/msitarzewski/agency-agents.git
+<span class="command">cd</span> agency-agents
+
+<span class="comment"># 一键安装所有 Agent 到 Claude Code</span>
+./scripts/install.sh --tool claude-code
+
+<span class="comment"># 在 Claude Code 中激活 Agent</span>
+<span class="string">"Hey Claude, activate Frontend Developer mode</span>
+<span class="string">and help me build a React component"</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-family: 'Space Grotesk'; margin-bottom: 1rem; color: var(--accent-cyan);">方式二：多工具安装</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-lang">bash</span>
+          </div>
+          <div class="code-body">
+<span class="comment"># 生成所有工具的集成文件</span>
+./scripts/convert.sh
+
+<span class="comment"># 交互式安装（自动检测已安装工具）</span>
+./scripts/install.sh
+
+<span class="comment"># 或指定特定工具</span>
+./scripts/install.sh --tool cursor
+./scripts/install.sh --tool copilot
+./scripts/install.sh --tool aider
+
+<span class="comment"># 并行安装，更快</span>
+./scripts/install.sh --no-interactive --parallel
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <h4 style="font-family: 'Space Grotesk'; margin-bottom: 1rem; color: var(--accent-amber);">方式三：手动使用单个 Agent</h4>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">bash</span>
+        </div>
+        <div class="code-body">
+<span class="comment"># 只复制你需要的 Agent</span>
+<span class="command">cp</span> engineering/*.md ~/.claude/agents/
+
+<span class="comment"># 或直接浏览 Agent 定义文件作为参考</span>
+<span class="comment"># 每个文件包含：身份、使命、规则、交付物、工作流、成功指标</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>
+    数据来源：<a href="https://github.com/msitarzewski/agency-agents" target="_blank">msitarzewski/agency-agents</a> ·
+    分析时间：2026-05-05 ·
+    GitHub Trending Deep Dive
+  </p>
+</footer>
+
+</body>
+</html>

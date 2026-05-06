@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACE-Step UI - 开源 AI 音乐生成终极方案</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8B5CF6;
+            --primary-light: #A78BFA;
+            --primary-dark: #7C3AED;
+            --accent: #F472B6;
+            --accent-light: #F9A8D4;
+            --bg-dark: #0F0B1A;
+            --bg-card: #1A1330;
+            --bg-card-hover: #231A40;
+            --bg-surface: #150F28;
+            --text-primary: #F8FAFC;
+            --text-secondary: #C4B5FD;
+            --text-muted: #8B7FB8;
+            --border: rgba(139, 92, 246, 0.2);
+            --gradient-1: linear-gradient(135deg, #8B5CF6, #EC4899);
+            --gradient-2: linear-gradient(135deg, #6366F1, #8B5CF6);
+            --gradient-3: linear-gradient(135deg, #EC4899, #F59E0B);
+            --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 18px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--primary-light);
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-badge .dot {
+            width: 8px; height: 8px;
+            background: #4ADE80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto 36px;
+            font-weight: 400;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 36px;
+        }
+
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stat-chip .icon { font-size: 16px; }
+        .stat-chip .value { color: var(--text-primary); font-weight: 700; }
+        .stat-chip .label { color: var(--text-muted); }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+        }
+
+        /* Section */
+        .section {
+            padding: 48px 0;
+        }
+
+        .section-header {
+            margin-bottom: 36px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-top: 10px;
+            max-width: 600px;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .feature-icon.music { background: linear-gradient(135deg, #8B5CF6, #6366F1); }
+        .feature-icon.params { background: linear-gradient(135deg, #EC4899, #F472B6); }
+        .feature-icon.lyrics { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+        .feature-icon.ui { background: linear-gradient(135deg, #10B981, #34D399); }
+        .feature-icon.tools { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+        .feature-icon.ai { background: linear-gradient(135deg, #EF4444, #F87171); }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 14px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 5px 0;
+            font-size: 13.5px;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li::before {
+            content: '→';
+            color: var(--primary-light);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Architecture Diagram */
+        .arch-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            overflow-x: auto;
+        }
+
+        .arch-layer {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 16px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .arch-layer:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .arch-layer:last-child { margin-bottom: 0; }
+
+        .arch-layer-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            padding: 3px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .arch-layer-label.frontend { background: rgba(99, 102, 241, 0.2); color: #818CF8; }
+        .arch-layer-label.backend { background: rgba(236, 72, 153, 0.2); color: #F472B6; }
+        .arch-layer-label.engine { background: rgba(139, 92, 246, 0.2); color: #A78BFA; }
+
+        .arch-layer h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .arch-layer p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .arch-layer .tech-tags {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tech-tag {
+            padding: 4px 12px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            padding: 4px 0;
+            color: var(--primary-light);
+            font-size: 22px;
+        }
+
+        /* Comparison Table */
+        .compare-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .compare-table thead th {
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(139, 92, 246, 0.1);
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .compare-table thead th.highlight {
+            color: var(--primary-light);
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        .compare-table tbody td {
+            padding: 14px 20px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .compare-table tbody tr:last-child td { border-bottom: none; }
+
+        .compare-table tbody tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .compare-table .highlight-col {
+            background: rgba(139, 92, 246, 0.05);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .check { color: #4ADE80; font-weight: 700; }
+        .cross { color: #F87171; }
+
+        /* Quick Start */
+        .quickstart-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            gap: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            flex-shrink: 0;
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .step-content { flex: 1; }
+
+        .step-content h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .step-content p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .code-block {
+            background: #0D0B14;
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 10px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #E2E8F0;
+        }
+
+        .code-block .comment { color: #6B7280; }
+        .code-block .cmd { color: #A78BFA; }
+        .code-block .flag { color: #F472B6; }
+        .code-block .url { color: #34D399; }
+
+        /* Trending Reasons */
+        .reasons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .reason-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .reason-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .reason-card .num {
+            font-size: 32px;
+            font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .reason-card h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .reason-card p {
+            color: var(--text-muted);
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        /* Target Users */
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .user-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .user-card .emoji {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .user-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .user-card .stars {
+            color: #FBBF24;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .user-card p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--primary-light); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 48px 0 36px; }
+            .stats-row { gap: 10px; }
+            .stat-chip { padding: 6px 12px; font-size: 12px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .reasons-grid { grid-template-columns: 1fr; }
+            .users-grid { grid-template-columns: repeat(2, 1fr); }
+            .compare-table { font-size: 12px; }
+            .compare-table thead th,
+            .compare-table tbody td { padding: 10px 12px; }
+            .step { flex-direction: column; gap: 12px; }
+            .arch-container { padding: 20px; }
+            .footer-content { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 480px) {
+            .users-grid { grid-template-columns: 1fr; }
+            .hero-actions { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+
+    <!-- Hero -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                GitHub Trending · 2026-05-05
+            </div>
+            <h1>ACE-Step UI</h1>
+            <p class="subtitle">终极开源 Suno 替代品 — 为 ACE-Step 1.5 AI 音乐生成模型打造的专业级 Spotify 风格界面。免费、本地、无限量。</p>
+            <div class="stats-row">
+                <div class="stat-chip">
+                    <span class="icon">⭐</span>
+                    <span class="value">2,547</span>
+                    <span class="label">Stars</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="icon">🚀</span>
+                    <span class="value">+222</span>
+                    <span class="label">Today</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="icon">💻</span>
+                    <span class="value">JavaScript</span>
+                    <span class="label">Language</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="icon">📄</span>
+                    <span class="value">MIT</span>
+                    <span class="label">License</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="icon">🎵</span>
+                    <span class="value">4+ min</span>
+                    <span class="label">歌曲时长</span>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <a href="https://github.com/fspecii/ace-step-ui" class="btn btn-primary" target="_blank">
+                    ⭐ GitHub 仓库
+                </a>
+                <a href="#quickstart" class="btn btn-secondary">
+                    🚀 快速上手
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Why Trending -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">🔥 Trending 原因</div>
+                <h2 class="section-title">为什么今天火了？</h2>
+            </div>
+            <div class="reasons-grid">
+                <div class="reason-card">
+                    <div class="num">01</div>
+                    <h4>填补开源 UI 空白</h4>
+                    <p>ACE-Step 1.5 模型强大但原生 Gradio 界面简陋。此项目提供了媲美 Spotify 的专业 UI，大幅降低使用门槛。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="num">02</div>
+                    <h4>直击付费痛点</h4>
+                    <p>Suno 每月 $10-50，而 ACE-Step UI 完全免费、无限制、生成内容归用户所有。"免费替代付费"的叙事极具传播力。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="num">03</div>
+                    <h4>隐私 + 本地化</h4>
+                    <p>所有生成在本地 GPU 完成，无需上传到云端。对隐私敏感的用户和商业场景极具吸引力。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="num">04</div>
+                    <h4>AI 音乐浪潮</h4>
+                    <p>2025-2026 年 AI 音乐是热门赛道。ACE-Step 1.5 生成速度 <2 秒，论文报告质量超越多数商业模型。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="num">05</div>
+                    <h4>生态成熟</h4>
+                    <p>Pinokio 一键安装、ComfyUI 集成、AMD 官方博客推荐，生态支持齐全，新用户进入门槛极低。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="num">06</div>
+                    <h4>一站式工具</h4>
+                    <p>内置音频编辑、音轨分离、视频生成等功能，远超简单的"文本到音乐"工具，形成完整创作平台。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">✨ 核心功能</div>
+                <h2 class="section-title">全方位 AI 音乐创作平台</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon music">🎵</div>
+                    <h3>AI 音乐生成</h3>
+                    <p>生成带人声和歌词的完整歌曲，时长可达 4+ 分钟</p>
+                    <ul class="feature-list">
+                        <li>完整歌曲生成（含人声）</li>
+                        <li>纯音乐/器乐模式</li>
+                        <li>批量生成多个变体</li>
+                        <li>自定义 BPM、调性、拍号</li>
+                        <li>风格标签（流派/情绪/节奏）</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon params">🎛️</div>
+                    <h3>高级参数控制</h3>
+                    <p>精细调控每个生成参数，获得理想的音乐输出</p>
+                    <ul class="feature-list">
+                        <li>参考音频风格迁移</li>
+                        <li>音频翻唱/风格转换</li>
+                        <li>局部重绘 (Repainting)</li>
+                        <li>种子控制复现结果</li>
+                        <li>推理步数控制质量/速度</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon lyrics">🎤</div>
+                    <h3>歌词与提示词</h3>
+                    <p>AI 驱动的歌词编辑和格式化系统</p>
+                    <ul class="feature-list">
+                        <li>歌词编辑器（支持结构标签）</li>
+                        <li>AI 格式助手</li>
+                        <li>流派预设模板</li>
+                        <li>历史提示词复用</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon ui">🎨</div>
+                    <h3>Spotify 级 UI</h3>
+                    <p>专业级播放器界面，深色/浅色主题</p>
+                    <ul class="feature-list">
+                        <li>底部播放器 + 波形显示</li>
+                        <li>曲库管理与搜索</li>
+                        <li>收藏与播放列表</li>
+                        <li>实时生成进度</li>
+                        <li>局域网多设备访问</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon tools">🛠️</div>
+                    <h3>内置工具集</h3>
+                    <p>一站式音乐创作，无需切换工具</p>
+                    <ul class="feature-list">
+                        <li>AudioMass 音频编辑器</li>
+                        <li>Demucs 音轨分离</li>
+                        <li>Pexels 视频生成器</li>
+                        <li>程序化渐变专辑封面</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon ai">🧠</div>
+                    <h3>AI 增强模式</h3>
+                    <p>三种智能模式适配不同场景</p>
+                    <ul class="feature-list">
+                        <li>标准模式：最快速度</li>
+                        <li>AI 增强：丰富风格标签</li>
+                        <li>思考模式：LLM 推理 + 最佳质量</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">🏗️ 技术架构</div>
+                <h2 class="section-title">三层架构设计</h2>
+            </div>
+            <div class="arch-container">
+                <div class="arch-layer">
+                    <span class="arch-layer-label frontend">Frontend Layer</span>
+                    <h4>React 18 + TypeScript</h4>
+                    <p>Spotify 风格的现代 Web UI · 深色/浅色主题 · 响应式设计</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">React 18</span>
+                        <span class="tech-tag">TypeScript 5.x</span>
+                        <span class="tech-tag">TailwindCSS 3.x</span>
+                        <span class="tech-tag">Vite</span>
+                    </div>
+                </div>
+                <div class="arch-arrow">⬇ HTTP REST API ⬇</div>
+                <div class="arch-layer">
+                    <span class="arch-layer-label backend">Backend Layer</span>
+                    <h4>Express.js + SQLite</h4>
+                    <p>曲库管理 · 生成队列调度 · 工具集成 · 局域网访问</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Express.js</span>
+                        <span class="tech-tag">SQLite</span>
+                        <span class="tech-tag">better-sqlite3</span>
+                        <span class="tech-tag">FFmpeg</span>
+                    </div>
+                </div>
+                <div class="arch-arrow">⬇ Gradio API ⬇</div>
+                <div class="arch-layer">
+                    <span class="arch-layer-label engine">AI Engine</span>
+                    <h4>ACE-Step 1.5</h4>
+                    <p>开源 AI 音乐基础模型 · 本地 GPU 运行 · 生成速度 &lt;2 秒</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">ACE-Step 1.5</span>
+                        <span class="tech-tag">Gradio API</span>
+                        <span class="tech-tag">CUDA / PT Backend</span>
+                        <span class="tech-tag">Demucs</span>
+                        <span class="tech-tag">AudioMass</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">📊 同类对比</div>
+                <h2 class="section-title">ACE-Step UI vs 竞品</h2>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th class="highlight">ACE-Step UI</th>
+                            <th>Suno</th>
+                            <th>Udio</th>
+                            <th>MusicGen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>价格</td>
+                            <td class="highlight-col">完全免费</td>
+                            <td>$10-50/月</td>
+                            <td>$10/月起</td>
+                            <td>免费</td>
+                        </tr>
+                        <tr>
+                            <td>本地运行</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>UI 质量</td>
+                            <td class="highlight-col">Spotify 级</td>
+                            <td>优秀</td>
+                            <td>优秀</td>
+                            <td>简陋</td>
+                        </tr>
+                        <tr>
+                            <td>人声支持</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>隐私保护</td>
+                            <td class="highlight-col">100% 本地</td>
+                            <td>云端</td>
+                            <td>云端</td>
+                            <td>本地</td>
+                        </tr>
+                        <tr>
+                            <td>商业使用</td>
+                            <td class="highlight-col">无限制</td>
+                            <td>需付费版</td>
+                            <td>需付费版</td>
+                            <td>MIT 许可</td>
+                        </tr>
+                        <tr>
+                            <td>生成时长</td>
+                            <td class="highlight-col">4+ 分钟</td>
+                            <td>4 分钟</td>
+                            <td>4 分钟</td>
+                            <td>30 秒</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Target Users -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">👥 适合谁</div>
+                <h2 class="section-title">目标用户群体</h2>
+            </div>
+            <div class="users-grid">
+                <div class="user-card">
+                    <div class="emoji">🎸</div>
+                    <h4>独立音乐人</h4>
+                    <div class="stars">★★★★★</div>
+                    <p>快速 Demo 制作与创意探索</p>
+                </div>
+                <div class="user-card">
+                    <div class="emoji">🎬</div>
+                    <h4>视频创作者</h4>
+                    <div class="stars">★★★★★</div>
+                    <p>免费 BGM 和配乐生成</p>
+                </div>
+                <div class="user-card">
+                    <div class="emoji">🤖</div>
+                    <h4>AI 爱好者</h4>
+                    <div class="stars">★★★★☆</div>
+                    <p>需一定技术基础部署</p>
+                </div>
+                <div class="user-card">
+                    <div class="emoji">🏢</div>
+                    <h4>商业团队</h4>
+                    <div class="stars">★★★★☆</div>
+                    <p>MIT 许可，可商用</p>
+                </div>
+                <div class="user-card">
+                    <div class="emoji">🎵</div>
+                    <h4>音乐爱好者</h4>
+                    <div class="stars">★★★☆☆</div>
+                    <p>零门槛创作个人音乐</p>
+                </div>
+                <div class="user-card">
+                    <div class="emoji">🔬</div>
+                    <h4>研究者</h4>
+                    <div class="stars">★★★★☆</div>
+                    <p>支持 LoRA 训练和模型微调</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section" id="quickstart">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">🚀 快速上手</div>
+                <h2 class="section-title">三步开始创作</h2>
+            </div>
+            <div class="quickstart-steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>安装 ACE-Step 引擎</h4>
+                        <p>克隆并安装 ACE-Step 1.5 AI 音乐生成模型（首次运行自动下载模型 ~5GB）</p>
+                        <div class="code-block">
+                            <span class="cmd">git clone</span> <span class="url">https://github.com/ace-step/ACE-Step-1.5</span><br>
+                            <span class="cmd">cd</span> ACE-Step-1.5<br>
+                            <span class="cmd">uv venv</span> && <span class="cmd">uv pip install</span> -e .
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>安装并启动 ACE-Step UI</h4>
+                        <p>一键安装并启动前端界面</p>
+                        <div class="code-block">
+                            <span class="cmd">git clone</span> <span class="url">https://github.com/fspecii/ace-step-ui</span><br>
+                            <span class="cmd">cd</span> ace-step-ui<br>
+                            ./setup.sh <span class="comment"># Linux/macOS</span><br>
+                            ./start-all.sh <span class="comment"># 一键启动全部服务</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>开始创作音乐！</h4>
+                        <p>打开浏览器访问，即可开始生成 AI 音乐</p>
+                        <div class="code-block">
+                            <span class="comment"># 本地访问</span><br>
+                            http://localhost:3000<br><br>
+                            <span class="comment"># 局域网其他设备访问</span><br>
+                            http://YOUR_IP:3000
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px;">
+                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600;">
+                    💡 更简单的方式：Pinokio 一键安装
+                </p>
+                <p style="font-size: 13px; color: var(--text-muted);">
+                    下载 <a href="https://pinokio.computer/" style="color: var(--primary-light); text-decoration: none;">Pinokio</a>，搜索 "ACE-Step UI"，一键安装所有依赖，无需终端操作。支持 Windows / macOS / Linux。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Requirements -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">📋 系统要求</div>
+                <h2 class="section-title">硬件与软件需求</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>最低配置（无 LLM）</h3>
+                    <ul class="feature-list">
+                        <li>NVIDIA GPU: 4GB+ VRAM</li>
+                        <li>Node.js: 18+</li>
+                        <li>Python: 3.10+</li>
+                        <li>磁盘空间: ~5GB（模型）</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>推荐配置（含 LLM 思考模式）</h3>
+                    <ul class="feature-list">
+                        <li>NVIDIA GPU: 12GB+ VRAM</li>
+                        <li>Python: 3.11 推荐</li>
+                        <li>CUDA: 12.8</li>
+                        <li>FFmpeg 已安装</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>跨平台支持</h3>
+                    <ul class="feature-list">
+                        <li>Windows: 一键 bat 脚本 / 便携包</li>
+                        <li>Linux: 一键 shell 脚本</li>
+                        <li>macOS: 完整支持</li>
+                        <li>AMD / Intel GPU: 通过 ComfyUI</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    分析日期: 2026-05-05 · 数据来源: GitHub Trending
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/fspecii/ace-step-ui" target="_blank">GitHub</a>
+                    <a href="https://github.com/ace-step/ACE-Step-1.5" target="_blank">ACE-Step 1.5</a>
+                    <a href="https://huggingface.co/ACE-Step/Ace-Step1.5" target="_blank">Hugging Face</a>
+                    <a href="https://arxiv.org/html/2602.00744v1" target="_blank">论文</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

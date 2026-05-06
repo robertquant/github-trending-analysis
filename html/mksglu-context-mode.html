@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context Mode - AI编程Agent上下文优化 深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+.badge-red{background:rgba(248,81,73,0.15);color:#f85149;border:1px solid rgba(248,81,73,0.3)}
+
+/* Cards */
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#58a6ff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#3fb950}
+.card a{color:#58a6ff;text-decoration:none}
+.card a:hover{text-decoration:underline}
+
+/* Feature Grid */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#58a6ff}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#58a6ff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(88,166,255,0.05)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+.warn{color:#f0883e}
+
+/* Score */
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+
+/* Code Block */
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#3fb950}
+.code-block .flag{color:#f0883e}
+.code-block .string{color:#a5d6ff}
+
+/* Scenario Tags */
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#58a6ff}
+
+/* Target Users */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #3fb950}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+
+/* Benchmark Highlight */
+.benchmark-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:15px 0}
+.benchmark-item{background:linear-gradient(135deg,rgba(88,166,255,0.05),rgba(63,185,80,0.05));border:1px solid rgba(88,166,255,0.2);border-radius:10px;padding:18px;text-align:center}
+.benchmark-item .bm-label{color:#8b949e;font-size:0.82rem;margin-bottom:6px}
+.benchmark-item .bm-value{font-size:1.8rem;font-weight:800;color:#3fb950}
+.benchmark-item .bm-detail{color:#58a6ff;font-size:0.85rem;margin-top:4px}
+
+/* Platform Grid */
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:15px 0}
+.platform-item{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px;text-align:center;font-size:0.88rem;color:#c9d1d9;transition:all 0.3s}
+.platform-item:hover{border-color:#3fb950;color:#3fb950}
+
+/* Footer */
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  .benchmark-grid{grid-template-columns:1fr 1fr}
+  .platform-grid{grid-template-columns:repeat(3,1fr)}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>Context Mode</h1>
+  <div class="subtitle">AI编程Agent上下文窗口优化 · MCP Server · 98% 压缩率</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 12,842 Stars</span>
+    <span class="badge badge-green">🔥 +306 Today</span>
+    <span class="badge badge-orange">💎 TypeScript</span>
+    <span class="badge badge-purple">📄 ELv2</span>
+    <span class="badge badge-red">🏆 HN #1</span>
+  </div>
+</div>
+
+<!-- Overview -->
+<div class="card">
+  <h2>📋 项目简介</h2>
+  <p>Context Mode 是一个基于 MCP (Model Context Protocol) 的服务器，专门解决 AI 编程 Agent 的<strong style="color:#f0883e">上下文窗口浪费问题</strong>。一次 Playwright 快照消耗 56KB，20 个 GitHub Issues 占用 59KB——工具输出在 30 分钟内就能吃掉 40% 的上下文。Context Mode 通过沙箱化、智能压缩、会话延续和代码化思考四大机制，实现 <strong style="color:#3fb950">98% 上下文节省</strong>，将有效会话时间从 ~30 分钟延长到 ~3 小时。</p>
+
+  <h3>四大核心功能</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🔒</div><div class="label">Context Saving<br>上下文沙箱 · 98% 压缩</div></div>
+    <div class="feature-item"><div class="icon">🔄</div><div class="label">Session Continuity<br>SQLite + FTS5 会话延续</div></div>
+    <div class="feature-item"><div class="icon">🧠</div><div class="label">Think in Code<br>LLM 生成分析脚本</div></div>
+    <div class="feature-item"><div class="icon">🗜️</div><div class="label">Output Compression<br>65-75% Token 减少</div></div>
+  </div>
+</div>
+
+<!-- Benchmark -->
+<div class="card">
+  <h2>📊 性能基准</h2>
+  <div class="benchmark-grid">
+    <div class="benchmark-item">
+      <div class="bm-label">Playwright 快照</div>
+      <div class="bm-value">98%</div>
+      <div class="bm-detail">56KB → 1.1KB</div>
+    </div>
+    <div class="benchmark-item">
+      <div class="bm-label">20 GitHub Issues</div>
+      <div class="bm-value">98%</div>
+      <div class="bm-detail">59KB → 1.2KB</div>
+    </div>
+    <div class="benchmark-item">
+      <div class="bm-label">大型代码库搜索</div>
+      <div class="bm-value">98%</div>
+      <div class="bm-detail">200KB+ → 4KB</div>
+    </div>
+    <div class="benchmark-item">
+      <div class="bm-label">综合测试</div>
+      <div class="bm-value">98%</div>
+      <div class="bm-detail">315KB → 5.4KB</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:15px;padding:12px;background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.3);border-radius:8px">
+    <span style="color:#3fb950;font-size:1.2rem;font-weight:700">⏱️ 会话有效期: ~30 min → ~3 hours（6x 延长）</span>
+  </div>
+</div>
+
+<!-- 11 MCP Tools -->
+<div class="card">
+  <h2>🛠️ 11 个 MCP 工具</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>工具</th><th>功能</th><th>类型</th></tr>
+      <tr><td style="color:#3fb950;font-weight:600">ctx_batch_execute</td><td>批量执行命令，结果不入上下文</td><td>执行</td></tr>
+      <tr><td style="color:#3fb950;font-weight:600">ctx_execute</td><td>单次命令沙箱执行</td><td>执行</td></tr>
+      <tr><td style="color:#3fb950;font-weight:600">ctx_execute_file</td><td>执行脚本文件</td><td>执行</td></tr>
+      <tr><td style="color:#58a6ff;font-weight:600">ctx_index</td><td>索引文档/代码到知识库</td><td>知识</td></tr>
+      <tr><td style="color:#58a6ff;font-weight:600">ctx_search</td><td>BM25 全文搜索</td><td>知识</td></tr>
+      <tr><td style="color:#58a6ff;font-weight:600">ctx_fetch_and_index</td><td>抓取网页并自动索引</td><td>知识</td></tr>
+      <tr><td style="color:#f0883e;font-weight:600">ctx_stats</td><td>上下文使用统计</td><td>管理</td></tr>
+      <tr><td style="color:#f0883e;font-weight:600">ctx_doctor</td><td>诊断配置和运行状态</td><td>管理</td></tr>
+      <tr><td style="color:#f0883e;font-weight:600">ctx_upgrade</td><td>升级到最新版本</td><td>管理</td></tr>
+      <tr><td style="color:#f0883e;font-weight:600">ctx_purge</td><td>清理历史数据</td><td>管理</td></tr>
+      <tr><td style="color:#bc8cff;font-weight:600">ctx_insight</td><td>智能洞察与分析</td><td>智能</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 14 Platforms -->
+<div class="card">
+  <h2>🌐 14 平台全覆盖</h2>
+  <div class="platform-grid">
+    <div class="platform-item">Claude Code</div>
+    <div class="platform-item">Cursor</div>
+    <div class="platform-item">Windsurf</div>
+    <div class="platform-item">GitHub Copilot</div>
+    <div class="platform-item">Cline</div>
+    <div class="platform-item">Aider</div>
+    <div class="platform-item">Continue</div>
+    <div class="platform-item">Roo Code</div>
+    <div class="platform-item">Zed</div>
+    <div class="platform-item">Warp</div>
+    <div class="platform-item">Amazon Q</div>
+    <div class="platform-item">Google Jules</div>
+    <div class="platform-item">Devin</div>
+    <div class="platform-item">PearAI</div>
+  </div>
+</div>
+
+<!-- Tech Architecture -->
+<div class="card">
+  <h2>🏗️ 技术架构</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>组件</th><th>技术选型</th></tr>
+      <tr><td>语言</td><td>TypeScript (Node.js)</td></tr>
+      <tr><td>数据库</td><td>SQLite + FTS5 全文检索</td></tr>
+      <tr><td>排名算法</td><td>BM25</td></tr>
+      <tr><td>协议</td><td>MCP (Model Context Protocol)</td></tr>
+      <tr><td>沙箱</td><td>子进程隔离执行</td></tr>
+      <tr><td>隐私</td><td>完全本地 · 零遥测 · 零云同步</td></tr>
+      <tr><td>许可证</td><td>ELv2 (Elastic License 2.0)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Why Trending -->
+<div class="card">
+  <h2>🔥 为什么火 (Trending 原因)</h2>
+  <ul>
+    <li><strong style="color:#f0883e">精准击中痛点</strong> — AI Agent 上下文耗尽是所有用户的核心困扰，没有一个好解决方案</li>
+    <li><strong style="color:#f85149">Hacker News 登顶 #1</strong> — 获得 570+ upvotes，引发广泛讨论</li>
+    <li><strong style="color:#58a6ff">MCP 生态爆发</strong> — 随 AI 编程工具普及，MCP 服务器需求暴涨</li>
+    <li><strong style="color:#3fb950">Think in Code 范式创新</strong> — 从"读取文件"到"生成分析脚本"，思维方式转变</li>
+    <li><strong style="color:#bc8cff">14 平台全覆盖</strong> — 确保最广泛的用户受益</li>
+    <li><strong style="color:#3fb950">零隐私顾虑</strong> — 完全本地运行，无遥测，无云同步</li>
+  </ul>
+</div>
+
+<!-- Comparison -->
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr>
+        <th>特性</th><th>Context Mode</th><th>Mem0</th><th>LangMem</th><th>Cognosys</th>
+      </tr>
+      <tr>
+        <td>上下文沙箱</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>FTS5 + BM25</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>Think in Code</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>MCP 协议</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>多平台适配</td><td class="check">✅ 14个</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>本地运行</td><td class="check">✅</td><td class="cross">❌ 云端</td><td class="check">✅</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>压缩率</td><td class="check">✅ 98%</td><td class="warn">⚠️ ~50%</td><td class="warn">⚠️ ~40%</td><td class="warn">⚠️ ~30%</td>
+      </tr>
+      <tr>
+        <td>会话延续</td><td class="check">✅ SQLite</td><td class="check">✅ 云端</td><td class="check">✅</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>开源</td><td class="check">✅ ELv2</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td>
+      </tr>
+    </table>
+  </div>
+  <p style="margin-top:12px;color:#3fb950;font-weight:600">结论：Context Mode 在上下文优化领域目前没有直接竞品，是唯一同时提供沙箱、FTS5检索、MCP集成的解决方案。</p>
+</div>
+
+<!-- Use Cases -->
+<div class="card">
+  <h2>🎯 应用场景</h2>
+  <div class="scenario-tags">
+    <span class="scenario-tag">💻 大型项目开发 · 上下文易耗尽</span>
+    <span class="scenario-tag">🤖 AI Agent 长任务 · 持续上下文</span>
+    <span class="scenario-tag">🔄 CI/CD 分析 · 日志压缩</span>
+    <span class="scenario-tag">📚 代码审查 · 批量代码阅读</span>
+    <span class="scenario-tag">🧠 知识库构建 · 文档索引化</span>
+    <span class="scenario-tag">🌐 Web 采集 · 网页内容压缩</span>
+  </div>
+</div>
+
+<!-- Quick Start -->
+<div class="card">
+  <h2>🚀 快速上手指南</h2>
+
+  <h3>1. Claude Code 安装</h3>
+  <div class="code-block">
+    <code><span class="cmd">claude mcp add</span> context-mode <span class="flag">--</span> npx <span class="flag">-y</span> @anthropic/context-mode@latest</code>
+  </div>
+
+  <h3>2. Cursor 安装</h3>
+  <div class="code-block">
+    <code><span class="comment">// .cursor/mcp.json</span><br>
+{<br>
+&nbsp;&nbsp;<span class="string">"mcpServers"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"context-mode"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"command"</span>: <span class="flag">"npx"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"args"</span>: [<span class="flag">"-y"</span>, <span class="string">"@anthropic/context-mode@latest"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}</code>
+  </div>
+
+  <h3>3. 基本使用</h3>
+  <div class="code-block">
+    <code><span class="comment"># 查看上下文统计</span><br>
+<span class="cmd">ctx_stats</span><br><br>
+<span class="comment"># 执行命令（结果不入上下文）</span><br>
+<span class="cmd">ctx_execute</span>(<span class="string">"cat large-log.log | grep ERROR | wc -l"</span>)<br><br>
+<span class="comment"># 索引文档到知识库</span><br>
+<span class="cmd">ctx_index</span>(<span class="string">"./docs"</span>, <span class="string">"project-docs"</span>)<br><br>
+<span class="comment"># BM25 搜索</span><br>
+<span class="cmd">ctx_search</span>(<span class="string">"authentication flow"</span>)</code>
+  </div>
+</div>
+
+<!-- Target Users -->
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item">
+      <div class="user-icon">🤖</div>
+      <div class="user-title">AI 编程重度用户</div>
+      <div class="user-desc">每天用 AI Agent 编程的开发者</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🏢</div>
+      <div class="user-title">大型项目团队</div>
+      <div class="user-desc">代码库庞大，上下文管理困难</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🛠️</div>
+      <div class="user-title">MCP 生态开发者</div>
+      <div class="user-desc">构建和优化 MCP 工具链</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">📊</div>
+      <div class="user-title">数据分析师</div>
+      <div class="user-desc">处理大量数据不耗尽上下文</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🔬</div>
+      <div class="user-title">研究型开发者</div>
+      <div class="user-desc">长时间保持 AI 会话连贯性</div>
+    </div>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">代码质量</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#f0883e">10/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:100%;background:linear-gradient(90deg,#3fb950,#f0883e)"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">9.0/10</div>
+    <div style="color:#f0883e;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>💡 总结</h2>
+  <p style="font-size:1.05rem">Context Mode 是 2026 年 AI 开发工具链中的<strong style="color:#3fb950">关键基础设施项目</strong>。它通过<strong style="color:#58a6ff">沙箱化工具输出 + FTS5 知识检索 + Think in Code</strong> 三大创新机制，精准解决了 AI 编程 Agent 最核心的痛点——上下文窗口浪费。<strong style="color:#f0883e">98% 的压缩率</strong>和<strong style="color:#3fb950">6 倍的会话延长</strong>使其成为任何 AI Agent 重度用户的必备工具。作为目前该领域唯一的全栈解决方案，Context Mode 有望成为 MCP 生态中的标准组件。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub · Hacker News · WebSearch</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>

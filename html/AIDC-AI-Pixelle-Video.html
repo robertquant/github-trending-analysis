@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixelle-Video - AI全自动短视频引擎深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#f97583,#ffa657,#79c0ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+.badge-red{background:rgba(249,117,131,0.15);color:#f97583;border:1px solid rgba(249,117,131,0.3)}
+
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#f97583,#ffa657);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#58a6ff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#ffa657}
+
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#ffa657}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+
+.pipeline{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:15px 0}
+.pipe-step{background:linear-gradient(135deg,rgba(249,117,131,0.1),rgba(255,166,87,0.1));border:1px solid rgba(249,117,131,0.3);
+  border-radius:10px;padding:10px 16px;text-align:center;font-size:.85rem;color:#ffa657;font-weight:600}
+.pipe-arrow{color:#484f58;font-size:1.3rem}
+
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#58a6ff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(249,117,131,0.03)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(255,166,87,0.08);border:1px solid rgba(255,166,87,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#ffa657}
+
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #f97583}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+.user-item .user-rate{color:#ffa657;font-size:0.9rem;margin-top:3px}
+
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#3fb950}
+.code-block .flag{color:#ffa657}
+.code-block .string{color:#a5d6ff}
+
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#f97583,#ffa657,#79c0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
+.pros,.cons{border-radius:8px;padding:16px}
+.pros{background:rgba(63,185,80,0.05);border:1px solid rgba(63,185,80,0.2)}
+.cons{background:rgba(249,117,131,0.05);border:1px solid rgba(249,117,131,0.2)}
+.pros h4{color:#3fb950;margin-bottom:10px}
+.cons h4{color:#f97583;margin-bottom:10px}
+.pros li,.cons li{font-size:0.88rem;margin-bottom:6px}
+
+.update-timeline{margin:15px 0;padding-left:20px}
+.update-timeline li{margin-bottom:8px;padding-left:8px;border-left:2px solid #30363d}
+.update-timeline li .date{color:#ffa657;font-weight:600;font-size:.85rem}
+.update-timeline li .text{color:#c9d1d9;font-size:.9rem}
+
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  .pros-cons{grid-template-columns:1fr}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+  .pipeline{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>Pixelle-Video</h1>
+  <div class="subtitle">AI Fully Automated Short Video Engine · AI 全自动短视频引擎</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 12,000 Stars</span>
+    <span class="badge badge-green">🔥 +724 Today</span>
+    <span class="badge badge-orange">🐍 Python</span>
+    <span class="badge badge-purple">📄 Apache-2.0</span>
+    <span class="badge badge-red">📦 v0.1.15</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📋 项目简介</h2>
+  <p>Pixelle-Video 是一个开源的 AI 全自动短视频引擎，核心理念是 <strong style="color:#f97583">"一句话生成视频"</strong>。用户只需输入一个主题关键词，系统即可自动完成从文案撰写到视频合成的全流程。<strong style="color:#3fb950">零门槛、零剪辑经验</strong>，让视频创作成为一句话的事。</p>
+
+  <h3>核心功能</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">✍️</div><div class="label">AI 智能文案<br>自动创作解说词</div></div>
+    <div class="feature-item"><div class="icon">🎨</div><div class="label">AI 生成配图<br>FLUX 等模型</div></div>
+    <div class="feature-item"><div class="icon">🎬</div><div class="label">AI 生成视频<br>WAN 2.1 模型</div></div>
+    <div class="feature-item"><div class="icon">🗣️</div><div class="label">AI 语音合成<br>Edge-TTS/克隆</div></div>
+    <div class="feature-item"><div class="icon">🎵</div><div class="label">背景音乐<br>内置/自定义 BGM</div></div>
+    <div class="feature-item"><div class="icon">👤</div><div class="label">数字人口播<br>AI 虚拟人播报</div></div>
+    <div class="feature-item"><div class="icon">💃</div><div class="label">动作迁移<br>参考视频驱动</div></div>
+    <div class="feature-item"><div class="icon">🖼️</div><div class="label">图生视频<br>图片转动态内容</div></div>
+  </div>
+
+  <h3>生成流程</h3>
+  <div class="pipeline">
+    <span class="pipe-step">📝 输入主题</span><span class="pipe-arrow">→</span>
+    <span class="pipe-step">✍️ AI 写文案</span><span class="pipe-arrow">→</span>
+    <span class="pipe-step">🎨 生成配图</span><span class="pipe-arrow">→</span>
+    <span class="pipe-step">🗣️ 合成语音</span><span class="pipe-arrow">→</span>
+    <span class="pipe-step">🎵 添加 BGM</span><span class="pipe-arrow">→</span>
+    <span class="pipe-step">🎬 合成视频</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🏗️ 技术架构</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>组件</th><th>技术选型</th></tr>
+      <tr><td>Web UI</td><td>Streamlit (Python)</td></tr>
+      <tr><td>图像/视频生成</td><td>ComfyUI (本地) / RunningHub (云端)</td></tr>
+      <tr><td>LLM 集成</td><td>GPT / 通义千问 / DeepSeek / Ollama</td></tr>
+      <tr><td>TTS 引擎</td><td>Edge-TTS / Index-TTS / 声音克隆</td></tr>
+      <tr><td>视频处理</td><td>ffmpeg</td></tr>
+      <tr><td>部署方式</td><td>源码 / Docker / Windows 一键包</td></tr>
+      <tr><td>包管理</td><td>uv</td></tr>
+      <tr><td>许可证</td><td>Apache-2.0</td></tr>
+    </table>
+  </div>
+
+  <h3>近期更新</h3>
+  <ul class="update-timeline">
+    <li><span class="date">2026-01-26</span> <span class="text">新增「动作迁移」模块</span></li>
+    <li><span class="date">2026-01-14</span> <span class="text">新增「数字人口播」和「图生视频」流水线，多语言 TTS</span></li>
+    <li><span class="date">2026-01-06</span> <span class="text">RunningHub 48G 显存机器调用支持</span></li>
+    <li><span class="date">2025-12-17</span> <span class="text">支持 ComfyUI API Key、Nano Banana 模型</span></li>
+    <li><span class="date">2025-12-05</span> <span class="text">Windows 整合包下载，自定义素材功能</span></li>
+    <li><span class="date">2025-11-18</span> <span class="text">RunningHub 并行处理、历史记录、批量创建</span></li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>🔥 为什么火 (Trending 原因)</h2>
+  <ul>
+    <li><strong style="color:#f97583">短视频创作刚需</strong> — 抖音/TikTok/YouTube Shorts 时代，内容创作者急需高效工具</li>
+    <li><strong style="color:#ffa657">"一句话生成视频"概念</strong> — 极低门槛的 AI 视频创作，击中大众痛点</li>
+    <li><strong style="color:#79c0ff">零剪辑经验要求</strong> — Windows 一键整合包，小白也能用</li>
+    <li><strong style="color:#3fb950">完全可免费运行</strong> — Ollama + ComfyUI 本地部署 = 0 元</li>
+    <li><strong style="color:#bc8cff">模块化架构</strong> — ComfyUI 工作流，可替换任意组件满足个性化需求</li>
+    <li><strong style="color:#f97583">快速迭代</strong> — 12 个 Release，持续加入数字人口播/动作迁移等前沿功能</li>
+    <li><strong style="color:#79c0ff">Web UI 友好</strong> — Streamlit 三栏布局，实时进度，操作直观</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>🎯 应用场景</h2>
+  <div class="scenario-tags">
+    <span class="scenario-tag">🧬 知识科普短视频</span>
+    <span class="scenario-tag">🏯 历史文化解说</span>
+    <span class="scenario-tag">🌱 个人成长/励志</span>
+    <span class="scenario-tag">📜 小说/影视解说</span>
+    <span class="scenario-tag">💰 副业赚钱教程</span>
+    <span class="scenario-tag">👤 数字人口播</span>
+    <span class="scenario-tag">📱 社交媒体运营</span>
+    <span class="scenario-tag">🎓 教育内容视频化</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>项目</th><th>Stars</th><th>类型</th><th>特点</th><th>开源</th></tr>
+      <tr>
+        <td><strong style="color:#ffa657">Pixelle-Video</strong></td><td>12K</td><td>全自动短视频引擎</td><td style="color:#3fb950">ComfyUI模块化/免费</td><td class="check">✅</td>
+      </tr>
+      <tr><td>MoneyPrinterTurbo</td><td>20K+</td><td>视频生成工具</td><td>一键生成短视频</td><td class="check">✅</td></tr>
+      <tr><td>NarratoAI</td><td>5K+</td><td>影视解说自动化</td><td>专注解说领域</td><td class="check">✅</td></tr>
+      <tr><td>MoneyPrinterPlus</td><td>8K+</td><td>视频创作平台</td><td>多功能视频创作</td><td class="check">✅</td></tr>
+      <tr><td>CapCut (剪映)</td><td>-</td><td>视频编辑工具</td><td>专业剪辑</td><td class="cross">❌</td></tr>
+      <tr><td>HeyGen</td><td>-</td><td>AI 数字人视频</td><td>数字人口播领先</td><td class="cross">❌</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:12px;color:#f97583;font-weight:600">结论：Pixelle-Video 在开源方案中模块化程度最高，完全免费运行是其最大竞争优势。</p>
+</div>
+
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item"><div class="user-icon">🎬</div><div class="user-title">短视频创作者</div><div class="user-desc">一句话生成视频</div><div class="user-rate">★★★★★</div></div>
+    <div class="user-item"><div class="user-icon">📱</div><div class="user-title">自媒体运营者</div><div class="user-desc">批量生产内容</div><div class="user-rate">★★★★★</div></div>
+    <div class="user-item"><div class="user-icon">🧬</div><div class="user-title">知识科普博主</div><div class="user-desc">知识转视频内容</div><div class="user-rate">★★★★☆</div></div>
+    <div class="user-item"><div class="user-icon">🤖</div><div class="user-title">AI 技术爱好者</div><div class="user-desc">ComfyUI 深度定制</div><div class="user-rate">★★★★☆</div></div>
+    <div class="user-item"><div class="user-icon">🏢</div><div class="user-title">中小企业营销</div><div class="user-desc">低成本视频营销</div><div class="user-rate">★★★★☆</div></div>
+    <div class="user-item"><div class="user-icon">🎓</div><div class="user-title">教育工作者</div><div class="user-desc">教学内容视频化</div><div class="user-rate">★★★☆☆</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🚀 快速上手</h2>
+
+  <h3>Windows 一键整合包（推荐）</h3>
+  <div class="code-block">
+    <code><span class="comment"># 1. 下载 Windows 一键整合包并解压</span><br>
+<span class="comment"># 2. 双击运行 start.bat 启动 Web 界面</span><br>
+<span class="comment"># 3. 浏览器打开 http://localhost:8501</span><br>
+<span class="comment"># 4. 配置 LLM API Key + 图像服务</span><br>
+<span class="comment"># 5. 输入主题 → 点击生成！</span></code>
+  </div>
+
+  <h3>源码安装 (macOS / Linux)</h3>
+  <div class="code-block">
+    <code><span class="comment"># 安装依赖</span><br>
+<span class="cmd">brew install</span> ffmpeg &nbsp;<span class="comment"># macOS</span><br><br>
+<span class="comment"># 克隆项目</span><br>
+<span class="cmd">git clone</span> https://github.com/AIDC-AI/Pixelle-Video.git<br>
+<span class="cmd">cd</span> Pixelle-Video<br><br>
+<span class="comment"># 启动 Web 界面</span><br>
+<span class="cmd">uv run</span> streamlit run web/app.py</code>
+  </div>
+
+  <h3>完全免费方案 💰 = ¥0</h3>
+  <div class="code-block">
+    <code><span class="comment"># LLM: Ollama 本地运行（免费）</span><br>
+<span class="comment"># 图像: ComfyUI 本地部署（免费）</span><br>
+<span class="comment"># TTS: Edge-TTS（免费）</span><br>
+<span class="cmd">总费用：0 元</span> ✅</code>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#ffa657">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#ffa657"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">代码质量</div>
+      <div class="score-value" style="color:#79c0ff">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#79c0ff"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#79c0ff">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#79c0ff"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">7.8/10</div>
+    <div style="color:#ffa657;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>💡 亮点与不足</h2>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✅ 亮点</h4>
+      <ul>
+        <li><strong>真正的全自动</strong> — 从文案到成片，输入主题即可</li>
+        <li><strong>模块化架构</strong> — ComfyUI 工作流，组件自由替换</li>
+        <li><strong>零门槛</strong> — Windows 一键整合包，无需编程</li>
+        <li><strong>完全可免费</strong> — Ollama + ComfyUI = 0 元</li>
+        <li><strong>持续迭代</strong> — 数字人口播/动作迁移等前沿功能</li>
+        <li><strong>多 LLM 支持</strong> — GPT/通义千问/DeepSeek/Ollama</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>⚠️ 不足</h4>
+      <ul>
+        <li><strong>依赖外部服务</strong> — 需配置 LLM API 和 ComfyUI</li>
+        <li><strong>视频质量不稳定</strong> — AI 生成内容受模型限制</li>
+        <li><strong>本地部署要求高</strong> — 完全本地需较好的 GPU</li>
+        <li><strong>中文为主</strong> — 主要面向中文用户群体</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 总结</h2>
+  <p style="font-size:1.05rem">Pixelle-Video 是 2026 年开源 AI 短视频领域的<strong style="color:#f97583">明星项目</strong>。它以 <strong style="color:#ffa657">"一句话生成视频"</strong> 的极简理念和 <strong style="color:#3fb950">完全可免费运行</strong> 的成本优势，精准击中了短视频内容创作者的核心痛点。对于任何需要高效生产短视频内容的个人或团队，Pixelle-Video 都是目前最值得尝试的开源方案。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub README · WebSearch</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>

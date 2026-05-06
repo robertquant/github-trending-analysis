@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n-mcp — AI 驱动的 n8n 工作流自动化 MCP 服务器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6D5A;
+            --primary-dark: #E8553E;
+            --primary-light: #FF8A7A;
+            --accent: #EA4335;
+            --accent2: #FF9500;
+            --bg-dark: #1A1A2E;
+            --bg-darker: #13132B;
+            --bg-card: #222240;
+            --bg-card-hover: #2A2A4A;
+            --text-primary: #F5F5F7;
+            --text-secondary: #A0A0B8;
+            --text-muted: #6C6C88;
+            --border: #333355;
+            --success: #34D399;
+            --warning: #FBBF24;
+            --info: #60A5FA;
+            --gradient-hero: linear-gradient(135deg, #FF6D5A 0%, #EA4335 40%, #FF9500 100%);
+            --gradient-card: linear-gradient(145deg, #222240 0%, #1E1E3A 100%);
+            --shadow-glow: 0 0 60px rgba(255, 109, 90, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 24px 60px;
+            background: var(--bg-darker);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -30%;
+            width: 80%;
+            height: 120%;
+            background: radial-gradient(ellipse, rgba(255, 109, 90, 0.08) 0%, transparent 70%);
+            animation: floatGlow 8s ease-in-out infinite alternate;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            right: -20%;
+            width: 60%;
+            height: 100%;
+            background: radial-gradient(ellipse, rgba(234, 67, 53, 0.06) 0%, transparent 70%);
+            animation: floatGlow 10s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -20px) scale(1.1); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            border-color: var(--primary);
+            background: rgba(255, 109, 90, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .badge svg { width: 14px; height: 14px; }
+        .badge-star { color: var(--warning); }
+        .badge-lang { color: var(--info); }
+        .badge-trending { color: var(--primary); }
+
+        .hero-title {
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: var(--gradient-hero);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-hero);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255, 109, 90, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 109, 90, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            background: rgba(255, 109, 90, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item {
+            background: var(--bg-dark);
+            padding: 32px 24px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .stat-item:hover { background: var(--bg-card); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-hero);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-bottom: 48px;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--gradient-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-hero);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255, 109, 90, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Architecture Diagram */
+        .arch-container {
+            background: var(--gradient-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 32px;
+            text-align: center;
+            position: relative;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 32px 0;
+        }
+
+        .arch-node {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 28px;
+            min-width: 150px;
+            transition: all 0.3s;
+        }
+
+        .arch-node:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .arch-node.highlight {
+            background: rgba(255, 109, 90, 0.1);
+            border-color: var(--primary);
+        }
+
+        .arch-node-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .arch-node-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .arch-arrow {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Code Block */
+        .code-section { margin-top: 48px; }
+
+        .code-block {
+            background: #0D0D1A;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #FF5F57; }
+        .code-dot.yellow { background: #FEBC2E; }
+        .code-dot.green { background: #28C840; }
+
+        .code-filename {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .code-body {
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #E0E0F0;
+        }
+
+        .code-comment { color: #6C6C88; }
+        .code-keyword { color: #FF6D5A; }
+        .code-string { color: #34D399; }
+        .code-const { color: #60A5FA; }
+        .code-punct { color: #888; }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 14px 24px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(51, 51, 85, 0.5);
+        }
+
+        .comparison-table tr:last-child td { border-bottom: none; }
+
+        .comparison-table tr:hover td {
+            background: rgba(255, 109, 90, 0.03);
+        }
+
+        .check { color: var(--success); font-weight: 700; }
+        .cross { color: #FF5F57; font-weight: 700; }
+
+        /* Use Cases */
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .use-case {
+            background: var(--gradient-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            transition: all 0.3s;
+        }
+
+        .use-case:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-3px);
+        }
+
+        .use-case-emoji {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .use-case-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .use-case-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Quick Start */
+        .quickstart-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            background: var(--gradient-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .step:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient-hero);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .step-content h4 {
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .step-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .step-content code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 109, 90, 0.1);
+            color: var(--primary-light);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        /* Who Section */
+        .who-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .who-card {
+            background: var(--gradient-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .who-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .who-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .who-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .who-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 60px 16px 40px; }
+            .section { padding: 48px 16px; }
+            .arch-flow { flex-direction: column; }
+            .arch-arrow { transform: rotate(90deg); }
+            .features-grid { grid-template-columns: 1fr; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="badge-row">
+            <span class="badge"><span class="badge-star">&#9733;</span> 19,734 Stars</span>
+            <span class="badge"><span class="badge-lang">&#9670;</span> TypeScript</span>
+            <span class="badge"><span class="badge-trending">&#128293;</span> +282 Today</span>
+            <span class="badge">MIT License</span>
+        </div>
+        <h1 class="hero-title">n8n-mcp</h1>
+        <p class="hero-subtitle">
+            Model Context Protocol 服务器，让 AI 助手（Claude、Cursor、Windsurf）深度理解 n8n 工作流自动化平台的 1,650+ 节点，成为你的工作流自动化专家。
+        </p>
+        <div class="hero-links">
+            <a href="https://github.com/czlonkowski/n8n-mcp" class="btn btn-primary" target="_blank">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                GitHub 仓库
+            </a>
+            <a href="https://dashboard.n8n-mcp.com" class="btn btn-outline" target="_blank">
+                免费试用 &rarr;
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-number">1,650+</div>
+        <div class="stat-label">n8n 节点覆盖</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">2,352</div>
+        <div class="stat-label">工作流模板</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">265</div>
+        <div class="stat-label">AI 工具变体</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">99%</div>
+        <div class="stat-label">属性覆盖率</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">20</div>
+        <div class="stat-label">MCP 工具</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number">87%</div>
+        <div class="stat-label">文档覆盖率</div>
+    </div>
+</div>
+
+<!-- Project Overview -->
+<section class="section">
+    <div class="section-label">项目简介</div>
+    <h2 class="section-title">让 AI 真正理解 n8n 工作流</h2>
+    <p class="section-desc">
+        n8n-mcp 是一个 MCP (Model Context Protocol) 服务器，在 n8n 工作流自动化平台与 AI 模型之间架起桥梁。它让 Claude、Cursor、Windsurf 等 AI 助手深度理解 n8n 的完整节点生态，从"通用聊天助手"进化为"n8n 工作流专家"。
+    </p>
+
+    <div class="arch-container">
+        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">架构示意图</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">AI 助手如何通过 n8n-mcp 与 n8n 平台交互</p>
+        <div class="arch-flow">
+            <div class="arch-node">
+                <div class="arch-node-title">AI 助手</div>
+                <div class="arch-node-desc">Claude / Cursor / Windsurf</div>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node highlight">
+                <div class="arch-node-title">n8n-mcp</div>
+                <div class="arch-node-desc">MCP Server 桥接层</div>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+                <div class="arch-node-title">n8n 平台</div>
+                <div class="arch-node-desc">工作流自动化引擎</div>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+                <div class="arch-node-title">外部服务</div>
+                <div class="arch-node-desc">Slack / Google / APIs</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Features -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">核心功能</div>
+    <h2 class="section-title">20 个 MCP 工具，覆盖全流程</h2>
+    <p class="section-desc">从节点搜索到工作流部署，n8n-mcp 提供完整的工具链支持。</p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">&#128270;</div>
+            <h3 class="feature-title">智能节点搜索</h3>
+            <p class="feature-desc">全文搜索 1,650+ n8n 节点（820 核心节点 + 830 社区节点），包含真实配置示例和 AI 工具变体。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128196;</div>
+            <h3 class="feature-title">模板库</h3>
+            <p class="feature-desc">内置 2,352 个工作流模板，支持按关键词、节点类型、任务类型、复杂度、目标受众多维度筛选。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#9989;</div>
+            <h3 class="feature-title">多级验证</h3>
+            <p class="feature-desc">从快速必填项检查到完整工作流验证的四层验证体系，确保生成的工作流可直接运行。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#9889;</div>
+            <h3 class="feature-title">直接部署</h3>
+            <p class="feature-desc">通过 n8n API 直接在工作流实例上创建、更新、测试工作流，无需手动复制粘贴 JSON。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128274;</div>
+            <h3 class="feature-title">安全审计</h3>
+            <p class="feature-desc">结合 n8n 内置审计 API 与深度工作流扫描，提供全面的安全审计功能。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#127919;</div>
+            <h3 class="feature-title">AI 节点支持</h3>
+            <p class="feature-desc">完整支持 LangChain AI Agent、OpenAI 等 265 个 AI 工具变体节点，打造 AI 原生工作流。</p>
+        </div>
+    </div>
+</section>
+
+<!-- Tech Stack -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">技术架构</div>
+    <h2 class="section-title">技术栈</h2>
+
+    <div class="code-section">
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot red"></span>
+                    <span class="code-dot yellow"></span>
+                    <span class="code-dot green"></span>
+                </div>
+                <span class="code-filename">tech-stack.config</span>
+            </div>
+            <div class="code-body">
+<pre><span class="code-comment">// 语言与运行时</span>
+<span class="code-const">Language</span>    <span class="code-punct">:</span> <span class="code-string">TypeScript</span>
+<span class="code-const">Runtime</span>     <span class="code-punct">:</span> <span class="code-string">Node.js</span>
+<span class="code-const">Package</span>     <span class="code-punct">:</span> <span class="code-string">npm (n8n-mcp)</span>
+
+<span class="code-comment">// 协议与框架</span>
+<span class="code-const">Protocol</span>    <span class="code-punct">:</span> <span class="code-string">MCP (Model Context Protocol)</span>
+<span class="code-const">Transport</span>   <span class="code-punct">:</span> <span class="code-string">stdio / SSE / HTTP</span>
+
+<span class="code-comment">// 部署方式</span>
+<span class="code-const">CLI</span>         <span class="code-punct">:</span> <span class="code-keyword">npx</span> n8n-mcp
+<span class="code-const">Docker</span>      <span class="code-punct">:</span> ghcr.io/czlonkowski/n8n-mcp
+<span class="code-const">Cloud</span>       <span class="code-punct">:</span> <span class="code-string">dashboard.n8n-mcp.com</span>
+<span class="code-const">Railway</span>     <span class="code-punct">:</span> <span class="code-string">One-click deploy</span>
+
+<span class="code-comment">// 兼容的 AI 客户端</span>
+<span class="code-const">IDE</span>         <span class="code-punct">:</span> <span class="code-string">Claude Desktop / Claude Code / VS Code / Cursor / Windsurf</span>
+<span class="code-const">License</span>     <span class="code-punct">:</span> <span class="code-string">MIT</span></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Comparison -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">同类对比</div>
+    <h2 class="section-title">为什么选择 n8n-mcp？</h2>
+    <p class="section-desc">与其他 AI 构建 n8n 工作流的方式对比。</p>
+
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>特性</th>
+                <th>n8n-mcp</th>
+                <th>手动粘贴 JSON</th>
+                <th>纯 AI 对话</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>节点知识覆盖</td>
+                <td><span class="check">1,650+ 节点</span></td>
+                <td><span class="cross">依赖个人经验</span></td>
+                <td><span class="cross">易产生幻觉</span></td>
+            </tr>
+            <tr>
+                <td>直接部署到 n8n</td>
+                <td><span class="check">&#10003;</span></td>
+                <td><span class="cross">&#10007;</span></td>
+                <td><span class="cross">&#10007;</span></td>
+            </tr>
+            <tr>
+                <td>多级验证</td>
+                <td><span class="check">4 层验证</span></td>
+                <td><span class="cross">手动测试</span></td>
+                <td><span class="cross">无验证</span></td>
+            </tr>
+            <tr>
+                <td>工作流模板</td>
+                <td><span class="check">2,352 个</span></td>
+                <td><span class="cross">需手动查找</span></td>
+                <td><span class="cross">有限</span></td>
+            </tr>
+            <tr>
+                <td>实时更新</td>
+                <td><span class="check">跟随 n8n 版本</span></td>
+                <td><span class="cross">N/A</span></td>
+                <td><span class="cross">训练数据截止</span></td>
+            </tr>
+            <tr>
+                <td>IDE 集成</td>
+                <td><span class="check">5+ IDE</span></td>
+                <td><span class="cross">N/A</span></td>
+                <td><span class="check">部分</span></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Use Cases -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">应用场景</div>
+    <h2 class="section-title">用 AI 构建 n8n 工作流</h2>
+
+    <div class="use-cases-grid">
+        <div class="use-case">
+            <span class="use-case-emoji">&#128172;</span>
+            <h4 class="use-case-title">聊天机器人工作流</h4>
+            <p class="use-case-desc">用自然语言描述需求，AI 自动生成包含 Webhook 触发器、AI Agent、消息路由的完整聊天机器人工作流。</p>
+        </div>
+        <div class="use-case">
+            <span class="use-case-emoji">&#128202;</span>
+            <h4 class="use-case-title">数据管道自动化</h4>
+            <p class="use-case-desc">一句话描述数据源和目标，自动生成 ETL 管道：API 调用、数据清洗、格式转换、写入数据库。</p>
+        </div>
+        <div class="use-case">
+            <span class="use-case-emoji">&#128276;</span>
+            <h4 class="use-case-title">监控与告警</h4>
+            <p class="use-case-desc">快速搭建定时监控工作流：检查服务状态、异常检测、Slack/Telegram 告警通知，包含错误处理。</p>
+        </div>
+        <div class="use-case">
+            <span class="use-case-emoji">&#129302;</span>
+            <h4 class="use-case-title">AI Agent 工作流</h4>
+            <p class="use-case-desc">利用 LangChain 节点构建 AI Agent 工作流，集成 OpenAI、向量数据库、工具调用链。</p>
+        </div>
+    </div>
+</section>
+
+<!-- Who is it for -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">适合谁</div>
+    <h2 class="section-title">谁应该使用 n8n-mcp？</h2>
+
+    <div class="who-grid">
+        <div class="who-card">
+            <span class="who-icon">&#128187;</span>
+            <h4 class="who-title">自动化工程师</h4>
+            <p class="who-desc">用 AI 加速工作流开发，减少查阅文档的时间，专注于业务逻辑设计。</p>
+        </div>
+        <div class="who-card">
+            <span class="who-icon">&#128640;</span>
+            <h4 class="who-title">创业团队</h4>
+            <p class="who-desc">快速搭建 MVP 自动化流程，用对话式方式构建生产级工作流。</p>
+        </div>
+        <div class="who-card">
+            <span class="who-icon">&#128218;</span>
+            <h4 class="who-title">n8n 新手</h4>
+            <p class="who-desc">零 n8n 经验也能通过 AI 引导创建复杂工作流，内置模板即学即用。</p>
+        </div>
+        <div class="who-card">
+            <span class="who-icon">&#128736;</span>
+            <h4 class="who-title">DevOps / SRE</h4>
+            <p class="who-desc">自动化运维工作流，CI/CD 管道集成，安全审计与合规检查。</p>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Start -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">快速上手</div>
+    <h2 class="section-title">三步开始使用</h2>
+
+    <div class="quickstart-steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>安装并运行</h4>
+                <p>使用 <code>npx n8n-mcp</code> 一键启动，或通过 Docker 镜像 <code>ghcr.io/czlonkowski/n8n-mcp</code> 部署。也支持一键部署到 Railway。</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>配置 AI 客户端</h4>
+                <p>在 Claude Desktop 的 <code>claude_desktop_config.json</code> 中添加 MCP 服务器配置，或按照文档配置 Cursor、VS Code、Windsurf 等客户端。</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>开始对话</h4>
+                <p>对 Claude 说"帮我创建一个 Slack 通知工作流"，AI 会自动搜索节点、选择模板、验证配置、生成完整工作流。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="code-section" style="margin-top: 32px;">
+        <div class="code-block">
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="code-dot red"></span>
+                    <span class="code-dot yellow"></span>
+                    <span class="code-dot green"></span>
+                </div>
+                <span class="code-filename">claude_desktop_config.json</span>
+            </div>
+            <div class="code-body">
+<pre><span class="code-punct">{</span>
+  <span class="code-string">"mcpServers"</span><span class="code-punct">:</span> <span class="code-punct">{</span>
+    <span class="code-string">"n8n-mcp"</span><span class="code-punct">:</span> <span class="code-punct">{</span>
+      <span class="code-string">"command"</span><span class="code-punct">:</span> <span class="code-string">"npx"</span><span class="code-punct">,</span>
+      <span class="code-string">"args"</span><span class="code-punct">:</span> <span class="code-punct">[</span><span class="code-string">"-y"</span><span class="code-punct">,</span> <span class="code-string">"n8n-mcp@latest"</span><span class="code-punct">]</span>
+    <span class="code-punct">}</span>
+  <span class="code-punct">}</span>
+<span class="code-punct">}</span></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trending Reason -->
+<section class="section" style="padding-top: 0;">
+    <div class="section-label">为什么火</div>
+    <h2 class="section-title">Trending 原因分析</h2>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">&#127775;</div>
+            <h3 class="feature-title">MCP 生态爆发</h3>
+            <p class="feature-desc">Model Context Protocol 正在成为 AI 与外部工具交互的标准协议，n8n-mcp 是最成熟的工作流自动化 MCP 实现之一。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128640;</div>
+            <h3 class="feature-title">n8n 社区增长</h3>
+            <p class="feature-desc">n8n 作为最流行的开源工作流自动化平台之一，用户量持续增长，对 AI 辅助构建工作流的需求强烈。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#129504;</div>
+            <h3 class="feature-title">解决真实痛点</h3>
+            <p class="feature-desc">直接解决 AI 生成 n8n 工作流时易产生幻觉、不了解节点属性的核心痛点，99% 属性覆盖率确保准确性。</p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <p>由 <a href="https://github.com/czlonkowski" target="_blank">Romuald Czlonkowski</a> 开发维护 &middot; MIT License</p>
+    <p style="margin-top: 8px;">数据分析日期: 2026-05-05 &middot; Generated by GitHub Trending Analyzer</p>
+</footer>
+
+<script>
+    // Intersection Observer for fade-in animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature-card, .arch-node, .step, .use-case, .who-card').forEach(el => {
+        el.classList.add('fade-in');
+        observer.observe(el);
+    });
+</script>
+
+</body>
+</html>

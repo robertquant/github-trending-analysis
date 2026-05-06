@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jcode - 下一代 AI 编程代理框架 | GitHub Trending Deep Dive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-card: #1e1e1e;
+    --bg-card-hover: #252525;
+    --accent: #e8532e;
+    --accent-light: #ff7a50;
+    --accent-glow: rgba(232, 83, 46, 0.3);
+    --amber: #f5a623;
+    --amber-dim: #c4841c;
+    --text-primary: #f0ece6;
+    --text-secondary: #a8a29e;
+    --text-muted: #6b6560;
+    --border: #2a2a2a;
+    --border-accent: #3a2a22;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --blue: #60a5fa;
+    --purple: #c084fc;
+    --code-bg: #161616;
+    --gradient-warm: linear-gradient(135deg, #e8532e 0%, #f5a623 100%);
+    --gradient-dark: linear-gradient(180deg, #0f0f0f 0%, #1a1210 100%);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Hero Section */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--gradient-dark);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(245, 166, 35, 0.12) 0%, transparent 70%);
+    animation: pulse 10s ease-in-out infinite reverse;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: rgba(232, 83, 46, 0.1);
+    border: 1px solid rgba(232, 83, 46, 0.3);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--accent-light);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.5px;
+  }
+
+  .hero-badge .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    background: var(--gradient-warm);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    color: var(--text-secondary);
+    font-weight: 300;
+    margin-bottom: 2.5rem;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem 1.5rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+  }
+
+  .stat-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--accent-glow);
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-light);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: bounce 2s ease-in-out infinite;
+    color: var(--text-muted);
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* Container */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Section */
+  .section {
+    padding: 5rem 0;
+  }
+
+  .section-header {
+    margin-bottom: 3rem;
+  }
+
+  .section-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    max-width: 600px;
+  }
+
+  /* Intro Card */
+  .intro-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .intro-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-warm);
+  }
+
+  .intro-text {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--text-secondary);
+  }
+
+  .intro-text strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .intro-highlight {
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: rgba(232, 83, 46, 0.08);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    color: var(--accent-light);
+    font-size: 0.95rem;
+  }
+
+  /* Feature Grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(232, 83, 46, 0.03) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover::after { opacity: 1; }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .icon-perf { background: rgba(232, 83, 46, 0.15); color: var(--accent); }
+  .icon-mem { background: rgba(96, 165, 250, 0.15); color: var(--blue); }
+  .icon-swarm { background: rgba(192, 132, 252, 0.15); color: var(--purple); }
+  .icon-provider { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+  .icon-selfdev { background: rgba(245, 166, 35, 0.15); color: var(--amber); }
+  .icon-browser { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+
+  .feature-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .feature-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .feature-desc ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .feature-desc li {
+    padding: 3px 0;
+    padding-left: 1.2rem;
+    position: relative;
+  }
+
+  .feature-desc li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* Performance Table */
+  .perf-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    overflow-x: auto;
+  }
+
+  .perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .perf-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .perf-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text-secondary);
+  }
+
+  .perf-table tr:hover td {
+    background: rgba(232, 83, 46, 0.03);
+  }
+
+  .perf-table .highlight-row td {
+    color: var(--accent-light);
+    font-weight: 600;
+  }
+
+  .perf-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+    min-width: 80px;
+  }
+
+  .perf-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--gradient-warm);
+    transition: width 1s ease;
+  }
+
+  .perf-bar-fill.best {
+    background: var(--green);
+  }
+
+  /* Comparison Table */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .compare-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .compare-card:hover {
+    border-color: var(--border-accent);
+  }
+
+  .compare-card.winner {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+
+  .compare-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .compare-lang {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .compare-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 0.85rem;
+  }
+
+  .compare-stat:last-child { border: none; }
+  .compare-stat .label { color: var(--text-muted); }
+  .compare-stat .value { color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+  .compare-card.winner .compare-stat .value { color: var(--accent-light); }
+
+  /* Architecture Diagram */
+  .arch-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    overflow-x: auto;
+  }
+
+  .arch-diagram {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .arch-diagram .box-border { color: var(--text-muted); }
+  .arch-diagram .box-title { color: var(--accent-light); font-weight: 600; }
+  .arch-diagram .component { color: var(--blue); }
+  .arch-diagram .highlight { color: var(--accent); }
+
+  /* Code Block */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-header-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .code-dot.red { background: #ff5f57; }
+  .code-dot.yellow { background: #febc2e; }
+  .code-dot.green { background: #28c840; }
+
+  .code-body {
+    padding: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    overflow-x: auto;
+  }
+
+  .code-body .comment { color: var(--text-muted); }
+  .code-body .command { color: var(--green); }
+  .code-body .flag { color: var(--amber); }
+  .code-body .string { color: var(--accent-light); }
+  .code-body .prompt { color: var(--text-muted); }
+
+  /* Why Hot Section */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .why-card {
+    padding: 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.3s;
+  }
+
+  .why-card:hover {
+    border-color: var(--amber-dim);
+    transform: translateY(-2px);
+  }
+
+  .why-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.4;
+    margin-bottom: 0.5rem;
+  }
+
+  .why-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .why-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Quick Start */
+  .quickstart-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .step {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(232, 83, 46, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--accent-light);
+    font-size: 1rem;
+  }
+
+  .step-content { flex: 1; }
+
+  .step-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  /* Target Users */
+  .user-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .user-tag {
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .user-tag:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+    background: rgba(232, 83, 46, 0.05);
+  }
+
+  .user-tag strong {
+    color: var(--text-primary);
+  }
+
+  /* Footer */
+  .footer {
+    padding: 3rem 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .footer a {
+    color: var(--accent-light);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .footer a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-stats { gap: 1rem; }
+    .stat-item { padding: 0.75rem 1rem; }
+    .stat-value { font-size: 1.3rem; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .section { padding: 3rem 0; }
+    .perf-section, .intro-card, .arch-container { padding: 1.5rem; }
+    .step { flex-direction: column; gap: 0.75rem; }
+  }
+
+  /* Animations */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      GitHub Trending #7 — 2026-05-05
+    </div>
+    <h1 class="hero-title">jcode</h1>
+    <p class="hero-subtitle">下一代 AI 编程代理框架 — 专为多会话工作流、极致性能和无限可定制性而生</p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-value">3,672</div>
+        <div class="stat-label">Stars</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">+591</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">14ms</div>
+        <div class="stat-label">Startup</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">28MB</div>
+        <div class="stat-label">RAM</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">Rust</div>
+        <div class="stat-label">Language</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+  </div>
+</section>
+
+<!-- Intro -->
+<section class="section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Overview</span>
+      <h2 class="section-title">项目简介</h2>
+    </div>
+    <div class="intro-card fade-in">
+      <p class="intro-text">
+        jcode 是一个用 <strong>Rust</strong> 编写的下一代编程代理框架（Coding Agent Harness）。它不是又一个 AI 编程助手，而是一个<strong>"元框架"</strong>——负责管理 AI 编程代理与代码环境之间的全部交互，包括请求编排、工具提供、上下文保持和多代理协调。
+      </p>
+      <div class="intro-highlight">
+        简单理解：Claude Code、Codex CLI 等是"驾驶员"，而 jcode 是"赛车底盘"——换任何 AI 模型都能在上面跑。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Features</span>
+      <h2 class="section-title">核心功能</h2>
+      <p class="section-desc">从极致性能到多代理协作，重新定义 AI 编程体验</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon icon-perf">&#9889;</div>
+        <div class="feature-title">极致性能</div>
+        <div class="feature-desc">
+          <ul>
+            <li>启动 14ms（比 Claude Code 快 245x）</li>
+            <li>单会话仅 28MB 内存</li>
+            <li>每增一个会话仅 +10MB</li>
+            <li>渲染超 1000 FPS，零闪烁</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon icon-mem">&#129504;</div>
+        <div class="feature-title">智能记忆系统</div>
+        <div class="feature-desc">
+          <ul>
+            <li>对话自动编码为语义向量</li>
+            <li>余弦相似度智能检索</li>
+            <li>自动提取、整合、去重</li>
+            <li>类似人类的记忆回忆机制</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon icon-swarm">&#128373;</div>
+        <div class="feature-title">Swarm 多代理协作</div>
+        <div class="feature-desc">
+          <ul>
+            <li>多代理同仓库自动协调</li>
+            <li>实时文件变更感知</li>
+            <li>DM / 广播 / 组播消息</li>
+            <li>代理可自主生成子团队</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon icon-provider">&#127760;</div>
+        <div class="feature-title">30+ Provider 支持</div>
+        <div class="feature-desc">
+          <ul>
+            <li>Claude / OpenAI / Gemini / Copilot</li>
+            <li>OAuth 订阅登录</li>
+            <li>多账户一键切换</li>
+            <li>本地模型 Ollama / LM Studio</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon icon-selfdev">&#128736;</div>
+        <div class="feature-title">Self-Dev 自我开发</div>
+        <div class="feature-desc">
+          <ul>
+            <li>AI 修改 jcode 自身源码</li>
+            <li>编辑→构建→测试→重载全自动</li>
+            <li>专为自我迭代优化</li>
+            <li>推荐使用前沿模型</li>
+          </ul>
+        </div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon icon-browser">&#127760;</div>
+        <div class="feature-title">浏览器自动化</div>
+        <div class="feature-desc">
+          <ul>
+            <li>内置 Firefox Agent Bridge</li>
+            <li>16+ 浏览器操作</li>
+            <li>一条命令设置</li>
+            <li>计划支持 Chrome 后端</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Performance Benchmarks -->
+<section class="section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Benchmarks</span>
+      <h2 class="section-title">性能基准测试</h2>
+      <p class="section-desc">与主流 AI 编程工具的对比数据（来源：项目 README）</p>
+    </div>
+    <div class="perf-section fade-in">
+      <h3 style="margin-bottom: 1rem; color: var(--accent-light); font-size: 1rem;">启动速度 — Time to First Frame</h3>
+      <table class="perf-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Time</th>
+            <th>Comparison</th>
+            <th>Visual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td>jcode</td>
+            <td>14.0 ms</td>
+            <td>baseline</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill best" style="width: 2%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>pi</td>
+            <td>590.7 ms</td>
+            <td>42.2x slower</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 17%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Codex CLI</td>
+            <td>882.8 ms</td>
+            <td>63.1x slower</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 25%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>OpenCode</td>
+            <td>1035.9 ms</td>
+            <td>74.0x slower</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 30%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Copilot CLI</td>
+            <td>1518.6 ms</td>
+            <td>108.5x slower</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 44%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Cursor Agent</td>
+            <td>1949.7 ms</td>
+            <td>139.3x slower</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 57%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Claude Code</td>
+            <td>3436.9 ms</td>
+            <td>245.5x slower</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 100%;"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 style="margin: 2rem 0 1rem; color: var(--accent-light); font-size: 1rem;">单会话内存占用 (PSS)</h3>
+      <table class="perf-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>RAM</th>
+            <th>Comparison</th>
+            <th>Visual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td>jcode (local embedding off)</td>
+            <td>27.8 MB</td>
+            <td>baseline</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill best" style="width: 7%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Codex CLI</td>
+            <td>140.0 MB</td>
+            <td>5.0x more</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 36%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Cursor Agent</td>
+            <td>214.9 MB</td>
+            <td>7.7x more</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 56%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Copilot CLI</td>
+            <td>333.3 MB</td>
+            <td>12.0x more</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 86%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>OpenCode</td>
+            <td>371.5 MB</td>
+            <td>13.4x more</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 96%;"></div></div></td>
+          </tr>
+          <tr>
+            <td>Claude Code</td>
+            <td>386.6 MB</td>
+            <td>13.9x more</td>
+            <td><div class="perf-bar"><div class="perf-bar-fill" style="width: 100%;"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="section" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Architecture</span>
+      <h2 class="section-title">技术架构</h2>
+    </div>
+    <div class="arch-container fade-in">
+      <div class="arch-diagram">
+<span class="box-border">┌─────────────────────────────────────────────────────┐</span>
+<span class="box-border">│</span>                    <span class="box-title">jcode TUI</span>                     <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">┌──────────┐</span>  <span class="box-border">┌──────────┐</span>  <span class="box-border">┌──────────┐</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span> <span class="component">Chat View</span> <span class="box-border">│</span>  <span class="box-border">│</span><span class="component">Side Panel</span><span class="box-border">│</span>  <span class="box-border">│</span><span class="component">InfoWidget</span> <span class="box-border">│</span> <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">└─────┬────┘</span>  <span class="box-border">└────┬─────┘</span>  <span class="box-border">└────┬─────┘</span> <span class="box-border">│</span>
+<span class="box-border">│</span>       <span class="box-border">│</span>            <span class="box-border">│</span>            <span class="box-border">│</span>        <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">┌────▼────────────▼────────────▼──────┐</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>        <span class="highlight">Agent Orchestrator</span>            <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  <span class="box-border">┌──────────┐</span> <span class="box-border">┌──────┐</span> <span class="box-border">┌──────────┐</span> <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  <span class="box-border">│</span><span class="component">Memory</span>    <span class="box-border">│</span> <span class="box-border">│</span><span class="component">Tools</span><span class="box-border">│</span> <span class="box-border">│</span><span class="component">Skills</span>   <span class="box-border">│</span> <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  <span class="box-border">│</span><span class="component">System</span>    <span class="box-border">│</span> <span class="box-border">│</span>      <span class="box-border">│</span> <span class="box-border">│</span><span class="component">(Semantic)</span><span class="box-border">│</span> <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  <span class="box-border">└──────────┘</span> <span class="box-border">└──────┘</span> <span class="box-border">└──────────┘</span> <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">└────────────────┬────────────────────┘</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>                 <span class="box-border">│</span>                       <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">┌────────────────▼────────────────────┐</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>           <span class="highlight">Provider Layer</span>               <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  <span class="component">Claude</span> <span class="box-border">│</span> <span class="component">OpenAI</span> <span class="box-border">│</span> <span class="component">Gemini</span> <span class="box-border">│</span> <span class="component">Copilot</span> <span class="box-border">│</span> <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">└────────────────────────────────────┘</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>                                           <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">┌────────────────────────────────────┐</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>     <span class="highlight">Server / Swarm Coordinator</span>       <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  <span class="component">Agent A</span> <span class="box-border">←→</span> <span class="component">Agent B</span> <span class="box-border">←→</span> <span class="component">Agent C</span>       <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">│</span>  (File conflict detection &amp; resolution) <span class="box-border">│</span>  <span class="box-border">│</span>
+<span class="box-border">│</span>  <span class="box-border">└────────────────────────────────────┘</span>  <span class="box-border">│</span>
+<span class="box-border">└─────────────────────────────────────────────────────┘</span>
+      </div>
+    </div>
+    <div style="margin-top: 1.5rem;" class="fade-in">
+      <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-primary);">Tech Stack</h3>
+      <div class="user-tags">
+        <span class="user-tag"><strong>Rust</strong> — Core Language</span>
+        <span class="user-tag"><strong>Handterm</strong> — Custom Terminal</span>
+        <span class="user-tag"><strong>mermaid-rs</strong> — Diagram Renderer</span>
+        <span class="user-tag"><strong>Local Embedding</strong> — Semantic Memory</span>
+        <span class="user-tag"><strong>MCP</strong> — Tool Protocol</span>
+        <span class="user-tag"><strong>OAuth 2.0</strong> — Auth</span>
+        <span class="user-tag"><strong>Cargo</strong> — Build System</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section class="section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Comparison</span>
+      <h2 class="section-title">同类项目对比</h2>
+    </div>
+    <div class="compare-grid fade-in">
+      <div class="compare-card winner">
+        <div class="compare-name" style="color: var(--accent-light);">jcode</div>
+        <div class="compare-lang">Rust | Open Source</div>
+        <div class="compare-stat"><span class="label">Startup</span><span class="value">14ms</span></div>
+        <div class="compare-stat"><span class="label">RAM (1 session)</span><span class="value">28MB</span></div>
+        <div class="compare-stat"><span class="label">Multi-session</span><span class="value">Swarm</span></div>
+        <div class="compare-stat"><span class="label">Memory System</span><span class="value">Semantic</span></div>
+        <div class="compare-stat"><span class="label">Providers</span><span class="value">30+</span></div>
+        <div class="compare-stat"><span class="label">Self-Dev</span><span class="value">Yes</span></div>
+        <div class="compare-stat"><span class="label">Browser</span><span class="value">Built-in</span></div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-name">Claude Code</div>
+        <div class="compare-lang">TypeScript | Partial Open</div>
+        <div class="compare-stat"><span class="label">Startup</span><span class="value">3,437ms</span></div>
+        <div class="compare-stat"><span class="label">RAM (1 session)</span><span class="value">387MB</span></div>
+        <div class="compare-stat"><span class="label">Multi-session</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Memory System</span><span class="value">Basic</span></div>
+        <div class="compare-stat"><span class="label">Providers</span><span class="value">1 (Claude)</span></div>
+        <div class="compare-stat"><span class="label">Self-Dev</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Browser</span><span class="value">No</span></div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-name">Cursor Agent</div>
+        <div class="compare-lang">Electron | Closed Source</div>
+        <div class="compare-stat"><span class="label">Startup</span><span class="value">1,950ms</span></div>
+        <div class="compare-stat"><span class="label">RAM (1 session)</span><span class="value">215MB</span></div>
+        <div class="compare-stat"><span class="label">Multi-session</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Memory System</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Providers</span><span class="value">3-5</span></div>
+        <div class="compare-stat"><span class="label">Self-Dev</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Browser</span><span class="value">No</span></div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-name">Codex CLI</div>
+        <div class="compare-lang">TypeScript | Open Source</div>
+        <div class="compare-stat"><span class="label">Startup</span><span class="value">883ms</span></div>
+        <div class="compare-stat"><span class="label">RAM (1 session)</span><span class="value">140MB</span></div>
+        <div class="compare-stat"><span class="label">Multi-session</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Memory System</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Providers</span><span class="value">1 (OpenAI)</span></div>
+        <div class="compare-stat"><span class="label">Self-Dev</span><span class="value">No</span></div>
+        <div class="compare-stat"><span class="label">Browser</span><span class="value">No</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why Hot -->
+<section class="section" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Trending</span>
+      <h2 class="section-title">为什么火</h2>
+    </div>
+    <div class="why-grid fade-in">
+      <div class="why-card">
+        <div class="why-number">01</div>
+        <div class="why-title">性能碾压竞品</div>
+        <div class="why-desc">启动速度快 245 倍，内存占用仅 1/14，benchmark 数据极具冲击力，非常适合社区传播</div>
+      </div>
+      <div class="why-card">
+        <div class="why-number">02</div>
+        <div class="why-title">AI Agent 生态爆发</div>
+        <div class="why-desc">2026 年是 AI Agent 大年，市场对高性能、可定制的代理框架需求激增</div>
+      </div>
+      <div class="why-card">
+        <div class="why-number">03</div>
+        <div class="why-title">独创功能</div>
+        <div class="why-desc">Self-Dev 模式（AI 修改自身代码）、Swarm 多代理协作、智能记忆系统——每一个都是前沿创新</div>
+      </div>
+      <div class="why-card">
+        <div class="why-number">04</div>
+        <div class="why-title">Rust 技术选型</div>
+        <div class="why-desc">开发者社区对 Rust 热情高涨，Rust 终端工具天然自带流量和技术信任</div>
+      </div>
+      <div class="why-card">
+        <div class="why-number">05</div>
+        <div class="why-title">30+ Provider 兼容</div>
+        <div class="why-desc">支持几乎所有主流 AI 模型，OAuth 订阅登录降低了切换成本</div>
+      </div>
+      <div class="why-card">
+        <div class="why-number">06</div>
+        <div class="why-title">社区多平台传播</div>
+        <div class="why-desc">YouTube 视频介绍、Medium 深度文章、Reddit 讨论，多平台联动推动 Trending</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section class="section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Quick Start</span>
+      <h2 class="section-title">快速上手</h2>
+    </div>
+    <div class="quickstart-steps fade-in">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-title">安装 jcode</div>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span></div>
+              <div class="code-header-title">Terminal</div>
+            </div>
+            <div class="code-body">
+<span class="comment"># macOS &amp; Linux</span>
+<span class="prompt">$ </span><span class="command">curl</span> <span class="flag">-fsSL</span> <span class="string">https://raw.githubusercontent.com/1jehuang/jcode/master/scripts/install.sh</span> | <span class="command">bash</span>
+
+<span class="comment"># macOS Homebrew</span>
+<span class="prompt">$ </span><span class="command">brew</span> tap 1jehuang/jcode <span class="flag">&&</span> <span class="command">brew</span> install jcode
+
+<span class="comment"># Windows PowerShell</span>
+<span class="prompt">PS&gt; </span><span class="command">irm</span> <span class="string">https://raw.githubusercontent.com/1jehuang/jcode/master/scripts/install.ps1</span> | <span class="command">iex</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-title">配置 AI Provider</div>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span></div>
+              <div class="code-header-title">Terminal</div>
+            </div>
+            <div class="code-body">
+<span class="comment"># 使用已有的 Claude 订阅</span>
+<span class="prompt">$ </span><span class="command">jcode</span> login <span class="flag">--provider</span> <span class="string">claude</span>
+
+<span class="comment"># 使用 OpenAI/ChatGPT</span>
+<span class="prompt">$ </span><span class="command">jcode</span> login <span class="flag">--provider</span> <span class="string">openai</span>
+
+<span class="comment"># 使用 GitHub Copilot</span>
+<span class="prompt">$ </span><span class="command">jcode</span> login <span class="flag">--provider</span> <span class="string">copilot</span>
+
+<span class="comment"># 使用本地 Ollama</span>
+<span class="prompt">$ </span><span class="command">jcode</span> login <span class="flag">--provider</span> <span class="string">ollama</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-title">开始使用</div>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span></div>
+              <div class="code-header-title">Terminal</div>
+            </div>
+            <div class="code-body">
+<span class="comment"># 启动交互式 TUI</span>
+<span class="prompt">$ </span><span class="command">jcode</span>
+
+<span class="comment"># 非交互式运行</span>
+<span class="prompt">$ </span><span class="command">jcode</span> run <span class="string">"say hello"</span>
+
+<span class="comment"># 恢复之前的会话</span>
+<span class="prompt">$ </span><span class="command">jcode</span> <span class="flag">--resume</span> <span class="string">fox</span>
+
+<span class="comment"># 启动后台服务器 + 多客户端</span>
+<span class="prompt">$ </span><span class="command">jcode</span> serve
+<span class="prompt">$ </span><span class="command">jcode</span> connect
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Target Users -->
+<section class="section" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">Audience</span>
+      <h2 class="section-title">适合谁使用</h2>
+    </div>
+    <div class="user-tags fade-in">
+      <span class="user-tag"><strong>高级开发者</strong> — 追求极致性能和多会话并行</span>
+      <span class="user-tag"><strong>AI Agent 开发者</strong> — 需要高性能代理底盘</span>
+      <span class="user-tag"><strong>团队协作</strong> — 多人同代码库自动冲突解决</span>
+      <span class="user-tag"><strong>多模型用户</strong> — 同时使用 Claude/GPT/Gemini</span>
+      <span class="user-tag"><strong>终端重度用户</strong> — 偏好 TUI 界面</span>
+      <span class="user-tag"><strong>隐私敏感用户</strong> — 支持 Ollama/LM Studio 本地运行</span>
+      <span class="user-tag"><strong>自托管爱好者</strong> — vLLM/本地模型完全离线</span>
+      <span class="user-tag"><strong>订阅用户</strong> — 用已有订阅无需额外 API 费</span>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>Deep Analysis by AI &middot; 2026-05-05 &middot; Data from <a href="https://github.com/1jehuang/jcode" target="_blank" rel="noopener">github.com/1jehuang/jcode</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem;">GitHub Trending Deep Dive &mdash; jcode &middot; Rust &middot; Coding Agent Harness</p>
+  </div>
+</footer>
+
+<script>
+// Intersection Observer for fade-in animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Animate performance bars on scroll
+const perfObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.perf-bar-fill').forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = width; }, 100);
+      });
+    }
+  });
+}, { threshold: 0.2 });
+
+document.querySelectorAll('.perf-section').forEach(el => perfObserver.observe(el));
+</script>
+</body>
+</html>

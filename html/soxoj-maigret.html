@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maigret - OSINT 用户名情报收集工具 | GitHub Trending 深度分析</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-card-hover: #1e2a42;
+            --bg-code: #0d1321;
+            --accent-primary: #00d4aa;
+            --accent-secondary: #7c3aed;
+            --accent-warn: #f59e0b;
+            --accent-danger: #ef4444;
+            --accent-info: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --glow-green: rgba(0, 212, 170, 0.15);
+            --glow-purple: rgba(124, 58, 237, 0.15);
+            --gradient-hero: linear-gradient(135deg, #0a0e17 0%, #1a1040 50%, #0a2020 100%);
+            --gradient-accent: linear-gradient(135deg, #00d4aa 0%, #7c3aed 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            padding: 80px 0 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(0, 212, 170, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--accent-primary);
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, #00d4aa 50%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 700px;
+            line-height: 1.8;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-value.purple { color: var(--accent-secondary); }
+        .stat-value.warn { color: var(--accent-warn); }
+        .stat-value.info { color: var(--accent-info); }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 64px 0;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .section-title .icon.green { background: rgba(0, 212, 170, 0.15); }
+        .section-title .icon.purple { background: rgba(124, 58, 237, 0.15); }
+        .section-title .icon.blue { background: rgba(59, 130, 246, 0.15); }
+        .section-title .icon.yellow { background: rgba(245, 158, 11, 0.15); }
+        .section-title .icon.red { background: rgba(239, 68, 68, 0.15); }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(0, 212, 170, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card .card-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Architecture Diagram */
+        .arch-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            overflow-x: auto;
+        }
+
+        .arch-layer {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .arch-layer:last-child { margin-bottom: 0; }
+
+        .arch-layer-title {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-card);
+            padding: 2px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .arch-layer-title.ui { color: var(--accent-primary); }
+        .arch-layer-title.engine { color: var(--accent-secondary); }
+        .arch-layer-title.output { color: var(--accent-warn); }
+
+        .arch-modules {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .arch-module {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .arch-module .mod-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .arch-module .mod-desc {
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 20px;
+            padding: 4px 0;
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .tech-item:hover {
+            border-color: rgba(0, 212, 170, 0.3);
+        }
+
+        .tech-item .tech-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .tech-item .tech-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tech-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 14px 20px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:last-child td { border-bottom: none; }
+
+        .comparison-table tr:hover td {
+            background: rgba(0, 212, 170, 0.03);
+        }
+
+        .comparison-table .highlight-col {
+            background: rgba(0, 212, 170, 0.05);
+            font-weight: 600;
+        }
+
+        .check { color: var(--accent-primary); font-weight: 700; }
+        .cross { color: var(--accent-danger); font-weight: 700; }
+
+        /* Use Cases */
+        .use-case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .use-case-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .use-case-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(124, 58, 237, 0.4);
+            box-shadow: 0 8px 32px rgba(124, 58, 237, 0.1);
+        }
+
+        .use-case-card .uc-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .use-case-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .use-case-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Trending Reasons */
+        .reason-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .reason-item {
+            display: flex;
+            gap: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .reason-item:hover {
+            border-color: rgba(0, 212, 170, 0.3);
+        }
+
+        .reason-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            flex-shrink: 0;
+            width: 48px;
+        }
+
+        .reason-content h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .reason-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #ef4444; }
+        .code-dot.yellow { background: #f59e0b; }
+        .code-dot.green { background: #22c55e; }
+
+        .code-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .code-body {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .code-body .comment { color: var(--text-muted); }
+        .code-body .cmd { color: var(--accent-primary); }
+        .code-body .flag { color: var(--accent-warn); }
+        .code-body .string { color: #a78bfa; }
+
+        /* Audience Tags */
+        .audience-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .audience-tag {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .audience-tag:hover {
+            border-color: rgba(0, 212, 170, 0.4);
+            background: rgba(0, 212, 170, 0.05);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: opacity 0.3s;
+        }
+
+        footer a:hover { opacity: 0.8; }
+
+        footer .footer-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 48px 0 40px; }
+            .hero h1 { font-size: 32px; }
+            .hero-stats { gap: 20px; }
+            .stat-value { font-size: 22px; }
+            section { padding: 40px 0; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .reason-item { flex-direction: column; gap: 8px; }
+            .comparison-table { font-size: 12px; }
+            .comparison-table th, .comparison-table td { padding: 10px 12px; }
+        }
+
+        /* Scroll animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<div class="hero">
+    <div class="container hero-content">
+        <div class="hero-badge">
+            <div class="pulse"></div>
+            GitHub Trending #5 &middot; Python &middot; 2026-05-05
+        </div>
+        <h1>Maigret</h1>
+        <p class="subtitle">
+            一款强大的开源 OSINT 命令行工具，仅需一个用户名即可从 <strong>3,000+</strong> 个网站收集关于个人的详细情报档案。被 Bellingcat、Social Links 等顶级调查机构采用。
+        </p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-value">24,345</div>
+                <div class="stat-label">Total Stars</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value purple">+1,119</div>
+                <div class="stat-label">Stars Today</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value warn">3,000+</div>
+                <div class="stat-label">Sites Covered</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value info">MIT</div>
+                <div class="stat-label">License</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon green">&#x2699;</div>
+            核心功能
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card fade-in">
+                <div class="card-icon">&#x1F310;</div>
+                <h3>海量站点覆盖</h3>
+                <p>支持 3,000+ 个网站的账号检测。默认检查 Top 500 站点，使用 <code>-a</code> 扫描全部，或 <code>--tags</code> 按分类/国家筛选。</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="card-icon">&#x1F50D;</div>
+                <h3>智能信息提取</h3>
+                <p>自动提取 PII（个人身份信息）、姓名、位置、简介、头像。交叉关联发现账号之间的链接关系，自动提取关联用户名和 ID。</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="card-icon">&#x1F504;</div>
+                <h3>递归搜索</h3>
+                <p>使用已发现的用户名和 ID 进行递归搜索。支持 <code>--parse URL</code> 解析页面和 <code>--permute</code> 生成用户名变体组合。</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="card-icon">&#x1F6E1;</div>
+                <h3>反检测与代理</h3>
+                <p>检测并部分绕过封锁、审查和 CAPTCHA。完整支持 Tor、I2P 和 HTTP/SOCKS5 代理，适用于 .onion / .i2p 站点。</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="card-icon">&#x1F4CA;</div>
+                <h3>多格式报告</h3>
+                <p>输出 HTML 交互报告、PDF 存档、XMind 思维导图、CSV/JSON/TXT 数据、D3.js 关系图谱。内置 Web UI 可视化界面。</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="card-icon">&#x1F40D;</div>
+                <h3>Python 库集成</h3>
+                <p>可作为 Python 库嵌入到自己的项目中。CLI 仅是对异步函数的薄封装，支持自定义 OSINT 工作流和管道构建。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Architecture Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon purple">&#x1F3D7;</div>
+            技术架构
+        </div>
+        <div class="arch-container fade-in">
+            <div class="arch-layer">
+                <div class="arch-layer-title ui">&#x1F5A5; 用户界面层</div>
+                <div class="arch-modules">
+                    <div class="arch-module">
+                        <div class="mod-name">CLI</div>
+                        <div class="mod-desc">命令行界面</div>
+                    </div>
+                    <div class="arch-module">
+                        <div class="mod-name">Web UI</div>
+                        <div class="mod-desc">Flask + D3.js</div>
+                    </div>
+                    <div class="arch-module">
+                        <div class="mod-name">Telegram Bot</div>
+                        <div class="mod-desc">maigret-tg-bot</div>
+                    </div>
+                </div>
+            </div>
+            <div class="arch-arrow">&#x2193;</div>
+            <div class="arch-layer">
+                <div class="arch-layer-title engine">&#x2699; 核心引擎层</div>
+                <div class="arch-modules">
+                    <div class="arch-module">
+                        <div class="mod-name">站点数据库</div>
+                        <div class="mod-desc">data.json (3000+)</div>
+                    </div>
+                    <div class="arch-module">
+                        <div class="mod-name">异步调度器</div>
+                        <div class="mod-desc">asyncio + aiohttp</div>
+                    </div>
+                    <div class="arch-module">
+                        <div class="mod-name">递归搜索引擎</div>
+                        <div class="mod-desc">用户名关联追踪</div>
+                    </div>
+                    <div class="arch-module">
+                        <div class="mod-name">反检测模块</div>
+                        <div class="mod-desc">Tor/I2P/Proxy</div>
+                    </div>
+                    <div class="arch-module">
+                        <div class="mod-name">信息提取器</div>
+                        <div class="mod-desc">BS4 + lxml</div>
+                    </div>
+                </div>
+            </div>
+            <div class="arch-arrow">&#x2193;</div>
+            <div class="arch-layer">
+                <div class="arch-layer-title output">&#x1F4C4; 输出层</div>
+                <div class="arch-modules">
+                    <div class="arch-module"><div class="mod-name">HTML</div></div>
+                    <div class="arch-module"><div class="mod-name">PDF</div></div>
+                    <div class="arch-module"><div class="mod-name">XMind</div></div>
+                    <div class="arch-module"><div class="mod-name">CSV</div></div>
+                    <div class="arch-module"><div class="mod-name">JSON</div></div>
+                    <div class="arch-module"><div class="mod-name">D3 Graph</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Tech Stack Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon blue">&#x1F4E6;</div>
+            技术栈
+        </div>
+        <div class="tech-grid fade-in">
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(59,130,246,0.15);color:#3b82f6;">&#x1F40D;</div>
+                <div>
+                    <div class="tech-label">语言</div>
+                    <div class="tech-value">Python 3.10+</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(0,212,170,0.15);color:#00d4aa;">&#x26A1;</div>
+                <div>
+                    <div class="tech-label">异步框架</div>
+                    <div class="tech-value">asyncio + aiohttp</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(124,58,237,0.15);color:#7c3aed;">&#x1F4DD;</div>
+                <div>
+                    <div class="tech-label">HTML 解析</div>
+                    <div class="tech-value">BeautifulSoup + lxml</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;">&#x1F4C4;</div>
+                <div>
+                    <div class="tech-label">PDF 生成</div>
+                    <div class="tech-value">reportlab</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(239,68,68,0.15);color:#ef4444;">&#x1F308;</div>
+                <div>
+                    <div class="tech-label">可视化</div>
+                    <div class="tech-value">D3.js + XMind SDK</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;">&#x1F310;</div>
+                <div>
+                    <div class="tech-label">Web 框架</div>
+                    <div class="tech-value">Flask</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;">&#x1F4BE;</div>
+                <div>
+                    <div class="tech-label">数据存储</div>
+                    <div class="tech-value">JSON (data.json)</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background:rgba(6,182,212,0.15);color:#06b6d4;">&#x1F433;</div>
+                <div>
+                    <div class="tech-label">部署方式</div>
+                    <div class="tech-value">Docker / pip / EXE</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Comparison Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon yellow">&#x2696;</div>
+            同类项目对比
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="comparison-table fade-in">
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th class="highlight-col">Maigret</th>
+                        <th>Sherlock</th>
+                        <th>WhatsMyName</th>
+                        <th>Namechk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>覆盖站点数</td>
+                        <td class="highlight-col">3,000+</td>
+                        <td>~400</td>
+                        <td>~600</td>
+                        <td>~100</td>
+                    </tr>
+                    <tr>
+                        <td>信息提取</td>
+                        <td class="highlight-col">全面 PII + 关联</td>
+                        <td>仅检测存在</td>
+                        <td>仅检测存在</td>
+                        <td>仅检测存在</td>
+                    </tr>
+                    <tr>
+                        <td>递归搜索</td>
+                        <td class="highlight-col"><span class="check">&#x2713;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                    </tr>
+                    <tr>
+                        <td>报告生成</td>
+                        <td class="highlight-col">HTML/PDF/XMind/CSV</td>
+                        <td>简单文本</td>
+                        <td>Web 界面</td>
+                        <td>Web 界面</td>
+                    </tr>
+                    <tr>
+                        <td>图谱可视化</td>
+                        <td class="highlight-col"><span class="check">D3.js</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Tor/代理</td>
+                        <td class="highlight-col"><span class="check">&#x2713;</span></td>
+                        <td>有限</td>
+                        <td><span class="cross">&#x2717;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Python 库</td>
+                        <td class="highlight-col"><span class="check">&#x2713;</span></td>
+                        <td><span class="check">&#x2713;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                        <td><span class="cross">&#x2717;</span></td>
+                    </tr>
+                    <tr>
+                        <td>开源协议</td>
+                        <td class="highlight-col">MIT</td>
+                        <td>MIT</td>
+                        <td>-</td>
+                        <td>商业</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Why Trending Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon red">&#x1F525;</div>
+            为什么火 — Trending 原因分析
+        </div>
+        <div class="reason-list">
+            <div class="reason-item fade-in">
+                <div class="reason-number">01</div>
+                <div class="reason-content">
+                    <h4>OSINT 需求爆发</h4>
+                    <p>随着网络安全威胁持续增长，OSINT 工具需求呈现爆发式增长。Maigret 作为该领域最全面的用户名搜索工具，自然受到广泛关注。今日新增 1,119 Stars 就是最好的证明。</p>
+                </div>
+            </div>
+            <div class="reason-item fade-in">
+                <div class="reason-number">02</div>
+                <div class="reason-content">
+                    <h4>Sherlock 的进化替代</h4>
+                    <p>Maigret 最初是 Sherlock 的 fork，但功能已远超原版：Sherlock 仅检查约 400 个站点，Maigret 覆盖 3,000+；增加了信息提取、递归搜索、报告生成等高级功能。被社区广泛认为是 Sherlock 的"升级版"。</p>
+                </div>
+            </div>
+            <div class="reason-item fade-in">
+                <div class="reason-number">03</div>
+                <div class="reason-content">
+                    <h4>专业工具集成</h4>
+                    <p>被 Social Links API、Social Links Crimewall、UserSearch 等多个专业 OSINT 分析平台采用。Bellingcat 已将其纳入官方调查工具箱，极大地提升了项目知名度和可信度。</p>
+                </div>
+            </div>
+            <div class="reason-item fade-in">
+                <div class="reason-number">04</div>
+                <div class="reason-content">
+                    <h4>持续活跃维护</h4>
+                    <p>站点数据库每日自动更新（GitHub 源），活跃的社区贡献者不断新增/修复站点。最新版本 v0.5.0 增加了 UnstoppableDomains 支持、memory.lol Twitter 归档搜索等功能。</p>
+                </div>
+            </div>
+            <div class="reason-item fade-in">
+                <div class="reason-number">05</div>
+                <div class="reason-content">
+                    <h4>零门槛使用</h4>
+                    <p>无需 API Key，一行命令即可运行。提供 CLI / Web UI / Docker / Telegram Bot / Cloud Shell 等多种使用方式，覆盖从新手到专业用户的全场景需求。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Use Cases Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon green">&#x1F3AF;</div>
+            应用场景
+        </div>
+        <div class="use-case-grid fade-in">
+            <div class="use-case-card">
+                <div class="uc-icon">&#x1F6E1;</div>
+                <h4>网络安全调查</h4>
+                <p>追踪威胁行为者数字足迹，红队/蓝队信息收集，社会工程学防御</p>
+            </div>
+            <div class="use-case-card">
+                <div class="uc-icon">&#x1F46E;</div>
+                <h4>执法与情报</h4>
+                <p>执法机构在线调查，情报分析人员开源情报收集，反欺诈调查</p>
+            </div>
+            <div class="use-case-card">
+                <div class="uc-icon">&#x1F4F0;</div>
+                <h4>调查报道</h4>
+                <p>记者验证信息来源，Bellingcat 调查工具箱核心组件，深度报道背景调查</p>
+            </div>
+            <div class="use-case-card">
+                <div class="uc-icon">&#x1F3E2;</div>
+                <h4>企业安全</h4>
+                <p>HR 背景调查，企业并购风险评估，品牌保护与冒充账号检测</p>
+            </div>
+            <div class="use-case-card">
+                <div class="uc-icon">&#x1F512;</div>
+                <h4>隐私审计</h4>
+                <p>检查自己在各平台的账号曝光，评估个人数字足迹，隐私加固参考</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Quick Start Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon purple">&#x1F680;</div>
+            快速上手指南
+        </div>
+
+        <div class="code-block fade-in">
+            <div class="code-header">
+                <div class="code-dot red"></div>
+                <div class="code-dot yellow"></div>
+                <div class="code-dot green"></div>
+                <span class="code-title">安装 (需要 Python 3.10+)</span>
+            </div>
+            <div class="code-body">
+<pre><span class="comment"># 一行命令安装并使用</span>
+<span class="cmd">pip</span> install maigret
+<span class="cmd">maigret</span> YOUR_USERNAME</pre>
+            </div>
+        </div>
+
+        <div class="code-block fade-in">
+            <div class="code-header">
+                <div class="code-dot red"></div>
+                <div class="code-dot yellow"></div>
+                <div class="code-dot green"></div>
+                <span class="code-title">基本用法</span>
+            </div>
+            <div class="code-body">
+<pre><span class="comment"># 搜索单个用户名（默认 Top 500 站点）</span>
+<span class="cmd">maigret</span> johndoe
+
+<span class="comment"># 生成 HTML 报告</span>
+<span class="cmd">maigret</span> johndoe <span class="flag">--html</span>
+
+<span class="comment"># 检查所有 3000+ 站点</span>
+<span class="cmd">maigret</span> johndoe <span class="flag">-a</span>
+
+<span class="comment"># 按标签筛选</span>
+<span class="cmd">maigret</span> johndoe <span class="flag">--tags</span> <span class="string">photo,dating</span>
+
+<span class="comment"># 通过 Tor 搜索</span>
+<span class="cmd">maigret</span> johndoe <span class="flag">--tor-proxy</span> <span class="string">socks5://127.0.0.1:9050</span></pre>
+            </div>
+        </div>
+
+        <div class="code-block fade-in">
+            <div class="code-header">
+                <div class="code-dot red"></div>
+                <div class="code-dot yellow"></div>
+                <div class="code-dot green"></div>
+                <span class="code-title">高级用法</span>
+            </div>
+            <div class="code-body">
+<pre><span class="comment"># 解析 URL 并递归搜索</span>
+<span class="cmd">maigret</span> <span class="flag">--parse</span> <span class="string">https://twitter.com/johndoe</span>
+
+<span class="comment"># 生成用户名排列组合后搜索</span>
+<span class="cmd">maigret</span> john doe <span class="flag">--permute</span>
+
+<span class="comment"># 导出为交互式关系图</span>
+<span class="cmd">maigret</span> johndoe <span class="flag">--graph</span>
+
+<span class="comment"># 同时搜索多个用户名</span>
+<span class="cmd">maigret</span> user1 user2 user3 <span class="flag">-a</span></pre>
+            </div>
+        </div>
+
+        <div class="code-block fade-in">
+            <div class="code-header">
+                <div class="code-dot red"></div>
+                <div class="code-dot yellow"></div>
+                <div class="code-dot green"></div>
+                <span class="code-title">Docker 部署</span>
+            </div>
+            <div class="code-body">
+<pre><span class="comment"># CLI 模式</span>
+<span class="cmd">docker</span> run <span class="flag">-v</span> <span class="string">$(pwd)/reports:/app/reports</span> soxoj/maigret:latest johndoe <span class="flag">--html</span>
+
+<span class="comment"># Web UI 模式（访问 http://localhost:5000）</span>
+<span class="cmd">docker</span> run <span class="flag">-p</span> <span class="string">5000:5000</span> soxoj/maigret:web</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Who Should Use Section -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <div class="icon yellow">&#x1F465;</div>
+            适合谁使用
+        </div>
+        <div class="audience-grid fade-in">
+            <div class="audience-tag">&#x1F6E1; 安全研究员 / 渗透测试人员</div>
+            <div class="audience-tag">&#x1F50E; OSINT 分析师</div>
+            <div class="audience-tag">&#x1F4F0; 调查记者</div>
+            <div class="audience-tag">&#x1F3E2; 企业安全团队</div>
+            <div class="audience-tag">&#x1F512; 隐私意识强的个人</div>
+            <div class="audience-tag">&#x1F46E; 执法与情报机构</div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="footer-links">
+            <a href="https://github.com/soxoj/maigret" target="_blank">GitHub 仓库</a>
+            <a href="https://maigret.readthedocs.io/" target="_blank">官方文档</a>
+            <a href="https://bellingcat.gitbook.io/toolkit/more/all-tools/maigret" target="_blank">Bellingcat 工具箱</a>
+            <a href="https://osintbench.com/tools/maigret" target="_blank">OSINTBench 评测</a>
+            <a href="https://github.com/soxoj/osint-namecheckers-list" target="_blank">OSINT 工具列表</a>
+        </div>
+        <p class="footer-note">
+            本分析仅供教育和合法用途参考。使用者有责任遵守所在司法管辖区的所有适用法律（包括 GDPR、CCPA 等）。<br>
+            GitHub Trending Deep Analysis &middot; 2026-05-05
+        </p>
+    </div>
+</footer>
+
+<script>
+    // Fade-in animation on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

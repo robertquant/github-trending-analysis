@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>browserbase/skills — GitHub Trending 深度分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg-deep:#060a14;
+--bg-card:rgba(12,20,40,0.65);
+--bg-card-hover:rgba(18,30,55,0.8);
+--neon-blue:#00d4ff;
+--neon-purple:#a855f7;
+--neon-cyan:#22d3ee;
+--neon-pink:#f472b6;
+--electric:#6366f1;
+--text-primary:#e2e8f0;
+--text-secondary:#94a3b8;
+--text-muted:#64748b;
+--border-glow:rgba(0,212,255,0.15);
+--glass-blur:20px;
+--radius:16px;
+--radius-sm:10px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+font-family:'Space Grotesk',sans-serif;
+background:var(--bg-deep);
+color:var(--text-primary);
+line-height:1.7;
+overflow-x:hidden;
+-webkit-font-smoothing:antialiased;
+}
+body::before{
+content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+background:
+  radial-gradient(ellipse 80% 60% at 20% 10%,rgba(99,102,241,0.08),transparent),
+  radial-gradient(ellipse 60% 50% at 80% 80%,rgba(0,212,255,0.06),transparent),
+  radial-gradient(ellipse 50% 40% at 50% 50%,rgba(168,85,247,0.04),transparent);
+}
+.scanline{
+position:fixed;inset:0;z-index:9999;pointer-events:none;
+background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.015) 2px,rgba(0,212,255,0.015) 4px);
+}
+.container{max-width:1200px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* HEADER */
+.hero{
+position:relative;padding:80px 0 60px;text-align:center;
+overflow:hidden;
+}
+.hero::before{
+content:'';position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+width:700px;height:700px;border-radius:50%;
+background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,rgba(0,212,255,0.06) 40%,transparent 70%);
+animation:pulse-glow 6s ease-in-out infinite;
+}
+@keyframes pulse-glow{0%,100%{opacity:.7;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.08)}}
+.hero-badge{
+display:inline-flex;align-items:center;gap:8px;
+padding:6px 18px;border-radius:100px;
+background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);
+font-size:.8rem;color:var(--neon-cyan);letter-spacing:.08em;text-transform:uppercase;
+margin-bottom:28px;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--neon-cyan);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{
+font-size:clamp(2.4rem,5.5vw,4rem);font-weight:700;
+letter-spacing:-.03em;line-height:1.1;margin-bottom:16px;
+background:linear-gradient(135deg,#e2e8f0 0%,var(--neon-blue) 50%,var(--neon-purple) 100%);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+background-clip:text;
+}
+.hero .tagline{
+font-size:clamp(1rem,2vw,1.25rem);color:var(--text-secondary);
+max-width:600px;margin:0 auto 36px;
+}
+.stats-bar{
+display:flex;justify-content:center;flex-wrap:wrap;gap:8px;
+}
+.stat{
+display:inline-flex;align-items:center;gap:6px;
+padding:8px 18px;border-radius:100px;
+background:var(--bg-card);border:1px solid var(--border-glow);
+backdrop-filter:blur(var(--glass-blur));
+font-size:.85rem;color:var(--text-secondary);
+transition:all .3s ease;
+}
+.stat:hover{border-color:var(--neon-blue);background:var(--bg-card-hover);color:var(--text-primary)}
+.stat .icon{font-size:1rem}
+.stat strong{color:var(--neon-cyan);font-weight:600}
+
+/* SECTION */
+section{padding:60px 0}
+.section-label{
+display:inline-flex;align-items:center;gap:8px;
+font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;
+color:var(--neon-cyan);margin-bottom:12px;
+}
+.section-label::before{content:'';width:20px;height:1px;background:var(--neon-cyan)}
+.section-title{
+font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;
+letter-spacing:-.02em;margin-bottom:32px;
+}
+.section-title span{
+background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple));
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.glass{
+background:var(--bg-card);border:1px solid var(--border-glow);
+backdrop-filter:blur(var(--glass-blur));border-radius:var(--radius);
+padding:28px;transition:all .35s ease;
+}
+.glass:hover{border-color:rgba(0,212,255,0.3);background:var(--bg-card-hover);transform:translateY(-2px)}
+
+/* INFO CARD */
+.info-card{position:relative;overflow:hidden}
+.info-card::after{
+content:'';position:absolute;top:0;right:0;width:200px;height:200px;
+background:radial-gradient(circle,rgba(0,212,255,0.06),transparent 70%);
+pointer-events:none;
+}
+.info-card p{font-size:1.05rem;line-height:1.8;color:var(--text-secondary)}
+.info-card strong{color:var(--neon-cyan);font-weight:600}
+.info-tag{
+display:inline-flex;align-items:center;gap:6px;
+padding:4px 14px;border-radius:100px;font-size:.78rem;
+background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:var(--neon-purple);
+margin-top:16px;
+}
+
+/* SKILLS GRID */
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.skill-card{
+position:relative;padding:22px;overflow:hidden;cursor:default;
+}
+.skill-card .skill-num{
+position:absolute;top:14px;right:18px;
+font-size:2.5rem;font-weight:700;color:rgba(255,255,255,0.03);
+line-height:1;font-family:'JetBrains Mono',monospace;
+}
+.skill-card h3{font-size:1rem;font-weight:600;margin-bottom:8px;color:var(--text-primary)}
+.skill-card p{font-size:.88rem;color:var(--text-secondary);line-height:1.6}
+.skill-card .skill-icon{
+display:inline-flex;align-items:center;justify-content:center;
+width:36px;height:36px;border-radius:var(--radius-sm);
+background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1));
+border:1px solid rgba(0,212,255,0.15);
+margin-bottom:12px;font-size:1rem;
+}
+
+/* ARCHITECTURE */
+.arch-flow{
+display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+gap:0;padding:40px 0;
+}
+.arch-node{
+padding:16px 24px;border-radius:var(--radius-sm);
+text-align:center;min-width:160px;
+border:1px solid var(--border-glow);
+background:var(--bg-card);
+backdrop-filter:blur(var(--glass-blur));
+transition:all .3s ease;
+}
+.arch-node:hover{border-color:var(--neon-blue);transform:scale(1.04)}
+.arch-node.active{
+border-color:var(--neon-cyan);
+box-shadow:0 0 20px rgba(0,212,255,0.15),inset 0 0 20px rgba(0,212,255,0.05);
+}
+.arch-node h4{font-size:.85rem;font-weight:600;margin-bottom:4px}
+.arch-node p{font-size:.75rem;color:var(--text-muted)}
+.arch-arrow{
+font-size:1.4rem;color:var(--neon-cyan);padding:0 8px;
+animation:arrow-pulse 2s ease-in-out infinite;
+}
+@keyframes arrow-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* TRENDING */
+.trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.trending-item{
+display:flex;align-items:flex-start;gap:16px;padding:22px;
+}
+.trending-num{
+flex-shrink:0;width:36px;height:36px;border-radius:50%;
+display:flex;align-items:center;justify-content:center;
+font-size:.85rem;font-weight:700;font-family:'JetBrains Mono',monospace;
+background:linear-gradient(135deg,var(--neon-blue),var(--electric));
+color:#fff;
+}
+.trending-item h4{font-size:.95rem;font-weight:600;margin-bottom:4px}
+.trending-item p{font-size:.85rem;color:var(--text-secondary);line-height:1.5}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border-glow)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+thead{background:rgba(0,212,255,0.05)}
+th{
+padding:14px 16px;text-align:left;font-weight:600;
+color:var(--neon-cyan);border-bottom:1px solid var(--border-glow);
+white-space:nowrap;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;
+}
+td{
+padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);
+color:var(--text-secondary);white-space:nowrap;
+}
+td:first-child{font-weight:600;color:var(--text-primary)}
+tr:hover td{background:rgba(0,212,255,0.02)}
+.check{color:#22c55e;font-weight:700}
+.cross{color:#ef4444;font-weight:700}
+.warn{color:#f59e0b;font-weight:700}
+
+/* USERS */
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.user-card{padding:22px;display:flex;align-items:center;gap:16px}
+.user-avatar{
+flex-shrink:0;width:44px;height:44px;border-radius:12px;
+display:flex;align-items:center;justify-content:center;
+font-size:1.2rem;
+background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(168,85,247,0.15));
+border:1px solid rgba(99,102,241,0.2);
+}
+.user-info h4{font-size:.92rem;font-weight:600;margin-bottom:2px}
+.user-info .stars{color:#fbbf24;font-size:.85rem;letter-spacing:1px}
+.user-info .desc{font-size:.8rem;color:var(--text-muted);margin-top:2px}
+
+/* CODE */
+.code-blocks{display:flex;flex-direction:column;gap:16px}
+.code-block{position:relative;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-glow)}
+.code-label{
+display:flex;align-items:center;gap:8px;
+padding:10px 16px;background:rgba(0,212,255,0.05);
+border-bottom:1px solid var(--border-glow);
+font-size:.78rem;color:var(--neon-cyan);font-weight:500;
+}
+.code-label .tag{
+padding:2px 10px;border-radius:100px;
+background:rgba(168,85,247,0.15);color:var(--neon-purple);
+font-size:.72rem;
+}
+pre{
+padding:18px 20px;overflow-x:auto;
+background:rgba(6,10,20,0.8);
+font-family:'JetBrains Mono',monospace;
+font-size:.84rem;line-height:1.7;color:var(--neon-cyan);
+}
+pre .cmd{color:#22c55e}
+pre .flag{color:var(--neon-purple)}
+pre .url{color:var(--neon-pink)}
+
+/* QUOTES */
+.quotes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:24px}
+.quote-card{
+position:relative;padding:22px 22px 22px 28px;
+border-left:3px solid var(--neon-cyan);
+}
+.quote-card::before{
+content:'\201C';position:absolute;top:8px;left:10px;
+font-size:2rem;color:rgba(0,212,255,0.2);font-family:serif;line-height:1;
+}
+.quote-card p{font-size:.92rem;color:var(--text-secondary);font-style:italic}
+
+/* COMMUNITY */
+.community-bar{
+display:flex;flex-wrap:wrap;justify-content:center;gap:20px;
+padding:28px;
+}
+.community-item{text-align:center}
+.community-item .label{font-size:.8rem;color:var(--text-muted);margin-bottom:6px}
+.community-item .value{font-size:1.1rem;font-weight:600}
+.community-item .value.good{color:#22c55e}
+.community-item .value.warn{color:#f59e0b}
+
+/* FOOTER */
+footer{
+padding:48px 0 32px;text-align:center;
+border-top:1px solid var(--border-glow);
+margin-top:40px;
+}
+.footer-links{display:flex;justify-content:center;flex-wrap:wrap;gap:24px;margin-bottom:20px}
+.footer-links a{
+color:var(--text-secondary);text-decoration:none;font-size:.88rem;
+transition:color .2s;
+}
+.footer-links a:hover{color:var(--neon-cyan)}
+.footer-meta{font-size:.78rem;color:var(--text-muted)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .hero{padding:50px 0 40px}
+  section{padding:40px 0}
+  .arch-flow{flex-direction:column;gap:4px}
+  .arch-arrow{transform:rotate(90deg);padding:4px 0}
+  .trending-grid{grid-template-columns:1fr}
+  .stats-bar{gap:6px}
+  .stat{padding:6px 12px;font-size:.78rem}
+  .container{padding:0 16px}
+}
+@media(max-width:480px){
+  .skills-grid{grid-template-columns:1fr}
+  .users-grid{grid-template-columns:1fr}
+  .quotes-grid{grid-template-columns:1fr}
+}
+
+/* FADE IN */
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+
+<!-- HERO -->
+<header class="hero">
+<div class="container">
+  <div class="hero-badge"><span class="dot"></span> GitHub Trending Deep Dive</div>
+  <h1>browserbase/skills</h1>
+  <p class="tagline">Claude Agent SDK 的 Web 浏览器技能插件 — 让 AI 编码助手像人类一样浏览和操控网页</p>
+  <div class="stats-bar">
+    <div class="stat"><span class="icon">⭐</span> <strong>1,969</strong> Stars</div>
+    <div class="stat"><span class="icon">📈</span> 今日 +<strong>322</strong></div>
+    <div class="stat"><span class="icon">🟨</span> JavaScript</div>
+    <div class="stat"><span class="icon">📅</span> 2026-05-05</div>
+  </div>
+</div>
+</header>
+
+<main class="container">
+
+<!-- INFO -->
+<section class="fade-in">
+  <div class="section-label">Project Overview</div>
+  <h2 class="section-title">项目<span>简介</span></h2>
+  <div class="glass info-card">
+    <p><strong>browserbase/skills</strong> 是 <strong>Browserbase</strong> 推出的一套 AI 编码代理浏览器技能插件，让 Claude Code、Cursor、Codex 等 AI 编码助手能够像人类一样浏览和操作网页——从简单的页面抓取到复杂的表单填写、CAPTCHA 破解，甚至自动化下单。</p>
+    <p style="margin-top:12px">Browserbase 是一家专注于 "Browser-as-a-Service" 的云基础设施公司，已融资 <strong>4000 万美元</strong>，为 AI Agent 提供可扩展的远程浏览器环境，内置反检测、住宅代理、验证码解决等企业级能力。</p>
+    <div class="info-tag">🌐 Browser-as-a-Service · AI Agent · Cloud Browser</div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section class="fade-in">
+  <div class="section-label">Core Features</div>
+  <h2 class="section-title">10 大核心<span>技能模块</span></h2>
+  <div class="skills-grid">
+    <div class="glass skill-card">
+      <div class="skill-num">01</div>
+      <div class="skill-icon">🌐</div>
+      <h3>browser</h3>
+      <p>核心浏览器自动化，支持反爬虫隐身模式、CAPTCHA 自动解决、住宅代理</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">02</div>
+      <div class="skill-icon">⌨️</div>
+      <h3>browserbase-cli</h3>
+      <p>官方 bb CLI 管理 Browserbase 平台资源——会话、项目、上下文、扩展</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">03</div>
+      <div class="skill-icon">⚡</div>
+      <h3>functions</h3>
+      <p>无服务器浏览器自动化部署到 Browserbase 云端，实现 7×24 运行</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">04</div>
+      <div class="skill-icon">🔧</div>
+      <h3>site-debugger</h3>
+      <p>诊断并修复失败的浏览器自动化——分析 bot 检测、选择器、时序问题</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">05</div>
+      <div class="skill-icon">📡</div>
+      <h3>browser-trace</h3>
+      <p>捕获完整 DevTools 协议追踪——CDP 数据流、截图、DOM 导出</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">06</div>
+      <div class="skill-icon">📊</div>
+      <h3>bb-usage</h3>
+      <p>终端仪表板显示使用统计、会话分析和成本预测</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">07</div>
+      <div class="skill-icon">🍪</div>
+      <h3>cookie-sync</h3>
+      <p>将本地 Chrome 的 Cookie 同步到 Browserbase 持久化上下文</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">08</div>
+      <div class="skill-icon">📄</div>
+      <h3>fetch</h3>
+      <p>无需浏览器会话即可获取静态页面的 HTML 或 JSON</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">09</div>
+      <div class="skill-icon">🔍</div>
+      <h3>search</h3>
+      <p>搜索网络并返回结构化结果——标题、URL、元数据</p>
+    </div>
+    <div class="glass skill-card">
+      <div class="skill-num">10</div>
+      <div class="skill-icon">🧪</div>
+      <h3>ui-test</h3>
+      <p>AI 驱动的对抗性 UI 测试——分析 git diff 自动测试变更或探索全应用</p>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="fade-in">
+  <div class="section-label">Tech Architecture</div>
+  <h2 class="section-title">技术<span>架构</span></h2>
+  <div class="glass" style="padding:36px 24px">
+    <div class="arch-flow">
+      <div class="arch-node">
+        <h4>AI Coding Agent</h4>
+        <p>Claude / Cursor / Codex</p>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node active">
+        <h4>Skills Plugin</h4>
+        <p>10 Browser Modules</p>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <h4>bb CLI / Stagehand</h4>
+        <p>SDK + Automation</p>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <h4>Browserbase Cloud</h4>
+        <p>Remote Browsers</p>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <h4>🌐 WWW</h4>
+        <p>Target Websites</p>
+      </div>
+    </div>
+    <div style="margin-top:28px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+      <div style="padding:6px 16px;border-radius:100px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);font-size:.78rem;color:var(--electric)">JavaScript / TypeScript</div>
+      <div style="padding:6px 16px;border-radius:100px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);font-size:.78rem;color:var(--neon-cyan)">Playwright Engine</div>
+      <div style="padding:6px 16px;border-radius:100px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);font-size:.78rem;color:var(--neon-purple)">Chrome DevTools Protocol</div>
+      <div style="padding:6px 16px;border-radius:100px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.2);font-size:.78rem;color:var(--neon-pink)">MCP Protocol</div>
+    </div>
+  </div>
+</section>
+
+<!-- TRENDING -->
+<section class="fade-in">
+  <div class="section-label">Why Trending</div>
+  <h2 class="section-title">为什么<span>火</span></h2>
+  <div class="trending-grid">
+    <div class="glass trending-item">
+      <div class="trending-num">1</div>
+      <div>
+        <h4>AI Agent 浪潮的刚需组件</h4>
+        <p>2026 年 AI Agent 生态爆发，让 AI 能操作浏览器是 Agent 走向实用化的关键能力</p>
+      </div>
+    </div>
+    <div class="glass trending-item">
+      <div class="trending-num">2</div>
+      <div>
+        <h4>极致的安装体验</h4>
+        <p>一条命令 npx skills add 即可为 Claude Code 添加完整浏览器操作能力</p>
+      </div>
+    </div>
+    <div class="glass trending-item">
+      <div class="trending-num">3</div>
+      <div>
+        <h4>背靠 4000 万美元融资</h4>
+        <p>Browserbase 提供成熟的云浏览器基础设施，Skills 是其开发者生态的重要一环</p>
+      </div>
+    </div>
+    <div class="glass trending-item">
+      <div class="trending-num">4</div>
+      <div>
+        <h4>多代理平台兼容</h4>
+        <p>不仅支持 Claude Code，还兼容 Cursor、Codex 等主流 AI 编码工具</p>
+      </div>
+    </div>
+    <div class="glass trending-item">
+      <div class="trending-num">5</div>
+      <div>
+        <h4>10 大技能模块覆盖全场景</h4>
+        <p>从简单抓取到复杂自动化测试，从调试到云端部署，覆盖浏览器自动化全链路</p>
+      </div>
+    </div>
+    <div class="glass trending-item">
+      <div class="trending-num">6</div>
+      <div>
+        <h4>解决实际痛点</h4>
+        <p>反爬虫隐身、CAPTCHA 解决、Cookie 同步——浏览器自动化中的真实难题</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="fade-in">
+  <div class="section-label">Comparison</div>
+  <h2 class="section-title">同类项目<span>对比</span></h2>
+  <div class="table-wrap glass" style="padding:0">
+    <table>
+      <thead>
+        <tr>
+          <th>项目</th>
+          <th>AI 驱动</th>
+          <th>开源</th>
+          <th>CAPTCHA</th>
+          <th>反爬虫</th>
+          <th>云设施</th>
+          <th>自然语言</th>
+          <th>适合场景</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--neon-cyan)">browserbase/skills</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td>AI 编码助手扩展</td>
+        </tr>
+        <tr>
+          <td>Playwright</td>
+          <td class="cross">❌</td>
+          <td class="check">✅</td>
+          <td class="cross">❌</td>
+          <td class="cross">❌</td>
+          <td class="cross">❌</td>
+          <td class="cross">❌</td>
+          <td>精确自动化测试</td>
+        </tr>
+        <tr>
+          <td>Browser Use</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="cross">❌</td>
+          <td class="warn">⚠️</td>
+          <td class="cross">❌</td>
+          <td class="check">✅</td>
+          <td>Python AI Agent</td>
+        </tr>
+        <tr>
+          <td>Stagehand</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td class="check">✅</td>
+          <td>复杂 AI 自动化</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- TARGET USERS -->
+<section class="fade-in">
+  <div class="section-label">Target Users</div>
+  <h2 class="section-title">适合<span>谁使用</span></h2>
+  <div class="users-grid">
+    <div class="glass user-card">
+      <div class="user-avatar">🤖</div>
+      <div class="user-info">
+        <h4>Claude Code 用户</h4>
+        <div class="stars">★★★★★</div>
+        <div class="desc">最佳目标用户——即装即用</div>
+      </div>
+    </div>
+    <div class="glass user-card">
+      <div class="user-avatar">✏️</div>
+      <div class="user-info">
+        <h4>Cursor / Codex 用户</h4>
+        <div class="stars">★★★★☆</div>
+        <div class="desc">同样支持，体验优秀</div>
+      </div>
+    </div>
+    <div class="glass user-card">
+      <div class="user-avatar">🕷️</div>
+      <div class="user-info">
+        <h4>Web 自动化开发者</h4>
+        <div class="stars">★★★★☆</div>
+        <div class="desc">需要反爬虫和 CAPTCHA 解决的场景</div>
+      </div>
+    </div>
+    <div class="glass user-card">
+      <div class="user-avatar">🧠</div>
+      <div class="user-info">
+        <h4>AI Agent 开发者</h4>
+        <div class="stars">★★★★☆</div>
+        <div class="desc">需要为 Agent 添加浏览器能力</div>
+      </div>
+    </div>
+    <div class="glass user-card">
+      <div class="user-avatar">🧪</div>
+      <div class="user-info">
+        <h4>QA 工程师</h4>
+        <div class="stars">★★★☆☆</div>
+        <div class="desc">AI 驱动的测试自动化</div>
+      </div>
+    </div>
+    <div class="glass user-card">
+      <div class="user-avatar">📊</div>
+      <div class="user-info">
+        <h4>数据科学家</h4>
+        <div class="stars">★★★☆☆</div>
+        <div class="desc">fetch 和 search 技能适合数据采集</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK START -->
+<section class="fade-in">
+  <div class="section-label">Quick Start</div>
+  <h2 class="section-title">快速<span>上手</span></h2>
+  <div class="code-blocks">
+    <div class="code-block">
+      <div class="code-label">方式一：通用安装 <span class="tag">推荐</span></div>
+      <pre><span class="cmd">npx</span> skills <span class="flag">add</span> browserbase/skills</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label">方式二：Claude Code 插件市场</div>
+      <pre><span class="cmd">/plugin</span> marketplace <span class="flag">add</span> browserbase/skills
+<span class="cmd">/plugin</span> <span class="flag">install</span> browse@browserbase
+<span class="comment"># 重启 Claude Code 使更改生效</span></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label">方式三：最简方式</div>
+      <pre>Read <span class="url">https://browserbase.com/SKILL.md</span> to set up Browserbase</pre>
+    </div>
+  </div>
+
+  <div style="margin-top:40px">
+    <div class="section-label">Usage Examples</div>
+    <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:16px">使用示例</h3>
+    <div class="quotes-grid">
+      <div class="glass quote-card">
+        <p>Go to Hacker News, get the top post comments, and summarize them</p>
+      </div>
+      <div class="glass quote-card">
+        <p>QA test http://localhost:3000 and fix any bugs you encounter</p>
+      </div>
+      <div class="glass quote-card">
+        <p>Order me a pizza, you're already signed in on Doordash</p>
+      </div>
+      <div class="glass quote-card">
+        <p>Use bb to list my Browserbase projects and show the output as JSON</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section class="fade-in">
+  <div class="section-label">Community</div>
+  <h2 class="section-title">社区<span>评价</span></h2>
+  <div class="glass community-bar">
+    <div class="community-item">
+      <div class="label">易用性</div>
+      <div class="value good">✅ 优秀</div>
+    </div>
+    <div class="community-item">
+      <div class="label">稳定性</div>
+      <div class="value good">✅ 10k+ Sessions</div>
+    </div>
+    <div class="community-item">
+      <div class="label">文档质量</div>
+      <div class="value good">✅ 高于平均</div>
+    </div>
+    <div class="community-item">
+      <div class="label">使用成本</div>
+      <div class="value warn">⚠️ 规模化偏贵</div>
+    </div>
+    <div class="community-item">
+      <div class="label">AI 集成</div>
+      <div class="value good">✅ 自然语言控制</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-links">
+      <a href="https://github.com/browserbase/skills" target="_blank">GitHub 仓库</a>
+      <a href="https://www.browserbase.com" target="_blank">Browserbase 官网</a>
+      <a href="https://docs.browserbase.com/welcome/quickstarts/skills" target="_blank">官方文档</a>
+      <a href="https://docs.stagehand.dev" target="_blank">Stagehand 文档</a>
+    </div>
+    <div class="footer-meta">GitHub Trending Deep Dive · 分析日期 2026-05-05</div>
+  </div>
+</footer>
+
+<script>
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}});
+},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

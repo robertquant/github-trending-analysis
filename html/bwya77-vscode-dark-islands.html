@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VSCode Dark Islands - 精美暗色主题深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#58a6ff,#bc8cff,#3fb950);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+
+/* Cards */
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#bc8cff,#58a6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#bc8cff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#bc8cff}
+.card a{color:#58a6ff;text-decoration:none}
+.card a:hover{text-decoration:underline}
+
+/* Feature Grid */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#bc8cff}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#bc8cff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(188,140,255,0.05)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+.warn{color:#f0883e}
+
+/* Score */
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#58a6ff,#bc8cff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+
+/* Code Block */
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#bc8cff}
+.code-block .flag{color:#f0883e}
+.code-block .string{color:#a5d6ff}
+
+/* Scenario Tags */
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(188,140,255,0.08);border:1px solid rgba(188,140,255,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#bc8cff}
+
+/* Target Users */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #bc8cff}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#bc8cff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+
+/* CSS Var Table */
+.var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:15px 0}
+.var-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:12px}
+.var-item .var-name{font-family:'Fira Code',Consolas,monospace;color:#bc8cff;font-size:0.88rem}
+.var-item .var-value{font-family:'Fira Code',Consolas,monospace;color:#3fb950;font-size:0.82rem;margin-top:3px}
+.var-item .var-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+
+/* Glass Preview */
+.glass-demo{background:linear-gradient(135deg,#121216,#181a1d);border-radius:24px;border:1px solid rgba(255,255,255,0.1);
+  padding:30px;margin:15px 0;position:relative;overflow:hidden}
+.glass-demo::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)}
+.glass-demo::after{content:'';position:absolute;top:0;left:0;bottom:0;width:1px;background:linear-gradient(180deg,rgba(255,255,255,0.15),transparent)}
+.glass-demo h4{color:#e6e6e6;font-size:1.1rem;margin-bottom:8px}
+.glass-demo p{color:#8b949e;font-size:0.9rem}
+.glass-panels{display:flex;gap:12px;margin-top:15px}
+.glass-panel{flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;min-height:80px;position:relative}
+.glass-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)}
+.glass-panel .gp-title{color:#58a6ff;font-size:0.85rem;font-weight:600;margin-bottom:4px}
+.glass-panel .gp-line{height:4px;border-radius:2px;background:rgba(255,255,255,0.06);margin-bottom:4px}
+
+/* Footer */
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  .glass-panels{flex-direction:column}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>VSCode Dark Islands</h1>
+  <div class="subtitle">JetBrains Islands 风格 VSCode 暗色主题 · 浮动玻璃面板 UI 改造</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 7,698 Stars</span>
+    <span class="badge badge-green">🔥 +665 Today</span>
+    <span class="badge badge-orange">💎 PowerShell / CSS</span>
+    <span class="badge badge-purple">📄 MIT License</span>
+  </div>
+</div>
+
+<!-- Glass Effect Demo -->
+<div class="glass-demo">
+  <h4>🎨 视觉效果预览 — 浮动玻璃面板</h4>
+  <p>所有面板呈现独立的浮动玻璃效果，搭配圆角设计与光照边框模拟</p>
+  <div class="glass-panels">
+    <div class="glass-panel">
+      <div class="gp-title">📁 Explorer</div>
+      <div class="gp-line" style="width:80%"></div>
+      <div class="gp-line" style="width:60%"></div>
+      <div class="gp-line" style="width:90%"></div>
+    </div>
+    <div class="glass-panel" style="flex:2">
+      <div class="gp-title">📝 Editor</div>
+      <div class="gp-line" style="width:95%;background:rgba(188,140,255,0.12)"></div>
+      <div class="gp-line" style="width:70%"></div>
+      <div class="gp-line" style="width:85%"></div>
+      <div class="gp-line" style="width:40%"></div>
+    </div>
+    <div class="glass-panel">
+      <div class="gp-title">💻 Terminal</div>
+      <div class="gp-line" style="width:75%;background:rgba(63,185,80,0.1)"></div>
+      <div class="gp-line" style="width:50%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Overview -->
+<div class="card">
+  <h2>📋 项目简介</h2>
+  <p>VSCode Dark Islands 是一个为 Visual Studio Code 设计的暗色主题，灵感来源于 <strong style="color:#bc8cff">JetBrains Islands Dark UI</strong> 主题和 easemate IDE。它不仅是配色方案，更是对 VSCode 整体 UI 的<strong style="color:#3fb950">深度改造</strong>——通过 CSS 自定义样式实现浮动玻璃面板、圆角设计、平滑动画等现代 IDE 视觉效果。</p>
+
+  <h3>核心功能</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🪟</div><div class="label">浮动玻璃面板<br>侧边栏/编辑器/终端</div></div>
+    <div class="feature-item"><div class="icon">⭕</div><div class="label">圆角设计<br>所有面板大圆角</div></div>
+    <div class="feature-item"><div class="icon">✨</div><div class="label">玻璃效果边框<br>模拟方向光照</div></div>
+    <div class="feature-item"><div class="icon">💊</div><div class="label">药丸活动栏<br>玻璃质感指示器</div></div>
+    <div class="feature-item"><div class="icon">🎬</div><div class="label">平滑动画过渡<br>丝滑交互体验</div></div>
+    <div class="feature-item"><div class="icon">🎨</div><div class="label">暖色调语法高亮<br>全语言支持</div></div>
+    <div class="feature-item"><div class="icon">👁️</div><div class="label">智能淡入淡出<br>状态栏/面包屑</div></div>
+    <div class="feature-item"><div class="icon">💡</div><div class="label">图标发光效果<br>Seti 主题配合</div></div>
+  </div>
+</div>
+
+<!-- Tech Architecture -->
+<div class="card">
+  <h2>🏗️ 技术架构</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>组件</th><th>技术选型</th></tr>
+      <tr><td>主题配色</td><td>VSCode Color Theme JSON</td></tr>
+      <tr><td>UI 定制</td><td>CSS Custom Properties + Custom UI Style 扩展</td></tr>
+      <tr><td>安装脚本</td><td>Shell (macOS/Linux) + PowerShell (Windows)</td></tr>
+      <tr><td>包管理</td><td>Nix Flake 支持</td></tr>
+      <tr><td>编辑器字体</td><td>IBM Plex Mono</td></tr>
+      <tr><td>终端字体</td><td>FiraCode Nerd Font Mono</td></tr>
+      <tr><td>UI 字体</td><td>Bear Sans UI</td></tr>
+      <tr><td>依赖扩展</td><td>Custom UI Style (subframe7536)</td></tr>
+    </table>
+  </div>
+
+  <h3>CSS 自定义变量体系</h3>
+  <p>项目定义了完整的 CSS 变量系统，用户可轻松自定义：</p>
+  <div class="var-grid">
+    <div class="var-item">
+      <div class="var-name">--islands-panel-radius</div>
+      <div class="var-value">24px</div>
+      <div class="var-desc">侧边栏、编辑器等面板圆角</div>
+    </div>
+    <div class="var-item">
+      <div class="var-name">--islands-widget-radius</div>
+      <div class="var-value">14px</div>
+      <div class="var-desc">通知、命令面板圆角</div>
+    </div>
+    <div class="var-item">
+      <div class="var-name">--islands-bg-canvas</div>
+      <div class="var-value">#121216</div>
+      <div class="var-desc">深层背景色</div>
+    </div>
+    <div class="var-item">
+      <div class="var-name">--islands-bg-surface</div>
+      <div class="var-value">#181a1d</div>
+      <div class="var-desc">面板/交互元素背景</div>
+    </div>
+  </div>
+</div>
+
+<!-- Why Trending -->
+<div class="card">
+  <h2>🔥 为什么火 (Trending 原因)</h2>
+  <ul>
+    <li><strong style="color:#bc8cff">视觉冲击力强</strong> — 截图和演示效果极具吸引力，社交媒体传播力惊人</li>
+    <li><strong style="color:#58a6ff">JetBrains Islands 效应</strong> — JetBrains 新 UI Islands 主题备受关注，VSCode 用户渴望同样体验</li>
+    <li><strong style="color:#3fb950">一站式安装</strong> — 一行命令即可完成全部配置（主题 + 扩展 + 字体 + 设置）</li>
+    <li><strong style="color:#f0883e">跨平台支持</strong> — macOS、Linux、Windows 均有对应安装脚本</li>
+    <li><strong style="color:#58a6ff">Nix Flake 支持</strong> — 吸引了 NixOS 社区用户</li>
+    <li><strong style="color:#bc8cff">高度可定制</strong> — CSS 变量系统让用户可以按喜好调整</li>
+    <li><strong style="color:#3fb950">AI 参与开发</strong> — 项目有 Claude (AI) 的贡献，展示 AI 辅助开发可能性</li>
+  </ul>
+</div>
+
+<!-- Use Cases -->
+<div class="card">
+  <h2>🎯 应用场景</h2>
+  <div class="scenario-tags">
+    <span class="scenario-tag">🎨 追求美感的开发者 — 让 VSCode 更漂亮</span>
+    <span class="scenario-tag">💻 前端工程师 — 提升编码视觉体验</span>
+    <span class="scenario-tag">🔀 JetBrains 转 VSCode 用户 — 熟悉的风格</span>
+    <span class="scenario-tag">⚙️ 主题定制爱好者 — 深度自定义 CSS</span>
+    <span class="scenario-tag">👥 团队统一风格 — 一行命令统一 IDE 外观</span>
+  </div>
+</div>
+
+<!-- Comparison -->
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr>
+        <th>特性</th><th>Dark Islands</th><th>One Dark Pro</th><th>GitHub Dark</th><th>Dracula</th><th>Catppuccin</th>
+      </tr>
+      <tr>
+        <td>深色主题</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>CSS UI 重塑</td><td class="check">✅ 浮动玻璃</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>圆角面板</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>平滑动画</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>一键安装</td><td class="check">✅</td><td class="check">✅ Marketplace</td><td class="check">✅ Marketplace</td><td class="check">✅ Marketplace</td><td class="check">✅ Marketplace</td>
+      </tr>
+      <tr>
+        <td>自定义变量</td><td class="check">✅ CSS Vars</td><td class="cross">❌</td><td class="cross">❌</td><td class="warn">⚠️ 有限</td><td class="warn">⚠️ 有限</td>
+      </tr>
+      <tr>
+        <td>Nix 支持</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>字体配套</td><td class="check">✅ 三字体方案</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>Stars</td><td>7.7K</td><td>4.2K</td><td>1.8K</td><td>3.5K</td><td>15K+</td>
+      </tr>
+    </table>
+  </div>
+  <p style="margin-top:12px;color:#bc8cff;font-weight:600">结论：Dark Islands 不只是主题，而是 VSCode 的全面 UI 改造方案，视觉效果和定制深度远超同类。</p>
+</div>
+
+<!-- Target Users -->
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item">
+      <div class="user-icon">👨‍💻</div>
+      <div class="user-title">VSCode 重度用户</div>
+      <div class="user-desc">长时间编码需要舒适视觉</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🎨</div>
+      <div class="user-title">前端/UI 开发者</div>
+      <div class="user-desc">对视觉美感有高要求</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🔀</div>
+      <div class="user-title">JetBrains 转投用户</div>
+      <div class="user-desc">寻找熟悉的 Islands 风格</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🌙</div>
+      <div class="user-title">暗色主题爱好者</div>
+      <div class="user-desc">喜欢深色、现代感外观</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">⚙️</div>
+      <div class="user-title">折腾爱好者</div>
+      <div class="user-desc">享受自定义 IDE 的乐趣</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Start -->
+<div class="card">
+  <h2>🚀 快速上手指南</h2>
+
+  <h3>1. macOS / Linux (一行命令)</h3>
+  <div class="code-block">
+    <code><span class="cmd">curl</span> <span class="flag">-fsSL</span> https://raw.githubusercontent.com/bwya77/vscode-dark-islands/main/bootstrap.sh <span class="flag">|</span> bash</code>
+  </div>
+
+  <h3>2. Windows (一行命令)</h3>
+  <div class="code-block">
+    <code><span class="cmd">irm</span> https://raw.githubusercontent.com/bwya77/vscode-dark-islands/main/bootstrap.ps1 <span class="flag">|</span> iex</code>
+  </div>
+
+  <h3>3. Nix 用户</h3>
+  <div class="code-block">
+    <code><span class="cmd">nix run</span> github:bwya77/vscode-dark-islands#vscode</code>
+  </div>
+
+  <h3>4. 自定义调整</h3>
+  <div class="code-block">
+    <code><span class="comment">// 编辑 VSCode settings.json 中的 CSS 变量</span><br>
+{<br>
+&nbsp;&nbsp;<span class="string">"custom-ui-style.widget"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">".monaco-workbench"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="flag">"--islands-panel-radius"</span>: <span class="string">"32px"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="flag">"--islands-bg-canvas"</span>: <span class="string">"#0a0a0f"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}</code>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">代码质量</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#f0883e">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#f0883e"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#f0883e">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#f0883e"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">8.0/10</div>
+    <div style="color:#bc8cff;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>💡 总结</h2>
+  <p style="font-size:1.05rem">VSCode Dark Islands 是一个将<strong style="color:#bc8cff">视觉设计推向极致</strong>的主题项目。它超越了传统"配色方案"的范畴，通过 CSS 注入实现了 JetBrains Islands 风格的浮动玻璃面板效果。对于追求极致美感的 VSCode 用户来说，这是目前<strong style="color:#3fb950">最惊艳的选择</strong>。虽然需要额外的扩展支持（Custom UI Style），但一键安装脚本大大降低了使用门槛。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub · WebSearch · 项目 README</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>

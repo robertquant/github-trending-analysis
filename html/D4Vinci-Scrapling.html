@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrapling - 自适应 Web 爬虫框架深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+.badge-red{background:rgba(248,81,73,0.15);color:#f85149;border:1px solid rgba(248,81,73,0.3)}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#58a6ff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#3fb950}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#58a6ff}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#58a6ff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(88,166,255,0.05)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+.warn{color:#f0883e}
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#3fb950}
+.code-block .flag{color:#f0883e}
+.code-block .string{color:#a5d6ff}
+.code-block .kw{color:#ff7b72}
+.code-block .fn{color:#d2a8ff}
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #3fb950}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#58a6ff}
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
+.pros,.cons{border-radius:8px;padding:16px}
+.pros{background:rgba(63,185,80,0.05);border:1px solid rgba(63,185,80,0.15)}
+.cons{background:rgba(248,81,73,0.05);border:1px solid rgba(248,81,73,0.15)}
+.pros h4{color:#3fb950;margin-bottom:8px}
+.cons h4{color:#f85149;margin-bottom:8px}
+.pros li,.cons li{font-size:0.9rem;margin-bottom:5px}
+.arch-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:18px;margin:12px 0;font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;line-height:1.7;color:#8b949e}
+.arch-block .arch-main{color:#58a6ff;font-weight:700}
+.arch-block .arch-sub{color:#3fb950}
+.arch-block .arch-detail{color:#c9d1d9}
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+.bench-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.bench-name{width:120px;text-align:right;font-size:0.85rem;color:#8b949e;flex-shrink:0}
+.bench-bar-bg{flex:1;height:20px;background:#21262d;border-radius:4px;overflow:hidden;position:relative}
+.bench-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:0.75rem;font-weight:600;color:#fff;white-space:nowrap}
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  .pros-cons{grid-template-columns:1fr}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+  .bench-name{width:80px;font-size:0.75rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>🕷️ Scrapling</h1>
+  <div class="subtitle">Adaptive Web Scraping Framework · 自适应 Web 爬虫框架</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 44,842 Stars</span>
+    <span class="badge badge-green">🔥 +915 Today</span>
+    <span class="badge badge-orange">🐍 Python 3.10+</span>
+    <span class="badge badge-purple">📄 BSD-3-Clause</span>
+    <span class="badge badge-red">🚀 v0.4.7</span>
+  </div>
+</div>
+
+<!-- Overview -->
+<div class="card">
+  <h2>📋 项目简介</h2>
+  <p>Scrapling 是一个<strong style="color:#3fb950">革命性</strong>的 Python Web 爬虫框架，由 Karim Shoair (D4Vinci) 开发。其核心创新在于<strong style="color:#58a6ff">自适应解析</strong>——当目标网站更新页面结构时，Scrapling 能够智能地重新定位目标元素，让你的爬虫<strong style="color:#f0883e">不再因网站改版而失效</strong>。</p>
+  <p style="margin-top:10px">从简单的 HTTP 请求到大规模并发爬取，从 Cloudflare 绕过到 AI 辅助提取，Scrapling 真正做到了 <strong style="color:#3fb950">"One library, zero compromises"</strong>。</p>
+
+  <h3>核心功能一览</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🔄</div><div class="label">自适应解析<br>网站改版不失效</div></div>
+    <div class="feature-item"><div class="icon">🛡️</div><div class="label">反检测浏览<br>Cloudflare 绕过</div></div>
+    <div class="feature-item"><div class="icon">🕷️</div><div class="label">Spider 框架<br>Scrapy 风格 API</div></div>
+    <div class="feature-item"><div class="icon">🤖</div><div class="label">MCP 服务器<br>AI 辅助爬取</div></div>
+    <div class="feature-item"><div class="icon">⚡</div><div class="label">极致性能<br>比 BS4 快 ~784x</div></div>
+    <div class="feature-item"><div class="icon">🔄</div><div class="label">代理轮换<br>内置 Proxy Rotator</div></div>
+    <div class="feature-item"><div class="icon">⏸️</div><div class="label">暂停/恢复<br>检查点持久化</div></div>
+    <div class="feature-item"><div class="icon">💻</div><div class="label">CLI + Shell<br>无需写代码</div></div>
+  </div>
+</div>
+
+<!-- Architecture -->
+<div class="card">
+  <h2>🏗️ 技术架构</h2>
+  <div class="arch-block">
+    <span class="arch-main">Scrapling</span><br>
+    ├── <span class="arch-sub">Parser</span> (自适应解析引擎)<br>
+    │   ├── CSS / XPath / BS4 选择器<br>
+    │   ├── <span class="arch-detail">智能元素追踪 (相似性算法)</span><br>
+    │   └── 正则 / 文本搜索<br>
+    ├── <span class="arch-sub">Fetchers</span> (请求层)<br>
+    │   ├── <span class="arch-detail">Fetcher</span> — HTTP + TLS 指纹模拟 + HTTP/3<br>
+    │   ├── <span class="arch-detail">DynamicFetcher</span> — Playwright 完整浏览器<br>
+    │   ├── <span class="arch-detail">StealthyFetcher</span> — 反检测隐身模式<br>
+    │   └── Session 管理 (同步 + 异步)<br>
+    ├── <span class="arch-sub">Spiders</span> (爬虫框架)<br>
+    │   ├── Scrapy 风格异步 API<br>
+    │   ├── 并发调度 + 域名节流<br>
+    │   ├── 检查点持久化 (暂停/恢复)<br>
+    │   └── 流式输出 + JSON/JSONL 导出<br>
+    ├── <span class="arch-sub">Proxy Rotator</span> (代理轮换)<br>
+    ├── <span class="arch-sub">MCP Server</span> (AI 集成)<br>
+    └── <span class="arch-sub">CLI & Interactive Shell</span>
+  </div>
+</div>
+
+<!-- Three Fetchers -->
+<div class="card">
+  <h2>🎯 三层 Fetcher 架构</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Fetcher</th><th>底层技术</th><th>适用场景</th><th>反检测</th></tr>
+      <tr>
+        <td><strong style="color:#58a6ff">Fetcher</strong></td>
+        <td>HTTP 请求 + TLS 模拟</td>
+        <td>静态页面 / API</td>
+        <td>TLS 指纹模拟</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#3fb950">DynamicFetcher</strong></td>
+        <td>Playwright 浏览器自动化</td>
+        <td>SPA 动态渲染页面</td>
+        <td>浏览器指纹</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0883e">StealthyFetcher</strong></td>
+        <td>Playwright + 隐身增强</td>
+        <td>反爬严格的目标</td>
+        <td class="check">✅ Cloudflare 绕过</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- Benchmarks -->
+<div class="card">
+  <h2>⚡ 性能基准测试</h2>
+  <p>文本提取速度测试（5000 嵌套元素，100+ 次运行平均值）</p>
+  <div style="margin:15px 0">
+    <div class="bench-row">
+      <div class="bench-name">Scrapling</div>
+      <div class="bench-bar-bg"><div class="bench-bar-fill" style="width:5%;background:linear-gradient(90deg,#3fb950,#58a6ff)">2.02ms</div></div>
+    </div>
+    <div class="bench-row">
+      <div class="bench-name">Parsel/Scrapy</div>
+      <div class="bench-bar-bg"><div class="bench-bar-fill" style="width:5.1%;background:#3fb950">2.04ms</div></div>
+    </div>
+    <div class="bench-row">
+      <div class="bench-name">Raw Lxml</div>
+      <div class="bench-bar-bg"><div class="bench-bar-fill" style="width:6.3%;background:#58a6ff">2.54ms</div></div>
+    </div>
+    <div class="bench-row">
+      <div class="bench-name">PyQuery</div>
+      <div class="bench-bar-bg"><div class="bench-bar-fill" style="width:15%;background:#f0883e">24.17ms (~12x)</div></div>
+    </div>
+    <div class="bench-row">
+      <div class="bench-name">BS4 + Lxml</div>
+      <div class="bench-bar-bg"><div class="bench-bar-fill" style="width:85%;background:#f85149">1584ms (~784x)</div></div>
+    </div>
+    <div class="bench-row">
+      <div class="bench-name">BS4 + html5lib</div>
+      <div class="bench-bar-bg"><div class="bench-bar-fill" style="width:100%;background:#f85149">3392ms (~1679x)</div></div>
+    </div>
+  </div>
+  <p style="color:#3fb950;font-weight:600;font-size:0.95rem">Scrapling 解析速度是 BeautifulSoup 的 ~784 倍，与 Scrapy/Parsel 基本持平</p>
+</div>
+
+<!-- Why Trending -->
+<div class="card">
+  <h2>🔥 为什么火 (Trending 原因)</h2>
+  <ul>
+    <li><strong style="color:#f0883e">自适应解析是杀手锏</strong> — 解决了爬虫最大的痛点：网站改版导致爬虫失效。这是独一无二的创新</li>
+    <li><strong style="color:#58a6ff">一站式解决方案</strong> — 不再需要组合 Scrapy + BS4 + Selenium，一个库搞定一切</li>
+    <li><strong style="color:#3fb950">Cloudflare 绕过开箱即用</strong> — 零配置即可绕过 Turnstile 和 Interstitial</li>
+    <li><strong style="color:#bc8cff">性能碾压传统方案</strong> — 比 BeautifulSoup 快 ~784 倍</li>
+    <li><strong style="color:#f0883e">AI 原生集成</strong> — 内置 MCP 服务器，Claude/Cursor 可直接调用</li>
+    <li><strong style="color:#3fb950">活跃维护</strong> — 45 个版本发布，92% 测试覆盖率，Discord 社区</li>
+  </ul>
+</div>
+
+<!-- Comparison -->
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>特性</th><th>Scrapling</th><th>Scrapy</th><th>BS4</th><th>Selenium</th><th>Playwright</th></tr>
+      <tr>
+        <td>自适应解析</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>反检测</td><td class="check">✅ 内置</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>CF 绕过</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>爬虫框架</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>动态渲染</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="check">✅</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>MCP/AI</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>代理轮换</td><td class="check">✅ 内置</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>暂停/恢复</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>解析速度</td><td class="check">极快</td><td class="check">快</td><td class="warn">慢</td><td class="warn">慢</td><td class="warn">慢</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- Use Cases -->
+<div class="card">
+  <h2>🎯 应用场景</h2>
+  <div class="scenario-tags">
+    <span class="scenario-tag">📊 数据采集 - 电商/新闻/社交</span>
+    <span class="scenario-tag">🔍 搜索引擎 - 价格比较</span>
+    <span class="scenario-tag">📈 金融数据 - 行情监控</span>
+    <span class="scenario-tag">🤖 AI 训练 - 数据集构建</span>
+    <span class="scenario-tag">🔒 安全研究 - 指纹检测</span>
+    <span class="scenario-tag">📰 内容聚合 - 自动化采集</span>
+    <span class="scenario-tag">🧪 竞品分析 - 自动化监控</span>
+    <span class="scenario-tag">🌐 SEO 工具 - 网站分析</span>
+  </div>
+</div>
+
+<!-- Quick Start -->
+<div class="card">
+  <h2>🚀 快速上手</h2>
+
+  <h3>1. 安装</h3>
+  <div class="code-block">
+    <code><span class="cmd">pip install</span> <span class="string">"scrapling[all]"</span><br>
+<span class="cmd">scrapling install</span>  <span class="comment"># 安装浏览器依赖</span></code>
+  </div>
+
+  <h3>2. 基础请求</h3>
+  <div class="code-block">
+    <code><span class="kw">from</span> scrapling.fetchers <span class="kw">import</span> <span class="fn">Fetcher</span><br><br>
+page = <span class="fn">Fetcher</span>.get(<span class="string">'https://example.com/'</span>)<br>
+titles = page.css(<span class="string">'h1::text'</span>).getall()</code>
+  </div>
+
+  <h3>3. 绕过 Cloudflare</h3>
+  <div class="code-block">
+    <code><span class="kw">from</span> scrapling.fetchers <span class="kw">import</span> <span class="fn">StealthyFetcher</span><br><br>
+page = <span class="fn">StealthyFetcher</span>.fetch(<br>
+&nbsp;&nbsp;<span class="string">'https://protected-site.com'</span>,<br>
+&nbsp;&nbsp;headless=<span class="flag">True</span>,<br>
+&nbsp;&nbsp;solve_cloudflare=<span class="flag">True</span><br>)<br>
+data = page.css(<span class="string">'.content'</span>).getall()</code>
+  </div>
+
+  <h3>4. 完整爬虫</h3>
+  <div class="code-block">
+    <code><span class="kw">from</span> scrapling.spiders <span class="kw">import</span> <span class="fn">Spider, Response</span><br><br>
+<span class="kw">class</span> <span class="fn">MySpider</span>(Spider):<br>
+&nbsp;&nbsp;name = <span class="string">"demo"</span><br>
+&nbsp;&nbsp;start_urls = [<span class="string">"https://example.com/"</span>]<br>
+&nbsp;&nbsp;concurrent_requests = <span class="flag">10</span><br><br>
+&nbsp;&nbsp;<span class="kw">async def</span> <span class="fn">parse</span>(self, response):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> item <span class="kw">in</span> response.css(<span class="string">'.product'</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">yield</span> {<span class="string">"title"</span>: item.css(<span class="string">'h2::text'</span>).get()}<br><br>
+result = <span class="fn">MySpider</span>().start()<br>
+result.items.to_json(<span class="string">"output.json"</span>)</code>
+  </div>
+
+  <h3>5. CLI 工具 (无需编程)</h3>
+  <div class="code-block">
+    <code><span class="cmd">scrapling shell</span>  <span class="comment"># 交互式爬虫 Shell</span><br>
+<span class="cmd">scrapling extract get</span> <span class="string">'https://example.com'</span> output.md<br>
+<span class="cmd">scrapling extract stealthy-fetch</span> <span class="string">'https://protected.com'</span> data.html <span class="flag">--solve-cloudflare</span></code>
+  </div>
+</div>
+
+<!-- Target Users -->
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item">
+      <div class="user-icon">🕷️</div>
+      <div class="user-title">爬虫开发者</div>
+      <div class="user-desc">★★★★★ 一站式替代 Scrapy+BS4</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">📊</div>
+      <div class="user-title">数据分析师</div>
+      <div class="user-desc">★★★★☆ CLI 快速提取数据</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🤖</div>
+      <div class="user-title">AI/LLM 开发者</div>
+      <div class="user-desc">★★★★☆ MCP 直连 AI 工具</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🔒</div>
+      <div class="user-title">安全研究员</div>
+      <div class="user-desc">★★★★☆ 反检测和指纹模拟</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🎯</div>
+      <div class="user-title">产品经理</div>
+      <div class="user-desc">★★★☆☆ CLI 无需编程</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🌱</div>
+      <div class="user-title">初学者</div>
+      <div class="user-desc">★★★☆☆ 功能全但学习曲线较陡</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pros & Cons -->
+<div class="card">
+  <h2>⚖️ 优势与不足</h2>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✅ 核心优势</h4>
+      <ul>
+        <li><strong>自适应解析</strong> — 独创功能，网站改版不失效</li>
+        <li><strong>一站式方案</strong> — 无需组合多个库</li>
+        <li><strong>性能卓越</strong> — 比 BS4 快 ~784 倍</li>
+        <li><strong>CF 绕过</strong> — 开箱即用</li>
+        <li><strong>AI 原生</strong> — MCP 服务器集成</li>
+        <li><strong>质量过硬</strong> — 92% 测试覆盖 + 完整类型提示</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>⚠️ 存在不足</h4>
+      <ul>
+        <li><strong>依赖较重</strong> — 完整安装需下载浏览器</li>
+        <li><strong>Python 3.10+</strong> — 不支持旧版本</li>
+        <li><strong>学习曲线</strong> — 功能全面需投入学习时间</li>
+        <li><strong>相对年轻</strong> — 生态不如 Scrapy 成熟</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">代码质量</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#f0883e">10/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:100%;background:linear-gradient(90deg,#3fb950,#f0883e)"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">9.2/10</div>
+    <div style="color:#f0883e;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>📝 总结</h2>
+  <p style="font-size:1.05rem">Scrapling 是 2026 年 Python 爬虫领域的<strong style="color:#3fb950">标杆级项目</strong>。其独创的<strong style="color:#58a6ff">自适应解析</strong>功能解决了爬虫开发者最大的痛点——网站改版导致爬虫失效。加上内置的反检测、Cloudflare 绕过、Scrapy 风格的爬虫框架、MCP AI 服务器等功能，Scrapling 真正做到了<strong style="color:#f0883e">"一个库替代整个技术栈"</strong>。</p>
+  <p style="margin-top:10px">无论你是专业爬虫工程师还是偶尔需要采集数据的开发者，Scrapling 都是 2026 年最值得关注的 Python 爬虫框架。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub README · WebSearch · 项目文档 · 性能基准</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>

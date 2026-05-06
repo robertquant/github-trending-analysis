@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>qBittorrent - 开源 BitTorrent 客户端之王 | GitHub Trending 分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1976D2;
+    --primary-light: #42A5F5;
+    --primary-dark: #0D47A1;
+    --accent: #00E676;
+    --accent-warm: #69F0AE;
+    --bg-dark: #0A0F1C;
+    --bg-card: #111827;
+    --bg-card-hover: #1A2332;
+    --bg-surface: #0D1321;
+    --text-primary: #E8ECF1;
+    --text-secondary: #8B9BB4;
+    --text-muted: #5A6A80;
+    --border: #1E2A3A;
+    --gradient-1: linear-gradient(135deg, #1976D2 0%, #00BCD4 100%);
+    --gradient-2: linear-gradient(135deg, #00E676 0%, #00BFA5 100%);
+    --gradient-3: linear-gradient(135deg, #1976D2 0%, #7C4DFF 100%);
+    --shadow-glow: 0 0 40px rgba(25, 118, 210, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Hero Section */
+  .hero {
+    position: relative;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px 60px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(25, 118, 210, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(0, 230, 118, 0.06) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(25, 118, 210, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(25, 118, 210, 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  }
+  .hero-content {
+    position: relative;
+    text-align: center;
+    max-width: 860px;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(25, 118, 210, 0.12);
+    border: 1px solid rgba(25, 118, 210, 0.25);
+    border-radius: 100px;
+    padding: 6px 20px;
+    font-size: 13px;
+    color: var(--primary-light);
+    margin-bottom: 28px;
+    letter-spacing: 0.5px;
+  }
+  .hero-badge .dot {
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 900;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #90CAF9 50%, #00E676 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto 36px;
+    line-height: 1.8;
+  }
+
+  /* Stats Row */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    text-align: center;
+    padding: 16px 24px;
+    background: rgba(17, 24, 39, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    min-width: 140px;
+    transition: all 0.3s;
+  }
+  .stat-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 900;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Container */
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Section */
+  .section {
+    padding: 72px 0;
+  }
+  .section-header {
+    margin-bottom: 48px;
+  }
+  .section-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--primary-light);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    transition: all 0.3s;
+  }
+  .card:hover {
+    border-color: rgba(25, 118, 210, 0.3);
+    box-shadow: var(--shadow-glow);
+  }
+  .card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Feature Grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .feature-card .icon-box {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .feature-card p {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+  .icon-blue { background: rgba(25, 118, 210, 0.15); }
+  .icon-green { background: rgba(0, 230, 118, 0.15); }
+  .icon-purple { background: rgba(124, 77, 255, 0.15); }
+  .icon-orange { background: rgba(255, 152, 0, 0.15); }
+  .icon-cyan { background: rgba(0, 188, 212, 0.15); }
+  .icon-pink { background: rgba(233, 30, 99, 0.15); }
+
+  /* Architecture Diagram */
+  .arch-diagram {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    overflow-x: auto;
+  }
+  .arch-diagram pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre;
+  }
+  .arch-diagram .highlight {
+    color: var(--primary-light);
+    font-weight: 600;
+  }
+  .arch-diagram .accent {
+    color: var(--accent);
+  }
+
+  /* Tech Stack */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .tech-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s;
+  }
+  .tech-item:hover {
+    border-color: rgba(25, 118, 210, 0.3);
+    transform: translateY(-2px);
+  }
+  .tech-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .tech-item .name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .tech-item .desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  /* v5.2 Features */
+  .new-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .new-feature {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .new-feature::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--gradient-1);
+  }
+  .new-feature:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-glow);
+    border-color: rgba(25, 118, 210, 0.3);
+  }
+  .new-feature .badge-new {
+    display: inline-block;
+    background: var(--gradient-2);
+    color: #000;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .new-feature h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .new-feature p {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Comparison Table */
+  .compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .compare-table th {
+    background: rgba(25, 118, 210, 0.08);
+    padding: 14px 18px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary-light);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .compare-table td {
+    padding: 12px 18px;
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: rgba(25, 118, 210, 0.04); }
+  .compare-table td:first-child {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .check { color: var(--accent); }
+  .cross { color: #EF5350; }
+  .rank-1 { color: #FFD700; font-weight: 700; }
+  .rank-2 { color: #B0BEC5; }
+  .rank-3 { color: #A1887F; }
+
+  /* Why Trending */
+  .trending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .trending-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    display: flex;
+    gap: 18px;
+    transition: all 0.3s;
+  }
+  .trending-card:hover {
+    border-color: rgba(25, 118, 210, 0.3);
+    transform: translateY(-2px);
+  }
+  .trending-num {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--gradient-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .trending-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+  .trending-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+
+  /* Code Block */
+  .code-block {
+    background: #0B1120;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: rgba(25, 118, 210, 0.06);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-header span {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .code-dots {
+    display: flex; gap: 6px;
+  }
+  .code-dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .code-dots .d1 { background: #EF5350; }
+  .code-dots .d2 { background: #FFC107; }
+  .code-dots .d3 { background: #4CAF50; }
+  .code-body {
+    padding: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    overflow-x: auto;
+  }
+  .code-body .comment { color: var(--text-muted); }
+  .code-body .cmd { color: var(--accent); }
+  .code-body .flag { color: #FFC107; }
+  .code-body .str { color: #CE93D8; }
+
+  /* Quick Start */
+  .quickstart-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .step-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: all 0.3s;
+  }
+  .step-card:hover {
+    border-color: rgba(25, 118, 210, 0.3);
+    transform: translateY(-2px);
+  }
+  .step-num {
+    font-size: 2.2rem;
+    font-weight: 900;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .step-card h4 { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+  .step-card p { font-size: 0.85rem; color: var(--text-secondary); }
+
+  /* Audience */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .audience-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .audience-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(25, 118, 210, 0.3);
+  }
+  .audience-card .emoji { font-size: 2rem; margin-bottom: 10px; }
+  .audience-card h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
+  .audience-card p { font-size: 0.8rem; color: var(--text-secondary); }
+  .audience-card .stars {
+    color: #FFD700;
+    font-size: 0.82rem;
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 48px 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+  .footer p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .footer a {
+    color: var(--primary-light);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .footer a:hover { color: var(--accent); }
+  .footer .links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { min-height: 440px; padding: 60px 16px 40px; }
+    .stats-row { gap: 12px; }
+    .stat-item { min-width: 100px; padding: 12px 16px; }
+    .stat-value { font-size: 1.3rem; }
+    .section { padding: 48px 0; }
+    .feature-grid, .new-features, .trending-grid, .quickstart-steps, .audience-grid {
+      grid-template-columns: 1fr;
+    }
+    .compare-table { font-size: 0.78rem; }
+    .compare-table th, .compare-table td { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      GitHub Trending — 2026-05-05
+    </div>
+    <h1>qBittorrent</h1>
+    <p>近 20 年持续迭代的开源 BitTorrent 客户端。<br>免费、无广告、跨平台 — 全球数百万用户的首选 µTorrent 替代方案。</p>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-value">36,904</div>
+        <div class="stat-label">Stars</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">v5.2.0</div>
+        <div class="stat-label">Latest</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">13,695+</div>
+        <div class="stat-label">Commits</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">20 yr</div>
+        <div class="stat-label">Since 2006</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">~70</div>
+        <div class="stat-label">Languages</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Core Features -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Core Features</div>
+      <h2 class="section-title">核心功能</h2>
+    </div>
+    <div class="feature-grid">
+      <div class="card feature-card">
+        <h3><span class="icon-box icon-blue">&#9881;</span> 下载引擎</h3>
+        <p>Magnet 链接、DHT/PEX/LSD 去中心化发现、加密连接、顺序下载（边下边播）、uTP 拥塞控制、多 Tracker 支持</p>
+      </div>
+      <div class="card feature-card">
+        <h3><span class="icon-box icon-green">&#128269;</span> 内置搜索</h3>
+        <p>Python 插件式搜索引擎，聚合多个种子站点，无需打开浏览器，支持 SOCKS4/5 代理</p>
+      </div>
+      <div class="card feature-card">
+        <h3><span class="icon-box icon-purple">&#128225;</span> RSS 订阅</h3>
+        <p>自动从 RSS Feed 抓取并下载新种子，支持正则表达式高级过滤规则</p>
+      </div>
+      <div class="card feature-card">
+        <h3><span class="icon-box icon-orange">&#127760;</span> Web UI</h3>
+        <p>内置 AJAX 远程管理界面 + RESTful API，完美适配 NAS、Docker、手机管理场景</p>
+      </div>
+      <div class="card feature-card">
+        <h3><span class="icon-box icon-cyan">&#128200;</span> 带宽调度</h3>
+        <p>按时间段自动设置上传/下载速度限制，精细控制带宽资源分配</p>
+      </div>
+      <div class="card feature-card">
+        <h3><span class="icon-box icon-pink">&#128274;</span> 隐私安全</h3>
+        <p>IP 过滤（eMule/PeerGuardian 格式）、连接加密、无追踪、完全开源可审计</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- v5.2 New Features -->
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">What's New in v5.2.0</div>
+      <h2 class="section-title">v5.2.0 重大更新 <span style="color: var(--accent); font-size: 0.9rem; font-weight: 400;">(2026-05-03)</span></h2>
+    </div>
+    <div class="new-features">
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>Torrent Creator 按钮</h4>
+        <p>工具栏新增创建种子文件按钮，直接在界面中制作并分享 .torrent 文件</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>Tracker 状态过滤器</h4>
+        <p>独立的 Tracker 状态筛选视图，快速定位不同状态的 Tracker 节点</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>按分类分享限制</h4>
+        <p>每个分类可独立设置做种比例和时间限制，灵活管理不同类型下载</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>异步分片计算</h4>
+        <p>添加大型种子时异步计算分片，显著提升界面响应性能</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>自定义颜色方案</h4>
+        <p>可配置应用样式、PiecesBar 和 ProgressBar 颜色，个性化界面体验</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>WebUI 全面增强</h4>
+        <p>创建种子、Tracker 管理与重声明、RSS 头部视图、Basic Auth、持久化设置、可用性条等</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>搜索功能改进</h4>
+        <p>SOCKS4/SOCKS4a 代理支持、结果过滤优化、CTRL+W 快速关闭搜索标签</p>
+      </div>
+      <div class="new-feature">
+        <span class="badge-new">NEW</span>
+        <h4>平台适配优化</h4>
+        <p>Linux / macOS / Windows 平台特定改进，大量 Bug 修复和性能优化</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Architecture</div>
+      <h2 class="section-title">技术架构</h2>
+    </div>
+    <div class="arch-diagram">
+<pre>
+<span class="highlight">┌──────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│</span>                    <span class="accent">qBittorrent</span>                        <span class="highlight">│</span>
+<span class="highlight">├───────────────┬──────────────────────────────────────────┤</span>
+<span class="highlight">│</span>  Desktop GUI  │  <span class="accent">Qt5 / Qt6 (C++)</span>                         <span class="highlight">│</span>
+<span class="highlight">│</span>               │  - 传输列表 / 搜索 / RSS 阅读器          <span class="highlight">│</span>
+<span class="highlight">├───────────────┼──────────────────────────────────────────┤</span>
+<span class="highlight">│</span>   Web UI      │  <span class="accent">HTML / CSS / JavaScript (AJAX)</span>           <span class="highlight">│</span>
+<span class="highlight">│</span>               │  - 响应式界面 + RESTful API              <span class="highlight">│</span>
+<span class="highlight">├───────────────┼──────────────────────────────────────────┤</span>
+<span class="highlight">│</span>  Core Engine  │  <span class="accent">C++ / Qt</span>                                <span class="highlight">│</span>
+<span class="highlight">│</span>               │  - 种子管理 / 队列 / 调度器              <span class="highlight">│</span>
+<span class="highlight">├───────────────┼──────────────────────────────────────────┤</span>
+<span class="highlight">│</span>  libtorrent   │  <span class="accent">libtorrent-rasterbar</span>                     <span class="highlight">│</span>
+<span class="highlight">│</span>               │  - DHT / PEX / LSD / uTP / 加密         <span class="highlight">│</span>
+<span class="highlight">├───────────────┼──────────────────────────────────────────┤</span>
+<span class="highlight">│</span>  搜索插件     │  <span class="accent">Python 插件系统</span>                         <span class="highlight">│</span>
+<span class="highlight">│</span>               │  - 多站点聚合 / SOCKS 代理               <span class="highlight">│</span>
+<span class="highlight">├───────────────┼──────────────────────────────────────────┤</span>
+<span class="highlight">│</span>  无头模式     │  <span class="accent">qbittorrent-nox</span>                         <span class="highlight">│</span>
+<span class="highlight">│</span>               │  - Docker / NAS / VPS 部署               <span class="highlight">│</span>
+<span class="highlight">└───────────────┴──────────────────────────────────────────┘</span>
+</pre>
+    </div>
+
+    <h3 style="margin: 36px 0 20px; font-size: 1.1rem; font-weight: 600;">技术栈</h3>
+    <div class="tech-grid">
+      <div class="tech-item">
+        <div class="tech-icon icon-blue">C++</div>
+        <div><div class="name">C++ / Qt</div><div class="desc">跨平台原生 GUI (69.1%)</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon icon-green">lt</div>
+        <div><div class="name">libtorrent-rasterbar</div><div class="desc">核心 BitTorrent 引擎</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon icon-orange">JS</div>
+        <div><div class="name">JavaScript (AJAX)</div><div class="desc">Web UI 交互层 (14.5%)</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon icon-purple">Py</div>
+        <div><div class="name">Python 插件</div><div class="desc">搜索引擎扩展系统</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon icon-cyan">CM</div>
+        <div><div class="name">CMake</div><div class="desc">跨平台构建系统</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon icon-pink">CI</div>
+        <div><div class="name">GitHub Actions</div><div class="desc">自动化 CI/CD 流水线</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why Trending -->
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Why Trending</div>
+      <h2 class="section-title">为什么登上 Trending？</h2>
+    </div>
+    <div class="trending-grid">
+      <div class="trending-card">
+        <div class="trending-num">1</div>
+        <div>
+          <h4>v5.2.0 重大版本发布</h4>
+          <p>2026 年 5 月 3 日发布，距上一版本整整一年。Torrent Creator、异步分片计算、WebUI 全面增强等大量新功能引发社区热议</p>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="trending-num">2</div>
+        <div>
+          <h4>µTorrent 替代首选</h4>
+          <p>µTorrent 广告泛滥和隐私争议不断，"免费、无广告、完全开源"的 qBittorrent 持续吸引大量迁移用户</p>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="trending-num">3</div>
+        <div>
+          <h4>近 20 年社区信任</h4>
+          <p>13,695+ 次提交、36K+ Stars、活跃的论坛与 IRC，SourceForge 社区评价："轻量、无广告、可靠"</p>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="trending-num">4</div>
+        <div>
+          <h4>行业一致认可</h4>
+          <p>TechRadar 称其为 "最佳 BT 客户端之一"；Slant 排名 #1，领先 Transmission 和 Deluge</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Comparison</div>
+      <h2 class="section-title">同类项目对比</h2>
+    </div>
+    <div style="overflow-x: auto; border-radius: 16px;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>特性</th>
+            <th>qBittorrent</th>
+            <th>Transmission</th>
+            <th>Deluge</th>
+            <th>rTorrent</th>
+            <th>µTorrent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>综合排名</td>
+            <td class="rank-1">&#11088; #1</td>
+            <td class="rank-2">#2</td>
+            <td class="rank-3">#3</td>
+            <td>#4</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>开源</td>
+            <td class="check">&#10004; GPL</td>
+            <td class="check">&#10004; MIT</td>
+            <td class="check">&#10004; GPL</td>
+            <td class="check">&#10004; GPL</td>
+            <td class="cross">&#10008; 闭源</td>
+          </tr>
+          <tr>
+            <td>广告</td>
+            <td class="check">&#10004; 无</td>
+            <td class="check">&#10004; 无</td>
+            <td class="check">&#10004; 无</td>
+            <td class="check">&#10004; 无</td>
+            <td class="cross">&#10008; 有</td>
+          </tr>
+          <tr>
+            <td>Web UI</td>
+            <td class="check">&#10004; 内置完善</td>
+            <td class="check">&#10004; 内置</td>
+            <td>需插件</td>
+            <td>需第三方</td>
+            <td class="check">&#10004;</td>
+          </tr>
+          <tr>
+            <td>搜索插件</td>
+            <td class="check">&#10004; 内置</td>
+            <td class="cross">&#10008;</td>
+            <td class="check">&#10004; 插件</td>
+            <td class="cross">&#10008;</td>
+            <td class="cross">&#10008;</td>
+          </tr>
+          <tr>
+            <td>RSS</td>
+            <td class="check">&#10004; 正则过滤</td>
+            <td class="check">&#10004;</td>
+            <td class="check">&#10004; 插件</td>
+            <td>需配置</td>
+            <td class="check">&#10004;</td>
+          </tr>
+          <tr>
+            <td>资源占用</td>
+            <td>低</td>
+            <td>极低</td>
+            <td>中等</td>
+            <td>低</td>
+            <td>低</td>
+          </tr>
+          <tr>
+            <td>适合场景</td>
+            <td><strong>通用首选</strong></td>
+            <td>macOS / 极简</td>
+            <td>高级/竞速</td>
+            <td>服务器</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Quick Start</div>
+      <h2 class="section-title">快速上手</h2>
+    </div>
+
+    <div class="quickstart-steps">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <h4>安装客户端</h4>
+        <p>支持 Ubuntu/Debian/Fedora/Arch/macOS/Windows，也可通过 Docker 部署无头版</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <h4>添加种子</h4>
+        <p>通过 .torrent 文件、Magnet 链接或内置搜索引擎添加下载任务</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <h4>开始下载</h4>
+        <p>选择保存路径，设置优先级和速度限制，享受高速稳定的下载体验</p>
+      </div>
+    </div>
+
+    <div class="code-block" style="margin-top: 24px;">
+      <div class="code-header">
+        <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span>terminal</span>
+      </div>
+      <div class="code-body">
+<span class="comment"># Ubuntu / Debian 安装</span>
+<span class="cmd">sudo apt update</span> <span class="flag">&&</span> <span class="cmd">sudo apt install</span> qbittorrent
+
+<span class="comment"># macOS (Homebrew)</span>
+<span class="cmd">brew install</span> <span class="flag">--cask</span> qbittorrent
+
+<span class="comment"># Docker 部署无头版</span>
+<span class="cmd">docker run</span> <span class="flag">-d</span> \
+  <span class="flag">--name</span> qbittorrent \
+  <span class="flag">-e</span> <span class="str">PUID=1000</span> \
+  <span class="flag">-e</span> <span class="str">PGID=1000</span> \
+  <span class="flag">-e</span> <span class="str">TZ=Asia/Shanghai</span> \
+  <span class="flag">-p</span> <span class="str">8080:8080</span> \
+  <span class="flag">-p</span> <span class="str">6881:6881</span> \
+  <span class="flag">-v</span> <span class="str">~/config:/config</span> \
+  <span class="flag">-v</span> <span class="str">~/downloads:/downloads</span> \
+  <span class="flag">--restart</span> unless-stopped \
+  linuxserver/qbittorrent
+
+<span class="comment"># 通过 API 添加种子</span>
+<span class="cmd">curl</span> <span class="flag">-X POST</span> <span class="str">"http://localhost:8080/api/v2/torrents/add"</span> \
+  <span class="flag">-b</span> <span class="str">"SID=your_session"</span> \
+  <span class="flag">-d</span> <span class="str">"urls=magnet:?xt=urn:btih:XXXXX"</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Who Should Use -->
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Target Users</div>
+      <h2 class="section-title">适合谁使用？</h2>
+    </div>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <div class="emoji">&#128187;</div>
+        <h4>Linux 用户</h4>
+        <p>几乎所有发行版默认推荐</p>
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#128421;</div>
+        <h4>Windows 用户</h4>
+        <p>µTorrent 完美替代方案</p>
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#128451;</div>
+        <h4>NAS / Homelab</h4>
+        <p>Docker + Web UI 远程管理</p>
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#128272;</div>
+        <h4>隐私敏感用户</h4>
+        <p>开源可审计、无追踪</p>
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#128241;</div>
+        <h4>移动端用户</h4>
+        <p>通过 Web UI 手机管理</p>
+        <div class="stars">&#9733;&#9733;&#9733;&#9734;&#9734;</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>qBittorrent — 开源 BitTorrent 客户端之王 | GitHub Trending 分析</p>
+  <p>数据来源：GitHub, 9to5Linux, TechRadar, Cloudwards, Slant, SourceForge</p>
+  <div class="links">
+    <a href="https://github.com/qbittorrent/qBittorrent" target="_blank">GitHub</a>
+    <a href="https://www.qbittorrent.org" target="_blank">官网</a>
+    <a href="https://wiki.qbittorrent.org" target="_blank">Wiki</a>
+    <a href="https://forum.qbittorrent.org" target="_blank">论坛</a>
+    <a href="https://sourceforge.net/projects/qbittorrent/" target="_blank">SourceForge</a>
+  </div>
+  <p style="margin-top: 20px; font-size: 0.75rem; color: var(--text-muted);">分析日期：2026-05-05 | 由 AI 自动生成</p>
+</footer>
+
+</body>
+</html>

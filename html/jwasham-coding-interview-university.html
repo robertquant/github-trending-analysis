@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coding Interview University - 深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+.badge-red{background:rgba(248,81,73,0.15);color:#f85149;border:1px solid rgba(248,81,73,0.3)}
+
+/* Cards */
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#58a6ff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#3fb950}
+.card a{color:#58a6ff;text-decoration:none}
+.card a:hover{text-decoration:underline}
+
+/* Feature Grid */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#58a6ff}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#58a6ff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(88,166,255,0.05)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+.warn{color:#f0883e}
+
+/* Score */
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+
+/* Timeline */
+.timeline{position:relative;padding-left:30px;margin:15px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:#21262d}
+.timeline-item{position:relative;margin-bottom:16px}
+.timeline-item::before{content:'';position:absolute;left:-26px;top:6px;width:12px;height:12px;border-radius:50%;background:#3fb950;border:2px solid #0d1117}
+.timeline-item .t-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.timeline-item .t-desc{color:#8b949e;font-size:0.85rem;margin-top:2px}
+
+/* Code Block */
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#3fb950}
+.code-block .flag{color:#f0883e}
+.code-block .string{color:#a5d6ff}
+
+/* Scenario Tags */
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#58a6ff}
+
+/* Target Users */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #3fb950}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+
+/* Translation Grid */
+.lang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin:15px 0}
+.lang-item{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px;text-align:center;font-size:0.85rem;color:#c9d1d9}
+.lang-item.done{border-color:rgba(63,185,80,0.3);color:#3fb950}
+
+/* Pros/Cons */
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
+.pros,.cons{border-radius:8px;padding:16px}
+.pros{background:rgba(63,185,80,0.05);border:1px solid rgba(63,185,80,0.15)}
+.cons{background:rgba(248,81,73,0.05);border:1px solid rgba(248,81,73,0.15)}
+.pros h4{color:#3fb950;margin-bottom:8px}
+.cons h4{color:#f85149;margin-bottom:8px}
+.pros li,.cons li{font-size:0.9rem;margin-bottom:5px}
+
+/* Footer */
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  .pros-cons{grid-template-columns:1fr}
+  .lang-grid{grid-template-columns:repeat(3,1fr)}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>Coding Interview University</h1>
+  <div class="subtitle">Complete CS Study Plan · 完整计算机科学面试学习计划</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 345,643 Stars</span>
+    <span class="badge badge-green">🔥 +497 Today</span>
+    <span class="badge badge-orange">📝 Markdown</span>
+    <span class="badge badge-purple">📄 CC-BY-SA-4.0</span>
+    <span class="badge badge-red">🏆 GitHub Top 10</span>
+  </div>
+</div>
+
+<!-- Story -->
+<div class="card">
+  <h2>📖 背景故事</h2>
+  <p>John Washam 并非计算机科班出身。作为一名自学编程者，他立志进入亚马逊等顶级科技公司。为此他制定了<strong style="color:#f0883e">为期数月的疯狂学习计划</strong>——每天学习 8-12 小时，系统地攻克数据结构、算法、系统设计等核心 CS 知识。</p>
+  <p style="margin-top:10px">最终他<strong style="color:#3fb950">成功入职亚马逊</strong>，并将自己的完整学习路线图开源。这就是 <strong style="color:#58a6ff">Coding Interview University</strong> 的由来——一份经过实战验证的学习计划，不是纸上谈兵。</p>
+</div>
+
+<!-- Content Coverage -->
+<div class="card">
+  <h2>📚 知识体系覆盖</h2>
+  <p>这份学习计划几乎覆盖了软件工程面试所需的所有计算机科学核心知识，从基础到高级层层递进。</p>
+
+  <h3>基础模块</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">📊</div><div class="label">算法复杂度分析<br>大O记号</div></div>
+    <div class="feature-item"><div class="icon">📦</div><div class="label">数据结构<br>数组/链表/栈/队列</div></div>
+    <div class="feature-item"><div class="icon">#️⃣</div><div class="label">哈希表<br>冲突解决/开放寻址</div></div>
+    <div class="feature-item"><div class="icon">🌳</div><div class="label">树结构<br>二叉树/AVL/红黑树</div></div>
+    <div class="feature-item"><div class="icon">🏔️</div><div class="label">堆/优先队列<br>最小堆/最大堆</div></div>
+    <div class="feature-item"><div class="icon">🔤</div><div class="label">字典树 Trie<br>前缀匹配</div></div>
+    <div class="feature-item"><div class="icon">🔗</div><div class="label">并查集<br>Union-Find</div></div>
+    <div class="feature-item"><div class="icon">🕸️</div><div class="label">图算法<br>BFS/DFS/最短路径</div></div>
+  </div>
+
+  <h3>排序算法</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">📌</div><div class="label">选择排序<br>O(n²)</div></div>
+    <div class="feature-item"><div class="icon">📌</div><div class="label">归并排序<br>O(n log n)</div></div>
+    <div class="feature-item"><div class="icon">📌</div><div class="label">快速排序<br>O(n log n) avg</div></div>
+    <div class="feature-item"><div class="icon">📌</div><div class="label">堆排序<br>O(n log n)</div></div>
+  </div>
+
+  <h3>高级主题</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🔄</div><div class="label">递归与回溯</div></div>
+    <div class="feature-item"><div class="icon">💰</div><div class="label">动态规划</div></div>
+    <div class="feature-item"><div class="icon">🎯</div><div class="label">贪心算法</div></div>
+    <div class="feature-item"><div class="icon">🏗️</div><div class="label">设计模式</div></div>
+    <div class="feature-item"><div class="icon">🧩</div><div class="label">NP-Complete</div></div>
+    <div class="feature-item"><div class="icon">🌐</div><div class="label">系统设计</div></div>
+    <div class="feature-item"><div class="icon">⚡</div><div class="label">并行编程</div></div>
+    <div class="feature-item"><div class="icon">🔐</div><div class="label">密码学</div></div>
+  </div>
+</div>
+
+<!-- Learning Resources -->
+<div class="card">
+  <h2>📖 推荐学习资源</h2>
+
+  <h3>核心书籍</h3>
+  <div class="table-wrap">
+    <table>
+      <tr><th>书名</th><th>语言版本</th><th>侧重</th></tr>
+      <tr><td>Coding Interview Patterns</td><td>C++ / Java / Python</td><td>面试模式识别</td></tr>
+      <tr><td>Cracking the Coding Interview</td><td>多语言</td><td>经典面试宝典</td></tr>
+      <tr><td>Elements of Programming Interviews</td><td>C++ / Java / Python</td><td>高质量编程题</td></tr>
+      <tr><td>Algorithm Design Manual</td><td>通用</td><td>算法设计思维</td></tr>
+      <tr><td>Designing Data-Intensive Applications</td><td>通用</td><td>系统设计必读</td></tr>
+    </table>
+  </div>
+
+  <h3>刷题平台</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🟢</div><div class="label">LeetCode</div></div>
+    <div class="feature-item"><div class="icon">🔵</div><div class="label">HackerRank</div></div>
+    <div class="feature-item"><div class="icon">🟡</div><div class="label">TopCoder</div></div>
+    <div class="feature-item"><div class="icon">🔴</div><div class="label">Codeforces</div></div>
+    <div class="feature-item"><div class="icon">🟣</div><div class="label">Codility</div></div>
+    <div class="feature-item"><div class="icon">🟠</div><div class="label">AlgoExpert</div></div>
+  </div>
+
+  <h3>记忆工具</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🧠</div><div class="label">专属 Flashcards<br>交互式记忆卡片</div></div>
+    <div class="feature-item"><div class="icon">📦</div><div class="label">Anki 格式<br>1200-1800 张卡片</div></div>
+    <div class="feature-item"><div class="icon">📝</div><div class="label">学习笔记<br>核心概念速查</div></div>
+  </div>
+</div>
+
+<!-- Internationalization -->
+<div class="card">
+  <h2>🌍 国际化支持</h2>
+  <p>社区贡献了 <strong style="color:#3fb950">15+</strong> 种语言的完整翻译，<strong style="color:#58a6ff">14+</strong> 种语言正在翻译中。</p>
+  <div class="lang-grid">
+    <div class="lang-item done">🇨🇳 简体中文</div>
+    <div class="lang-item done">🇹🇼 繁體中文</div>
+    <div class="lang-item done">🇯🇵 日本語</div>
+    <div class="lang-item done">🇰🇷 한국어</div>
+    <div class="lang-item done">🇪🇸 Español</div>
+    <div class="lang-item done">🇵🇹 Português</div>
+    <div class="lang-item done">🇫🇷 Français</div>
+    <div class="lang-item done">🇩🇪 Deutsch</div>
+    <div class="lang-item done">🇷🇺 Русский</div>
+    <div class="lang-item done">🇮🇹 Italiano</div>
+    <div class="lang-item done">🇹🇷 Türkçe</div>
+    <div class="lang-item done">🇮🇩 Bahasa</div>
+    <div class="lang-item done">🇵🇱 Polski</div>
+    <div class="lang-item done">🇮🇷 فارسی</div>
+    <div class="lang-item done">🇻🇳 Tiếng Việt</div>
+    <div class="lang-item">+14 翻译中...</div>
+  </div>
+</div>
+
+<!-- Why Trending -->
+<div class="card">
+  <h2>🔥 为什么是 GitHub Top 10</h2>
+  <ul>
+    <li><strong style="color:#f0883e">真实故事背书</strong> — 作者从自学到入职亚马逊的亲身经历，不是理论派</li>
+    <li><strong style="color:#58a6ff">覆盖面极广</strong> — 从算法基础到系统设计，几乎没有知识盲区</li>
+    <li><strong style="color:#3fb950">完全免费</strong> — CC-BY-SA-4.0 开源许可，比付费课程更全面</li>
+    <li><strong style="color:#bc8cff">持续更新 8+ 年</strong> — 2016 年至今，始终保持与行业趋势同步</li>
+    <li><strong style="color:#f0883e">全球社区驱动</strong> — 15+ 种语言翻译，全球开发者共同维护</li>
+    <li><strong style="color:#58a6ff">实用工具配套</strong> — Flashcards + Anki 卡片，科学记忆方法论</li>
+  </ul>
+</div>
+
+<!-- Comparison -->
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr>
+        <th>项目</th><th>Stars</th><th>侧重</th><th>互动性</th><th>语言</th>
+      </tr>
+      <tr>
+        <td><strong style="color:#f0883e">coding-interview-university</strong></td><td>345K+</td><td>全面学习路线图</td><td class="warn">⚠️ 纯文档</td><td>15+ 翻译</td>
+      </tr>
+      <tr>
+        <td>system-design-primer</td><td>290K+</td><td>系统设计</td><td class="warn">⚠️ 文档+代码</td><td>多语言</td>
+      </tr>
+      <tr>
+        <td>javascript-algorithms</td><td>190K+</td><td>JS 算法实现</td><td class="check">✅ 代码可运行</td><td>English</td>
+      </tr>
+      <tr>
+        <td>fucking-algorithm</td><td>127K+</td><td>中文算法框架</td><td class="warn">⚠️ 图文教程</td><td>中文</td>
+      </tr>
+      <tr>
+        <td>LeetCode-Solutions</td><td>40K+</td><td>LeetCode 题解</td><td class="check">✅ 代码题解</td><td>多语言</td>
+      </tr>
+    </table>
+  </div>
+  <p style="margin-top:12px;color:#3fb950;font-weight:600">结论：coding-interview-university 是覆盖面最广、最系统化的免费面试学习资源。</p>
+</div>
+
+<!-- Target Users -->
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item">
+      <div class="user-icon">🎯</div>
+      <div class="user-title">面试准备者</div>
+      <div class="user-desc">★★★★★ 最全面的面试路线图</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">📚</div>
+      <div class="user-title">CS 自学者</div>
+      <div class="user-desc">★★★★★ 从基础到高级系统学习</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🔄</div>
+      <div class="user-title">转行开发者</div>
+      <div class="user-desc">★★★★☆ 路线清晰，需投入时间</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🎓</div>
+      <div class="user-title">在校学生</div>
+      <div class="user-desc">★★★★☆ 补充课堂知识的优秀资源</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">💼</div>
+      <div class="user-title">资深工程师</div>
+      <div class="user-desc">★★★☆☆ 可用于查漏补缺</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🌏</div>
+      <div class="user-title">全球学习者</div>
+      <div class="user-desc">★★★★★ 15+ 语言翻译覆盖</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pros & Cons -->
+<div class="card">
+  <h2>⚖️ 优势与不足</h2>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✅ 核心优势</h4>
+      <ul>
+        <li><strong>真实故事背书</strong> — 自学→亚马逊，非纸上谈兵</li>
+        <li><strong>覆盖极广</strong> — 算法到系统设计无盲区</li>
+        <li><strong>15+ 语言翻译</strong> — 全球可达</li>
+        <li><strong>记忆工具</strong> — Flashcards + Anki 科学记忆</li>
+        <li><strong>持续更新 8+ 年</strong> — 保持行业同步</li>
+        <li><strong>完全免费</strong> — CC-BY-SA-4.0 许可</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>⚠️ 存在不足</h4>
+      <ul>
+        <li><strong>非交互式</strong> — 纯 Markdown，无互动练习环境</li>
+        <li><strong>学习曲线陡峭</strong> — 完整学习需数月投入</li>
+        <li><strong>内容过多</strong> — 可能导致"选择困难症"</li>
+        <li><strong>偏重算法</strong> — 实际工程技能覆盖较少</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#f0883e">5/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:50%;background:#f0883e"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">内容质量</div>
+      <div class="score-value" style="color:#3fb950">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#3fb950">10/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:100%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#3fb950">10/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:100%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#3fb950">10/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:100%;background:#3fb950"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">8.4/10</div>
+    <div style="color:#f0883e;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<!-- Tips -->
+<div class="card">
+  <h2>💡 使用建议</h2>
+  <ul>
+    <li><strong style="color:#58a6ff">分阶段学习</strong> — 不要试图一次学完，每天固定时间，按计划推进</li>
+    <li><strong style="color:#3fb950">动手实现</strong> — 每种数据结构和算法都要自己手写一遍，不能只看</li>
+    <li><strong style="color:#f0883e">善用 Flashcards</strong> — 利用记忆卡片巩固知识，对抗遗忘曲线</li>
+    <li><strong style="color:#bc8cff">学练结合</strong> — 学完一个主题后立即到 LeetCode 做对应题目</li>
+    <li><strong style="color:#58a6ff">选对语言</strong> — Python 做学习语言，Java/C++ 准备面试</li>
+  </ul>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>📝 总结</h2>
+  <p style="font-size:1.05rem">Coding Interview University 是 GitHub 历史上 <strong style="color:#3fb950">Star 数最高的学习资源之一</strong>（345K+），也是计算机科学面试准备领域 <strong style="color:#58a6ff">最全面、最系统化</strong> 的免费学习路线图。作者从自学到入职亚马逊的真实经历赋予了这份计划无可替代的<strong style="color:#f0883e">实战可信度</strong>。</p>
+  <p style="margin-top:10px">无论你是准备大厂面试、转行学编程，还是想系统复习 CS 基础，这份路线图都是 <strong style="color:#3fb950">零成本的起点</strong>。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub API · 项目 README · WebSearch</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>

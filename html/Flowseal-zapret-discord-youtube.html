@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowseal/zapret-discord-youtube - GitHub Trending 分析</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --bg-card-hover: #1f2b3d;
+            --accent-cyan: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-orange: #ff6b35;
+            --accent-red: #ff3366;
+            --accent-purple: #a855f7;
+            --text-primary: #e8edf5;
+            --text-secondary: #8899b0;
+            --text-muted: #4a5568;
+            --border-color: #1e3a5f;
+            --glow-cyan: rgba(0, 212, 255, 0.15);
+            --glow-green: rgba(0, 255, 136, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            padding: 60px 0 40px;
+            position: relative;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-badge .pulse {
+            width: 8px; height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            line-height: 1.8;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .meta-tag:hover {
+            border-color: var(--accent-cyan);
+            background: var(--bg-card-hover);
+        }
+
+        .meta-tag .value {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .meta-tag.star .value { color: #fbbf24; }
+        .meta-tag.today .value { color: var(--accent-green); }
+        .meta-tag.lang .value { color: var(--accent-cyan); }
+
+        /* Section */
+        section {
+            margin: 48px 0;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .icon-cyan { background: rgba(0, 212, 255, 0.12); color: var(--accent-cyan); }
+        .icon-green { background: rgba(0, 255, 136, 0.12); color: var(--accent-green); }
+        .icon-orange { background: rgba(255, 107, 53, 0.12); color: var(--accent-orange); }
+        .icon-purple { background: rgba(168, 85, 247, 0.12); color: var(--accent-purple); }
+        .icon-red { background: rgba(255, 51, 102, 0.12); color: var(--accent-red); }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 30px var(--glow-cyan);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 212, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .feature-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Architecture */
+        .arch-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .arch-layer {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s;
+        }
+
+        .arch-layer:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .arch-layer .layer-label {
+            min-width: 100px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .arch-layer:nth-child(1) .layer-label { color: var(--accent-cyan); }
+        .arch-layer:nth-child(2) .layer-label { color: var(--accent-green); }
+        .arch-layer:nth-child(3) .layer-label { color: var(--accent-orange); }
+        .arch-layer:nth-child(4) .layer-label { color: var(--accent-purple); }
+
+        .arch-layer .layer-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .arch-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 20px;
+            padding: 4px 0;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: rgba(0, 212, 255, 0.08);
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table td {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(0, 212, 255, 0.03);
+        }
+
+        .comparison-table .highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Code block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .code-header {
+            background: rgba(255,255,255,0.03);
+            padding: 10px 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-header .dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-header .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+
+        .code-header .dot:nth-child(1) { background: #ff5f57; }
+        .code-header .dot:nth-child(2) { background: #febc2e; }
+        .code-header .dot:nth-child(3) { background: #28c840; }
+
+        .code-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #c9d1d9;
+            overflow-x: auto;
+        }
+
+        .code-body .comment { color: #6e7681; }
+        .code-body .cmd { color: var(--accent-cyan); }
+        .code-body .flag { color: var(--accent-orange); }
+        .code-body .string { color: var(--accent-green); }
+        .code-body .step { color: var(--accent-purple); font-weight: 600; }
+
+        /* Trending reasons */
+        .reasons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .reason-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            transition: all 0.3s;
+        }
+
+        .reason-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .reason-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            width: 40px;
+            text-align: center;
+        }
+
+        .reason-card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .reason-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        .stat-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-item:nth-child(1) .stat-value { color: #fbbf24; }
+        .stat-item:nth-child(2) .stat-value { color: var(--accent-green); }
+        .stat-item:nth-child(3) .stat-value { color: var(--accent-cyan); }
+        .stat-item:nth-child(4) .stat-value { color: var(--accent-orange); }
+        .stat-item:nth-child(5) .stat-value { color: var(--accent-purple); }
+
+        /* Audience tags */
+        .audience-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .audience-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .audience-card:hover {
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .audience-card .avatar {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .audience-card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            color: var(--accent-green);
+        }
+
+        .audience-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tech stack table */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .tech-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .tech-item:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tech-item .tech-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .tech-item .tech-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .tech-item .tech-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: rgba(255, 107, 53, 0.08);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+
+        .warning-box h4 {
+            color: var(--accent-orange);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .warning-box p, .warning-box li {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .warning-box ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+
+        .warning-box li {
+            margin-bottom: 4px;
+        }
+
+        /* Flow diagram */
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+        }
+
+        .flow-step .step-num {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            border: 2px solid;
+        }
+
+        .flow-step:nth-child(1) .step-num { background: rgba(0,212,255,0.1); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .flow-step:nth-child(2) .step-num { background: rgba(0,255,136,0.1); border-color: var(--accent-green); color: var(--accent-green); }
+        .flow-step:nth-child(3) .step-num { background: rgba(255,107,53,0.1); border-color: var(--accent-orange); color: var(--accent-orange); }
+        .flow-step:nth-child(4) .step-num { background: rgba(168,85,247,0.1); border-color: var(--accent-purple); color: var(--accent-purple); }
+
+        .flow-step .step-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .flow-step .step-text strong {
+            color: var(--text-primary);
+        }
+
+        .flow-connector {
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 48px;
+        }
+
+        footer p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header { padding: 40px 0 24px; }
+            .header-meta { flex-direction: column; gap: 8px; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .feature-grid { grid-template-columns: 1fr; }
+            .reasons-grid { grid-template-columns: 1fr; }
+            section { margin: 32px 0; }
+            .comparison-table { font-size: 0.8rem; }
+            .comparison-table th, .comparison-table td { padding: 10px 12px; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-badge">
+                <span class="pulse"></span>
+                GitHub Trending &middot; 2026-05-05
+            </div>
+            <h1>zapret-discord-youtube</h1>
+            <p class="header-desc">
+                基于 bol-van/zapret 的 Windows 预配置构建版本，通过 DPI（深度包检测）绕过技术，帮助用户恢复对 Discord、YouTube 等被封锁服务的访问。
+            </p>
+            <div class="header-meta">
+                <div class="meta-tag star">
+                    <span>Stars</span>
+                    <span class="value">27,242</span>
+                </div>
+                <div class="meta-tag today">
+                    <span>Today</span>
+                    <span class="value">+106</span>
+                </div>
+                <div class="meta-tag lang">
+                    <span>Language</span>
+                    <span class="value">Batchfile</span>
+                </div>
+                <div class="meta-tag">
+                    <span>License</span>
+                    <span class="value">MIT</span>
+                </div>
+                <div class="meta-tag">
+                    <span>Author</span>
+                    <span class="value">Flowseal</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value">27.2K</div>
+                <div class="stat-label">Total Stars</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">+106</div>
+                <div class="stat-label">Stars Today</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">12K+</div>
+                <div class="stat-label">Issues</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">Win</div>
+                <div class="stat-label">Platform</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">MIT</div>
+                <div class="stat-label">License</div>
+            </div>
+        </div>
+
+        <!-- Core Features -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-cyan">&#x2699;</span>
+                核心功能
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-num">01</div>
+                    <h3>DPI 流量绕过</h3>
+                    <p>通过操纵网络数据包特征（TTL、窗口大小、分段等）欺骗 ISP 的深度包检测系统，使其无法识别和拦截目标流量。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">02</div>
+                    <h3>多服务支持</h3>
+                    <p>支持 YouTube、Discord、Telegram (Web版) 等主流服务，可通过配置文件自由添加更多需要绕过的域名和 IP。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">03</div>
+                    <h3>多策略切换</h3>
+                    <p>提供 General、ALT、FAKE 等多种绕过策略，适配不同 ISP 和网络环境。用户可逐一测试找到最佳方案。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">04</div>
+                    <h3>一键安装服务</h3>
+                    <p>通过 service.bat 脚本将策略安装为 Windows 系统服务，实现开机自动启动，无需手动运行。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">05</div>
+                    <h3>内置诊断工具</h3>
+                    <p>提供 Run Diagnostics 和 Run Tests 功能，自动检测常见问题并测试不同策略在不同 CDN 上的可用性。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-num">06</div>
+                    <h3>灵活的规则管理</h3>
+                    <p>支持自定义域名列表、IP 集合和排除规则，满足个性化需求。自动更新 IPSet 和 Hosts 文件。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-green">&#x1F3D7;</span>
+                技术架构
+            </div>
+            <div class="arch-layers">
+                <div class="arch-layer">
+                    <span class="layer-label">UI Layer</span>
+                    <div class="layer-content">
+                        <span class="arch-chip">general.bat</span>
+                        <span class="arch-chip">service.bat</span>
+                    </div>
+                </div>
+                <div class="arch-layer">
+                    <span class="layer-label">Strategy</span>
+                    <div class="layer-content">
+                        <span class="arch-chip">General</span>
+                        <span class="arch-chip">ALT</span>
+                        <span class="arch-chip">FAKE</span>
+                        <span class="arch-chip">Host Lists</span>
+                        <span class="arch-chip">IPSet</span>
+                    </div>
+                </div>
+                <div class="arch-layer">
+                    <span class="layer-label">Engine</span>
+                    <div class="layer-content">
+                        <span class="arch-chip">winws.exe (zapret core)</span>
+                        <span class="arch-chip">WinDivert.dll</span>
+                    </div>
+                </div>
+                <div class="arch-layer">
+                    <span class="layer-label">Kernel</span>
+                    <div class="layer-content">
+                        <span class="arch-chip">WinDivert64.sys</span>
+                        <span class="arch-chip">Windows Network Stack</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 16px; color: var(--accent-green);">工作原理流程</h3>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="step-num">1</div>
+                        <div class="step-text"><strong>WinDivert 拦截流量</strong> &mdash; 在内核层截获所有网络数据包</div>
+                    </div>
+                    <div class="flow-connector">&#x25BE;</div>
+                    <div class="flow-step">
+                        <div class="step-num">2</div>
+                        <div class="step-text"><strong>策略规则处理</strong> &mdash; winws.exe 根据选定策略修改数据包特征</div>
+                    </div>
+                    <div class="flow-connector">&#x25BE;</div>
+                    <div class="flow-step">
+                        <div class="step-num">3</div>
+                        <div class="step-text"><strong>DPI 欺骗</strong> &mdash; 修改后的数据包无法被 DPI 系统正确识别</div>
+                    </div>
+                    <div class="flow-connector">&#x25BE;</div>
+                    <div class="flow-step">
+                        <div class="step-num">4</div>
+                        <div class="step-text"><strong>流量放行</strong> &mdash; ISP 的 DPI 系统放行流量，用户正常访问目标服务</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-orange">&#x1F4E6;</span>
+                技术栈
+            </div>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-icon">&#x1F4DC;</div>
+                    <div class="tech-name">Batchfile</div>
+                    <div class="tech-desc">Windows 批处理脚本</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">&#x2699;</div>
+                    <div class="tech-name">WinDivert</div>
+                    <div class="tech-desc">内核级网络驱动</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">&#x1F527;</div>
+                    <div class="tech-name">C (winws.exe)</div>
+                    <div class="tech-desc">zapret 核心引擎</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">&#x1F6E0;</div>
+                    <div class="tech-name">GitHub Actions</div>
+                    <div class="tech-desc">CI/CD 自动构建</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">&#x1F4C4;</div>
+                    <div class="tech-name">Text Config</div>
+                    <div class="tech-desc">纯文本配置文件</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why Trending -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-red">&#x1F525;</span>
+                为什么火？
+            </div>
+            <div class="reasons-grid">
+                <div class="reason-card">
+                    <div class="reason-icon">&#x1F30D;</div>
+                    <div>
+                        <h4>地缘政治需求驱动</h4>
+                        <p>俄罗斯持续封锁西方互联网服务，数百万用户迫切需要此类工具恢复访问。</p>
+                    </div>
+                </div>
+                <div class="reason-card">
+                    <div class="reason-icon">&#x1F4A1;</div>
+                    <div>
+                        <h4>零门槛使用</h4>
+                        <p>下载解压运行 .bat 文件即可，无需技术背景。相比 VPN 更轻量，不需要代理服务器。</p>
+                    </div>
+                </div>
+                <div class="reason-card">
+                    <div class="reason-icon">&#x2764;</div>
+                    <div>
+                        <h4>免费开源</h4>
+                        <p>MIT 许可证，完全免费无广告。代码透明可审计，赢得用户信任。</p>
+                    </div>
+                </div>
+                <div class="reason-card">
+                    <div class="reason-icon">&#x1F504;</div>
+                    <div>
+                        <h4>持续维护</h4>
+                        <p>截至 2026 年 4 月仍有活跃 CI 构建和 Issue 回复，策略随封锁升级不断更新。</p>
+                    </div>
+                </div>
+                <div class="reason-card">
+                    <div class="reason-icon">&#x1F4CA;</div>
+                    <div>
+                        <h4>社区飞轮效应</h4>
+                        <p>12000+ Issues 和活跃 Discussions 形成社区飞轮。2026 年 2 月首次 Trending 引发持续关注。</p>
+                    </div>
+                </div>
+                <div class="reason-card">
+                    <div class="reason-icon">&#x1F6E1;</div>
+                    <div>
+                        <h4>无服务器方案</h4>
+                        <p>无需远程代理或 VPN 服务器，纯本地运行，不存在服务器被封的问题。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-purple">&#x2696;</span>
+                同类项目对比
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>项目</th>
+                            <th>平台</th>
+                            <th>易用性</th>
+                            <th>灵活性</th>
+                            <th>特色</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="highlight">zapret-discord-youtube</td>
+                            <td>Windows</td>
+                            <td>极高</td>
+                            <td>中等</td>
+                            <td>开箱即用，一键运行</td>
+                        </tr>
+                        <tr>
+                            <td>bol-van/zapret</td>
+                            <td>Win/Linux/Mac</td>
+                            <td>低</td>
+                            <td>极高</td>
+                            <td>原始项目，全平台支持</td>
+                        </tr>
+                        <tr>
+                            <td>ankddev/zapret-discord-youtube</td>
+                            <td>Windows</td>
+                            <td>高</td>
+                            <td>中等</td>
+                            <td>额外支持 Viber 等</td>
+                        </tr>
+                        <tr>
+                            <td>GoodbyDPI</td>
+                            <td>Windows</td>
+                            <td>高</td>
+                            <td>低</td>
+                            <td>极轻量</td>
+                        </tr>
+                        <tr>
+                            <td>VPN 服务</td>
+                            <td>全平台</td>
+                            <td>高</td>
+                            <td>高</td>
+                            <td>通用代理，但需付费</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Who should use -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-green">&#x1F465;</span>
+                适合谁使用
+            </div>
+            <div class="audience-grid">
+                <div class="audience-card">
+                    <div class="avatar">&#x1F468;&#x200D;&#x1F4BB;</div>
+                    <h4>俄罗斯普通网民</h4>
+                    <p>需要访问 YouTube、Discord 但不想付费 VPN 的用户</p>
+                </div>
+                <div class="audience-card">
+                    <div class="avatar">&#x1F393;</div>
+                    <h4>留学生和外籍人士</h4>
+                    <p>在俄罗斯需要与国外保持联络的国际群体</p>
+                </div>
+                <div class="audience-card">
+                    <div class="avatar">&#x1F50D;</div>
+                    <h4>网络安全学习者</h4>
+                    <p>想了解 DPI 技术原理和对抗方法的研究者</p>
+                </div>
+                <div class="audience-card">
+                    <div class="avatar">&#x1F468;&#x200D;&#x1F4BC;</div>
+                    <h4>系统管理员</h4>
+                    <p>需要理解网络审查机制的技术人员</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Start -->
+        <section>
+            <div class="section-title">
+                <span class="icon icon-cyan">&#x1F680;</span>
+                快速上手
+            </div>
+
+            <div class="warning-box">
+                <h4>&#x26A0; 注意事项</h4>
+                <ul>
+                    <li>需要 Windows 7 及以上（64位）系统</li>
+                    <li>必须以管理员权限运行</li>
+                    <li>杀毒软件可能误报 WinDivert 为病毒，需添加排除项</li>
+                    <li>解压路径不要包含中文或特殊字符</li>
+                </ul>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    installation.bat
+                </div>
+                <div class="code-body">
+                    <span class="comment"># Step 1: 开启浏览器安全 DNS</span><br>
+                    <span class="step">Chrome:</span> 设置 &rarr; 隐私和安全 &rarr; 安全 &rarr; <span class="string">使用安全 DNS</span><br>
+                    <span class="step">Firefox:</span> 设置 &rarr; 隐私与安全 &rarr; <span class="string">DNS over HTTPS</span> &rarr; 最大保护<br><br>
+                    <span class="comment"># Step 2: 下载最新版本</span><br>
+                    <span class="cmd">访问</span> <span class="string">https://github.com/Flowseal/zapret-discord-youtube/releases</span><br><br>
+                    <span class="comment"># Step 3: 解除文件锁定</span><br>
+                    右键 &rarr; 属性 &rarr; 勾选 <span class="flag">"解除锁定"</span> &rarr; 确定<br><br>
+                    <span class="comment"># Step 4: 解压并运行</span><br>
+                    <span class="cmd">general.bat</span> &nbsp;&nbsp;&nbsp;<span class="comment"># 手动运行策略（逐一测试）</span><br>
+                    <span class="cmd">service.bat</span> &nbsp;&nbsp;<span class="comment"># 安装为系统服务（推荐）</span>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    service-management.bat
+                </div>
+                <div class="code-body">
+                    <span class="comment"># 通过 service.bat 管理服务</span><br><br>
+                    <span class="cmd">Install Service</span> &nbsp;&nbsp;&nbsp;<span class="comment"># 安装策略为自动启动服务</span><br>
+                    <span class="cmd">Remove Services</span> &nbsp;&nbsp;<span class="comment"># 卸载策略和 WinDivert</span><br>
+                    <span class="cmd">Check Status</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 检查服务运行状态</span><br>
+                    <span class="cmd">Run Diagnostics</span> &nbsp;<span class="comment"># 诊断常见问题</span><br>
+                    <span class="cmd">Run Tests</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 测试策略可用性</span><br>
+                    <span class="cmd">Game Filter</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 切换游戏模式</span><br>
+                    <span class="cmd">Update Hosts File</span> <span class="comment"># 修复 Telegram/Discord</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>
+                Analysis date: 2026-05-05 &middot;
+                <a href="https://github.com/Flowseal/zapret-discord-youtube" target="_blank" rel="noopener">View on GitHub</a> &middot;
+                <a href="https://github.com/bol-van/zapret" target="_blank" rel="noopener">Upstream: bol-van/zapret</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

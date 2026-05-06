@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CocoIndex - 增量数据引擎深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+.badge-red{background:rgba(248,81,73,0.15);color:#f85149;border:1px solid rgba(248,81,73,0.3)}
+
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#58a6ff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#3fb950}
+
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#58a6ff}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#58a6ff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(88,166,255,0.05)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+.warn{color:#f0883e}
+
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#3fb950}
+.code-block .flag{color:#f0883e}
+.code-block .string{color:#a5d6ff}
+.code-block .keyword{color:#ff7b72}
+.code-block .func{color:#d2a8ff}
+
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#58a6ff}
+
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #3fb950}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+
+/* Delta highlight */
+.delta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:15px 0}
+.delta-item{background:linear-gradient(135deg,rgba(63,185,80,0.05),rgba(88,166,255,0.05));border:1px solid rgba(63,185,80,0.2);border-radius:10px;padding:18px;text-align:center}
+.delta-item .d-label{color:#8b949e;font-size:.82rem;margin-bottom:6px}
+.delta-item .d-value{font-size:1.6rem;font-weight:800;color:#3fb950}
+.delta-item .d-detail{color:#58a6ff;font-size:.85rem;margin-top:4px}
+
+/* Source/Target flow */
+.flow-box{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.flow-tag{padding:6px 12px;border-radius:6px;font-size:.82rem;font-weight:600}
+.flow-src{background:rgba(240,136,62,0.1);border:1px solid rgba(240,136,62,0.3);color:#f0883e}
+.flow-tgt{background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);color:#58a6ff}
+.flow-arrow{display:flex;align-items:center;color:#3fb950;font-size:1.2rem;padding:0 4px}
+
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  .delta-grid{grid-template-columns:1fr 1fr}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>CocoIndex</h1>
+  <div class="subtitle">Incremental Engine for Long Horizon Agents · 面向长周期Agent的增量数据引擎</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 8,286 Stars</span>
+    <span class="badge badge-green">🔥 +434 Today</span>
+    <span class="badge badge-orange">💎 Python + Rust</span>
+    <span class="badge badge-purple">📄 Apache 2.0</span>
+  </div>
+</div>
+
+<!-- Overview -->
+<div class="card">
+  <h2>📋 项目简介</h2>
+  <p>CocoIndex 是一个开源的增量数据框架，专为长周期 AI Agent 设计。它将代码库、会议记录、Slack 消息、PDF、视频等数据源转化为<strong style="color:#3fb950">实时、持续刷新</strong>的上下文——且只处理增量变化（Δ）。</p>
+  <p style="color:#f0883e;font-weight:700;margin-top:8px">核心理念："React for data engineering" — 声明目标状态，引擎自动保持同步。</p>
+
+  <h3>核心功能一览</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🔄</div><div class="label">增量同步<br>只处理 Δ 变化</div></div>
+    <div class="feature-item"><div class="icon">📝</div><div class="label">声明式 API<br>Python 5分钟上手</div></div>
+    <div class="feature-item"><div class="icon">🔗</div><div class="label">端到端血缘<br>每字节可溯源</div></div>
+    <div class="feature-item"><div class="icon">🦀</div><div class="label">Rust 核心<br>生产级性能</div></div>
+    <div class="feature-item"><div class="icon">🔌</div><div class="label">8类源 / 6类目标<br>丰富连接器</div></div>
+    <div class="feature-item"><div class="icon">🤖</div><div class="label">CocoIndex Code<br>MCP 代码索引</div></div>
+  </div>
+</div>
+
+<!-- Data Flow -->
+<div class="card">
+  <h2>🌊 数据流架构</h2>
+  <p style="text-align:center;margin-bottom:10px;color:#8b949e">8 种数据源 → 增量引擎 → 6 种目标存储</p>
+  <div class="flow-box">
+    <span class="flow-tag flow-src">📁 代码库</span>
+    <span class="flow-tag flow-src">📝 会议记录</span>
+    <span class="flow-tag flow-src">🌐 Web/API</span>
+    <span class="flow-tag flow-src">📄 PDF</span>
+    <span class="flow-tag flow-src">💬 Slack</span>
+    <span class="flow-tag flow-src">🎥 视频</span>
+    <span class="flow-tag flow-src">📊 数据库</span>
+    <span class="flow-tag flow-src">📮 消息队列</span>
+    <span class="flow-arrow">→</span>
+    <span style="padding:6px 16px;border-radius:6px;font-weight:700;background:rgba(63,185,80,0.15);border:1px solid rgba(63,185,80,0.3);color:#3fb950">🔄 CocoIndex Engine</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-tag flow-tgt">🗃️ PostgreSQL</span>
+    <span class="flow-tag flow-tgt">📐 向量DB</span>
+    <span class="flow-tag flow-tgt">🕸️ 图DB</span>
+    <span class="flow-tag flow-tgt">📊 数仓</span>
+    <span class="flow-tag flow-tgt">📮 Kafka</span>
+    <span class="flow-tag flow-tgt">🎯 特征存储</span>
+  </div>
+</div>
+
+<!-- Why Incremental -->
+<div class="card">
+  <h2>⚡ 为什么增量？</h2>
+  <div class="delta-grid">
+    <div class="delta-item">
+      <div class="d-label">数据新鲜度</div>
+      <div class="d-value">&lt; 1s</div>
+      <div class="d-detail">亚秒级源→目标同步</div>
+    </div>
+    <div class="delta-item">
+      <div class="d-label">成本节省</div>
+      <div class="d-value">10×</div>
+      <div class="d-detail">只处理 0.1% 变更</div>
+    </div>
+    <div class="delta-item">
+      <div class="d-label">数据血缘</div>
+      <div class="d-value">100%</div>
+      <div class="d-detail">每个字节可溯源</div>
+    </div>
+    <div class="delta-item">
+      <div class="d-label">缓存命中</div>
+      <div class="d-value">80-90%</div>
+      <div class="d-detail">CocoIndex Code</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:12px;padding:10px;background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);border-radius:8px">
+    <span style="color:#58a6ff;font-size:1.1rem;font-weight:700">🧠 记忆机制：hash(input) + hash(code) → 智能缓存失效</span>
+  </div>
+</div>
+
+<!-- CocoIndex Code -->
+<div class="card">
+  <h2>🤖 CocoIndex Code — 旗舰 MCP 服务器</h2>
+  <p>AST 感知的增量语义代码索引，专为 AI 编程 Agent 设计。</p>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">🌳</div><div class="label">AST 感知分块<br>语义级切分</div></div>
+    <div class="feature-item"><div class="icon">📊</div><div class="label">调用图分析<br>Blast Radius</div></div>
+    <div class="feature-item"><div class="icon">🔍</div><div class="label">语义搜索<br>按含义而非 grep</div></div>
+    <div class="feature-item"><div class="icon">📉</div><div class="label">70% Token 节省<br>80-90% 缓存</div></div>
+  </div>
+  <p style="margin-top:10px;color:#3fb950;font-weight:600">支持：Python · TypeScript · Rust · Go | 兼容 Claude Code · Cursor · Windsurf</p>
+</div>
+
+<!-- Tech Architecture -->
+<div class="card">
+  <h2>🏗️ 技术架构</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>组件</th><th>技术选型</th></tr>
+      <tr><td>核心引擎</td><td>Rust（生产级）</td></tr>
+      <tr><td>API 层</td><td>Python（声明式）</td></tr>
+      <tr><td>执行模型</td><td>持久状态驱动数据流</td></tr>
+      <tr><td>并行策略</td><td>默认并行 + 零拷贝</td></tr>
+      <tr><td>缓存</td><td>hash(input) + hash(code) memoization</td></tr>
+      <tr><td>容错</td><td>重试 + 指数退避 + 死信队列 + 零丢失</td></tr>
+      <tr><td>向量DB</td><td>pgvector / LanceDB</td></tr>
+      <tr><td>图DB</td><td>Neo4j / Kuzu / SurrealDB</td></tr>
+      <tr><td>消息队列</td><td>Kafka (StreamNative / Confluent)</td></tr>
+      <tr><td>许可证</td><td>Apache 2.0</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Why Trending -->
+<div class="card">
+  <h2>🔥 为什么火 (Trending 原因)</h2>
+  <ul>
+    <li><strong style="color:#f0883e">精准定位 Agent 数据痛点</strong> — 批处理管道必然过时，Agent 需要持续新鲜上下文</li>
+    <li><strong style="color:#58a6ff">React 式心智模型</strong> — "声明式" 大幅降低数据工程门槛</li>
+    <li><strong style="color:#3fb950">MCP 生态爆发</strong> — CocoIndex Code 直接兼容 Claude Code、Cursor</li>
+    <li><strong style="color:#bc8cff">Rust 核心保证性能</strong> — Python 易用 + Rust 性能，两全其美</li>
+    <li><strong style="color:#3fb950">Apache 2.0 完全开源</strong> — 无 ELv2 限制，企业友好</li>
+    <li><strong style="color:#f0883e">20+ 即用示例</strong> — 每周更新，开箱即用</li>
+  </ul>
+</div>
+
+<!-- Use Cases -->
+<div class="card">
+  <h2>🎯 内置示例 (20+)</h2>
+  <div class="scenario-tags">
+    <span class="scenario-tag">🔍 实时代码索引 · AST + 向量</span>
+    <span class="scenario-tag">📄 PDF → RAG 索引</span>
+    <span class="scenario-tag">📰 HN 热门话题 · LLM 提取</span>
+    <span class="scenario-tag">🕸️ 会议 → 知识图谱</span>
+    <span class="scenario-tag">📦 多仓库摘要 · LLM</span>
+    <span class="scenario-tag">📋 结构化提取 · BAML/DSPy</span>
+    <span class="scenario-tag">🎙️ 播客 → 知识图谱</span>
+    <span class="scenario-tag">📊 CSV → Kafka 实时流</span>
+  </div>
+</div>
+
+<!-- Comparison -->
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>特性</th><th>CocoIndex</th><th>LlamaIndex</th><th>LangChain</th><th>Airbyte</th></tr>
+      <tr><td>增量处理</td><td class="check">✅ 原生</td><td class="cross">❌</td><td class="cross">❌</td><td class="check">✅</td></tr>
+      <tr><td>AI 原生</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+      <tr><td>声明式 API</td><td class="check">✅ React式</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+      <tr><td>Rust 核心</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+      <tr><td>MCP 兼容</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+      <tr><td>数据血缘</td><td class="check">✅ 端到端</td><td class="cross">❌</td><td class="cross">❌</td><td class="warn">⚠️</td></tr>
+      <tr><td>知识图谱</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+      <tr><td>代码索引</td><td class="check">✅ AST感知</td><td class="warn">⚠️ 基础</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+      <tr><td>开源</td><td class="check">✅ Apache 2.0</td><td class="check">✅ MIT</td><td class="check">✅ MIT</td><td class="check">✅</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:12px;color:#3fb950;font-weight:600">结论：目前唯一将"声明式增量"与"AI Agent 原生"结合的开源框架。</p>
+</div>
+
+<!-- Quick Start -->
+<div class="card">
+  <h2>🚀 快速上手</h2>
+  <h3>1. 安装</h3>
+  <div class="code-block">
+    <code><span class="cmd">pip install</span> cocoindex</code>
+  </div>
+
+  <h3>2. 最小示例 — 文档索引</h3>
+  <div class="code-block">
+    <code><span class="keyword">import</span> cocoindex <span class="keyword">as</span> coco<br>
+<span class="keyword">from</span> cocoindex.connectors <span class="keyword">import</span> localfs, postgres<br>
+<span class="keyword">from</span> cocoindex.ops.text <span class="keyword">import</span> RecursiveSplitter<br><br>
+<span class="keyword">@coco.fn</span>(<span class="flag">memo=True</span>)<br>
+<span class="keyword">async def</span> <span class="func">index_file</span>(file, table):<br>
+&nbsp;&nbsp;<span class="keyword">for</span> chunk <span class="keyword">in</span> RecursiveSplitter().<span class="func">split</span>(<span class="keyword">await</span> file.<span class="func">read_text</span>()):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;table.<span class="func">declare_row</span>(text=chunk.text, embedding=<span class="func">embed</span>(chunk.text))<br><br>
+coco.<span class="func">App</span>(coco.<span class="func">AppConfig</span>(<span class="string">name="docs"</span>), main, <span class="flag">src="./docs"</span>).<span class="func">update_blocking</span>()</code>
+  </div>
+
+  <h3>3. CocoIndex Code (MCP)</h3>
+  <div class="code-block">
+    <code><span class="comment"># Claude Code</span><br>
+<span class="cmd">claude mcp add</span> cocoindex-code <span class="flag">--</span> cocoindex-code<br><br>
+<span class="comment"># Cursor — 添加到 .cursor/mcp.json</span><br>
+{<br>
+&nbsp;&nbsp;<span class="string">"mcpServers"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"cocoindex-code"</span>: { <span class="string">"command"</span>: <span class="flag">"cocoindex-code"</span> }<br>
+&nbsp;&nbsp;}<br>
+}</code>
+  </div>
+</div>
+
+<!-- Target Users -->
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item">
+      <div class="user-icon">🤖</div>
+      <div class="user-title">AI Agent 开发者</div>
+      <div class="user-desc">构建持续刷新的上下文管道</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🔍</div>
+      <div class="user-title">RAG 工程师</div>
+      <div class="user-desc">增量向量索引，告别全量重建</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🏢</div>
+      <div class="user-title">企业 AI 团队</div>
+      <div class="user-desc">PB 级知识库实时索引</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🛠️</div>
+      <div class="user-title">AI 编程工具用户</div>
+      <div class="user-desc">提升 Claude Code/Cursor 效果</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">📊</div>
+      <div class="user-title">数据工程师</div>
+      <div class="user-desc">Python 声明式 ETL，无需 DAG</div>
+    </div>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">代码质量</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#f0883e">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#f0883e"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">8.2/10</div>
+    <div style="color:#f0883e;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>💡 总结</h2>
+  <p style="font-size:1.05rem">CocoIndex 是 2026 年 AI 数据基础设施领域的<strong style="color:#3fb950">重要创新</strong>。以 <strong style="color:#58a6ff">"React for data engineering"</strong> 的核心理念，通过声明式 Python API + Rust 增量引擎，解决了 AI Agent 长周期运行中<strong style="color:#f0883e">上下文数据过时</strong>的核心难题。作为目前唯一将增量数据管道与 AI Agent 原生集成的开源框架，Apache 2.0 许可证更使其成为企业友好的选择。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub · cocoindex.io · Reddit · dev.to · Medium</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>

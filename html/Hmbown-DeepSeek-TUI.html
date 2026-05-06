@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepSeek-TUI - 终端原生 AI 编码代理 | GitHub Trending 分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-secondary: #111827;
+    --bg-card: #1a2233;
+    --bg-card-hover: #1f2a3d;
+    --accent-orange: #f97316;
+    --accent-amber: #f59e0b;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --accent-purple: #8b5cf6;
+    --accent-pink: #ec4899;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: #1e293b;
+    --glow-orange: rgba(249, 115, 22, 0.15);
+    --glow-cyan: rgba(6, 182, 212, 0.15);
+    --code-bg: #0d1117;
+    --font-sans: 'Noto Sans SC', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ===== Hero Section ===== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at 20% 50%, rgba(249, 115, 22, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+                var(--bg-primary);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 20s linear infinite;
+  }
+
+  @keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--accent-orange);
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    color: var(--accent-orange);
+    margin-bottom: 1.5rem;
+    background: var(--glow-orange);
+    font-family: var(--font-mono);
+  }
+
+  .hero-badge .pulse {
+    width: 8px; height: 8px;
+    background: var(--accent-orange);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f97316 0%, #f59e0b 30%, #06b6d4 70%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    font-weight: 300;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+
+  .stat-item:hover {
+    border-color: var(--accent-orange);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--glow-orange);
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--accent-orange);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.25rem;
+  }
+
+  .hero-tags {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+  }
+
+  .tag:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  .tag.rust { border-color: #dea584; color: #dea584; }
+  .tag.ai { border-color: var(--accent-purple); color: var(--accent-purple); }
+  .tag.terminal { border-color: var(--accent-green); color: var(--accent-green); }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    animation: bounce 2s infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* ===== Container ===== */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ===== Section Styles ===== */
+  section {
+    padding: 5rem 0;
+    position: relative;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent-orange);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    font-size: 0.95rem;
+  }
+
+  /* ===== Feature Grid ===== */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-orange), var(--accent-cyan));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .feature-card:hover {
+    border-color: var(--accent-orange);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+    background: var(--glow-orange);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+  }
+
+  .feature-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  /* ===== Architecture Section ===== */
+  .arch-section { background: var(--bg-secondary); }
+
+  .arch-diagram {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arch-diagram::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2rem,
+      rgba(249, 115, 22, 0.03) 2rem,
+      rgba(249, 115, 22, 0.03) calc(2rem + 1px)
+    );
+  }
+
+  .arch-layer {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+
+  .arch-layer:hover {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 20px var(--glow-orange);
+  }
+
+  .arch-layer .layer-name {
+    color: var(--accent-orange);
+    font-weight: 600;
+  }
+
+  .arch-layer .layer-detail {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .arch-arrow {
+    text-align: center;
+    color: var(--accent-cyan);
+    font-size: 1.2rem;
+    margin: 0.25rem 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== Modes Section ===== */
+  .modes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .mode-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.4s ease;
+  }
+
+  .mode-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .mode-card.plan { border-top: 3px solid var(--accent-cyan); }
+  .mode-card.plan:hover { border-color: var(--accent-cyan); box-shadow: 0 12px 40px var(--glow-cyan); }
+  .mode-card.agent { border-top: 3px solid var(--accent-orange); }
+  .mode-card.agent:hover { box-shadow: 0 12px 40px var(--glow-orange); }
+  .mode-card.yolo { border-top: 3px solid var(--accent-green); }
+  .mode-card.yolo:hover { box-shadow: 0 12px 40px rgba(16, 185, 129, 0.15); }
+
+  .mode-emoji { font-size: 2.5rem; margin-bottom: 1rem; }
+  .mode-card h3 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+  .mode-card p { color: var(--text-secondary); font-size: 0.9rem; }
+
+  /* ===== Comparison Table ===== */
+  .comparison-wrapper {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 700px;
+  }
+
+  .comparison-table thead {
+    background: var(--bg-card);
+  }
+
+  .comparison-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--accent-orange);
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+
+  .comparison-table th.highlight {
+    color: var(--accent-orange);
+  }
+
+  .comparison-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+  }
+
+  .comparison-table tr:hover td {
+    background: var(--bg-card);
+  }
+
+  .comparison-table td:first-child {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .check { color: var(--accent-green); font-weight: 700; }
+  .cross { color: var(--text-muted); }
+
+  /* ===== Pricing Section ===== */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .pricing-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.4s ease;
+  }
+
+  .pricing-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .pricing-card.pro {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 30px var(--glow-orange);
+  }
+
+  .pricing-card .model-name {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--accent-cyan);
+    margin-bottom: 0.5rem;
+  }
+
+  .pricing-card .model-context {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-orange);
+    margin-bottom: 1rem;
+  }
+
+  .pricing-card .model-context span {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .pricing-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+  }
+
+  .pricing-detail:last-child { border-bottom: none; }
+  .pricing-detail .label { color: var(--text-muted); }
+  .pricing-detail .value { color: var(--text-primary); font-family: var(--font-mono); font-weight: 500; }
+
+  /* ===== Code Block ===== */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .code-dot.red { background: #ef4444; }
+  .code-dot.yellow { background: #f59e0b; }
+  .code-dot.green { background: #10b981; }
+
+  .code-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .code-body {
+    padding: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    color: #e2e8f0;
+  }
+
+  .code-body .comment { color: #6b7280; }
+  .code-body .command { color: var(--accent-orange); font-weight: 500; }
+  .code-body .flag { color: var(--accent-cyan); }
+  .code-body .string { color: var(--accent-green); }
+
+  /* ===== Quickstart Section ===== */
+  .quickstart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .quickstart-step {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+
+  .quickstart-step:hover {
+    border-color: var(--accent-orange);
+    transform: translateY(-2px);
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .quickstart-step h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ===== Trending Analysis ===== */
+  .trending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .trending-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.75rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trending-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 0 0 0 80px;
+    opacity: 0.05;
+  }
+
+  .trending-card:nth-child(1)::after { background: var(--accent-orange); }
+  .trending-card:nth-child(2)::after { background: var(--accent-cyan); }
+  .trending-card:nth-child(3)::after { background: var(--accent-purple); }
+  .trending-card:nth-child(4)::after { background: var(--accent-green); }
+  .trending-card:nth-child(5)::after { background: var(--accent-pink); }
+
+  .trending-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+
+  .trending-card .card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .trending-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .trending-card p {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  /* ===== Rating Section ===== */
+  .rating-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+  }
+
+  .rating-total {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .rating-total .score {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .rating-total .stars {
+    font-size: 1.5rem;
+    color: var(--accent-amber);
+  }
+
+  .rating-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .rating-bar .label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-width: 100px;
+  }
+
+  .rating-bar .bar-bg {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .rating-bar .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+
+  .rating-bar .bar-fill.s5 { width: 100%; background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber)); }
+  .rating-bar .bar-fill.s4 { width: 80%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); }
+  .rating-bar .bar-fill.s35 { width: 70%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
+  .rating-bar .bar-fill.s3 { width: 60%; background: linear-gradient(90deg, var(--text-muted), var(--text-secondary)); }
+
+  .rating-bar .score-num {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  /* ===== Target Users ===== */
+  .users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .user-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+
+  .user-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .user-card.recommend { border-left: 3px solid var(--accent-green); }
+  .user-card.try { border-left: 3px solid var(--accent-cyan); }
+  .user-card.skip { border-left: 3px solid var(--text-muted); }
+
+  .user-level {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .user-card.recommend .user-level {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--accent-green);
+  }
+
+  .user-card.try .user-level {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--accent-cyan);
+  }
+
+  .user-card.skip .user-level {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-muted);
+  }
+
+  .user-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+  .user-card p { color: var(--text-secondary); font-size: 0.85rem; }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  footer a {
+    color: var(--accent-orange);
+    text-decoration: none;
+  }
+
+  footer a:hover { text-decoration: underline; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .hero-stats { gap: 1rem; }
+    .stat-item { min-width: 100px; padding: 0.75rem 1rem; }
+    .stat-value { font-size: 1.4rem; }
+    section { padding: 3rem 0; }
+    .container { padding: 0 1rem; }
+    .features-grid, .modes-grid, .quickstart-grid, .users-grid, .trending-grid {
+      grid-template-columns: 1fr;
+    }
+    .pricing-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ===== Scroll Animations ===== */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="pulse"></span>
+      GitHub Trending #4 — Rust — 2026-05-05
+    </div>
+    <h1>DeepSeek-TUI</h1>
+    <p class="hero-subtitle">
+      为 DeepSeek V4 打造的终端原生编程代理。Rust 单二进制、1M-token 上下文、实时思维链流式输出——在终端中释放 AI 编码的全部潜力。
+    </p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-value">3,068</div>
+        <div class="stat-label">GitHub Stars</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">+343</div>
+        <div class="stat-label">今日新增</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">v0.8.10</div>
+        <div class="stat-label">最新版本</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">1M</div>
+        <div class="stat-label">Token 上下文</div>
+      </div>
+    </div>
+    <div class="hero-tags">
+      <span class="tag rust">Rust</span>
+      <span class="tag ai">DeepSeek V4</span>
+      <span class="tag terminal">Terminal UI</span>
+      <span class="tag">MCP</span>
+      <span class="tag">LSP</span>
+      <span class="tag">Single Binary</span>
+    </div>
+  </div>
+  <div class="scroll-hint">↓ 向下滚动查看深度分析 ↓</div>
+</section>
+
+<!-- ===== 核心功能 ===== -->
+<section>
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Core Features</div>
+      <h2 class="section-title">核心功能一览</h2>
+      <p class="section-desc">从实时思维链到并行推理，DeepSeek-TUI 重新定义了终端 AI 编码体验</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🧠</div>
+        <h3>Thinking-Mode 流式输出</h3>
+        <p>实时观看 DeepSeek V4 的思维链推理过程。模型如何一步步分析问题、制定方案、执行操作——全部透明可见。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⚡</div>
+        <h3>Native RLM 并行推理</h3>
+        <p>rlm_query 工具可同时启动 1-16 个 deepseek-v4-flash 子任务，批量并行分析和推理，用低成本获取高效率。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">📦</div>
+        <h3>1M-Token 超长上下文</h3>
+        <p>自动智能压缩机制，前缀缓存感知设计大幅降低成本。足以分析整个大型代码库。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🔧</div>
+        <h3>完整工具套件</h3>
+        <p>文件操作、Shell 执行、Git 管理、Web 搜索、子代理编排、MCP 协议——开箱即用的全功能工具箱。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🔍</div>
+        <h3>LSP 诊断集成</h3>
+        <p>内置 rust-analyzer、pyright、typescript-language-server、gopls、clangd。每次编辑后自动将类型错误注入模型上下文。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🛡️</div>
+        <h3>工作区安全回滚</h3>
+        <p>侧 Git 在每回合前后自动快照，支持 /restore 和 revert_turn，不影响你项目原有的 .git 仓库。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 架构图 ===== -->
+<section class="arch-section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Architecture</div>
+      <h2 class="section-title">技术架构</h2>
+      <p class="section-desc">双二进制架构 + 异步引擎 + 类型化工具注册表</p>
+    </div>
+    <div class="arch-diagram fade-in">
+      <div class="arch-layer">
+        <span class="layer-name">deepseek</span> <span style="color:var(--text-muted)">— Dispatcher CLI（调度器入口）</span>
+      </div>
+      <div class="arch-arrow">▼</div>
+      <div class="arch-layer">
+        <span class="layer-name">deepseek-tui</span> <span style="color:var(--text-muted)">— Companion Binary（TUI 伴侣）</span>
+      </div>
+      <div class="arch-arrow">▼</div>
+      <div class="arch-layer">
+        <span class="layer-name">ratatui 界面</span> ↔ <span class="layer-name">异步引擎 (tokio)</span> ↔ <span style="color:var(--accent-cyan)">OpenAI 兼容流式客户端</span>
+      </div>
+      <div class="arch-arrow">▼</div>
+      <div class="arch-layer">
+        <span class="layer-name">工具注册表</span>
+        <div class="layer-detail">shell · file ops · git · web · sub-agents · MCP · RLM</div>
+      </div>
+      <div class="arch-arrow">▼</div>
+      <div class="arch-layer">
+        <span style="color:var(--accent-cyan)">会话状态</span> · <span style="color:var(--accent-cyan)">回合追踪</span> · <span style="color:var(--accent-cyan)">持久任务队列</span> · <span style="color:var(--accent-cyan)">LSP 子系统</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 三种模式 ===== -->
+<section>
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Work Modes</div>
+      <h2 class="section-title">三种工作模式</h2>
+      <p class="section-desc">从审慎探索到全自动执行，按需选择</p>
+    </div>
+    <div class="modes-grid">
+      <div class="mode-card plan fade-in">
+        <div class="mode-emoji">🔍</div>
+        <h3>Plan 模式</h3>
+        <p>只读探索模式。模型分析代码、提出方案，使用 update_plan 和 checklist_write 规划任务，不修改任何文件。适合代码审查和学习。</p>
+      </div>
+      <div class="mode-card agent fade-in">
+        <div class="mode-emoji">🤖</div>
+        <h3>Agent 模式</h3>
+        <p>默认交互模式。多步工具使用带审批门控，每步操作需要确认。模型通过 checklist_write 透明展示工作计划。</p>
+      </div>
+      <div class="mode-card yolo fade-in">
+        <div class="mode-emoji">⚡</div>
+        <h3>YOLO 模式</h3>
+        <p>自动审批所有工具。适合受信工作区的快速迭代。仍维护计划和检查清单以保持可见性。开发者的效率利器。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 定价 ===== -->
+<section class="arch-section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">模型定价</h2>
+      <p class="section-desc">DeepSeek V4 的极致性价比</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card pro fade-in">
+        <div class="model-name">deepseek-v4-pro</div>
+        <div class="model-context">1M <span>tokens 上下文</span></div>
+        <div class="pricing-detail">
+          <span class="label">输入（缓存命中）</span>
+          <span class="value">$0.003625/1M</span>
+        </div>
+        <div class="pricing-detail">
+          <span class="label">输入（缓存未命中）</span>
+          <span class="value">$0.435/1M</span>
+        </div>
+        <div class="pricing-detail">
+          <span class="label">输出</span>
+          <span class="value">$0.87/1M</span>
+        </div>
+        <div style="margin-top:1rem;font-size:0.75rem;color:var(--accent-amber);">
+          * 限时 75% 折扣至 2026-05-05
+        </div>
+      </div>
+      <div class="pricing-card fade-in">
+        <div class="model-name">deepseek-v4-flash</div>
+        <div class="model-context">1M <span>tokens 上下文</span></div>
+        <div class="pricing-detail">
+          <span class="label">输入（缓存命中）</span>
+          <span class="value">$0.0028/1M</span>
+        </div>
+        <div class="pricing-detail">
+          <span class="label">输入（缓存未命中）</span>
+          <span class="value">$0.14/1M</span>
+        </div>
+        <div class="pricing-detail">
+          <span class="label">输出</span>
+          <span class="value">$0.28/1M</span>
+        </div>
+        <div style="margin-top:1rem;font-size:0.75rem;color:var(--accent-green);">
+          极致性价比，适合批量推理
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 同类对比 ===== -->
+<section>
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Comparison</div>
+      <h2 class="section-title">同类项目对比</h2>
+      <p class="section-desc">2026 年主流终端 AI 编码代理横向比较</p>
+    </div>
+    <div class="comparison-wrapper fade-in">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>特性</th>
+            <th class="highlight">DeepSeek-TUI</th>
+            <th>Claude Code</th>
+            <th>Aider</th>
+            <th>Gemini CLI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>核心语言</td>
+            <td><strong style="color:var(--accent-orange)">Rust</strong></td>
+            <td>TypeScript</td>
+            <td>Python</td>
+            <td>Go</td>
+          </tr>
+          <tr>
+            <td>运行依赖</td>
+            <td><span class="check">无（单二进制）</span></td>
+            <td>Node.js</td>
+            <td>Python</td>
+            <td>Go/Node</td>
+          </tr>
+          <tr>
+            <td>上下文窗口</td>
+            <td><span class="check">1M tokens</span></td>
+            <td>200K</td>
+            <td>模型决定</td>
+            <td>1M+</td>
+          </tr>
+          <tr>
+            <td>MCP 支持</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>LSP 集成</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>并行推理</td>
+            <td><span class="check">✓ (RLM)</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>思维链可见</td>
+            <td><span class="check">✓ 实时流式</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>使用成本</td>
+            <td><span class="check">极低</span></td>
+            <td>高</td>
+            <td>低-中</td>
+            <td>低</td>
+          </tr>
+          <tr>
+            <td>Skills/插件</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="check">✓ (hooks)</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="check">✓</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Trending 原因 ===== -->
+<section class="arch-section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Why Trending</div>
+      <h2 class="section-title">为什么火</h2>
+      <p class="section-desc">五大因素驱动 DeepSeek-TUI 快速崛起</p>
+    </div>
+    <div class="trending-grid">
+      <div class="trending-card fade-in">
+        <div class="card-icon">🔥</div>
+        <h3>DeepSeek V4 热度溢出</h3>
+        <p>V4 模型 85% SWE-bench + 1M 上下文 + $0.28/1M tokens，作为专属工具直接受益。</p>
+      </div>
+      <div class="trending-card fade-in">
+        <div class="card-icon">🦀</div>
+        <h3>Rust 零依赖体验</h3>
+        <p>单二进制 vs Claude Code (Node.js) vs Aider (Python)，启动快、内存低、无需运行时。</p>
+      </div>
+      <div class="trending-card fade-in">
+        <div class="card-icon">🎯</div>
+        <h3>功能密度惊人</h3>
+        <p>v0.8.10 已具备 RLM、MCP、LSP、持久队列、HTTP API——远超同类初期版本。</p>
+      </div>
+      <div class="trending-card fade-in">
+        <div class="card-icon">🌍</div>
+        <h3>社区全球化传播</h3>
+        <p>YouTube 演示视频 + 中英双语社区 + 单日 1,277+ Stars，跨文化传播效应显著。</p>
+      </div>
+      <div class="trending-card fade-in">
+        <div class="card-icon">💰</div>
+        <h3>极致性价比</h3>
+        <p>Flash 模型 $0.28/1M tokens 输出价，配合缓存命中，成本仅为 Claude 的零头。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 快速上手 ===== -->
+<section>
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Quickstart</div>
+      <h2 class="section-title">快速上手</h2>
+      <p class="section-desc">三步启动你的终端 AI 编码助手</p>
+    </div>
+    <div class="quickstart-grid">
+      <div class="quickstart-step fade-in">
+        <div class="step-number">1</div>
+        <h3>安装</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span></div>
+            <span class="code-title">Terminal</span>
+          </div>
+          <div class="code-body">
+<span class="comment"># npm 安装（推荐）</span>
+<span class="command">npm</span> install <span class="flag">-g</span> deepseek-tui
+
+<span class="comment"># 或 cargo 安装</span>
+<span class="command">cargo</span> install deepseek-tui-cli <span class="flag">--locked</span>
+<span class="command">cargo</span> install deepseek-tui <span class="flag">--locked</span>
+          </div>
+        </div>
+      </div>
+      <div class="quickstart-step fade-in">
+        <div class="step-number">2</div>
+        <h3>配置 API Key</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span></div>
+            <span class="code-title">Terminal</span>
+          </div>
+          <div class="code-body">
+<span class="comment"># 交互式设置</span>
+<span class="command">deepseek</span> auth set <span class="flag">--provider</span> deepseek
+
+<span class="comment"># 或环境变量</span>
+<span class="command">export</span> DEEPSEEK_API_KEY=<span class="string">"your-key"</span>
+
+<span class="comment"># 验证</span>
+<span class="command">deepseek</span> doctor
+          </div>
+        </div>
+      </div>
+      <div class="quickstart-step fade-in">
+        <div class="step-number">3</div>
+        <h3>开始使用</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span></div>
+            <span class="code-title">Terminal</span>
+          </div>
+          <div class="code-body">
+<span class="comment"># 启动交互式 TUI</span>
+<span class="command">deepseek</span>
+
+<span class="comment"># 单次提问</span>
+<span class="command">deepseek</span> <span class="string">"explain this function"</span>
+
+<span class="comment"># YOLO 模式</span>
+<span class="command">deepseek</span> <span class="flag">--yolo</span>
+
+<span class="comment"># 恢复会话</span>
+<span class="command">deepseek</span> resume <span class="flag">--last</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 适合谁 ===== -->
+<section class="arch-section">
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Who Should Use</div>
+      <h2 class="section-title">适合谁使用</h2>
+      <p class="section-desc">不同用户群体的适配度分析</p>
+    </div>
+    <div class="users-grid">
+      <div class="user-card recommend fade-in">
+        <span class="user-level">强烈推荐</span>
+        <h3>DeepSeek API 用户</h3>
+        <p>已有 DeepSeek API key 的开发者——这是最佳的终端编码工具搭配。</p>
+      </div>
+      <div class="user-card recommend fade-in">
+        <span class="user-level">强烈推荐</span>
+        <h3>Rust / 终端爱好者</h3>
+        <p>喜欢原生性能、零依赖哲学，日常工作流以终端和 Vim/Neovim 为中心。</p>
+      </div>
+      <div class="user-card recommend fade-in">
+        <span class="user-level">强烈推荐</span>
+        <h3>成本敏感开发者</h3>
+        <p>需要低成本 AI 编码辅助，Flash 模型 $0.28/1M tokens 的极致性价比。</p>
+      </div>
+      <div class="user-card try fade-in">
+        <span class="user-level">可以尝试</span>
+        <h3>多模型用户</h3>
+        <p>支持 NVIDIA NIM、Fireworks、自托管 SGLang 等第三方 provider。</p>
+      </div>
+      <div class="user-card try fade-in">
+        <span class="user-level">可以尝试</span>
+        <h3>团队自动化</h3>
+        <p>HTTP/SSE API 支持无头代理，可集成到团队 CI/CD 流水线。</p>
+      </div>
+      <div class="user-card skip fade-in">
+        <span class="user-level">可能不适合</span>
+        <h3>GUI 依赖用户</h3>
+        <p>偏好 VS Code、Cursor 等图形界面的开发者，或需要 Claude/GPT 模型。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 综合评分 ===== -->
+<section>
+  <div class="container">
+    <div class="section-header fade-in">
+      <div class="section-label">Rating</div>
+      <h2 class="section-title">综合评分</h2>
+    </div>
+    <div class="rating-container fade-in">
+      <div class="rating-total">
+        <div class="score">4.0</div>
+        <div class="stars">★ ★ ★ ★ ☆</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem">综合评价</div>
+      </div>
+      <div class="rating-bar">
+        <span class="label">功能完整度</span>
+        <div class="bar-bg"><div class="bar-fill s5"></div></div>
+        <span class="score-num" style="color:var(--accent-orange)">5/5</span>
+      </div>
+      <div class="rating-bar">
+        <span class="label">性能体验</span>
+        <div class="bar-bg"><div class="bar-fill s5"></div></div>
+        <span class="score-num" style="color:var(--accent-orange)">5/5</span>
+      </div>
+      <div class="rating-bar">
+        <span class="label">易用性</span>
+        <div class="bar-bg"><div class="bar-fill s35"></div></div>
+        <span class="score-num" style="color:var(--accent-purple)">3.5/5</span>
+      </div>
+      <div class="rating-bar">
+        <span class="label">生态成熟度</span>
+        <div class="bar-bg"><div class="bar-fill s3"></div></div>
+        <span class="score-num" style="color:var(--text-secondary)">3/5</span>
+      </div>
+      <div class="rating-bar">
+        <span class="label">成本效益</span>
+        <div class="bar-bg"><div class="bar-fill s5"></div></div>
+        <span class="score-num" style="color:var(--accent-orange)">5/5</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <p>
+    分析日期: 2026-05-05 | 数据来源:
+    <a href="https://github.com/Hmbown/DeepSeek-TUI" target="_blank">GitHub</a> ·
+    <a href="https://agentconn.com/agents/deepseek-tui/" target="_blank">AgentConn</a> ·
+    <a href="https://lib.rs/crates/deepseek-tui-cli" target="_blank">Lib.rs</a> ·
+    <a href="https://aur.archlinux.org/packages/deepseek-tui" target="_blank">AUR</a>
+  </p>
+  <p style="margin-top:0.5rem;">
+    DeepSeek-TUI 由 Hunter Bown (Hmbown) 开发 · 非 DeepSeek Inc. 官方产品 · MIT License
+  </p>
+</footer>
+
+<script>
+// Intersection Observer for scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, index) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, index * 100);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

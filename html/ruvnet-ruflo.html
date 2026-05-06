@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruflo - GitHub Trending 深度分析</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-light: #A78BFA;
+            --primary-dark: #5B21B6;
+            --accent: #06B6D4;
+            --accent-light: #67E8F9;
+            --bg-dark: #0F0B1A;
+            --bg-card: #1A1330;
+            --bg-card-hover: #221A3F;
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --border: rgba(124, 58, 237, 0.2);
+            --glow: rgba(124, 58, 237, 0.15);
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --gradient-1: linear-gradient(135deg, #7C3AED, #06B6D4);
+            --gradient-2: linear-gradient(135deg, #7C3AED, #EC4899);
+            --gradient-3: linear-gradient(135deg, #06B6D4, #10B981);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: var(--primary-light);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.35rem);
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 300;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem 1.5rem;
+            background: rgba(26, 19, 48, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            min-width: 140px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        .hero-tags {
+            display: flex;
+            justify-content: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 0.35rem 0.9rem;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--primary-light);
+            font-weight: 500;
+        }
+
+        .tag.ts { background: rgba(49, 120, 198, 0.15); border-color: rgba(49, 120, 198, 0.3); color: #3178C6; }
+        .tag.ai { background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.3); color: #EC4899; }
+        .tag.wasm { background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.3); color: #06B6D4; }
+        .tag.enterprise { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #10B981; }
+
+        /* Sections */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 5rem 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Cards */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(124, 58, 237, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon.purple { background: rgba(124, 58, 237, 0.15); }
+        .card-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+        .card-icon.pink { background: rgba(236, 72, 153, 0.15); }
+        .card-icon.green { background: rgba(16, 185, 129, 0.15); }
+        .card-icon.amber { background: rgba(245, 158, 11, 0.15); }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .card-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Architecture Diagram */
+        .arch-section {
+            position: relative;
+            padding: 5rem 0;
+        }
+
+        .arch-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            overflow-x: auto;
+        }
+
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .arch-node {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: center;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .arch-node.primary { background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(124, 58, 237, 0.15)); border: 1px solid rgba(124, 58, 237, 0.4); }
+        .arch-node.secondary { background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.1)); border: 1px solid rgba(6, 182, 212, 0.3); }
+        .arch-node.tertiary { background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.1)); border: 1px solid rgba(236, 72, 153, 0.3); }
+        .arch-node.quaternary { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .arch-node.quinary { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1)); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .arch-arrow {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .comparison-table thead th {
+            background: rgba(124, 58, 237, 0.1);
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tbody td {
+            padding: 0.85rem 1.25rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .comparison-table tbody tr:last-child td { border-bottom: none; }
+
+        .check { color: var(--success); font-weight: 700; }
+        .cross { color: var(--danger); }
+
+        /* Code Block */
+        .code-block {
+            background: #0D0A14;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(124, 58, 237, 0.08);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #EF4444; }
+        .code-dot.yellow { background: #F59E0B; }
+        .code-dot.green { background: #10B981; }
+
+        .code-body {
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+
+        .code-body .comment { color: #6B7280; }
+        .code-body .keyword { color: #C084FC; }
+        .code-body .string { color: #34D399; }
+        .code-body .command { color: #67E8F9; }
+
+        /* Why Trending Section */
+        .trending-reasons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .trending-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: all 0.3s;
+        }
+
+        .trending-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .trending-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .trending-text h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .trending-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Star Trend */
+        .star-chart {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 200px;
+            padding-top: 1rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: var(--gradient-1);
+            border-radius: 6px 6px 0 0;
+            min-height: 10px;
+            position: relative;
+            transition: all 0.3s;
+            opacity: 0.7;
+        }
+
+        .chart-bar:hover {
+            opacity: 1;
+            transform: scaleY(1.05);
+            transform-origin: bottom;
+        }
+
+        .chart-bar::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Quick Start */
+        .quickstart {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .quickstart { grid-template-columns: 1fr; }
+        }
+
+        .quickstart-steps {
+            counter-reset: step;
+        }
+
+        .quickstart-step {
+            position: relative;
+            padding-left: 3.5rem;
+            padding-bottom: 2rem;
+            border-left: 2px solid var(--border);
+            margin-left: 1rem;
+        }
+
+        .quickstart-step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: -16px;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .quickstart-step h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .quickstart-step p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .hero { min-height: 60vh; padding: 2rem 1rem; }
+            .hero-stats { gap: 0.75rem; }
+            .stat-item { min-width: 100px; padding: 0.75rem 1rem; }
+            .stat-value { font-size: 1.3rem; }
+            section { padding: 3rem 0; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .trending-reasons { grid-template-columns: 1fr; }
+        }
+
+        /* Scroll animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            GitHub Trending #1 Today &middot; +1,840 Stars
+        </div>
+        <h1 class="hero-title">Ruflo</h1>
+        <p class="hero-subtitle">Claude 生态下领先的多 Agent 编排平台 — 部署智能多 Agent 蜂群、协调自主工作流、构建企业级对话式 AI 系统</p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-value">40.1K</div>
+                <div class="stat-label">GitHub Stars</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">100+</div>
+                <div class="stat-label">专用 Agent</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">32</div>
+                <div class="stat-label">原生插件</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">~210</div>
+                <div class="stat-label">MCP 工具</div>
+            </div>
+        </div>
+        <div class="hero-tags">
+            <span class="tag ts">TypeScript</span>
+            <span class="tag ai">Multi-Agent AI</span>
+            <span class="tag wasm">WASM / Rust</span>
+            <span class="tag enterprise">Enterprise-Grade</span>
+            <span class="tag">Claude Code 原生集成</span>
+            <span class="tag">MIT License</span>
+        </div>
+    </div>
+</section>
+
+<!-- Project Overview -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Overview</div>
+            <h2 class="section-title">项目简介</h2>
+        </div>
+        <div class="grid-2 fade-in">
+            <div class="card">
+                <div class="card-icon purple">&#x1F30A;</div>
+                <div class="card-title">什么是 Ruflo?</div>
+                <div class="card-text">
+                    Ruflo（原名 Claude Flow）是由 rUv 开发的开源企业级 Agent 编排平台，专为 Claude 生态设计。一个 <code>init</code> 命令即可让 Claude Code 获得完整的"神经系统" — Agent 自组织成蜂群、从每次任务中学习、跨会话记忆，并通过联邦协议安全地与其他机器上的 Agent 协作。底层策略引擎使用 Rust 编写的 WASM 内核驱动。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon cyan">&#x1F3D7;&#xFE0F;</div>
+                <div class="card-title">核心理念</div>
+                <div class="card-text">
+                    <strong>"Ru" 来自 rUv，"flo" 来自 flow。</strong> 作者热爱 Rust、心流状态和构建"感觉必然"的产品。核心理念是：你只需继续写代码，Ruflo 负责所有协调工作。不需要学习 314 个 MCP 工具或 26 个 CLI 命令 — hooks 系统自动路由任务、学习成功模式并在后台协调 Agent。
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Features -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Features</div>
+            <h2 class="section-title">核心功能</h2>
+        </div>
+        <div class="grid-3 fade-in">
+            <div class="card">
+                <div class="card-icon purple">&#x1F916;</div>
+                <div class="card-title">蜂群协调</div>
+                <div class="card-text">100+ 专用 Agent 按层级、网格和自适应拓扑自动组织，支持 Raft、拜占庭和 Gossip 共识机制。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon cyan">&#x1F9E0;</div>
+                <div class="card-title">自学习系统</div>
+                <div class="card-text">SONA 神经网络模式 + ReasoningBank + 轨迹学习，Agent 从每次成功中变得更聪明，智能路由准确率达 89%。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon pink">&#x1F4BE;</div>
+                <div class="card-title">向量记忆</div>
+                <div class="card-text">基于 HNSW 索引的 AgentDB，搜索速度比暴力搜索快 150x-12,500x，支持亚毫秒级检索。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon green">&#x1F310;</div>
+                <div class="card-title">Agent 联邦</div>
+                <div class="card-text">跨机器、跨组织的零信任安全协作。mTLS + ed25519 身份认证，PII 自动脱敏，HIPAA/SOC2/GDPR 审计。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon amber">&#x1F50C;</div>
+                <div class="card-title">多模型支持</div>
+                <div class="card-text">原生支持 Claude、GPT、Gemini、Cohere、Ollama 五大提供商，内置智能路由与故障转移。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon purple">&#x26A1;</div>
+                <div class="card-title">12 个后台 Worker</div>
+                <div class="card-text">审计、优化、测试覆盖率扫描等 12 个自动触发的后台任务，无需人工干预即可持续改进项目。</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Architecture -->
+<section class="arch-section">
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Architecture</div>
+            <h2 class="section-title">技术架构</h2>
+        </div>
+        <div class="arch-diagram fade-in">
+            <div class="arch-flow">
+                <div class="arch-node primary">User &#x2192; Claude Code / CLI</div>
+                <div class="arch-arrow">&#x2193;</div>
+                <div class="arch-node secondary">Orchestration Layer (MCP Server, Router, 27 Hooks)</div>
+                <div class="arch-arrow">&#x2193;</div>
+                <div class="arch-node tertiary">Swarm Coordination (Queen, Topology, Consensus)</div>
+                <div class="arch-arrow">&#x2193;</div>
+                <div class="arch-node quaternary">100+ Specialized Agents (coder, tester, reviewer, architect, security...)</div>
+                <div class="arch-arrow">&#x2193;</div>
+                <div class="arch-node quinary">Memory &amp; Learning (AgentDB, HNSW, SONA, ReasoningBank)</div>
+                <div class="arch-arrow">&#x2193;</div>
+                <div class="arch-node primary">LLM Providers (Claude, GPT, Gemini, Cohere, Ollama)</div>
+            </div>
+        </div>
+
+        <div class="grid-4 fade-in" style="margin-top: 2rem;">
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 1.6rem; margin-bottom: 0.5rem;">&#x1F537;</div>
+                <div class="card-title" style="font-size: 0.95rem;">TypeScript / Node.js</div>
+                <div class="card-text" style="font-size: 0.8rem;">主要开发语言，NPM 生态</div>
+            </div>
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 1.6rem; margin-bottom: 0.5rem;">&#x1F998;</div>
+                <div class="card-title" style="font-size: 0.95rem;">Rust / WASM</div>
+                <div class="card-text" style="font-size: 0.8rem;">底层策略引擎 &amp; 向量计算</div>
+            </div>
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 1.6rem; margin-bottom: 0.5rem;">&#x1F4E6;</div>
+                <div class="card-title" style="font-size: 0.95rem;">MCP Protocol</div>
+                <div class="card-text" style="font-size: 0.8rem;">Model Context Protocol</div>
+            </div>
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 1.6rem; margin-bottom: 0.5rem;">&#x1F5C4;&#xFE0F;</div>
+                <div class="card-title" style="font-size: 0.95rem;">MongoDB + HNSW</div>
+                <div class="card-text" style="font-size: 0.8rem;">持久化存储 &amp; 向量索引</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Plugin Ecosystem -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Ecosystem</div>
+            <h2 class="section-title">32 个原生插件生态</h2>
+        </div>
+        <div class="grid-4 fade-in">
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">编排类</div>
+                <div class="card-text" style="font-size: 0.8rem;">core, swarm, autopilot, loop-workers, workflows, federation</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">记忆类</div>
+                <div class="card-text" style="font-size: 0.8rem;">agentdb, rag-memory, rvf, ruvector, knowledge-graph</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">智能类</div>
+                <div class="card-text" style="font-size: 0.8rem;">intelligence, daa, ruvllm, goals</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">质量类</div>
+                <div class="card-text" style="font-size: 0.8rem;">testgen, browser, jujutsu, docs</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">安全类</div>
+                <div class="card-text" style="font-size: 0.8rem;">security-audit, aidefence</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">方法论</div>
+                <div class="card-text" style="font-size: 0.8rem;">adr, ddd, sparc</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">DevOps</div>
+                <div class="card-text" style="font-size: 0.8rem;">migrations, observability, cost-tracker</div>
+            </div>
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.9rem;">扩展类</div>
+                <div class="card-text" style="font-size: 0.8rem;">wasm, plugin-creator, iot, neural-trader, market-data</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Trending -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Analysis</div>
+            <h2 class="section-title">为什么火?</h2>
+        </div>
+        <div class="trending-reasons fade-in">
+            <div class="trending-card">
+                <div class="trending-num">1</div>
+                <div class="trending-text">
+                    <h4>Claude Code 生态爆发</h4>
+                    <p>2026 年 Claude Code 成为最受欢迎的 AI 编码 Agent，Ruflo 作为其头号编排平台，直接受益于生态红利。</p>
+                </div>
+            </div>
+            <div class="trending-card">
+                <div class="trending-num">2</div>
+                <div class="trending-text">
+                    <h4>多 Agent 范式崛起</h4>
+                    <p>从单 Agent 到多 Agent 协作是 AI 工程的最大趋势。Ruflo 提供了开箱即用的 100+ 专用 Agent 蜂群能力。</p>
+                </div>
+            </div>
+            <div class="trending-card">
+                <div class="trending-num">3</div>
+                <div class="trending-text">
+                    <h4>极致的开发者体验</h4>
+                    <p>一条命令初始化，hooks 系统自动路由，开发者无需学习复杂的编排语法。Web UI 和 Goal Planner 让上手零门槛。</p>
+                </div>
+            </div>
+            <div class="trending-card">
+                <div class="trending-num">4</div>
+                <div class="trending-text">
+                    <h4>企业级安全与合规</h4>
+                    <p>零信任联邦、PII 自动脱敏、AIDefence 防注入、HIPAA/SOC2/GDPR 审计，满足企业采购要求。</p>
+                </div>
+            </div>
+            <div class="trending-card">
+                <div class="trending-num">5</div>
+                <div class="trending-text">
+                    <h4>品牌重塑引起关注</h4>
+                    <p>从 "Claude Flow" 更名为 "Ruflo"，底层加入 Rust/WASM 内核，社区和媒体广泛报道，形成传播飞轮。</p>
+                </div>
+            </div>
+            <div class="trending-card">
+                <div class="trending-num">6</div>
+                <div class="trending-text">
+                    <h4>Web UI 降低门槛</h4>
+                    <p>flo.ruv.io 提供 Zero-Install 体验，无需账号和 API Key 即可试用，极大降低了尝鲜成本。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Star Trend Chart -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Growth</div>
+            <h2 class="section-title">Star 增长趋势</h2>
+        </div>
+        <div class="star-chart fade-in">
+            <div class="chart-bars">
+                <div class="chart-bar" style="height: 15%;" data-label="2025 Q3"></div>
+                <div class="chart-bar" style="height: 22%;" data-label="Q4"></div>
+                <div class="chart-bar" style="height: 35%;" data-label="2026 Q1"></div>
+                <div class="chart-bar" style="height: 55%;" data-label="Mar"></div>
+                <div class="chart-bar" style="height: 72%;" data-label="Apr"></div>
+                <div class="chart-bar" style="height: 100%;" data-label="May"></div>
+            </div>
+            <div class="chart-labels">
+                <span>项目启动</span>
+                <span style="color: var(--accent-light);">40,125 Stars — 持续爆发增长中</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Comparison -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Comparison</div>
+            <h2 class="section-title">同类项目对比</h2>
+        </div>
+        <div style="overflow-x: auto;" class="fade-in">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>Ruflo</th>
+                        <th>LangGraph</th>
+                        <th>CrewAI</th>
+                        <th>AutoGen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>定位</strong></td>
+                        <td>Claude 原生编排</td>
+                        <td>通用图式编排</td>
+                        <td>快速原型设计</td>
+                        <td>微软生态/Azure</td>
+                    </tr>
+                    <tr>
+                        <td><strong>语言</strong></td>
+                        <td>TypeScript + Rust</td>
+                        <td>Python</td>
+                        <td>Python</td>
+                        <td>Python</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Agent 数量</strong></td>
+                        <td>100+ 专用 Agent</td>
+                        <td>自定义</td>
+                        <td>自定义</td>
+                        <td>自定义</td>
+                    </tr>
+                    <tr>
+                        <td><strong>自学习能力</strong></td>
+                        <td class="check">&#x2713; SONA + ReasoningBank</td>
+                        <td class="cross">&#x2717;</td>
+                        <td class="cross">&#x2717;</td>
+                        <td class="cross">&#x2717;</td>
+                    </tr>
+                    <tr>
+                        <td><strong>向量记忆</strong></td>
+                        <td class="check">&#x2713; AgentDB + HNSW</td>
+                        <td class="check">&#x2713; 需外接</td>
+                        <td class="check">&#x2713; 需外接</td>
+                        <td class="cross">&#x2717;</td>
+                    </tr>
+                    <tr>
+                        <td><strong>联邦协作</strong></td>
+                        <td class="check">&#x2713; 零信任联邦</td>
+                        <td class="cross">&#x2717;</td>
+                        <td class="cross">&#x2717;</td>
+                        <td class="cross">&#x2717;</td>
+                    </tr>
+                    <tr>
+                        <td><strong>插件系统</strong></td>
+                        <td class="check">&#x2713; 32 原生插件</td>
+                        <td class="check">&#x2713; LangChain 生态</td>
+                        <td class="cross">&#x2717;</td>
+                        <td class="cross">&#x2717;</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Web UI</strong></td>
+                        <td class="check">&#x2713; flo.ruv.io</td>
+                        <td class="check">&#x2713; LangGraph Studio</td>
+                        <td class="cross">&#x2717;</td>
+                        <td class="check">&#x2713; AutoGen Studio</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GitHub Stars</strong></td>
+                        <td>~40K</td>
+                        <td>~35K</td>
+                        <td>~30K</td>
+                        <td>~45K</td>
+                    </tr>
+                    <tr>
+                        <td><strong>License</strong></td>
+                        <td>MIT</td>
+                        <td>MIT</td>
+                        <td>MIT</td>
+                        <td>MIT</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Application Scenarios -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Use Cases</div>
+            <h2 class="section-title">应用场景</h2>
+        </div>
+        <div class="grid-3 fade-in">
+            <div class="card">
+                <div class="card-icon purple">&#x1F4BB;</div>
+                <div class="card-title">大型项目开发</div>
+                <div class="card-text">使用蜂群 Agent 同时处理编码、测试、代码审查、文档生成等并行任务，大幅提升开发效率。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon cyan">&#x1F3E2;</div>
+                <div class="card-title">企业级自动化</div>
+                <div class="card-text">跨团队 Agent 联邦协作，安全合规地自动化工作流，满足 HIPAA/SOC2/GDPR 要求。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon pink">&#x1F4CA;</div>
+                <div class="card-title">金融交易分析</div>
+                <div class="card-text">neural-trader 插件提供 4 个专用 Agent、112+ 工具和完整回测系统。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon green">&#x1F50D;</div>
+                <div class="card-title">安全审计</div>
+                <div class="card-text">自动扫描漏洞和 CVE、检测 PII 泄露、阻止 Prompt 注入攻击。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon amber">&#x1F52C;</div>
+                <div class="card-title">研究自动化</div>
+                <div class="card-text">Goal Planner 将复杂目标分解为可执行步骤，Agent 自动调度执行。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon purple">&#x1F310;</div>
+                <div class="card-title">IoT 设备管理</div>
+                <div class="card-text">iot-cognitum 插件提供设备信任评分、异常检测和舰队管理。</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Start -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Quick Start</div>
+            <h2 class="section-title">快速上手</h2>
+        </div>
+        <div class="quickstart fade-in">
+            <div class="quickstart-steps">
+                <div class="quickstart-step">
+                    <h4>安装 Ruflo</h4>
+                    <p>一行命令完成安装</p>
+                </div>
+                <div class="quickstart-step">
+                    <h4>初始化项目</h4>
+                    <p>运行 init 命令，自动配置 hooks 和 Agent</p>
+                </div>
+                <div class="quickstart-step">
+                    <h4>安装需要的插件</h4>
+                    <p>从 32 个原生插件中选择你需要的</p>
+                </div>
+                <div class="quickstart-step">
+                    <h4>开始使用</h4>
+                    <p>正常使用 Claude Code 即可，Ruflo 在后台自动编排</p>
+                </div>
+            </div>
+            <div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span class="code-dot red"></span>
+                            <span class="code-dot yellow"></span>
+                            <span class="code-dot green"></span>
+                        </div>
+                        <span>Terminal</span>
+                    </div>
+                    <div class="code-body">
+<span class="comment"># 方式一：Claude Code 插件安装（推荐）</span>
+<span class="command">/plugin</span> marketplace add <span class="string">ruvnet/ruflo</span>
+<span class="command">/plugin</span> install <span class="string">ruflo-core@ruflo</span>
+<span class="command">/plugin</span> install <span class="string">ruflo-swarm@ruflo</span>
+
+<span class="comment"># 方式二：一行命令安装</span>
+curl -fsSL https://cdn.jsdelivr.net/gh/ruvnet/ruflo@main/scripts/install.sh | bash
+
+<span class="comment"># 方式三：通过 npx</span>
+npx <span class="string">ruflo@latest</span> init --wizard
+
+<span class="comment"># 方式四：MCP Server 模式</span>
+claude mcp add ruflo -- npx -y <span class="string">@claude-flow/cli@latest</span>
+
+<span class="comment"># 初始化后即可正常使用 Claude Code</span>
+<span class="comment"># Ruflo 会自动在后台协调 Agent</span>
+                    </div>
+                </div>
+
+                <div class="code-block" style="margin-top: 1rem;">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span class="code-dot red"></span>
+                            <span class="code-dot yellow"></span>
+                            <span class="code-dot green"></span>
+                        </div>
+                        <span>在线体验 — 无需安装</span>
+                    </div>
+                    <div class="code-body">
+<span class="comment"># Web UI (多模型聊天)</span>
+<span class="keyword">https://</span><span class="string">flo.ruv.io</span>
+
+<span class="comment"># Goal Planner (目标分解)</span>
+<span class="keyword">https://</span><span class="string">goal.ruv.io</span>
+
+<span class="comment"># Agent 仪表盘</span>
+<span class="keyword">https://</span><span class="string">goal.ruv.io/agents</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Who Should Use -->
+<section>
+    <div class="container">
+        <div class="section-header fade-in">
+            <div class="section-label">Target Audience</div>
+            <h2 class="section-title">适合谁使用?</h2>
+        </div>
+        <div class="grid-2 fade-in">
+            <div class="card">
+                <div class="card-icon green">&#x2705;</div>
+                <div class="card-title">强烈推荐</div>
+                <div class="card-text">
+                    <ul style="padding-left: 1rem; margin-top: 0.5rem;">
+                        <li><strong>Claude Code 重度用户</strong> — 项目管理的复杂度已超出单 Agent 能力</li>
+                        <li><strong>AI 工程团队</strong> — 需要多 Agent 协作处理大型代码库</li>
+                        <li><strong>企业安全团队</strong> — 需要 AI Agent 的合规与审计能力</li>
+                        <li><strong>全栈开发者</strong> — TypeScript 生态友好，NPM 即装即用</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon amber">&#x26A1;</div>
+                <div class="card-title">需要考虑</div>
+                <div class="card-text">
+                    <ul style="padding-left: 1rem; margin-top: 0.5rem;">
+                        <li><strong>Python 纯生态团队</strong> — 可能更适合 LangGraph / CrewAI</li>
+                        <li><strong>轻量级需求</strong> — 如果只需简单 Agent 对话，无需编排平台</li>
+                        <li><strong>非 Claude 用户</strong> — 核心优势绑定 Claude 生态</li>
+                        <li><strong>离线环境</strong> — 联邦功能需要网络连接</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p>GitHub Trending 深度分析 &middot; 生成于 2026-05-05 &middot; 数据来源:
+        <a href="https://github.com/ruvnet/ruflo">ruvnet/ruflo</a>
+    </p>
+</footer>
+
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

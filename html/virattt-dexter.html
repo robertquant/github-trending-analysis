@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dexter - 自主金融研究 AI 代理 | GitHub Trending Deep Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2035;
+            --bg-card-hover: #1f2847;
+            --accent-green: #00d4aa;
+            --accent-green-dim: rgba(0, 212, 170, 0.15);
+            --accent-blue: #3b82f6;
+            --accent-blue-dim: rgba(59, 130, 246, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-dim: rgba(245, 158, 11, 0.12);
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-purple-dim: rgba(139, 92, 246, 0.12);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a1628 100%);
+            --gradient-card: linear-gradient(145deg, rgba(0, 212, 170, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Grotesk', 'Noto Sans SC', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+        /* Animated background grid */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            filter: blur(150px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-1 {
+            top: -200px; right: -200px;
+            background: rgba(0, 212, 170, 0.07);
+        }
+
+        .bg-glow-2 {
+            bottom: -200px; left: -200px;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 60px 0;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 860px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--accent-green-dim);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+            border-radius: 100px;
+            font-size: 0.85rem;
+            color: var(--accent-green);
+            margin-bottom: 32px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-badge .pulse {
+            width: 8px; height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            color: var(--text-secondary);
+            font-weight: 300;
+            margin-bottom: 40px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-value.green { color: var(--accent-green); }
+        .stat-value.blue { color: var(--accent-blue); }
+        .stat-value.amber { color: var(--accent-amber); }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            color: #0a0e1a;
+        }
+
+        .btn-primary:hover {
+            background: #00e5b8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Section styles */
+        section {
+            padding: 80px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-green);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .card-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        .card-icon.green { background: var(--accent-green-dim); }
+        .card-icon.blue { background: var(--accent-blue-dim); }
+        .card-icon.amber { background: var(--accent-amber-dim); }
+        .card-icon.purple { background: var(--accent-purple-dim); }
+
+        .card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Architecture Diagram */
+        .arch-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .arch-node {
+            width: 100%;
+            max-width: 500px;
+            padding: 24px 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .arch-node:hover {
+            transform: scale(1.02);
+        }
+
+        .arch-node .node-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 6px;
+        }
+
+        .arch-node .node-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .arch-node.planning {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.04));
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .arch-node.action {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.12), rgba(0, 212, 170, 0.04));
+            border-color: rgba(0, 212, 170, 0.2);
+        }
+
+        .arch-node.validation {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04));
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .arch-node.answer {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.04));
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .arch-arrow {
+            width: 2px;
+            height: 32px;
+            position: relative;
+        }
+
+        .arch-arrow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--text-muted), transparent);
+        }
+
+        .arch-arrow::after {
+            content: '▼';
+            position: absolute;
+            bottom: -6px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .tech-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .tech-item .tech-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .tech-item .tech-cat {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table thead {
+            background: rgba(0, 212, 170, 0.08);
+        }
+
+        .comparison-table th {
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table td {
+            padding: 14px 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .check { color: var(--accent-green); font-weight: 600; }
+        .cross { color: var(--text-muted); }
+
+        /* Quick Start */
+        .quickstart {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .quickstart-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quickstart-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quickstart-dots span {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+        }
+
+        .quickstart-dots span:nth-child(1) { background: #ef4444; }
+        .quickstart-dots span:nth-child(2) { background: #f59e0b; }
+        .quickstart-dots span:nth-child(3) { background: #22c55e; }
+
+        .quickstart-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .quickstart pre {
+            padding: 28px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .quickstart pre .comment { color: var(--text-muted); }
+        .quickstart pre .command { color: var(--accent-green); }
+        .quickstart pre .string { color: var(--accent-amber); }
+        .quickstart pre .keyword { color: var(--accent-purple); }
+
+        /* Trending Reasons */
+        .trending-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .trending-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+        }
+
+        .trending-item:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .trending-num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .trending-item h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .trending-item p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Use Cases */
+        .usecases-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .usecase-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .usecase-item:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+        }
+
+        .usecase-emoji {
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .usecase-text h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .usecase-text p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        /* Audience */
+        .audience-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .audience-card {
+            text-align: center;
+            padding: 32px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .audience-card:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .audience-card .audience-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .audience-card h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .audience-card p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Star Trend */
+        .star-trend {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .star-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 180px;
+            padding-top: 20px;
+        }
+
+        .star-bar {
+            flex: 1;
+            border-radius: 6px 6px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-width: 30px;
+        }
+
+        .star-bar:hover {
+            opacity: 0.8;
+        }
+
+        .star-bar .bar-label {
+            position: absolute;
+            bottom: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .star-bar .bar-value {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .footer p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-stats { gap: 24px; }
+            .stat-value { font-size: 1.5rem; }
+            section { padding: 48px 0; }
+            .comparison-table { font-size: 0.8rem; }
+            .comparison-table th, .comparison-table td { padding: 10px 12px; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .trending-grid { grid-template-columns: 1fr; }
+            .usecases-list { grid-template-columns: 1fr; }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="pulse"></span>
+                    GitHub Trending #9 — TypeScript
+                </div>
+                <h1>Dexter</h1>
+                <p class="subtitle">自主金融研究 AI 代理 — 会思考、会规划、会验证的金融分析助手。被誉为"金融界的 Claude Code"</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-value green">22,819</div>
+                        <div class="stat-label">Total Stars</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value blue">+418</div>
+                        <div class="stat-label">Today Stars</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value amber">TypeScript</div>
+                        <div class="stat-label">Primary Language</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: var(--accent-purple);">MIT</div>
+                        <div class="stat-label">License</div>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a href="https://github.com/virattt/dexter" target="_blank" class="btn btn-primary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        View on GitHub
+                    </a>
+                    <a href="#quickstart" class="btn btn-secondary">
+                        Quick Start
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">About</div>
+                <h2 class="section-title">什么是 Dexter？</h2>
+                <p class="section-desc">一个开源的自主金融研究 AI 代理，由前 Airbnb/Acorns 工程师 Virat 创建，核心代码不到 200 行，却构建了完整的金融研究代理系统。</p>
+            </div>
+            <div class="cards-grid fade-in">
+                <div class="card">
+                    <div class="card-icon green">&#x1F9E0;</div>
+                    <h3>自主思考</h3>
+                    <p>不同于简单的问答工具，Dexter 会自主思考、规划和学习。它将复杂的金融问题分解为可执行的子任务，逐步深入研究。</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon amber">&#x2705;</div>
+                    <h3>自我验证</h3>
+                    <p>内置验证代理会严格检查每个分析结果的准确性、一致性和逻辑连贯性，确保金融分析结果可信可靠。</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon blue">&#x1F4C8;</div>
+                    <h3>实时数据</h3>
+                    <p>通过 Financial Datasets API 获取实时市场数据，包括股票价格、P/E 比率、行业平均值等关键金融指标。</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon purple">&#x1F6E1;</div>
+                    <h3>安全机制</h3>
+                    <p>循环检测和步数限制防止代理失控执行，Scratchpad 日志完整记录推理过程，确保可审计性。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section id="architecture">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Architecture</div>
+                <h2 class="section-title">四代理协作架构</h2>
+                <p class="section-desc">Dexter 采用多代理架构，四个专业化代理分工协作，模拟完整的金融研究团队。</p>
+            </div>
+            <div class="arch-container fade-in">
+                <div class="arch-flow">
+                    <div class="arch-node planning">
+                        <div class="node-title" style="color: var(--accent-blue);">Planning Agent</div>
+                        <div class="node-desc">将复杂金融查询分解为可执行的细粒度任务<br>例如：将"分析AAPL是否被低估"拆解为6个子任务</div>
+                    </div>
+                    <div class="arch-arrow"></div>
+                    <div class="arch-node action">
+                        <div class="node-title" style="color: var(--accent-green);">Action Agent</div>
+                        <div class="node-desc">执行任务，通过 Financial Datasets API 获取实时市场数据<br>获取股价、历史数据、行业指标等</div>
+                    </div>
+                    <div class="arch-arrow"></div>
+                    <div class="arch-node validation">
+                        <div class="node-title" style="color: var(--accent-amber);">Validation Agent</div>
+                        <div class="node-desc">严格检查输出结果的准确性、一致性和逻辑连贯性<br>交叉验证数据，防止幻觉和错误</div>
+                    </div>
+                    <div class="arch-arrow"></div>
+                    <div class="arch-node answer">
+                        <div class="node-title" style="color: var(--accent-purple);">Answer Agent</div>
+                        <div class="node-desc">将经过验证的研究发现综合为最终的金融分析报告<br>输出可信的、经过验证的结论</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section id="techstack">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Tech Stack</div>
+                <h2 class="section-title">技术栈</h2>
+                <p class="section-desc">基于 TypeScript + Bun 的高性能技术栈，灵活支持多种 LLM 提供商。</p>
+            </div>
+            <div class="tech-grid fade-in">
+                <div class="tech-item">
+                    <div class="tech-name">TypeScript</div>
+                    <div class="tech-cat">Language</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Bun</div>
+                    <div class="tech-cat">Runtime</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">LangChain.js</div>
+                    <div class="tech-cat">AI Framework</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">React + Ink</div>
+                    <div class="tech-cat">Terminal UI</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">OpenAI / Anthropic</div>
+                    <div class="tech-cat">LLM Providers</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Google / Ollama</div>
+                    <div class="tech-cat">LLM Providers</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Financial Datasets</div>
+                    <div class="tech-cat">Data API</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">Exa / Tavily</div>
+                    <div class="tech-cat">Web Search</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">LangSmith</div>
+                    <div class="tech-cat">Evaluation</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-name">WhatsApp</div>
+                    <div class="tech-cat">Gateway</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Trending -->
+    <section id="trending">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Why Trending</div>
+                <h2 class="section-title">为什么火？</h2>
+                <p class="section-desc">五个关键因素让 Dexter 在 GitHub 上迅速获得关注。</p>
+            </div>
+            <div class="trending-grid fade-in">
+                <div class="trending-item">
+                    <div class="trending-num">01</div>
+                    <div>
+                        <h4>"金融界 Claude Code" 定位</h4>
+                        <p>直接对标 $2,000/月的 Bloomberg Terminal，极具话题性和吸引力。被称为金融版的 Claude Code。</p>
+                    </div>
+                </div>
+                <div class="trending-item">
+                    <div class="trending-num">02</div>
+                    <div>
+                        <h4>解决 AI 金融分析核心痛点</h4>
+                        <p>AI 在金融分析中最大问题是幻觉。Dexter 通过多代理验证，让 AI 输出可以自我校验，极具实际价值。</p>
+                    </div>
+                </div>
+                <div class="trending-item">
+                    <div class="trending-num">03</div>
+                    <div>
+                        <h4>2026 AI 代理元年浪潮</h4>
+                        <p>2026 年被称为"AI 代理元年"，专业化 AI 代理成为行业趋势。Dexter 是金融领域的代表。</p>
+                    </div>
+                </div>
+                <div class="trending-item">
+                    <div class="trending-num">04</div>
+                    <div>
+                        <h4>极致的代码简洁性</h4>
+                        <p>核心代码不到 200 行就实现了完整系统，展示极高工程能力，降低了贡献和二次开发门槛。</p>
+                    </div>
+                </div>
+                <div class="trending-item">
+                    <div class="trending-num">05</div>
+                    <div>
+                        <h4>开源 + 实用性</h4>
+                        <p>MIT 协议完全开源，可直接用于实际金融研究和投资决策，具有很强的实用价值。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Star Trend -->
+    <section id="stars">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Growth</div>
+                <h2 class="section-title">Star 增长趋势</h2>
+            </div>
+            <div class="star-trend fade-in">
+                <div class="star-chart">
+                    <div class="star-bar" style="height: 15%; background: linear-gradient(180deg, var(--accent-green), rgba(0,212,170,0.3));">
+                        <span class="bar-value">2K</span>
+                        <span class="bar-label">2025 Q2</span>
+                    </div>
+                    <div class="star-bar" style="height: 25%; background: linear-gradient(180deg, var(--accent-green), rgba(0,212,170,0.3));">
+                        <span class="bar-value">5K</span>
+                        <span class="bar-label">2025 Q3</span>
+                    </div>
+                    <div class="star-bar" style="height: 40%; background: linear-gradient(180deg, var(--accent-green), rgba(0,212,170,0.3));">
+                        <span class="bar-value">9K</span>
+                        <span class="bar-label">2025 Q4</span>
+                    </div>
+                    <div class="star-bar" style="height: 60%; background: linear-gradient(180deg, var(--accent-green), rgba(0,212,170,0.3));">
+                        <span class="bar-value">13K</span>
+                        <span class="bar-label">2026 Q1</span>
+                    </div>
+                    <div class="star-bar" style="height: 80%; background: linear-gradient(180deg, var(--accent-green), rgba(0,212,170,0.3));">
+                        <span class="bar-value">19K</span>
+                        <span class="bar-label">2026 Apr</span>
+                    </div>
+                    <div class="star-bar" style="height: 100%; background: linear-gradient(180deg, var(--accent-green), rgba(0,212,170,0.3));">
+                        <span class="bar-value">22.8K</span>
+                        <span class="bar-label">Today</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section id="comparison">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Comparison</div>
+                <h2 class="section-title">同类项目对比</h2>
+                <p class="section-desc">与主要竞品的多维度对比分析。</p>
+            </div>
+            <div style="overflow-x: auto;" class="fade-in">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Dexter</th>
+                            <th>TradingAgents</th>
+                            <th>AutoGPT</th>
+                            <th>Bloomberg</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>定位</td>
+                            <td>金融研究代理</td>
+                            <td>交易执行代理</td>
+                            <td>通用任务代理</td>
+                            <td>专业金融终端</td>
+                        </tr>
+                        <tr>
+                            <td>核心能力</td>
+                            <td>深度研究+验证</td>
+                            <td>多代理交易</td>
+                            <td>通用自动化</td>
+                            <td>全方位数据</td>
+                        </tr>
+                        <tr>
+                            <td>架构</td>
+                            <td>4 专业化代理</td>
+                            <td>7 LLM 代理</td>
+                            <td>单代理循环</td>
+                            <td>传统软件</td>
+                        </tr>
+                        <tr>
+                            <td>自我验证</td>
+                            <td class="check">&#x2713; 内置</td>
+                            <td class="cross">&#x2717;</td>
+                            <td class="cross">&#x2717;</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td>开源</td>
+                            <td class="check">&#x2713; MIT</td>
+                            <td class="check">&#x2713;</td>
+                            <td class="check">&#x2713;</td>
+                            <td class="cross">&#x2717;</td>
+                        </tr>
+                        <tr>
+                            <td>费用</td>
+                            <td>免费+API</td>
+                            <td>免费+API</td>
+                            <td>免费+API</td>
+                            <td>~$2K/月</td>
+                        </tr>
+                        <tr>
+                            <td>技术栈</td>
+                            <td>TypeScript</td>
+                            <td>Python</td>
+                            <td>Python</td>
+                            <td>C++</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section id="usecases">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Use Cases</div>
+                <h2 class="section-title">应用场景</h2>
+            </div>
+            <div class="usecases-list fade-in">
+                <div class="usecase-item">
+                    <span class="usecase-emoji">&#x1F4C8;</span>
+                    <div class="usecase-text">
+                        <h4>股票估值分析</h4>
+                        <p>自动获取 P/E 比率、行业平均值，判断股票是否被低估</p>
+                    </div>
+                </div>
+                <div class="usecase-item">
+                    <span class="usecase-emoji">&#x1F4DD;</span>
+                    <div class="usecase-text">
+                        <h4>深度金融研究</h4>
+                        <p>多维度分析公司财务状况，自动生成研究报告</p>
+                    </div>
+                </div>
+                <div class="usecase-item">
+                    <span class="usecase-emoji">&#x1F4B0;</span>
+                    <div class="usecase-text">
+                        <h4>投资决策辅助</h4>
+                        <p>聚合多源数据，提供经过验证的投资建议</p>
+                    </div>
+                </div>
+                <div class="usecase-item">
+                    <span class="usecase-emoji">&#x1F30D;</span>
+                    <div class="usecase-text">
+                        <h4>市场趋势分析</h4>
+                        <p>实时跟踪市场数据，发现投资机会和风险</p>
+                    </div>
+                </div>
+                <div class="usecase-item">
+                    <span class="usecase-emoji">&#x1F50D;</span>
+                    <div class="usecase-text">
+                        <h4>数据交叉验证</h4>
+                        <p>交叉验证不同来源的金融数据，确保分析基础可靠</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who Should Use -->
+    <section id="audience">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">For Who</div>
+                <h2 class="section-title">适合谁使用？</h2>
+            </div>
+            <div class="audience-grid fade-in">
+                <div class="audience-card">
+                    <div class="audience-icon">&#x1F4BC;</div>
+                    <h4>金融分析师</h4>
+                    <p>用 AI 加速研究，需要可靠的结果验证</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">&#x1F911;</div>
+                    <h4>个人投资者</h4>
+                    <p>需要深度分析但无法负担 Bloomberg</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">&#x1F4CA;</div>
+                    <h4>量化研究员</h4>
+                    <p>快速获取和验证金融数据</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">&#x1F916;</div>
+                    <h4>AI 工程师</h4>
+                    <p>对金融 AI 代理架构感兴趣</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">&#x1F4BB;</div>
+                    <h4>FinTech 开发者</h4>
+                    <p>在产品中集成 AI 金融研究能力</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">&#x1F393;</div>
+                    <h4>学生研究者</h4>
+                    <p>学习 AI 代理和金融分析的绝佳案例</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section id="quickstart">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">Quick Start</div>
+                <h2 class="section-title">快速上手</h2>
+                <p class="section-desc">三步启动 Dexter，开始你的 AI 金融研究之旅。</p>
+            </div>
+            <div class="quickstart fade-in">
+                <div class="quickstart-header">
+                    <div class="quickstart-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span class="quickstart-title">terminal</span>
+                </div>
+                <pre><span class="comment"># Step 1: 克隆仓库并安装依赖</span>
+<span class="command">git</span> clone https://github.com/virattt/dexter.git
+<span class="command">cd</span> dexter
+<span class="command">bun</span> install
+
+<span class="comment"># Step 2: 配置 API 密钥</span>
+<span class="command">cp</span> .env.example .env
+<span class="comment"># 编辑 .env 填入: OPENAI_API_KEY, FINANCIAL_DATASETS_API_KEY</span>
+
+<span class="comment"># Step 3: 启动 Dexter</span>
+<span class="command">bun</span> run start
+
+<span class="comment"># 示例查询：</span>
+<span class="string">> "分析苹果公司（AAPL）是否被低估，基于 P/E 比率和行业数据"</span>
+
+<span class="comment"># Dexter 会自动分解为：</span>
+<span class="comment"># 1. 获取当前股价</span>
+<span class="comment"># 2. 获取历史 P/E 比率</span>
+<span class="comment"># 3. 获取行业平均 P/E</span>
+<span class="comment"># 4. 计算估值指标</span>
+<span class="comment"># 5. 验证数据一致性</span>
+<span class="comment"># 6. 综合生成分析报告</span></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container">
+            <p>GitHub Trending Deep Analysis &mdash; 2026-05-05</p>
+            <p style="margin-top: 8px;">
+                <a href="https://github.com/virattt/dexter" target="_blank">virattt/dexter</a>
+                &nbsp;&bull;&nbsp; Built with Claude Code
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Intersection Observer for fade-in animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

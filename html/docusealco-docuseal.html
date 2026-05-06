@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuSeal - 开源电子签名平台深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 20px;border-bottom:1px solid #21262d;margin-bottom:30px}
+.header h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin-bottom:10px;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .subtitle{color:#8b949e;font-size:1.1rem;margin-bottom:15px}
+.header .meta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)}
+.badge-green{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)}
+.badge-orange{background:rgba(240,136,62,0.15);color:#f0883e;border:1px solid rgba(240,136,62,0.3)}
+.badge-purple{background:rgba(188,140,255,0.15);color:#bc8cff;border:1px solid rgba(188,140,255,0.3)}
+
+/* Cards */
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.5rem;font-weight:700;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #21262d;
+  background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card h3{color:#58a6ff;font-size:1.15rem;margin:15px 0 8px}
+.card p{color:#c9d1d9;margin-bottom:10px}
+.card ul{padding-left:20px;margin:10px 0}
+.card li{margin-bottom:6px;color:#c9d1d9}
+.card li::marker{color:#3fb950}
+.card a{color:#58a6ff;text-decoration:none}
+.card a:hover{text-decoration:underline}
+
+/* Feature Grid */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:15px 0}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;transition:border-color 0.3s}
+.feature-item:hover{border-color:#58a6ff}
+.feature-item .icon{font-size:1.8rem;margin-bottom:6px}
+.feature-item .label{font-size:0.9rem;color:#8b949e}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th{background:#161b22;color:#58a6ff;padding:10px 14px;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #21262d;color:#c9d1d9}
+tr:hover td{background:rgba(88,166,255,0.05)}
+.check{color:#3fb950;font-weight:700}
+.cross{color:#f85149}
+.warn{color:#f0883e}
+
+/* Score */
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:15px 0}
+.score-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center}
+.score-item .score-label{color:#8b949e;font-size:0.85rem;margin-bottom:6px}
+.score-item .score-value{font-size:1.6rem;font-weight:800}
+.score-bar{height:6px;background:#21262d;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width 1s}
+.total-score{text-align:center;margin-top:20px}
+.total-score .big{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#58a6ff,#3fb950,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .label{color:#8b949e;font-size:1.1rem}
+
+/* Code Block */
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto}
+.code-block code{font-family:'Fira Code',Consolas,monospace;font-size:0.88rem;color:#c9d1d9;line-height:1.7}
+.code-block .comment{color:#8b949e}
+.code-block .cmd{color:#3fb950}
+.code-block .flag{color:#f0883e}
+.code-block .string{color:#a5d6ff}
+
+/* Scenario Tags */
+.scenario-tags{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.scenario-tag{background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:8px;padding:8px 16px;font-size:0.9rem;color:#58a6ff}
+
+/* Target Users */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:15px 0}
+.user-item{background:#0d1117;border-radius:8px;padding:14px;border-left:3px solid #3fb950}
+.user-item .user-icon{font-size:1.3rem;margin-bottom:4px}
+.user-item .user-title{color:#58a6ff;font-weight:600;font-size:0.95rem}
+.user-item .user-desc{color:#8b949e;font-size:0.82rem;margin-top:3px}
+
+/* Footer */
+.footer{text-align:center;padding:30px 20px;color:#484f58;font-size:0.85rem;border-top:1px solid #21262d;margin-top:30px}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{padding:12px}
+  .card{padding:16px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .user-grid{grid-template-columns:1fr}
+  table{font-size:0.8rem}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>DocuSeal</h1>
+  <div class="subtitle">Open Source DocuSign Alternative · 开源电子签名平台</div>
+  <div class="meta">
+    <span class="badge badge-blue">⭐ 13,776 Stars</span>
+    <span class="badge badge-green">🔥 +929 Today</span>
+    <span class="badge badge-orange">💎 Ruby</span>
+    <span class="badge badge-purple">📄 AGPLv3</span>
+  </div>
+</div>
+
+<!-- Overview -->
+<div class="card">
+  <h2>📋 项目简介</h2>
+  <p>DocuSeal 是一个开源的电子文档签名和处理平台，定位为 <strong>DocuSign 的开源替代品</strong>。允许用户创建 PDF 表单、在线填写和签名数字文档，支持任何设备上的移动端优化操作。被广泛认为是目前 <strong style="color:#3fb950">功能最完整的开源电子签名解决方案</strong>。</p>
+
+  <h3>核心功能一览</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><div class="icon">📝</div><div class="label">PDF 表单构建器<br>(WYSIWYG)</div></div>
+    <div class="feature-item"><div class="icon">✍️</div><div class="label">12 种字段类型<br>签名/日期/复选框</div></div>
+    <div class="feature-item"><div class="icon">👥</div><div class="label">多签署人<br>支持多人签署</div></div>
+    <div class="feature-item"><div class="icon">📧</div><div class="label">自动化邮件<br>SMTP 发送邀请</div></div>
+    <div class="feature-item"><div class="icon">☁️</div><div class="label">多云存储<br>S3/GCS/Azure</div></div>
+    <div class="feature-item"><div class="icon">🔐</div><div class="label">电子签名<br>自动签名验证</div></div>
+    <div class="feature-item"><div class="icon">📱</div><div class="label">移动端优化<br>响应式设计</div></div>
+    <div class="feature-item"><div class="icon">🌐</div><div class="label">多语言<br>7 UI / 14 签署</div></div>
+    <div class="feature-item"><div class="icon">🔗</div><div class="label">API & Webhooks<br>丰富集成</div></div>
+  </div>
+</div>
+
+<!-- Tech Architecture -->
+<div class="card">
+  <h2>🏗️ 技术架构</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>组件</th><th>技术选型</th></tr>
+      <tr><td>后端语言</td><td>Ruby</td></tr>
+      <tr><td>数据库</td><td>SQLite (默认) / PostgreSQL / MySQL</td></tr>
+      <tr><td>部署方式</td><td>Docker / Docker Compose</td></tr>
+      <tr><td>反向代理</td><td>Caddy (自动 HTTPS)</td></tr>
+      <tr><td>文件存储</td><td>本地磁盘 / AWS S3 / GCS / Azure</td></tr>
+      <tr><td>许可证</td><td>AGPLv3 with Section 7(b)</td></tr>
+    </table>
+  </div>
+
+  <h3>Pro 版增强功能</h3>
+  <ul>
+    <li>🏢 企业品牌定制和白标</li>
+    <li>👤 用户角色管理</li>
+    <li>⏰ 自动提醒功能</li>
+    <li>📲 SMS 邀请和身份验证</li>
+    <li>📐 条件字段和公式</li>
+    <li>📊 CSV/XLSX 批量发送</li>
+    <li>🔐 SSO / SAML 集成</li>
+    <li>🧩 嵌入式签署组件 (React, Vue, Angular, JS)</li>
+  </ul>
+</div>
+
+<!-- Why Trending -->
+<div class="card">
+  <h2>🔥 为什么火 (Trending 原因)</h2>
+  <ul>
+    <li><strong style="color:#f0883e">DocuSign 替代品需求旺盛</strong> — DocuSign 定价昂贵 ($10+/月起)，中小企业急需低成本替代方案</li>
+    <li><strong style="color:#58a6ff">数据主权意识增强</strong> — GDPR、隐私法规推动企业自托管文档处理</li>
+    <li><strong style="color:#3fb950">功能完整度最高</strong> — 在开源电子签名领域，DocuSeal 的功能覆盖面最广</li>
+    <li><strong style="color:#bc8cff">部署极其简单</strong> — 一行 Docker 命令即可启动，降低使用门槛</li>
+    <li><strong style="color:#f0883e">API 友好</strong> — 丰富的 API 和 Webhook 支持开发者快速集成</li>
+    <li><strong style="color:#3fb950">活跃维护</strong> — 持续更新迭代，Discord 社区活跃，企业级支持</li>
+  </ul>
+</div>
+
+<!-- Use Cases -->
+<div class="card">
+  <h2>🎯 应用场景</h2>
+  <div class="scenario-tags">
+    <span class="scenario-tag">🏦 金融银行 - 贷款文件、KYC</span>
+    <span class="scenario-tag">🏥 医疗保健 - 患者同意书</span>
+    <span class="scenario-tag">🏠 房地产 - 租赁合同</span>
+    <span class="scenario-tag">🏢 企业HR - 劳动合同、NDA</span>
+    <span class="scenario-tag">🛒 电商 - 商家入驻协议</span>
+    <span class="scenario-tag">🎓 教育 - 入学注册</span>
+    <span class="scenario-tag">🏛️ 政府 - 公民服务表单</span>
+    <span class="scenario-tag">⚖️ 法律 - 法律文件签署</span>
+  </div>
+</div>
+
+<!-- Comparison -->
+<div class="card">
+  <h2>📊 同类项目对比</h2>
+  <div class="table-wrap">
+    <table>
+      <tr>
+        <th>特性</th><th>DocuSeal</th><th>DocuSign</th><th>OpenSign</th><th>LibreSign</th><th>PandaDoc</th>
+      </tr>
+      <tr>
+        <td>开源</td><td class="check">✅ AGPLv3</td><td class="cross">❌ 商业</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>自托管</td><td class="check">✅</td><td class="cross">❌</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td>
+      </tr>
+      <tr>
+        <td>表单构建器</td><td class="check">✅ WYSIWYG</td><td class="check">✅</td><td class="warn">⚠️ 基础</td><td class="warn">⚠️ 基础</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>多签署人</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>API/Webhook</td><td class="check">✅</td><td class="check">✅</td><td class="warn">⚠️</td><td class="warn">⚠️</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>移动端</td><td class="check">✅</td><td class="check">✅</td><td class="warn">⚠️</td><td class="warn">⚠️</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>嵌入式签署</td><td class="check">✅ Pro</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td><td class="check">✅</td>
+      </tr>
+      <tr>
+        <td>免费使用</td><td class="check">✅ 免费/Pro付费</td><td class="cross">❌ $10+/月</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌ $19+/月</td>
+      </tr>
+    </table>
+  </div>
+  <p style="margin-top:12px;color:#3fb950;font-weight:600">结论：DocuSeal 在开源方案中功能最完整，是 DocuSign 最佳的开源替代品。</p>
+</div>
+
+<!-- Target Users -->
+<div class="card">
+  <h2>👥 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-item">
+      <div class="user-icon">🏢</div>
+      <div class="user-title">中小企业</div>
+      <div class="user-desc">控制合同签署成本</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">👨‍💻</div>
+      <div class="user-title">开发者/技术团队</div>
+      <div class="user-desc">集成电子签名到产品</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🔒</div>
+      <div class="user-title">注重隐私的组织</div>
+      <div class="user-desc">自托管，数据不出服务器</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">☁️</div>
+      <div class="user-title">SaaS 产品</div>
+      <div class="user-desc">嵌入签名到自己的应用</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">🏦</div>
+      <div class="user-title">金融/医疗/法律</div>
+      <div class="user-desc">合规性和数据安全</div>
+    </div>
+    <div class="user-item">
+      <div class="user-icon">❤️</div>
+      <div class="user-title">非营利组织</div>
+      <div class="user-desc">预算有限，专业需求</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Start -->
+<div class="card">
+  <h2>🚀 快速上手指南</h2>
+
+  <h3>1. Docker 一键部署 (推荐)</h3>
+  <div class="code-block">
+    <code><span class="cmd">docker run</span> <span class="flag">--name</span> docuseal <span class="flag">-p</span> 3000:3000 <span class="flag">-v</span> .:/data docuseal/docuseal</code>
+  </div>
+
+  <h3>2. Docker Compose (生产环境)</h3>
+  <div class="code-block">
+    <code><span class="comment"># 下载配置文件</span><br>
+<span class="cmd">curl</span> https://raw.githubusercontent.com/docusealco/docuseal/master/docker-compose.yml <span class="flag">></span> docker-compose.yml<br><br>
+<span class="comment"># 启动（自动 HTTPS）</span><br>
+<span class="cmd">sudo</span> HOST=your-domain.com docker compose up</code>
+  </div>
+
+  <h3>3. 使用 PostgreSQL 数据库</h3>
+  <div class="code-block">
+    <code><span class="cmd">docker run</span> <span class="flag">--name</span> docuseal <span class="flag">-p</span> 3000:3000 \<br>
+&nbsp;&nbsp;<span class="flag">-e</span> <span class="string">DATABASE_URL=postgresql://user:pass@host:5432/docuseal</span> \<br>
+&nbsp;&nbsp;<span class="flag">-v</span> .:/data docuseal/docuseal</code>
+  </div>
+
+  <h3>4. 嵌入式签署 (Pro)</h3>
+  <div class="code-block">
+    <code><span class="comment">// Vue 组件集成示例</span><br>
+<span class="flag">import</span> { DocusealForm } <span class="flag">from</span> <span class="string">'@docuseal/vue'</span><br><br>
+&lt;<span class="cmd">DocusealForm</span> <span class="flag">src</span>=<span class="string">"https://docuseal.com/d/SIGNER_TOKEN"</span> /&gt;</code>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="card">
+  <h2>⭐ 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-label">创新性</div>
+      <div class="score-value" style="color:#f0883e">7/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:70%;background:#f0883e"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">代码质量</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">实用性</div>
+      <div class="score-value" style="color:#3fb950">9/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:90%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value" style="color:#3fb950">8/10</div>
+      <div class="score-bar"><div class="score-fill" style="width:80%;background:#3fb950"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="label">综合评分</div>
+    <div class="big">8.0/10</div>
+    <div style="color:#f0883e;font-size:1.3rem;margin-top:5px">⭐⭐⭐⭐</div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>💡 总结</h2>
+  <p style="font-size:1.05rem">DocuSeal 是 2026 年开源电子签名领域的<strong style="color:#3fb950">标杆项目</strong>。它以<strong style="color:#58a6ff">免费、自托管、功能完整</strong>三大优势，精准击中了中小企业对 DocuSign 替代品的强烈需求。对于任何需要文档电子签名功能的团队来说，DocuSeal 都是目前最值得考虑的开源方案。</p>
+</div>
+
+<div class="footer">
+  <p>📡 数据来源: GitHub · WebSearch · 项目官网</p>
+  <p>🤖 分析由 AI 自动生成，仅供参考 | 2026-05-06</p>
+</div>
+
+</div>
+</body>
+</html>
