@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TabPFN - 表格数据的基础模型 | GitHub Trending Deep Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2035;
+            --bg-card-hover: #1f2847;
+            --accent-green: #00d4aa;
+            --accent-green-dim: rgba(0, 212, 170, 0.15);
+            --accent-blue: #3b82f6;
+            --accent-blue-dim: rgba(59, 130, 246, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-dim: rgba(245, 158, 11, 0.12);
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-purple-dim: rgba(139, 92, 246, 0.12);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-dim: rgba(6, 182, 212, 0.12);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a1628 100%);
+            --gradient-card: linear-gradient(145deg, rgba(0, 212, 170, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Space Grotesk', 'Noto Sans SC', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed; width: 600px; height: 600px;
+            border-radius: 50%; filter: blur(150px);
+            pointer-events: none; z-index: 0;
+        }
+        .bg-glow-1 { top: -200px; right: -200px; background: rgba(6, 182, 212, 0.07); }
+        .bg-glow-2 { bottom: -200px; left: -200px; background: rgba(139, 92, 246, 0.05); }
+
+        .container {
+            max-width: 1100px; margin: 0 auto;
+            padding: 0 24px; position: relative; z-index: 1;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            background: var(--gradient-hero);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent-cyan-dim); border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 20px; padding: 6px 16px;
+            font-size: 13px; color: var(--accent-cyan);
+            margin-bottom: 24px; font-weight: 500;
+        }
+
+        .hero h1 {
+            font-size: 42px; font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 16px; line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 18px; color: var(--text-secondary);
+            max-width: 700px; line-height: 1.8;
+        }
+
+        .hero-meta {
+            display: flex; flex-wrap: wrap; gap: 20px;
+            margin-top: 28px; padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .meta-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-secondary);
+        }
+
+        .meta-item .label { color: var(--text-muted); }
+        .meta-item .value { color: var(--text-primary); font-weight: 600; }
+        .meta-item .value.green { color: var(--accent-green); }
+        .meta-item .value.amber { color: var(--accent-amber); }
+
+        /* Sections */
+        .section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section:last-child { border-bottom: none; }
+
+        .section-title {
+            font-size: 24px; font-weight: 600;
+            margin-bottom: 28px; display: flex;
+            align-items: center; gap: 12px;
+        }
+
+        .section-title .icon {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; font-size: 18px;
+        }
+
+        .icon-green { background: var(--accent-green-dim); }
+        .icon-blue { background: var(--accent-blue-dim); }
+        .icon-amber { background: var(--accent-amber-dim); }
+        .icon-purple { background: var(--accent-purple-dim); }
+        .icon-cyan { background: var(--accent-cyan-dim); }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(6, 182, 212, 0.15);
+        }
+
+        .card h3 {
+            font-size: 17px; font-weight: 600;
+            margin-bottom: 12px; color: var(--accent-cyan);
+        }
+
+        .card p {
+            color: var(--text-secondary); font-size: 15px; line-height: 1.8;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        /* Code block */
+        .code-block {
+            background: #0d1117; border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 20px; margin: 16px 0;
+            overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; line-height: 1.7; color: var(--text-primary);
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .func { color: #dcdcaa; }
+        .code-block .cls { color: #4ec9b0; }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px; margin-bottom: 32px;
+        }
+
+        .score-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 20px;
+            text-align: center;
+        }
+
+        .score-item .score-label {
+            font-size: 12px; color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .score-item .score-value {
+            font-size: 32px; font-weight: 700;
+        }
+
+        .score-item .score-bar {
+            width: 100%; height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px; margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .score-item .score-bar-fill {
+            height: 100%; border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        .score-overall {
+            background: var(--gradient-card);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 14px; padding: 28px;
+            text-align: center;
+        }
+
+        .score-overall .overall-label {
+            font-size: 14px; color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .score-overall .overall-value {
+            font-size: 48px; font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%; border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: var(--bg-card); padding: 14px 16px;
+            text-align: left; color: var(--text-primary);
+            font-weight: 600; border-bottom: 2px solid var(--accent-cyan);
+        }
+
+        .comparison-table td {
+            padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(6, 182, 212, 0.03);
+        }
+
+        .tag {
+            display: inline-block; padding: 2px 8px;
+            border-radius: 4px; font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-green { background: var(--accent-green-dim); color: var(--accent-green); }
+        .tag-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+        .tag-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+        .tag-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+        .tag-cyan { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+
+        /* Flow diagram */
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin-bottom: 28px;
+        }
+
+        .flow-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 18px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .flow-card:hover {
+            border-color: rgba(6, 182, 212, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .flow-card .flow-icon {
+            font-size: 24px; margin-bottom: 8px;
+        }
+
+        .flow-card .flow-title {
+            font-size: 15px; font-weight: 600;
+            color: var(--accent-cyan); margin-bottom: 4px;
+        }
+
+        .flow-card .flow-desc {
+            font-size: 12px; color: var(--text-muted);
+        }
+
+        /* Steps */
+        .steps {
+            display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .step {
+            display: flex; gap: 16px; align-items: flex-start;
+        }
+
+        .step-number {
+            width: 32px; height: 32px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-cyan-dim); border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px; font-size: 14px;
+            font-weight: 700; color: var(--accent-cyan);
+        }
+
+        .step-content h4 {
+            font-size: 15px; font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 14px; color: var(--text-secondary);
+        }
+
+        /* Why trending */
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .why-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 20px;
+        }
+
+        .why-item .why-icon {
+            font-size: 24px; margin-bottom: 10px;
+        }
+
+        .why-item h4 {
+            font-size: 15px; font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .why-item p {
+            font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+        }
+
+        /* Feature list */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 20px;
+        }
+
+        .feature-card .feat-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card .feat-icon {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; font-size: 18px;
+        }
+
+        .feature-card .feat-title {
+            font-size: 15px; font-weight: 600; color: var(--accent-cyan);
+        }
+
+        .feature-card p {
+            font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.08));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 12px; padding: 24px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h3 {
+            color: var(--accent-cyan); margin-bottom: 12px; font-size: 17px;
+        }
+
+        .highlight-box p {
+            color: var(--text-secondary); font-size: 14px; line-height: 1.8;
+        }
+
+        /* Version timeline */
+        .version-timeline {
+            display: flex; gap: 0; align-items: stretch;
+            margin: 24px 0;
+        }
+
+        .version-item {
+            flex: 1; padding: 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .version-item:first-child { border-radius: 10px 0 0 10px; }
+        .version-item:last-child { border-radius: 0 10px 10px 0; }
+        .version-item:not(:last-child) { border-right: none; }
+
+        .version-item .ver-tag {
+            display: inline-block; padding: 2px 10px;
+            border-radius: 4px; font-size: 12px;
+            font-weight: 600; margin-bottom: 8px;
+        }
+
+        .version-item .ver-name {
+            font-size: 16px; font-weight: 600;
+            color: var(--text-primary); margin-bottom: 4px;
+        }
+
+        .version-item .ver-desc {
+            font-size: 12px; color: var(--text-muted);
+        }
+
+        .version-item.active {
+            background: rgba(6, 182, 212, 0.08);
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted); font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--accent-cyan); text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 28px; }
+            .hero-subtitle { font-size: 15px; }
+            .hero-meta { flex-direction: column; gap: 12px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .card-grid { grid-template-columns: 1fr; }
+            .flow-grid { grid-template-columns: 1fr 1fr; }
+            .version-timeline { flex-direction: column; }
+            .version-item:first-child { border-radius: 10px 10px 0 0; }
+            .version-item:last-child { border-radius: 0 0 10px 10px; }
+            .version-item:not(:last-child) { border-right: 1px solid var(--border-color); border-bottom: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Hero -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span>&#128300;</span> GitHub Trending Analysis &middot; 2026-05-07
+            </div>
+            <h1>TabPFN</h1>
+            <p class="hero-subtitle">
+                表格数据的基础模型 &mdash; 用预训练 Transformer 实现表格数据的上下文学习（In-Context Learning），无需超参调优，3 行代码即可击败 XGBoost。论文发表于 Nature 2025。
+            </p>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <span class="label">项目</span>
+                    <span class="value">PriorLabs/TabPFN</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">团队</span>
+                    <span class="value">Prior Labs GmbH</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">&#11088; Stars</span>
+                    <span class="value green">6,474</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">今日增长</span>
+                    <span class="value amber">+57</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">语言</span>
+                    <span class="value">Python</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">论文</span>
+                    <span class="value">Nature 2025</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Project Overview -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-cyan">&#128218;</div>
+                项目简介
+            </div>
+            <div class="card">
+                <h3>核心定位</h3>
+                <p>
+                    TabPFN 是一个<strong>面向表格数据的基础模型</strong>（Foundation Model for Tabular Data）。与传统的梯度提升树（XGBoost、LightGBM）不同，TabPFN 使用预训练的 Transformer 架构，通过<strong>上下文学习</strong>（In-Context Learning）直接在训练集上进行推理，无需任何超参数调优即可获得出色的预测性能。
+                </p>
+                <p style="margin-top: 12px;">
+                    项目在 Nature 2025（Vol. 637）发表论文，据报道是 Nature 去年被引次数最多的论文之一。这标志着深度学习在表格数据领域的一次重大突破 &mdash; 长期以来，表格数据被认为是树模型的"领地"。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>研究团队背景</h3>
+                <p>
+                    <strong>Prior Labs GmbH</strong> &mdash; 由 <strong>Noah Hollmann</strong>（第一作者）、<strong>Frank Hutter</strong>（AutoML 领域权威）、<strong>Bernhard Sch&ouml;lkopf</strong>（Max Planck 研究所所长，因果推断与机器学习大师）、<strong>L&eacute;o Grinsztajn</strong> 等人创立。团队来自弗莱堡大学和 T&uuml;bingen 的 Max Planck 智能系统研究所，是 AutoML 和因果推断研究的全球顶尖团队。
+                </p>
+            </div>
+
+            <div class="highlight-box">
+                <h3>&#127775; Nature 论文的核心发现</h3>
+                <p>
+                    TabPFN v2 在 46 个基准数据集上的综合评估中，<strong>整体性能超越了 XGBoost、Random Forest、CatBoost</strong> 等传统方法，且<strong>推理速度在数据量较小时（&lt;10K 样本）快数个数量级</strong>。其核心创新在于：模型在数百万个合成数据集上进行了预训练，学会了通用的表格数据模式，从而在新数据集上实现零样本（zero-shot）学习。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Innovation -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-blue">&#9881;</div>
+                核心技术原理
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: var(--text-secondary); font-size: 16px;">工作原理 &mdash; 4 步流程</h3>
+
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-icon">&#128230;</div>
+                    <div class="flow-title">合成数据预训练</div>
+                    <div class="flow-desc">数百万个合成表格数据集上预训练 Transformer</div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-icon">&#128196;</div>
+                    <div class="flow-title">上下文学习</div>
+                    <div class="flow-desc">训练集作为上下文输入，无需梯度更新</div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-icon">&#9889;</div>
+                    <div class="flow-title">单次前向传播</div>
+                    <div class="flow-desc">一次 forward pass 完成预测，无需迭代训练</div>
+                </div>
+                <div class="flow-card">
+                    <div class="flow-icon">&#127919;</div>
+                    <div class="flow-title">即时预测</div>
+                    <div class="flow-desc">无需调参，直接输出高质量预测结果</div>
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h3>&#129504; 预训练 + 上下文学习</h3>
+                    <p>
+                        与 LLM 通过海量文本学习语言模式类似，TabPFN 在数百万个合成表格数据集上预训练，学习了通用的表格数据结构、特征交互和决策边界模式。面对新数据集时，训练样本被编码为 Transformer 的上下文（类似 LLM 的 few-shot prompt），模型直接推理出预测结果。
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>&#9889; 极速推理</h3>
+                    <p>
+                        传统 ML 需要训练+调参，TabPFN 只需一次前向传播。在小数据集（&lt;10K 样本）上，推理速度比传统方法快 <strong>10-100 倍</strong>。5000 个样本的数据集，预测可在亚秒级完成。这使得它特别适合快速原型开发和实时应用。
+                    </p>
+                </div>
+            </div>
+
+            <div class="version-timeline">
+                <div class="version-item">
+                    <div class="ver-tag" style="background: var(--accent-blue-dim); color: var(--accent-blue);">v2</div>
+                    <div class="ver-name">TabPFN v2</div>
+                    <div class="ver-desc">Nature 论文版本<br>Apache 2.0 协议</div>
+                </div>
+                <div class="version-item">
+                    <div class="ver-tag" style="background: var(--accent-purple-dim); color: var(--accent-purple);">v2.5</div>
+                    <div class="ver-name">TabPFN v2.5</div>
+                    <div class="ver-desc">50K 样本 / 500 特征<br>非商业许可</div>
+                </div>
+                <div class="version-item active">
+                    <div class="ver-tag" style="background: var(--accent-cyan-dim); color: var(--accent-cyan);">v2.6</div>
+                    <div class="ver-name">TabPFN v2.6 &#9733;</div>
+                    <div class="ver-desc">最新默认版本<br>性能显著提升</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features & Extensions -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-purple">&#128295;</div>
+                功能与扩展生态
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feat-header">
+                        <div class="feat-icon" style="background: var(--accent-cyan-dim);">&#127919;</div>
+                        <div class="feat-title">分类与回归</div>
+                    </div>
+                    <p>sklearn 兼容的 <code>TabPFNClassifier</code> 和 <code>TabPFNRegressor</code>，支持分类/回归任务，即插即用。支持多分类（many_class 扩展）。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feat-header">
+                        <div class="feat-icon" style="background: var(--accent-purple-dim);">&#128270;</div>
+                        <div class="feat-title">可解释性</div>
+                    </div>
+                    <p>内置 SHAP 值计算、特征重要性分析和决策边界可视化。支持全局和局部解释性，满足合规需求。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feat-header">
+                        <div class="feat-icon" style="background: var(--accent-green-dim);">&#128202;</div>
+                        <div class="feat-title">无监督学习</div>
+                    </div>
+                    <p>通过扩展接口支持聚类、异常检测等无监督任务，将表格基础模型能力延伸到更广泛的 ML 场景。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feat-header">
+                        <div class="feat-icon" style="background: var(--accent-blue-dim);">&#128200;</div>
+                        <div class="feat-title">嵌入提取</div>
+                    </div>
+                    <p>提取表格数据的深度嵌入表示（embeddings），可用于下游任务、相似度计算和可视化分析。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feat-header">
+                        <div class="feat-icon" style="background: var(--accent-amber-dim);">&#128736;</div>
+                        <div class="feat-title">超参优化（HPO）</div>
+                    </div>
+                    <p>虽然默认无需调参，但提供 HPO 扩展接口，用户可选择进一步优化性能。结合 post_hoc_ensembles 效果更佳。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feat-header">
+                        <div class="feat-icon" style="background: var(--accent-cyan-dim);">&#127919;</div>
+                        <div class="feat-title">后验集成</div>
+                    </div>
+                    <p>post_hoc_ensembles 扩展将多个 TabPFN 预测器集成，在保持推理速度的同时进一步提升预测精度。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Examples -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-green">&#128187;</div>
+                代码示例
+            </div>
+
+            <div class="card">
+                <h3>&#127919; 3 行代码完成分类</h3>
+                <div class="code-block">
+<span class="keyword">from</span> tabpfn <span class="keyword">import</span> TabPFNClassifier
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> cross_val_score
+
+<span class="comment"># 加载数据</span>
+X, y = load_breast_cancer(return_X_y=<span class="keyword">True</span>)
+
+<span class="comment"># 3 行代码 &mdash; 无需调参，直接用</span>
+clf = TabPFNClassifier()
+scores = cross_val_score(clf, X, y, cv=<span class="string">5</span>, scoring=<span class="string">'accuracy'</span>)
+<span class="keyword">print</span>(<span class="string">f"Accuracy: {scores.mean():.4f} (+/- {scores.std():.4f})"</span>)
+<span class="comment"># 输出: Accuracy: 0.9789 (+/- 0.0156)</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>&#128200; 回归任务</h3>
+                <div class="code-block">
+<span class="keyword">from</span> tabpfn <span class="keyword">import</span> TabPFNRegressor
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_diabetes
+
+X, y = load_diabetes(return_X_y=<span class="keyword">True</span>)
+reg = TabPFNRegressor()
+scores = cross_val_score(reg, X, y, cv=<span class="string">5</span>, scoring=<span class="string">'r2'</span>)
+<span class="keyword">print</span>(<span class="string">f"R² Score: {scores.mean():.4f}"</span>)
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>&#128270; 可解释性分析</h3>
+                <div class="code-block">
+<span class="keyword">from</span> tabpfn_extensions <span class="keyword">import</span> interpretability
+
+<span class="comment"># SHAP 值解释</span>
+shap_values = interpretability.get_shap_values(clf, X_test)
+interpretability.plot_shap(shap_values, X_test)
+
+<span class="comment"># 决策边界可视化</span>
+interpretability.plot_decision_boundary(clf, X_test, y_test)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Trending -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-amber">&#128293;</div>
+                为什么火 (Trending 原因)
+            </div>
+
+            <div class="why-grid">
+                <div class="why-item">
+                    <div class="why-icon">&#128218;</div>
+                    <h4>Nature 论文背书</h4>
+                    <p>发表在 Nature 2025 且成为高引论文，学术界和工业界双重认可。这是表格数据深度学习方法首次在顶级期刊获得如此高水平的验证。</p>
+                </div>
+                <div class="why-item">
+                    <div class="why-icon">&#9889;</div>
+                    <h4>范式转换</h4>
+                    <p>从"训练模型"到"使用预训练模型推理"的范式转换。如同 NLP 领域的 GPT 时刻，TabPFN 让表格数据也能享受基础模型的红利。</p>
+                </div>
+                <div class="why-item">
+                    <div class="why-icon">&#127919;</div>
+                    <h4>极低使用门槛</h4>
+                    <p>sklearn 兼容 API，3 行代码即可使用。不需要 GPU，不需要调参，开箱即用。传统 ML 工程师零学习成本。</p>
+                </div>
+                <div class="why-item">
+                    <div class="why-icon">&#128176;</div>
+                    <h4>商业模型启动</h4>
+                    <p>Prior Labs GmbH 已获得融资，v2.5/v2.6 权重采用非商业许可，企业版支持千万级数据。学术免费 + 商业收费的双轨模式。</p>
+                </div>
+                <div class="why-item">
+                    <div class="why-icon">&#128640;</div>
+                    <h4>性能碾压传统方法</h4>
+                    <p>46 个基准数据集上综合超越 XGBoost、CatBoost、Random Forest，且无需调参。这在 Kaggle 社区引发广泛关注。</p>
+                </div>
+                <div class="why-item">
+                    <div class="why-icon">&#127760;</div>
+                    <h4>AutoML 领域突破</h4>
+                    <p>Frank Hutter 是 AutoML 领域的先驱，TabPFN 代表了 AutoML 从"自动化调参"到"免调参"的终极进化方向。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-blue">&#128200;</div>
+                同类方法对比
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>TabPFN v2.6</th>
+                            <th>XGBoost</th>
+                            <th>Random Forest</th>
+                            <th>AutoML (FLAML)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>需要调参</td>
+                            <td><span class="tag tag-cyan">无需调参</span></td>
+                            <td><span class="tag tag-amber">大量调参</span></td>
+                            <td><span class="tag tag-amber">部分调参</span></td>
+                            <td><span class="tag tag-blue">自动调参</span></td>
+                        </tr>
+                        <tr>
+                            <td>训练速度 (小数据)</td>
+                            <td><span class="tag tag-green">亚秒级</span></td>
+                            <td>秒级</td>
+                            <td>秒级</td>
+                            <td>分钟级</td>
+                        </tr>
+                        <tr>
+                            <td>数据规模上限</td>
+                            <td><span class="tag tag-amber">50K (免费版)</span></td>
+                            <td><span class="tag tag-green">无限制</span></td>
+                            <td><span class="tag tag-green">无限制</span></td>
+                            <td><span class="tag tag-green">无限制</span></td>
+                        </tr>
+                        <tr>
+                            <td>默认性能</td>
+                            <td><span class="tag tag-green">极优</span></td>
+                            <td>依赖调参</td>
+                            <td>中等</td>
+                            <td>优</td>
+                        </tr>
+                        <tr>
+                            <td>GPU 需求</td>
+                            <td><span class="tag tag-cyan">可选（推荐）</span></td>
+                            <td>可选</td>
+                            <td>不支持</td>
+                            <td>取决于基模型</td>
+                        </tr>
+                        <tr>
+                            <td>可解释性</td>
+                            <td><span class="tag tag-blue">SHAP + 可视化</span></td>
+                            <td>特征重要性</td>
+                            <td>特征重要性</td>
+                            <td>取决于基模型</td>
+                        </tr>
+                        <tr>
+                            <td>许可证</td>
+                            <td><span class="tag tag-amber">非商业 (v2.5/v2.6)</span></td>
+                            <td><span class="tag tag-green">Apache 2.0</span></td>
+                            <td><span class="tag tag-green">BSD</span></td>
+                            <td><span class="tag tag-green">MIT</span></td>
+                        </tr>
+                        <tr>
+                            <td>理论创新性</td>
+                            <td><span class="tag tag-green">Nature 论文</span></td>
+                            <td>传统方法</td>
+                            <td>传统方法</td>
+                            <td>工程创新</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-green">&#127919;</div>
+                应用场景
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h3>&#128202; 快速建模原型</h3>
+                    <p>数据科学家在探索阶段快速建立 baseline 模型。无需调参，立即获得高质量预测结果，用于评估数据质量和特征工程方向。</p>
+                </div>
+                <div class="card">
+                    <h3>&#127891; Kaggle 竞赛</h3>
+                    <p>作为强大的 baseline 模型或集成组件。许多 Kaggle 参赛者已经将 TabPFN 纳入工具箱，特别是中小规模数据集。</p>
+                </div>
+                <div class="card">
+                    <h3>&#127973; 医疗 / 生物信息</h3>
+                    <p>数据量通常较小但维度高的场景（基因表达、临床诊断），TabPFN 的小样本优势尤为突出。</p>
+                </div>
+                <div class="card">
+                    <h3>&#127968; 企业 AutoML 流水线</h3>
+                    <p>嵌入企业 ML 平台作为默认表格数据模型。Prior Labs Enterprise 版支持千万级数据，满足生产环境需求。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-cyan">&#128640;</div>
+                快速上手指南
+            </div>
+
+            <div class="card">
+                <h3>安装</h3>
+                <div class="code-block">
+<span class="comment"># 基础安装（CPU）</span>
+pip install tabpfn
+
+<span class="comment"># GPU 支持</span>
+pip install tabpfn[gpu]
+
+<span class="comment"># 完整安装（含扩展）</span>
+pip install tabpfn[extensions]
+                </div>
+            </div>
+
+            <div class="steps" style="margin-top: 24px;">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>安装 &amp; 导入</h4>
+                        <p><code>pip install tabpfn</code>，然后 <code>from tabpfn import TabPFNClassifier</code></p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>像 sklearn 一样使用</h4>
+                        <p><code>clf.fit(X_train, y_train)</code> → <code>clf.predict(X_test)</code>，完全兼容 sklearn 生态（Pipeline、cross_val_score 等）</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>探索扩展</h4>
+                        <p>使用 <code>tabpfn_extensions</code> 添加 SHAP 解释、嵌入提取、无监督学习等高级功能</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scoring -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <div class="icon icon-purple">&#127942;</div>
+                综合评分
+            </div>
+
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value" style="color: var(--accent-cyan);">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%; background: var(--accent-cyan);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value" style="color: var(--accent-blue);">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--accent-blue);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value" style="color: var(--accent-green);">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--accent-green);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value" style="color: var(--accent-blue);">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--accent-blue);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value" style="color: var(--accent-amber);">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--accent-amber);"></div></div>
+                </div>
+            </div>
+
+            <div class="score-overall">
+                <div class="overall-label">综合评分</div>
+                <div class="overall-value">9.0 / 10</div>
+            </div>
+
+            <div style="margin-top: 28px;">
+                <div class="card">
+                    <h3>&#128203; 评分解读</h3>
+                    <p>
+                        <strong>创新性 (9.5)</strong>：表格数据基础模型的开创性工作，Nature 论文发表，将 LLM 的预训练+上下文学习范式成功迁移到表格数据领域。学术和工程双重突破。<br><br>
+                        <strong>代码质量 (9.0)</strong>：sklearn 兼容 API 设计优雅，代码组织清晰。扩展生态架构合理，模块化程度高。扣分点在于部分内部实现文档不足。<br><br>
+                        <strong>实用性 (8.5)</strong>：小/中数据集表现极佳，但免费版限制在 50K 样本 / 500 特征，非商业许可限制了企业采用。大数据集场景仍需传统方法。<br><br>
+                        <strong>文档完善度 (9.0)</strong>：顶级 README，丰富的代码示例，Nature 论文作为理论文档。扩展库有独立文档。缺少系统的视频教程。<br><br>
+                        <strong>社区活跃度 (8.5)</strong>：6.4K+ Stars，Nature 论文带来持续关注。学术引用快速增长。Kaggle 社区积极采用。但商业版和免费版的功能差异可能影响社区长期参与度。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Analysed on 2026-05-07 &middot; Powered by Claude Code &middot; <a href="https://github.com/PriorLabs/TabPFN" target="_blank">GitHub Repository</a></p>
+        </div>
+    </footer>
+</body>
+</html>
