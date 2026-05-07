@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude for Financial Services | GitHub Trending Deep Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2035;
+            --bg-card-hover: #1f2847;
+            --accent-gold: #d4a843;
+            --accent-gold-dim: rgba(212, 168, 67, 0.15);
+            --accent-teal: #14b8a6;
+            --accent-teal-dim: rgba(20, 184, 166, 0.12);
+            --accent-blue: #3b82f6;
+            --accent-blue-dim: rgba(59, 130, 246, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-dim: rgba(245, 158, 11, 0.12);
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-purple-dim: rgba(139, 92, 246, 0.12);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-dim: rgba(6, 182, 212, 0.12);
+            --accent-emerald: #10b981;
+            --accent-emerald-dim: rgba(16, 185, 129, 0.12);
+            --accent-rose: #f43f5e;
+            --accent-rose-dim: rgba(244, 63, 94, 0.12);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a1628 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Space Grotesk', 'Noto Sans SC', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 168, 67, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed; width: 600px; height: 600px;
+            border-radius: 50%; filter: blur(150px);
+            pointer-events: none; z-index: 0;
+        }
+        .bg-glow-1 { top: -200px; right: -200px; background: rgba(212, 168, 67, 0.07); }
+        .bg-glow-2 { bottom: -200px; left: -200px; background: rgba(20, 184, 166, 0.05); }
+
+        .container {
+            max-width: 1100px; margin: 0 auto;
+            padding: 0 24px; position: relative; z-index: 1;
+        }
+
+        .hero {
+            padding: 80px 0 60px;
+            background: var(--gradient-hero);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent-gold-dim); border: 1px solid rgba(212, 168, 67, 0.3);
+            border-radius: 20px; padding: 6px 16px;
+            font-size: 13px; color: var(--accent-gold);
+            margin-bottom: 24px; font-weight: 500;
+        }
+
+        .hero h1 {
+            font-size: 42px; font-weight: 700;
+            background: linear-gradient(135deg, #d4a843 0%, #14b8a6 40%, #3b82f6 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 16px; line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 18px; color: var(--text-secondary);
+            max-width: 700px; line-height: 1.8;
+        }
+
+        .hero-meta {
+            display: flex; flex-wrap: wrap; gap: 20px;
+            margin-top: 32px;
+        }
+
+        .meta-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-secondary);
+        }
+
+        .meta-icon {
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+
+        .meta-value { font-weight: 600; color: var(--text-primary); }
+
+        .section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 32px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .section-title .icon {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-gold-dim);
+            border-radius: 8px; font-size: 18px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(212, 168, 67, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            font-size: 18px; font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-gold);
+        }
+
+        .card p {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .score-card:hover {
+            border-color: rgba(212, 168, 67, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .score-label {
+            font-size: 13px; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-value {
+            font-size: 36px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .score-value.gold { color: var(--accent-gold); }
+        .score-value.teal { color: var(--accent-teal); }
+        .score-value.blue { color: var(--accent-blue); }
+        .score-value.purple { color: var(--accent-purple); }
+        .score-value.cyan { color: var(--accent-cyan); }
+        .score-value.emerald { color: var(--accent-emerald); }
+
+        .score-bar {
+            height: 4px; background: var(--bg-secondary);
+            border-radius: 2px; margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%; border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        .overall-score {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 168, 67, 0.2);
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 40px;
+        }
+
+        .overall-number {
+            font-size: 72px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #d4a843, #14b8a6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .overall-label {
+            font-size: 14px; color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .overall-desc h3 {
+            font-size: 22px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .overall-desc p {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(212, 168, 67, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-gold-dim);
+            border-radius: 10px; font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 8px; color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(212, 168, 67, 0.1) 0%, rgba(20, 184, 166, 0.08) 100%);
+            border: 1px solid rgba(212, 168, 67, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .highlight-box h4 {
+            font-size: 16px; font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+
+        .highlight-box p, .highlight-box ul {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .highlight-box ul {
+            margin-top: 8px; padding-left: 20px;
+        }
+
+        .highlight-box li { margin-bottom: 4px; }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(212, 168, 67, 0.3);
+        }
+
+        .comparison-table td {
+            padding: 14px 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(212, 168, 67, 0.03);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-gold { background: var(--accent-gold-dim); color: var(--accent-gold); }
+        .tag-teal { background: var(--accent-teal-dim); color: var(--accent-teal); }
+        .tag-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+        .tag-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+        .tag-cyan { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+        .tag-emerald { background: var(--accent-emerald-dim); color: var(--accent-emerald); }
+        .tag-rose { background: var(--accent-rose-dim); color: var(--accent-rose); }
+
+        .reason-list {
+            list-style: none;
+            counter-reset: reason;
+        }
+
+        .reason-list li {
+            counter-increment: reason;
+            padding: 20px 24px 20px 72px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .reason-list li:hover {
+            border-color: rgba(212, 168, 67, 0.15);
+            transform: translateX(4px);
+        }
+
+        .reason-list li::before {
+            content: counter(reason);
+            position: absolute;
+            left: 20px; top: 50%;
+            transform: translateY(-50%);
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-gold-dim);
+            border-radius: 8px;
+            font-size: 16px; font-weight: 700;
+            color: var(--accent-gold);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .reason-list li strong {
+            display: block;
+            font-size: 16px; color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .reason-list li span {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #c9d1d9;
+        }
+
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .func { color: #d2a8ff; }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-card:hover {
+            border-color: rgba(212, 168, 67, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .scenario-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .scenario-card h4 {
+            font-size: 15px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .scenario-card p {
+            font-size: 13px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 20px;
+        }
+
+        .toc h3 {
+            font-size: 16px; color: var(--accent-gold);
+            margin-bottom: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px;
+        }
+
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            display: flex; align-items: center; gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .toc-list a:hover { color: var(--accent-gold); }
+        .toc-list a::before { content: "→"; font-size: 12px; color: var(--text-muted); }
+
+        .badge-row {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin-top: 16px;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+
+        .arch-node {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px 24px;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .arch-node:hover {
+            border-color: rgba(212, 168, 67, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .arch-node.active {
+            border-color: rgba(212, 168, 67, 0.4);
+            background: linear-gradient(135deg, rgba(212, 168, 67, 0.1), rgba(20, 184, 166, 0.05));
+        }
+
+        .arch-node h4 {
+            font-size: 14px; font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .arch-node p {
+            font-size: 12px; color: var(--text-muted);
+        }
+
+        .arch-arrow {
+            color: var(--text-muted);
+            font-size: 20px;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .agent-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .agent-card:hover {
+            border-color: rgba(212, 168, 67, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .agent-card .agent-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .agent-card h4 {
+            font-size: 13px; font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+        }
+
+        .agent-card p {
+            font-size: 12px; color: var(--text-muted);
+        }
+
+        .plugins-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .plugin-tag {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .plugin-tag:hover {
+            border-color: rgba(212, 168, 67, 0.2);
+        }
+
+        .plugin-tag strong {
+            color: var(--accent-gold);
+        }
+
+        .plugin-tag span {
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        .mcp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .mcp-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .mcp-item:hover {
+            border-color: rgba(20, 184, 166, 0.3);
+        }
+
+        .mcp-item strong {
+            display: block;
+            color: var(--accent-teal);
+            margin-bottom: 2px;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .skill-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent-cyan);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .skill-item:hover {
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .partner-row {
+            display: flex;
+            gap: 16px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .partner-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 28px;
+            flex: 1;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .partner-card:hover {
+            border-color: rgba(212, 168, 67, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .partner-card h4 {
+            font-size: 16px; font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 6px;
+        }
+
+        .partner-card p {
+            font-size: 13px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 28px; }
+            .hero-subtitle { font-size: 16px; }
+            .overall-score { flex-direction: column; gap: 16px; }
+            .overall-number { font-size: 56px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(3, 1fr); }
+            .section { padding: 40px 0; }
+            .arch-flow { flex-direction: column; }
+            .arch-arrow { transform: rotate(90deg); }
+            .agents-grid { grid-template-columns: repeat(2, 1fr); }
+            .skills-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span>🏦</span>
+                <span>GitHub Trending Deep Analysis</span>
+            </div>
+            <h1>Claude for Financial Services</h1>
+            <p class="hero-subtitle">
+                Anthropic 官方开源的金融服务 AI 代理集合。包含 10 个预构建 Agent、7 个垂直领域 Plugin、11 个 MCP 数据连接器、40+ 专业 Skills，覆盖投行、资管、私募、财富管理、基金运营等金融核心场景。一套源码，两种交付——Claude Cowork 插件或 Managed Agents API。
+            </p>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">⭐</span>
+                    <span class="meta-value">8,527</span> Stars
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📈</span>
+                    <span class="meta-value">+540</span> today
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">💻</span>
+                    <span class="meta-value">Python</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📜</span>
+                    <span class="meta-value">Apache 2.0</span> License
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🏢</span>
+                    <span class="meta-value">Anthropic</span> Official
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🤝</span>
+                    <span class="meta-value">Accenture + FIS</span>
+                </div>
+            </div>
+            <div class="badge-row">
+                <span class="tag tag-gold">Financial AI Agents</span>
+                <span class="tag tag-teal">MCP Connectors</span>
+                <span class="tag tag-blue">Claude Cowork</span>
+                <span class="tag tag-purple">Managed Agents API</span>
+                <span class="tag tag-cyan">Vertical Plugins</span>
+                <span class="tag tag-emerald">Microsoft 365</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="padding: 40px 0 20px;">
+        <div class="container">
+            <div class="toc">
+                <h3>📑 目录</h3>
+                <ul class="toc-list">
+                    <li><a href="#score">评分概览</a></li>
+                    <li><a href="#overview">项目概览</a></li>
+                    <li><a href="#agents">预构建 Agent</a></li>
+                    <li><a href="#architecture">架构设计</a></li>
+                    <li><a href="#trending">热门原因</a></li>
+                    <li><a href="#comparison">竞品对比</a></li>
+                    <li><a href="#scenarios">应用场景</a></li>
+                    <li><a href="#quickstart">快速开始</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="score">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">📊</span>
+                综合评分
+            </h2>
+
+            <div class="overall-score">
+                <div>
+                    <div class="overall-number">8.9</div>
+                    <div class="overall-label">/ 10 综合评分</div>
+                </div>
+                <div class="overall-desc">
+                    <h3>AI 巨头的垂直行业战略蓝图</h3>
+                    <p>Anthropic 以此项目向市场释放了明确信号：AI 公司不再只提供通用模型，而是直接下场构建垂直行业解决方案。10 个生产级 Agent、7 个垂直 Plugin、11 个 MCP 数据连接器——这不是 Demo，而是经过 WSJ、Bloomberg 等主流媒体报道的生产就绪系统。从投行 Pitch Book 到私募尽调，从财报分析到 KYC 筛查，几乎覆盖了金融服务业的核心工作流。Apache 2.0 开源 + 文件驱动架构（Markdown/JSON/YAML）使金融机构可以零门槛上手和深度定制。</p>
+                </div>
+            </div>
+
+            <div class="score-grid">
+                <div class="score-card">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value gold">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%; background: linear-gradient(90deg, #d4a843, #14b8a6);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value teal">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%; background: linear-gradient(90deg, #14b8a6, #3b82f6);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value gold">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%; background: linear-gradient(90deg, #d4a843, #f59e0b);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value purple">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:95%; background: linear-gradient(90deg, #8b5cf6, #ec4899);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value cyan">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%; background: linear-gradient(90deg, #06b6d4, #3b82f6);"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="overview">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🌐</span>
+                项目概览
+            </h2>
+
+            <div class="card">
+                <h3>什么是 Claude for Financial Services？</h3>
+                <p>这是 Anthropic 官方开源的金融服务业 AI 代理参考实现。它不是通用 AI 模型的简单包装，而是一套完整的、面向金融行业特定工作流的垂直解决方案——从投行并购顾问到基金经理报表分析，从 KYC 合规审查到私募股权尽调，每个场景都有专门的 AI Agent 和配套 Skills。</p>
+            </div>
+
+            <div class="card">
+                <h3>核心设计理念：垂直 AI 平台</h3>
+                <p>与 OpenAI、Google 等公司专注于通用 AI 能力不同，Anthropic 选择了一条"垂直深耕"的道路。Claude for Financial Services 不是 Demo 或实验项目，而是经过 Accenture、FIS 等全球顶级咨询和金融科技公司验证的生产级系统。其设计假设是：AI 的最大商业价值不在于通用对话，而在于深度嵌入特定行业的专业知识和工作流程。</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🔑 核心数据</h4>
+                <ul>
+                    <li><strong>Stars:</strong> 8,527+（+540 today，发布后快速增长）</li>
+                    <li><strong>Agent 数量:</strong> 10 个命名 Agent，覆盖金融全链条</li>
+                    <li><strong>垂直 Plugin:</strong> 7 个领域 + 2 个合作伙伴 Plugin</li>
+                    <li><strong>MCP 连接器:</strong> 11 个金融数据源实时集成</li>
+                    <li><strong>Skills/Commands:</strong> 40+ 个专业金融操作命令</li>
+                    <li><strong>交付方式:</strong> Claude Cowork 插件 + Managed Agents API</li>
+                    <li><strong>架构:</strong> 纯文件驱动（Markdown/JSON/YAML），零构建步骤</li>
+                    <li><strong>企业集成:</strong> Microsoft 365（Excel, PowerPoint, Word, Outlook）</li>
+                    <li><strong>License:</strong> Apache 2.0（完全开源）</li>
+                    <li><strong>合作伙伴:</strong> Accenture（企业部署）、FIS（金融犯罪检测）</li>
+                </ul>
+            </div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 20px; color: var(--accent-gold);">两种交付方式</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧩</div>
+                    <h3>Claude Cowork Plugin</h3>
+                    <p>直接在 Claude.ai 中使用。安装 Plugin 后，在对话中即可调用所有 Agent 和 Skills。适合个人分析师、小型团队快速上手。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>Managed Agents API</h3>
+                    <p>通过 API 部署和调用 Agent。适合企业级集成，可嵌入内部系统、定制工作流、对接自有数据源。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="agents">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🤖</span>
+                10 个预构建 Agent
+            </h2>
+
+            <div class="card">
+                <h3>覆盖金融服务业全链条</h3>
+                <p>从投行前端（Pitch、Meeting Prep）到研究分析（Market Research、Earnings Review），从建模估值（Model Builder、Valuation Review）到后台运营（GL Reconciler、Month-End Closer、Statement Auditor、KYC Screener），每个 Agent 都针对特定的金融工作流深度优化。</p>
+            </div>
+
+            <div class="agents-grid">
+                <div class="agent-card">
+                    <div class="agent-icon">📊</div>
+                    <h4>Pitch Agent</h4>
+                    <p>投行提案书生成</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">📋</div>
+                    <h4>Meeting Prep</h4>
+                    <p>会议准备与调研</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">🔬</div>
+                    <h4>Market Researcher</h4>
+                    <p>市场研究与行业分析</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">📈</div>
+                    <h4>Earnings Reviewer</h4>
+                    <p>财报解读与点评</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">📐</div>
+                    <h4>Model Builder</h4>
+                    <p>财务模型构建</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">💰</div>
+                    <h4>Valuation Reviewer</h4>
+                    <p>估值审查与校验</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">⚖️</div>
+                    <h4>GL Reconciler</h4>
+                    <p>总账对账与差异分析</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">📅</div>
+                    <h4>Month-End Closer</h4>
+                    <p>月末结账自动化</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">🔍</div>
+                    <h4>Statement Auditor</h4>
+                    <p>报表审计与异常检测</p>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-icon">🛡️</div>
+                    <h4>KYC Screener</h4>
+                    <p>客户身份筛查与合规</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="architecture">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🏗️</span>
+                架构设计
+            </h2>
+
+            <div class="card">
+                <h3>文件驱动架构：零构建步骤</h3>
+                <p>整个项目采用纯文件驱动架构，所有 Agent 定义、Plugin 配置、Skill 描述都以 Markdown、JSON 和 YAML 文件存储。没有编译步骤，没有构建流程——克隆仓库后即可直接使用或修改。这种设计极大地降低了金融机构的上手门槛，同时也便于版本控制和审计追踪。</p>
+            </div>
+
+            <div class="arch-flow">
+                <div class="arch-node">
+                    <h4>Markdown/JSON/YAML</h4>
+                    <p>Agent + Plugin + Skill 定义</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node active">
+                    <h4>Claude Runtime</h4>
+                    <p>Cowork Plugin / Managed Agents API</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div class="arch-node"><h4>MCP Connectors</h4><p>11 个金融数据源</p></div>
+                    <div class="arch-node"><h4>Microsoft 365</h4><p>Excel/PowerPoint/Word</p></div>
+                    <div class="arch-node"><h4>Partner APIs</h4><p>LSEG / S&P Global</p></div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--accent-gold);">7 个垂直领域 Plugin</h3>
+            <div class="plugins-flow">
+                <div class="plugin-tag"><strong>financial-analysis</strong><span>核心金融分析</span></div>
+                <div class="plugin-tag"><strong>investment-banking</strong><span>投资银行</span></div>
+                <div class="plugin-tag"><strong>equity-research</strong><span>股票研究</span></div>
+                <div class="plugin-tag"><strong>private-equity</strong><span>私募股权</span></div>
+                <div class="plugin-tag"><strong>wealth-management</strong><span>财富管理</span></div>
+                <div class="plugin-tag"><strong>fund-admin</strong><span>基金运营</span></div>
+                <div class="plugin-tag"><strong>operations</strong><span>后台运营</span></div>
+            </div>
+
+            <div class="partner-row" style="margin-top: 16px;">
+                <div class="partner-card">
+                    <h4>🤝 LSEG Plugin</h4>
+                    <p>伦敦证券交易所集团数据集成，覆盖全球市场实时数据和交易信息。</p>
+                </div>
+                <div class="partner-card">
+                    <h4>🤝 S&P Global Plugin</h4>
+                    <p>标普全球数据集成，提供信用评级、市场指数和宏观经济数据。</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--accent-teal);">11 个 MCP 数据连接器</h3>
+            <div class="mcp-grid">
+                <div class="mcp-item"><strong>Daloopa</strong>财务数据提取</div>
+                <div class="mcp-item"><strong>Morningstar</strong>基金与评级</div>
+                <div class="mcp-item"><strong>S&P Global</strong>信用评级指数</div>
+                <div class="mcp-item"><strong>FactSet</strong>金融数据分析</div>
+                <div class="mcp-item"><strong>Moody's</strong>信用风险评估</div>
+                <div class="mcp-item"><strong>MT Newswires</strong>实时新闻</div>
+                <div class="mcp-item"><strong>Aiera</strong>AI 事件检测</div>
+                <div class="mcp-item"><strong>LSEG</strong>伦交所数据</div>
+                <div class="mcp-item"><strong>PitchBook</strong>私募创投数据</div>
+                <div class="mcp-item"><strong>Chronograph</strong>另类投资数据</div>
+                <div class="mcp-item"><strong>Egnyte</strong>文档安全管理</div>
+            </div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--accent-cyan);">40+ 专业 Skills / Commands</h3>
+            <div class="skills-grid">
+                <div class="skill-item">/comps</div>
+                <div class="skill-item">/dcf</div>
+                <div class="skill-item">/lbo</div>
+                <div class="skill-item">/earnings</div>
+                <div class="skill-item">/ic-memo</div>
+                <div class="skill-item">/cim</div>
+                <div class="skill-item">/teaser</div>
+                <div class="skill-item">/one-pager</div>
+                <div class="skill-item">/buyer-list</div>
+                <div class="skill-item">/merger-model</div>
+                <div class="skill-item">/initiate</div>
+                <div class="skill-item">/screen</div>
+                <div class="skill-item">/source</div>
+                <div class="skill-item">/dd-checklist</div>
+                <div class="skill-item">/client-review</div>
+                <div class="skill-item">/financial-plan</div>
+                <div class="skill-item">/rebalance</div>
+                <div class="skill-item">/tlh</div>
+            </div>
+            <p style="text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 8px;">...以及更多覆盖投行、资管、私募、运营等领域的专业命令</p>
+        </div>
+    </section>
+
+    <section class="section" id="trending">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🔥</span>
+                热门原因分析
+            </h2>
+
+            <ol class="reason-list">
+                <li>
+                    <strong>Anthropic 官方出品：AI 巨头进军垂直行业</strong>
+                    <span>这不是社区项目或第三方集成，而是 Anthropic 自己构建并开源的垂直行业解决方案。它标志着 AI 公司从"卖通用模型"到"提供行业解决方案"的战略转型，被 WSJ、Bloomberg 等主流媒体广泛报道。</span>
+                </li>
+                <li>
+                    <strong>生产级 Agent 而非 Demo</strong>
+                    <span>10 个命名 Agent 每一个都对应真实的金融工作流——不是聊天机器人做做样子，而是能实际完成 Pitch Book 生成、财报分析、估值建模、KYC 筛查等专业任务的 AI 代理。Accenture 和 FIS 的参与进一步验证了生产就绪度。</span>
+                </li>
+                <li>
+                    <strong>11 个 MCP 数据连接器：打通实时金融数据</strong>
+                    <span>通过 MCP 协议连接 Morningstar、S&P Global、FactSet、Moody's 等 11 个顶级金融数据源，Agent 可以获取实时市场数据、信用评级、财报信息。这是"AI + 实时数据"的最佳实践。</span>
+                </li>
+                <li>
+                    <strong>文件驱动架构：金融行业的"可审计 AI"</strong>
+                    <span>所有 Agent 和 Plugin 都用 Markdown/JSON/YAML 定义，没有构建步骤，没有黑箱。金融机构可以直接审计 AI 的行为定义，修改任何细节，这在强监管行业至关重要。</span>
+                </li>
+                <li>
+                    <strong>Apache 2.0 开源：零门槛采用</strong>
+                    <span>完全开源意味着任何金融机构、FinTech 公司、咨询公司都可以免费使用、修改和部署。这消除了传统企业软件的采购壁垒，加速了市场渗透。</span>
+                </li>
+                <li>
+                    <strong>Microsoft 365 深度集成</strong>
+                    <span>金融行业重度依赖 Excel、PowerPoint、Word 和 Outlook。项目提供了直接在这些工具中使用 Claude Agent 的能力，让 AI 自然地嵌入现有工作流而非要求用户切换工具。</span>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="section" id="comparison">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">⚖️</span>
+                竞品对比
+            </h2>
+
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>平台</th>
+                            <th>定位</th>
+                            <th>行业覆盖</th>
+                            <th>Agent 数量</th>
+                            <th>数据连接</th>
+                            <th>开源</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: var(--accent-gold);">Claude for Financial Services</td>
+                            <td>垂直行业 AI 平台</td>
+                            <td>金融服务全链条</td>
+                            <td><span class="tag tag-gold">10 命名 Agent</span></td>
+                            <td><span class="tag tag-teal">11 MCP 连接器</span></td>
+                            <td><span class="tag tag-emerald">Apache 2.0</span></td>
+                        </tr>
+                        <tr>
+                            <td>OpenAI FinTech</td>
+                            <td>通用模型 + API</td>
+                            <td>无行业特化</td>
+                            <td><span class="tag tag-rose">无预构建</span></td>
+                            <td>需自建</td>
+                            <td><span class="tag tag-rose">闭源</span></td>
+                        </tr>
+                        <tr>
+                            <td>Google Cloud Financial Services AI</td>
+                            <td>云平台 + AI 工具</td>
+                            <td>反洗钱、欺诈检测</td>
+                            <td>有限</td>
+                            <td>Google 生态</td>
+                            <td><span class="tag tag-rose">闭源</span></td>
+                        </tr>
+                        <tr>
+                            <td>Palantir AIP</td>
+                            <td>企业 AI 平台</td>
+                            <td>国防 + 金融</td>
+                            <td>可定制</td>
+                            <td>自有数据</td>
+                            <td><span class="tag tag-rose">闭源</span></td>
+                        </tr>
+                        <tr>
+                            <td>Bloomberg GPT</td>
+                            <td>金融专用 LLM</td>
+                            <td>Bloomberg 终端用户</td>
+                            <td>有限</td>
+                            <td>Bloomberg 数据</td>
+                            <td><span class="tag tag-rose">闭源</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="highlight-box">
+                <h4>💡 关键差异</h4>
+                <p>Claude for Financial Services 是目前<strong>唯一</strong>由顶级 AI 公司官方开源的、面向金融服务业的完整 AI Agent 解决方案。它不是闭源的 SaaS 产品，不是需要巨额采购费的咨询项目，而是一套任何人都可以免费使用、审计和定制的生产级系统。结合 11 个 MCP 金融数据连接器和 Microsoft 365 深度集成，它构建了一个从数据到洞察到交付的完整闭环——这在当前的 AI 金融工具生态中是独一无二的。</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="scenarios">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🎯</span>
+                应用场景
+            </h2>
+
+            <div class="scenario-grid">
+                <div class="scenario-card">
+                    <div class="scenario-icon">🏦</div>
+                    <h4>投资银行</h4>
+                    <p>Pitch Book 生成、可比公司分析、DCF 估值、LBO 建模、并购分析</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">📊</div>
+                    <h4>股票研究</h4>
+                    <p>财报解读、行业研究、投资评级、市场异动分析</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🏢</div>
+                    <h4>私募股权</h4>
+                    <p>尽调清单、CIM 摘要、Teaser 生成、买家列表、估值审查</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">💼</div>
+                    <h4>财富管理</h4>
+                    <p>财务规划、投资组合再平衡、税损 harvesting、客户报告</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">📋</div>
+                    <h4>基金运营</h4>
+                    <p>总账对账、月末结账、NAV 计算、报表审计</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🛡️</div>
+                    <h4>合规风控</h4>
+                    <p>KYC 筛查、AML 审查、交易监控、合规报告</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="quickstart">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🚀</span>
+                快速开始
+            </h2>
+
+            <div class="card">
+                <h3>方式一：Claude Cowork 插件（最快上手）</h3>
+                <div class="code-block">
+<span class="comment"># 1. 克隆仓库</span>
+git clone https://github.com/anthropics/financial-services.git
+<span class="keyword">cd</span> financial-services
+
+<span class="comment"># 2. 在 Claude.ai 中安装 Cowork Plugin</span>
+<span class="comment"># 选择需要的 Plugin 目录（如 plugins/investment-banking/）</span>
+
+<span class="comment"># 3. 开始使用 Skills</span>
+<span class="string">/comps</span>   <span class="comment"># 生成可比公司分析</span>
+<span class="string">/dcf</span>     <span class="comment"># 构建 DCF 估值模型</span>
+<span class="string">/earnings</span> <span class="comment"># 分析最新财报</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>方式二：Managed Agents API（企业集成）</h3>
+                <div class="code-block">
+<span class="comment"># 通过 API 部署 Agent</span>
+<span class="keyword">import</span> anthropic
+
+client = anthropic.Anthropic()
+
+<span class="comment"># 调用 Earnings Reviewer Agent</span>
+response = client.agents.run(
+    agent_id=<span class="string">"earnings-reviewer"</span>,
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"分析 Apple 2026 Q1 财报"</span>
+    }]
+)
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>连接 MCP 数据源</h3>
+                <div class="code-block">
+<span class="comment"># 配置 MCP 连接器（以 Morningstar 为例）</span>
+<span class="comment"># 在 .mcp.json 中添加：</span>
+
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"morningstar"</span>: {
+      <span class="string">"command"</span>: <span class="string">"npx"</span>,
+      <span class="string">"args"</span>: [<span class="string">"-y"</span>, <span class="string">"@anthropic/mcp-morningstar"</span>],
+      <span class="string">"env"</span>: {
+        <span class="string">"MORNINGSTAR_API_KEY"</span>: <span class="string">"your-api-key"</span>
+      }
+    }
+  }
+}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>自定义 Agent 和 Plugin</h3>
+                <p>所有 Agent 和 Plugin 都以 Markdown/JSON 文件定义，可以直接修改：</p>
+                <div class="code-block">
+<span class="comment"># 项目结构</span>
+financial-services/
+├── agents/           <span class="comment"># 10 个命名 Agent 定义</span>
+│   ├── pitch-agent/
+│   ├── model-builder/
+│   └── kyc-screener/
+├── plugins/          <span class="comment"># 7 个垂直领域 Plugin</span>
+│   ├── financial-analysis/
+│   ├── investment-banking/
+│   └── wealth-management/
+├── skills/           <span class="comment"># 40+ 专业 Skills</span>
+├── mcp/              <span class="comment"># 11 个 MCP 数据连接器</span>
+└── validation/       <span class="comment"># 验证脚本</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>📊 由 AI 深度分析生成 | 数据来源: GitHub, WebSearch, Bloomberg, WSJ | 分析时间: 2026-05-07</p>
+        <p style="margin-top: 8px;">
+            <a href="https://github.com/anthropics/financial-services" target="_blank">GitHub 仓库</a>
+            &nbsp;·&nbsp;
+            <a href="https://www.anthropic.com/financial-services" target="_blank">Anthropic 金融服务</a>
+            &nbsp;·&nbsp;
+            <a href="https://docs.anthropic.com" target="_blank">Claude 文档</a>
+        </p>
+    </footer>
+</body>
+</html>
