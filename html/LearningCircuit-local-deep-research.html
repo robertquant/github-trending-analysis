@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Deep Research - 本地AI深度研究助手 | GitHub Trending Deep Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2035;
+            --bg-card-hover: #1f2847;
+            --accent-green: #00d4aa;
+            --accent-green-dim: rgba(0, 212, 170, 0.15);
+            --accent-blue: #3b82f6;
+            --accent-blue-dim: rgba(59, 130, 246, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-dim: rgba(245, 158, 11, 0.12);
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-purple-dim: rgba(139, 92, 246, 0.12);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-dim: rgba(6, 182, 212, 0.12);
+            --accent-teal: #14b8a6;
+            --accent-teal-dim: rgba(20, 184, 166, 0.12);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a1628 100%);
+            --gradient-card: linear-gradient(145deg, rgba(0, 212, 170, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Space Grotesk', 'Noto Sans SC', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed; width: 600px; height: 600px;
+            border-radius: 50%; filter: blur(150px);
+            pointer-events: none; z-index: 0;
+        }
+        .bg-glow-1 { top: -200px; right: -200px; background: rgba(0, 212, 170, 0.07); }
+        .bg-glow-2 { bottom: -200px; left: -200px; background: rgba(139, 92, 246, 0.05); }
+
+        .container {
+            max-width: 1100px; margin: 0 auto;
+            padding: 0 24px; position: relative; z-index: 1;
+        }
+
+        .hero {
+            padding: 80px 0 60px;
+            background: var(--gradient-hero);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent-green-dim); border: 1px solid rgba(0, 212, 170, 0.3);
+            border-radius: 20px; padding: 6px 16px;
+            font-size: 13px; color: var(--accent-green);
+            margin-bottom: 24px; font-weight: 500;
+        }
+
+        .hero h1 {
+            font-size: 42px; font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa 0%, #06b6d4 40%, #8b5cf6 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 16px; line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 18px; color: var(--text-secondary);
+            max-width: 700px; line-height: 1.8;
+        }
+
+        .hero-meta {
+            display: flex; flex-wrap: wrap; gap: 20px;
+            margin-top: 32px;
+        }
+
+        .meta-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-secondary);
+        }
+
+        .meta-icon {
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+
+        .meta-value { font-weight: 600; color: var(--text-primary); }
+
+        .section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 32px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .section-title .icon {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-green-dim);
+            border-radius: 8px; font-size: 18px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            font-size: 18px; font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-green);
+        }
+
+        .card p {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .score-card:hover {
+            border-color: rgba(0, 212, 170, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .score-label {
+            font-size: 13px; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-value {
+            font-size: 36px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .score-value.green { color: var(--accent-green); }
+        .score-value.blue { color: var(--accent-blue); }
+        .score-value.amber { color: var(--accent-amber); }
+        .score-value.purple { color: var(--accent-purple); }
+        .score-value.cyan { color: var(--accent-cyan); }
+
+        .score-bar {
+            height: 4px; background: var(--bg-secondary);
+            border-radius: 2px; margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%; border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        .overall-score {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 40px;
+        }
+
+        .overall-number {
+            font-size: 72px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #00d4aa, #06b6d4);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .overall-label {
+            font-size: 14px; color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .overall-desc h3 {
+            font-size: 22px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .overall-desc p {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-green-dim);
+            border-radius: 10px; font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 8px; color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(6, 182, 212, 0.08) 100%);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .highlight-box h4 {
+            font-size: 16px; font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 12px;
+        }
+
+        .highlight-box p {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .comparison-table td {
+            padding: 14px 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(0, 212, 170, 0.03);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-green { background: var(--accent-green-dim); color: var(--accent-green); }
+        .tag-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+        .tag-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+        .tag-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+        .tag-cyan { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+
+        .reason-list {
+            list-style: none;
+            counter-reset: reason;
+        }
+
+        .reason-list li {
+            counter-increment: reason;
+            padding: 20px 24px 20px 72px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .reason-list li:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateX(4px);
+        }
+
+        .reason-list li::before {
+            content: counter(reason);
+            position: absolute;
+            left: 20px; top: 50%;
+            transform: translateY(-50%);
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-green-dim);
+            border-radius: 8px;
+            font-size: 16px; font-weight: 700;
+            color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .reason-list li strong {
+            display: block;
+            font-size: 16px; color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .reason-list li span {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #c9d1d9;
+        }
+
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .func { color: #d2a8ff; }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-card:hover {
+            border-color: rgba(0, 212, 170, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .scenario-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .scenario-card h4 {
+            font-size: 15px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .scenario-card p {
+            font-size: 13px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 20px;
+        }
+
+        .toc h3 {
+            font-size: 16px; color: var(--accent-green);
+            margin-bottom: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px;
+        }
+
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            display: flex; align-items: center; gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .toc-list a:hover { color: var(--accent-green); }
+        .toc-list a::before { content: "→"; font-size: 12px; color: var(--text-muted); }
+
+        .badge-row {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin-top: 16px;
+        }
+
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .benchmark-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .benchmark-card h4 {
+            font-size: 14px; color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .benchmark-value {
+            font-size: 28px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-green);
+        }
+
+        .benchmark-note {
+            font-size: 12px; color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 28px; }
+            .hero-subtitle { font-size: 16px; }
+            .overall-score { flex-direction: column; gap: 16px; }
+            .overall-number { font-size: 56px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(3, 1fr); }
+            .section { padding: 40px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span>🔍</span>
+                <span>GitHub Trending Deep Analysis</span>
+            </div>
+            <h1>Local Deep Research</h1>
+            <p class="hero-subtitle">
+                本地优先的 AI 深度研究助手。支持所有主流 LLM（Ollama、OpenAI、Anthropic、Google），10+ 搜索引擎（arXiv、PubMed、Semantic Scholar），SimpleQA 基准测试准确率 ~95%。所有数据本地加密，零遥测追踪。
+            </p>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">⭐</span>
+                    <span class="meta-value">5,420</span> Stars
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📈</span>
+                    <span class="meta-value">+197</span> today
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🐍</span>
+                    <span class="meta-value">Python</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📜</span>
+                    <span class="meta-value">MIT</span> License
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📦</span>
+                    <span class="meta-value">pip / Docker</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🏢</span>
+                    <span class="meta-value">LearningCircuit</span>
+                </div>
+            </div>
+            <div class="badge-row">
+                <span class="tag tag-green">AI Research</span>
+                <span class="tag tag-cyan">Local-First</span>
+                <span class="tag tag-blue">Privacy</span>
+                <span class="tag tag-purple">MCP</span>
+                <span class="tag tag-amber">Multi-LLM</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="padding: 40px 0 20px;">
+        <div class="container">
+            <div class="toc">
+                <h3>📑 目录</h3>
+                <ul class="toc-list">
+                    <li><a href="#score">评分概览</a></li>
+                    <li><a href="#overview">项目概览</a></li>
+                    <li><a href="#features">核心特性</a></li>
+                    <li><a href="#security">安全架构</a></li>
+                    <li><a href="#benchmarks">性能基准</a></li>
+                    <li><a href="#trending">热门原因</a></li>
+                    <li><a href="#comparison">竞品对比</a></li>
+                    <li><a href="#scenarios">应用场景</a></li>
+                    <li><a href="#quickstart">快速开始</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="score">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">📊</span>
+                综合评分
+            </h2>
+
+            <div class="overall-score">
+                <div>
+                    <div class="overall-number">8.5</div>
+                    <div class="overall-label">/ 10 综合评分</div>
+                </div>
+                <div class="overall-desc">
+                    <h3>本地 AI 研究工具的标杆之作</h3>
+                    <p>
+                        Local Deep Research 凭借 ~95% 的 SimpleQA 准确率、零遥测的隐私设计、以及对几乎所有主流 LLM 的原生支持，成为本地化 AI 研究工具领域的一颗新星。MCP 集成和知识库构建功能进一步拓宽了其实用边界。
+                    </p>
+                </div>
+            </div>
+
+            <div class="score-grid">
+                <div class="score-card">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value green">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, #00d4aa, #06b6d4);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value blue">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value amber">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, #f59e0b, #ef4444);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value purple">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, #8b5cf6, #06b6d4);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value cyan">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: linear-gradient(90deg, #06b6d4, #00d4aa);"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="overview">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🎯</span>
+                项目概览
+            </h2>
+
+            <div class="card">
+                <h3>什么是 Local Deep Research？</h3>
+                <p>
+                    Local Deep Research（LDR）是一个完全本地运行的 AI 研究助手，由 LearningCircuit 团队开发。它的核心理念是：<strong>你拥有自己的数据，你看到它如何工作</strong>。用户可以用自然语言提出复杂问题，LDR 会自动搜索网络、学术论文和个人文档库，综合生成带引用的研究报告。
+                </p>
+                <p style="margin-top: 12px;">
+                    项目支持 20+ 研究策略，从快速摘要（30秒-3分钟）到深度分析报告（10-30分钟），覆盖从即时问答到学术研究的全场景。独特的知识库构建功能让每次研究的来源自动归档、索引，形成可复用的个人知识资产。
+                </p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🔑 核心数据</h4>
+                <p>
+                    <strong>SimpleQA 准确率:</strong> ~95%（GPT-4.1-mini + SearXNG）&nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>搜索引擎:</strong> 10+ 免费/付费引擎&nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>LLM 支持:</strong> Ollama、LM Studio、llama.cpp、OpenAI、Anthropic、Google、100+ via OpenRouter&nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>加密:</strong> AES-256 per-user SQLCipher&nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>遥测:</strong> 零追踪&nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>MCP 工具:</strong> 8 个（5 研究 + 3 发现）
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="features">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">✨</span>
+                核心特性
+            </h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>多模式研究</h3>
+                    <p>快速摘要（30秒-3分钟）、深度分析、正式报告生成、个人文档搜索，20+ 研究策略灵活选择。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>LangGraph Agent</h3>
+                    <p>自主式研究代理模式，LLM 自行决定搜索什么、使用哪个专业引擎（arXiv/PubMed/Semantic Scholar），以及何时综合结论。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3>知识库构建</h3>
+                    <p>每次研究的来源自动下载到加密库中，提取文本、建立索引、支持搜索。知识随时间不断积累复利。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>零遥测隐私</h3>
+                    <p>不收集、不传输、不存储任何用户数据。无分析 SDK、无回拨、无崩溃报告。网络请求仅由用户主动发起。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>MCP 集成</h3>
+                    <p>通过 Model Context Protocol 与 Claude Desktop/Code 深度集成。8 个 MCP 工具覆盖搜索、研究、报告、文档分析等全部能力。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>期刊质量系统</h3>
+                    <p>自动评估期刊声誉，覆盖 212K+ 索引来源，包含掠夺性期刊检测。基于 OpenAlex、DOAJ 等权威数据源。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📰</div>
+                    <h3>研究订阅</h3>
+                    <p>订阅特定主题，定期接收 AI 驱动的研究摘要。支持日/周/自定义频率，智能过滤和总结最相关的发展。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>供应链安全</h3>
+                    <p>Docker 镜像使用 Cosign 签名，包含 SLSA 来源证明和 SBOM。可验证的完整供应链安全链。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>10+ 搜索引擎</h3>
+                    <p>免费：arXiv、PubMed、Semantic Scholar、Wikipedia、SearXNG、GitHub、Wayback Machine。付费：Tavily、Google、Brave。自定义：本地文档、LangChain Retriever。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3>多接口支持</h3>
+                    <p>Web UI（localhost:5000）、Python API（quick_query/LDRClient）、REST HTTP API、命令行工具，满足不同使用场景。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>分析仪表板</h3>
+                    <p>内置分析面板追踪成本、性能和使用指标。WebSocket 实时更新研究进度。支持 PDF/Markdown 导出。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔑</div>
+                    <h3>Per-User 加密数据库</h3>
+                    <p>每个用户独立隔离的 SQLCipher 数据库，AES-256 加密（Signal 级安全）。无密码恢复 = 真正零知识。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="security">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🛡️</span>
+                安全架构
+            </h2>
+
+            <div class="card">
+                <h3>多层安全设计</h3>
+                <p>Local Deep Research 在安全方面投入了大量精力，从数据加密到供应链安全，构建了完整的信任链：</p>
+            </div>
+
+            <div class="feature-grid" style="margin-top: 20px;">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: var(--accent-cyan-dim);">🔐</div>
+                    <h3>数据层</h3>
+                    <p>SQLCipher AES-256 per-user 加密数据库。无密码恢复 = 零知识架构。会话级凭证生命周期管理，核心转储排除。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: var(--accent-purple-dim);">🐳</div>
+                    <h3>供应链层</h3>
+                    <p>Docker 镜像 Cosign 签名 + SLSA 来源证明 + SBOM 物料清单。可验证的构建-发布完整链路。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: var(--accent-green-dim);">📡</div>
+                    <h3>网络层</h3>
+                    <p>零遥测、零分析、零追踪。所有网络请求仅由用户主动发起（搜索查询、LLM API 调用、可选通知）。完全本地时可离线运行。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: var(--accent-amber-dim);">📋</div>
+                    <h3>透明度</h3>
+                    <p>扫描抑制有文档化理由（Security Alerts Assessment、Container CVE Suppressions、SAST Rule Rationale）。公开安全策略和审查流程。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="benchmarks">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">📈</span>
+                性能基准
+            </h2>
+
+            <div class="card">
+                <h3>SimpleQA 基准测试结果</h3>
+                <p>在 SimpleQA 基准上达到 ~95% 准确率，与 SOTA AI 研究系统相当。本地模型通过合理配置也能达到类似水平。</p>
+            </div>
+
+            <div class="benchmark-grid">
+                <div class="benchmark-card">
+                    <h4>GPT-4.1-mini + SearXNG + focused_iteration</h4>
+                    <div class="benchmark-value">90-95%</div>
+                    <div class="benchmark-note">Limited sample size</div>
+                </div>
+                <div class="benchmark-card">
+                    <h4>GPT-4.1-mini + Tavily + focused_iteration</h4>
+                    <div class="benchmark-value">90-95%</div>
+                    <div class="benchmark-note">Limited sample size</div>
+                </div>
+                <div class="benchmark-card">
+                    <h4>Gemini-2.0-flash + SearXNG</h4>
+                    <div class="benchmark-value">82%</div>
+                    <div class="benchmark-note">Single test run</div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🏆 社区基准排行榜</h4>
+                <p>
+                    社区维护了开放的基准数据集：<strong>GitHub: LearningCircuit/ldr-benchmarks</strong>（提交结果）和 <strong>Hugging Face: local-deep-research/ldr-benchmarks</strong>（浏览排行榜和下载 CSV）。覆盖本地/云端模型、不同策略和搜索引擎组合的准确率对比。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="trending">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🔥</span>
+                热门原因分析
+            </h2>
+
+            <ol class="reason-list">
+                <li>
+                    <strong>隐私优先的时代需求</strong>
+                    <span>在数据隐私日益受关注的大环境下，LDR 的零遥测、零追踪、本地加密架构精准击中了用户痛点。记者、研究人员、企业敏感部门可以在不泄露查询的情况下进行深度研究。</span>
+                </li>
+                <li>
+                    <strong>SimpleQA ~95% 准确率的硬实力</strong>
+                    <span>与 GPT Researcher 等 SOTA 系统相当的准确率，证明了本地化不意味着妥协性能。这一数据成为项目最有力的背书，在 r/LocalLLaMA 社区引发广泛讨论。</span>
+                </li>
+                <li>
+                    <strong>LLM 无绑定策略</strong>
+                    <span>支持所有主流 LLM（Ollama、LM Studio、llama.cpp、OpenAI、Anthropic、Google、OpenRouter 100+ 模型），用户不被锁定在任何单一供应商。完全自主选择本地或云端。</span>
+                </li>
+                <li>
+                    <strong>MCP 生态集成的前瞻性</strong>
+                    <span>作为首批提供完整 MCP Server 的研究工具，8 个 MCP 工具让 Claude Desktop/Code 用户可以无缝调用深度研究能力，抓住了 AI 工具链整合的浪潮。</span>
+                </li>
+                <li>
+                    <strong>知识复利效应</strong>
+                    <span>独特的知识库构建功能让每次研究自动归档来源、建立索引。研究不再是一次性的，而是持续积累的个人知识资产。这一"研究 → 下载 → 索引 → 再研究"的闭环极具吸引力。</span>
+                </li>
+                <li>
+                    <strong>国际化的社区传播</strong>
+                    <span>覆盖中文（掘金、知乎、CSDN、GitHubDaily）、日文（note.com、Qiita）、韩文（PyTorch Korea）、法文（Korben.info）等多个语言社区。LangChain 官方在 Twitter/LinkedIn 推广。Hacker News 190+ points 讨论。</span>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="section" id="comparison">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">⚖️</span>
+                竞品对比
+            </h2>
+
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th>Local Deep Research</th>
+                            <th>GPT Researcher</th>
+                            <th>OpenAI Deep Research</th>
+                            <th>Perplexity Pro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>运行方式</td>
+                            <td><span class="tag tag-green">本地 + 云端</span></td>
+                            <td><span class="tag tag-blue">云端为主</span></td>
+                            <td><span class="tag tag-amber">仅云端</span></td>
+                            <td><span class="tag tag-amber">仅云端</span></td>
+                        </tr>
+                        <tr>
+                            <td>隐私保护</td>
+                            <td><span class="tag tag-green">零遥测 · AES-256</span></td>
+                            <td><span class="tag tag-amber">基础</span></td>
+                            <td><span class="tag tag-red" style="background:rgba(239,68,68,0.12);color:#ef4444;">依赖 OpenAI</span></td>
+                            <td><span class="tag tag-red" style="background:rgba(239,68,68,0.12);color:#ef4444;">依赖服务</span></td>
+                        </tr>
+                        <tr>
+                            <td>LLM 选择</td>
+                            <td><span class="tag tag-green">全部主流</span></td>
+                            <td><span class="tag tag-blue">部分</span></td>
+                            <td><span class="tag tag-amber">仅 GPT</span></td>
+                            <td><span class="tag tag-amber">仅自有</span></td>
+                        </tr>
+                        <tr>
+                            <td>搜索引擎</td>
+                            <td>10+ (含学术)</td>
+                            <td>多引擎</td>
+                            <td>Web search</td>
+                            <td>自有索引</td>
+                        </tr>
+                        <tr>
+                            <td>知识库构建</td>
+                            <td><span class="tag tag-green">✅ 自动积累</span></td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>Collections</td>
+                        </tr>
+                        <tr>
+                            <td>MCP 支持</td>
+                            <td><span class="tag tag-green">✅ 8 工具</span></td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td>期刊质量评估</td>
+                            <td><span class="tag tag-green">✅ 212K+ 来源</span></td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td>开源</td>
+                            <td><span class="tag tag-green">MIT</span></td>
+                            <td><span class="tag tag-green">MIT</span></td>
+                            <td>❌ 闭源</td>
+                            <td>❌ 闭源</td>
+                        </tr>
+                        <tr>
+                            <td>费用</td>
+                            <td>免费（本地 LLM）</td>
+                            <td>需 API key</td>
+                            <td>$200/月</td>
+                            <td>$20/月</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="scenarios">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">💡</span>
+                应用场景
+            </h2>
+
+            <div class="scenario-grid">
+                <div class="scenario-card">
+                    <div class="scenario-icon">🔬</div>
+                    <h4>学术研究</h4>
+                    <p>搜索 arXiv、PubMed、Semantic Scholar，自动评估期刊质量，生成带引用的学术综述。</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">📰</div>
+                    <h4>新闻调查</h4>
+                    <p>记者在零追踪环境下进行敏感话题深度研究，所有数据本地加密不外泄。</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🏢</div>
+                    <h4>企业知识管理</h4>
+                    <p>搜索公司内部文档（LangChain Retriever 集成），结合网络搜索进行竞品分析和技术调研。</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🤖</div>
+                    <h4>AI Agent 增强研究</h4>
+                    <p>通过 MCP 协议让 Claude/其他 AI agent 自动执行深度研究，构建 AI 驱动的研究工作流。</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">📚</div>
+                    <h4>个人知识库</h4>
+                    <p>持续积累研究来源，构建可搜索的个人知识库。研究越多次，知识越丰富。</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">📊</div>
+                    <h4>趋势监测</h4>
+                    <p>订阅特定主题的研究摘要，定期获取 AI 过滤的最相关发展动态。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="quickstart">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🚀</span>
+                快速开始
+            </h2>
+
+            <div class="card">
+                <h3>方式一：Docker Compose（推荐）</h3>
+                <div class="code-block">
+<span class="comment"># CPU 版本（全平台）</span>
+curl -O https://raw.githubusercontent.com/LearningCircuit/local-deep-research/main/docker-compose.yml
+docker compose up -d
+
+<span class="comment"># GPU 版本（Linux + NVIDIA）</span>
+curl -O https://raw.githubusercontent.com/LearningCircuit/local-deep-research/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/LearningCircuit/local-deep-research/main/docker-compose.gpu.override.yml
+docker compose -f docker-compose.yml -f docker-compose.gpu.override.yml up -d
+
+<span class="comment"># 访问 http://localhost:5000</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>方式二：pip 安装</h3>
+                <div class="code-block">
+<span class="comment"># 基础安装（含 SQLCipher 加密）</span>
+pip install local-deep-research
+
+<span class="comment"># MCP 支持（Claude Desktop 集成）</span>
+pip install <span class="string">"local-deep-research[mcp]"</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>方式三：Python API</h3>
+                <div class="code-block">
+<span class="keyword">from</span> local_deep_research.api <span class="keyword">import</span> LDRClient, quick_query
+
+<span class="comment"># 一行研究</span>
+summary = quick_query(<span class="string">"username"</span>, <span class="string">"password"</span>, <span class="string">"量子计算最新进展"</span>)
+print(summary)
+
+<span class="comment"># 客户端模式</span>
+client = LDRClient()
+client.login(<span class="string">"username"</span>, <span class="string">"password"</span>)
+result = client.quick_research(<span class="string">"量子计算有哪些实际应用？"</span>)
+print(result[<span class="string">"summary"</span>])
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Claude Desktop MCP 配置</h3>
+                <div class="code-block">
+<span class="comment"># claude_desktop_config.json</span>
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"local-deep-research"</span>: {
+      <span class="string">"command"</span>: <span class="string">"ldr-mcp"</span>,
+      <span class="string">"env"</span>: {
+        <span class="string">"LDR_LLM_PROVIDER"</span>: <span class="string">"openai"</span>,
+        <span class="string">"LDR_LLM_OPENAI_API_KEY"</span>: <span class="string">"sk-..."</span>
+      }
+    }
+  }
+}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>
+                <a href="https://github.com/LearningCircuit/local-deep-research" target="_blank">GitHub 仓库</a> ·
+                <a href="https://pypi.org/project/local-deep-research/" target="_blank">PyPI</a> ·
+                <a href="https://github.com/LearningCircuit/ldr-benchmarks" target="_blank">Benchmarks</a> ·
+                <a href="https://huggingface.co/local-deep-research/ldr-benchmarks" target="_blank">HuggingFace Leaderboard</a>
+            </p>
+            <p style="margin-top: 12px;">
+                📊 分析日期: 2026-05-07 · 🤖 由 AI 自动分析生成 · Powered by Claude Code
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
