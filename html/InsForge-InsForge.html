@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsForge - AI原生的后端开发平台 | GitHub Trending Deep Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2035;
+            --bg-card-hover: #1f2847;
+            --accent-green: #00d4aa;
+            --accent-green-dim: rgba(0, 212, 170, 0.15);
+            --accent-blue: #3b82f6;
+            --accent-blue-dim: rgba(59, 130, 246, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-dim: rgba(245, 158, 11, 0.12);
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-purple-dim: rgba(139, 92, 246, 0.12);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-dim: rgba(6, 182, 212, 0.12);
+            --accent-orange: #f97316;
+            --accent-orange-dim: rgba(249, 115, 22, 0.12);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #0a1628 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Space Grotesk', 'Noto Sans SC', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed; width: 600px; height: 600px;
+            border-radius: 50%; filter: blur(150px);
+            pointer-events: none; z-index: 0;
+        }
+        .bg-glow-1 { top: -200px; right: -200px; background: rgba(249, 115, 22, 0.07); }
+        .bg-glow-2 { bottom: -200px; left: -200px; background: rgba(59, 130, 246, 0.05); }
+
+        .container {
+            max-width: 1100px; margin: 0 auto;
+            padding: 0 24px; position: relative; z-index: 1;
+        }
+
+        .hero {
+            padding: 80px 0 60px;
+            background: var(--gradient-hero);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent-orange-dim); border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 20px; padding: 6px 16px;
+            font-size: 13px; color: var(--accent-orange);
+            margin-bottom: 24px; font-weight: 500;
+        }
+
+        .hero h1 {
+            font-size: 42px; font-weight: 700;
+            background: linear-gradient(135deg, #f97316 0%, #f59e0b 40%, #8b5cf6 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 16px; line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 18px; color: var(--text-secondary);
+            max-width: 700px; line-height: 1.8;
+        }
+
+        .hero-meta {
+            display: flex; flex-wrap: wrap; gap: 20px;
+            margin-top: 32px;
+        }
+
+        .meta-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-secondary);
+        }
+
+        .meta-icon {
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+
+        .meta-value { font-weight: 600; color: var(--text-primary); }
+
+        .section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 32px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .section-title .icon {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-orange-dim);
+            border-radius: 8px; font-size: 18px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(249, 115, 22, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            font-size: 18px; font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-orange);
+        }
+
+        .card p {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .score-card:hover {
+            border-color: rgba(249, 115, 22, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .score-label {
+            font-size: 13px; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-value {
+            font-size: 36px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .score-value.green { color: var(--accent-green); }
+        .score-value.blue { color: var(--accent-blue); }
+        .score-value.amber { color: var(--accent-amber); }
+        .score-value.purple { color: var(--accent-purple); }
+        .score-value.cyan { color: var(--accent-cyan); }
+        .score-value.orange { color: var(--accent-orange); }
+
+        .score-bar {
+            height: 4px; background: var(--bg-secondary);
+            border-radius: 2px; margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%; border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        .overall-score {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            background: var(--bg-card);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 40px;
+        }
+
+        .overall-number {
+            font-size: 72px; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #f97316, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .overall-label {
+            font-size: 14px; color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .overall-desc h3 {
+            font-size: 22px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .overall-desc p {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(249, 115, 22, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-orange-dim);
+            border-radius: 10px; font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 8px; color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(245, 158, 11, 0.08) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .highlight-box h4 {
+            font-size: 16px; font-weight: 600;
+            color: var(--accent-orange);
+            margin-bottom: 12px;
+        }
+
+        .highlight-box p, .highlight-box ul {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .highlight-box ul {
+            margin-top: 8px; padding-left: 20px;
+        }
+
+        .highlight-box li { margin-bottom: 4px; }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .comparison-table td {
+            padding: 14px 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(249, 115, 22, 0.03);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-green { background: var(--accent-green-dim); color: var(--accent-green); }
+        .tag-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+        .tag-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+        .tag-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+        .tag-cyan { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+        .tag-orange { background: var(--accent-orange-dim); color: var(--accent-orange); }
+
+        .reason-list {
+            list-style: none;
+            counter-reset: reason;
+        }
+
+        .reason-list li {
+            counter-increment: reason;
+            padding: 20px 24px 20px 72px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .reason-list li:hover {
+            border-color: rgba(249, 115, 22, 0.15);
+            transform: translateX(4px);
+        }
+
+        .reason-list li::before {
+            content: counter(reason);
+            position: absolute;
+            left: 20px; top: 50%;
+            transform: translateY(-50%);
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent-orange-dim);
+            border-radius: 8px;
+            font-size: 16px; font-weight: 700;
+            color: var(--accent-orange);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .reason-list li strong {
+            display: block;
+            font-size: 16px; color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .reason-list li span {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #c9d1d9;
+        }
+
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .func { color: #d2a8ff; }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-card:hover {
+            border-color: rgba(249, 115, 22, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .scenario-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .scenario-card h4 {
+            font-size: 15px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .scenario-card p {
+            font-size: 13px; color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--accent-orange);
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 20px;
+        }
+
+        .toc h3 {
+            font-size: 16px; color: var(--accent-orange);
+            margin-bottom: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px;
+        }
+
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            display: flex; align-items: center; gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .toc-list a:hover { color: var(--accent-orange); }
+        .toc-list a::before { content: "→"; font-size: 12px; color: var(--text-muted); }
+
+        .badge-row {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin-top: 16px;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+
+        .arch-node {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px 24px;
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .arch-node:hover {
+            border-color: rgba(249, 115, 22, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .arch-node.active {
+            border-color: rgba(249, 115, 22, 0.4);
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(245, 158, 11, 0.05));
+        }
+
+        .arch-node h4 {
+            font-size: 14px; font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        .arch-node p {
+            font-size: 12px; color: var(--text-muted);
+        }
+
+        .arch-arrow {
+            color: var(--text-muted);
+            font-size: 20px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover {
+            border-color: rgba(249, 115, 22, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .product-card .product-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .product-card h4 {
+            font-size: 14px; font-weight: 600;
+            color: var(--accent-orange);
+            margin-bottom: 4px;
+        }
+
+        .product-card p {
+            font-size: 12px; color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 28px; }
+            .hero-subtitle { font-size: 16px; }
+            .overall-score { flex-direction: column; gap: 16px; }
+            .overall-number { font-size: 56px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(3, 1fr); }
+            .section { padding: 40px 0; }
+            .arch-flow { flex-direction: column; }
+            .arch-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span>⚡</span>
+                <span>GitHub Trending Deep Analysis</span>
+            </div>
+            <h1>InsForge</h1>
+            <p class="hero-subtitle">
+                AI 原生的后端开发平台。基于 PostgreSQL + PostgREST + Deno + TypeScript 构建，为 AI 编码代理（Cursor、Claude Code、Windsurf）设计的语义层后端。提供认证、数据库、存储、Edge Functions、AI Gateway、MCP Server，从 Prompt 到生产级后端仅需几分钟。
+            </p>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">⭐</span>
+                    <span class="meta-value">8,232</span> Stars
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📈</span>
+                    <span class="meta-value">+213</span> today
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">💻</span>
+                    <span class="meta-value">TypeScript</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">📜</span>
+                    <span class="meta-value">Apache 2.0</span> License
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🏢</span>
+                    <span class="meta-value">Y Combinator</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🐳</span>
+                    <span class="meta-value">Docker</span>
+                </div>
+            </div>
+            <div class="badge-row">
+                <span class="tag tag-orange">AI-Native Backend</span>
+                <span class="tag tag-purple">MCP Server</span>
+                <span class="tag tag-green">PostgreSQL</span>
+                <span class="tag tag-blue">Deno</span>
+                <span class="tag tag-cyan">Vibe Coding</span>
+                <span class="tag tag-amber">Y Combinator</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="padding: 40px 0 20px;">
+        <div class="container">
+            <div class="toc">
+                <h3>📑 目录</h3>
+                <ul class="toc-list">
+                    <li><a href="#score">评分概览</a></li>
+                    <li><a href="#overview">项目概览</a></li>
+                    <li><a href="#architecture">架构设计</a></li>
+                    <li><a href="#trending">热门原因</a></li>
+                    <li><a href="#comparison">竞品对比</a></li>
+                    <li><a href="#scenarios">应用场景</a></li>
+                    <li><a href="#quickstart">快速开始</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="score">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">📊</span>
+                综合评分
+            </h2>
+
+            <div class="overall-score">
+                <div>
+                    <div class="overall-number">8.1</div>
+                    <div class="overall-label">/ 10 综合评分</div>
+                </div>
+                <div class="overall-desc">
+                    <h3>AI 时代后端开发的新范式</h3>
+                    <p>InsForge 精准抓住了 AI 编码代理爆发的时代机遇，将传统后端平台从"为开发者设计（DX）"转变为"为 AI 代理设计（AX）"。通过 MCP Server 语义层，AI 代理可以端到端地理解、配置和管理后端基础设施。Y Combinator 背书、快速增长的社区和清晰的产品定位，使其成为 2026 年 AI 开发工具链中最值得关注的基础设施项目之一。</p>
+                </div>
+            </div>
+
+            <div class="score-grid">
+                <div class="score-card">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value orange">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%; background: linear-gradient(90deg, #f97316, #f59e0b);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value blue">7.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:75%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value green">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%; background: linear-gradient(90deg, #00d4aa, #06b6d4);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value purple">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:80%; background: linear-gradient(90deg, #8b5cf6, #ec4899);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value cyan">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:80%; background: linear-gradient(90deg, #06b6d4, #3b82f6);"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="overview">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🌐</span>
+                项目概览
+            </h2>
+
+            <div class="card">
+                <h3>什么是 InsForge？</h3>
+                <p>InsForge 是一个专为 AI 编码代理和 AI 代码编辑器（Cursor、Claude Code、Windsurf、Lovable 等）设计的后端开发平台。它在 AI 代理和后端基础设施之间构建了一个语义层，使 AI 代理能够理解、推理并端到端地操作数据库、认证、存储等后端原语。简单来说：让 AI 代理可以自己搭建和管理生产级后端。</p>
+            </div>
+
+            <div class="card">
+                <h3>核心理念：从 DX 到 AX</h3>
+                <p>传统后端平台（Supabase、Firebase 等）为人类开发者设计，强调开发者体验（DX）。InsForge 则开创了"代理体验"（Agent Experience, AX）的理念——后端不再需要人类手动配置，AI 代理通过 MCP Server 语义层即可完成数据库建表、认证配置、存储管理、函数部署等所有操作。</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🔑 核心数据</h4>
+                <ul>
+                    <li><strong>Stars:</strong> 8,232+（4 个月内从 2K 增长到 8K+）</li>
+                    <li><strong>组织:</strong> InsForge（GitHub 上 26 个仓库）</li>
+                    <li><strong>技术栈:</strong> PostgreSQL + PostgREST + Deno + TypeScript</li>
+                    <li><strong>架构:</strong> 5 容器 Docker Compose 部署</li>
+                    <li><strong>License:</strong> Apache 2.0（完全开源）</li>
+                    <li><strong>投资:</strong> Y Combinator 支持（经过 6 次申请终获录取）</li>
+                    <li><strong>上线:</strong> 2025 年 11 月发布，2026 年推出 2.0 版本</li>
+                </ul>
+            </div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 20px; color: var(--accent-orange);">核心产品</h3>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-icon">🔐</div>
+                    <h4>Authentication</h4>
+                    <p>用户管理、认证与会话</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">🗄️</div>
+                    <h4>Database</h4>
+                    <p>PostgreSQL 关系型数据库</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">📁</div>
+                    <h4>Storage</h4>
+                    <p>S3 兼容文件存储</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">🤖</div>
+                    <h4>Model Gateway</h4>
+                    <p>OpenAI 兼容多 LLM 网关</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">⚡</div>
+                    <h4>Edge Functions</h4>
+                    <p>Deno 边缘无服务器函数</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">🖥️</div>
+                    <h4>Compute</h4>
+                    <p>Fly.io 长运行容器服务</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">🚀</div>
+                    <h4>Deployment</h4>
+                    <p>一键前端部署到公网</p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">🔌</div>
+                    <h4>MCP Server</h4>
+                    <p>AI 代理直连后端的桥梁</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="architecture">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🏗️</span>
+                架构设计
+            </h2>
+
+            <div class="card">
+                <h3>语义层架构</h3>
+                <p>InsForge 的核心创新在于在 AI 编码代理和后端原语之间插入了一个语义层。这个语义层执行"后端上下文工程"，使代理能够理解、操作和检查后端系统。代理可以获取后端文档和可用操作、直接配置后端原语、通过结构化 Schema 检查后端状态和日志。</p>
+            </div>
+
+            <div class="arch-flow">
+                <div class="arch-node">
+                    <h4>AI Coding Agents</h4>
+                    <p>Cursor / Claude Code / Windsurf</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node active">
+                    <h4>InsForge Semantic Layer</h4>
+                    <p>MCP Server + Context Engine</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div class="arch-node"><h4>Auth</h4><p>认证</p></div>
+                    <div class="arch-node"><h4>Database</h4><p>Postgres</p></div>
+                    <div class="arch-node"><h4>Storage</h4><p>S3 兼容</p></div>
+                    <div class="arch-node"><h4>Functions</h4><p>Deno</p></div>
+                    <div class="arch-node"><h4>AI Gateway</h4><p>LLM 路由</p></div>
+                    <div class="arch-node"><h4>Compute</h4><p>Fly.io</p></div>
+                    <div class="arch-node"><h4>Deploy</h4><p>站点部署</p></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>5 容器 Docker 架构</h3>
+                <p>InsForge 通过 Docker Compose 部署，由 5 个核心容器组成：PostgreSQL 数据库、PostgREST API 层、Deno Functions 运行时、认证服务和前端应用。支持多项目并行运行，每个项目使用不同端口和独立数据库隔离。</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🔧 MCP Server：AI 代理的后端桥梁</h4>
+                <p>InsForge MCP Server 是整个平台的核心差异化组件。它为 AI 编码助手提供对后端的直接访问能力：数据库查询、Schema 管理、存储操作等。开发者只需在 AI 编辑器中配置 MCP 连接，即可让 AI 代理全权管理后端。</p>
+                <div class="code-block" style="margin-top: 12px;">
+<span class="comment"># 验证 MCP 连接</span>
+I'm using InsForge as my backend platform, call InsForge MCP's
+fetch-docs tool to learn about InsForge instructions.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="trending">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🔥</span>
+                热门原因分析
+            </h2>
+
+            <ol class="reason-list">
+                <li>
+                    <strong>精准踩中 AI Vibe Coding 浪潮</strong>
+                    <span>2025-2026 年 AI 编码代理爆发式增长，Cursor、Claude Code 等工具让"用自然语言写代码"成为主流。但 AI 代理擅长生成代码却不擅长配置基础设施——InsForge 精准解决了这个痛点。</span>
+                </li>
+                <li>
+                    <strong>MCP 协议生态的先行者</strong>
+                    <span>Model Context Protocol (MCP) 正在成为 AI 工具互联的标准协议。InsForge 作为首批提供原生 MCP Server 的后端平台，让 AI 代理直接操作后端成为现实，这赋予了它极强的先发优势。</span>
+                </li>
+                <li>
+                    <strong>"AI 原生 Supabase" 的清晰定位</strong>
+                    <span>用一句话就能让开发者理解价值主张——Supabase 为人设计，InsForge 为 AI 设计。这种类比降低了理解门槛，同时暗示了巨大的市场潜力。</span>
+                </li>
+                <li>
+                    <strong>Y Combinator 背书</strong>
+                    <span>经过 6 次申请最终被 YC 录取的故事本身就有极强的话题性。YC 的背书为项目带来了可信度、网络效应和社区关注度。</span>
+                </li>
+                <li>
+                    <strong>完全开源 + 自托管友好</strong>
+                    <span>Apache 2.0 协议、Docker Compose 一键部署、5 容器架构——开发者可以轻松在本地或自己的服务器上运行，不存在供应商锁定风险。这种开放态度赢得了社区的广泛认可。</span>
+                </li>
+                <li>
+                    <strong>从 Prompt 到生产的端到端体验</strong>
+                    <span>YouTube 教程展示了令人印象深刻的演示：一条 Prompt 就能建好数据库、配置认证、部署上线。这种"魔法感"极大地激发了社交媒体传播。</span>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="section" id="comparison">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">⚖️</span>
+                竞品对比
+            </h2>
+
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>平台</th>
+                            <th>数据库</th>
+                            <th>设计目标</th>
+                            <th>AI 集成</th>
+                            <th>部署方式</th>
+                            <th>License</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: var(--accent-orange);">InsForge</td>
+                            <td>PostgreSQL</td>
+                            <td>AI 代理（AX）</td>
+                            <td><span class="tag tag-orange">MCP 原生</span></td>
+                            <td>Docker / Cloud</td>
+                            <td><span class="tag tag-green">Apache 2.0</span></td>
+                        </tr>
+                        <tr>
+                            <td>Supabase</td>
+                            <td>PostgreSQL</td>
+                            <td>人类开发者（DX）</td>
+                            <td><span class="tag tag-amber">需手动集成</span></td>
+                            <td>Docker / Cloud</td>
+                            <td><span class="tag tag-green">Apache 2.0</span></td>
+                        </tr>
+                        <tr>
+                            <td>Firebase</td>
+                            <td>Firestore</td>
+                            <td>前端团队（DX）</td>
+                            <td><span class="tag tag-amber">需手动集成</span></td>
+                            <td>Cloud Only</td>
+                            <td><span class="tag tag-amber">Proprietary</span></td>
+                        </tr>
+                        <tr>
+                            <td>Appwrite</td>
+                            <td>MariaDB</td>
+                            <td>人类开发者（DX）</td>
+                            <td><span class="tag tag-amber">需手动集成</span></td>
+                            <td>Docker / Cloud</td>
+                            <td><span class="tag tag-green">BSD-3</span></td>
+                        </tr>
+                        <tr>
+                            <td>Appsmith</td>
+                            <td>连接外部</td>
+                            <td>低代码可视化</td>
+                            <td><span class="tag tag-amber">AI 辅助</span></td>
+                            <td>Docker / Cloud</td>
+                            <td><span class="tag tag-green">Apache 2.0</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="highlight-box">
+                <h4>💡 关键差异</h4>
+                <p>传统 BaaS 平台（Supabase/Firebase/Appwrite）都假设<strong>人类开发者</strong>通过 Dashboard 或 API 手动配置后端。InsForge 是第一个假设<strong>AI 代理</strong>作为主要操作者的后端平台——通过 MCP Server 语义层，AI 代理可以完全自主地完成从建库到部署的全流程。这不只是功能叠加，而是范式的根本转变。</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="scenarios">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🎯</span>
+                应用场景
+            </h2>
+
+            <div class="scenario-grid">
+                <div class="scenario-card">
+                    <div class="scenario-icon">🤖</div>
+                    <h4>AI 代理驱动开发</h4>
+                    <p>让 Cursor/Claude Code 全权管理后端，从 Prompt 直接到生产</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🚀</div>
+                    <h4>快速 MVP 原型</h4>
+                    <p>初创团队用 AI 代理在几分钟内搭建完整后端，加速产品验证</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🛠️</div>
+                    <h4>内部工具开发</h4>
+                    <p>企业内部 CRUD 工具、管理后台，AI 代理快速生成</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">📱</div>
+                    <h4>全栈 AI 应用</h4>
+                    <p>AI SaaS 产品、聊天机器人后端、AI 驱动的 Web 应用</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🎓</div>
+                    <h4>AI 编程学习</h4>
+                    <p>学习 AI 代理如何与后端交互，理解 MCP 协议实践</p>
+                </div>
+                <div class="scenario-card">
+                    <div class="scenario-icon">🏢</div>
+                    <h4>自托管后端</h4>
+                    <p>需要数据主权的企业，在自己的服务器上运行完整 BaaS</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="quickstart">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="icon">🚀</span>
+                快速开始
+            </h2>
+
+            <div class="card">
+                <h3>方式一：云端托管 (insforge.dev)</h3>
+                <p>访问 <a href="https://insforge.dev" style="color: var(--accent-orange);">insforge.dev</a> 注册即可使用，无需本地安装。</p>
+            </div>
+
+            <div class="card">
+                <h3>方式二：Docker Compose 自托管</h3>
+                <div class="code-block">
+<span class="comment"># 前置条件: Docker + Node.js</span>
+
+<span class="comment"># 克隆仓库</span>
+git clone https://github.com/InsForge/InsForge.git
+<span class="keyword">cd</span> InsForge
+cp .env.example .env
+
+<span class="comment"># 启动所有服务</span>
+docker compose -f docker-compose.prod.yml up
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>连接 MCP Server</h3>
+                <div class="code-block">
+<span class="comment"># 1. 打开 http://localhost:7130</span>
+<span class="comment"># 2. 按照指引连接 InsForge MCP Server</span>
+<span class="comment"># 3. 在 AI 编辑器中验证连接：</span>
+
+I'm using InsForge as my backend platform,
+call InsForge MCP's fetch-docs tool to learn
+about InsForge instructions.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>一键部署平台</h3>
+                <p>InsForge 还支持通过 Railway、Zeabur、Sealos 等平台一键部署，无需安装 Docker：</p>
+                <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+                    <span class="tag tag-purple">Railway</span>
+                    <span class="tag tag-blue">Zeabur</span>
+                    <span class="tag tag-cyan">Sealos</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>多项目并行</h3>
+                <div class="code-block">
+<span class="comment"># 为每个项目创建独立环境文件</span>
+cp .env.example .env.project1
+cp .env.example .env.project2
+
+<span class="comment"># 编辑 .env.project2 使用不同端口</span>
+<span class="comment"># POSTGRES_PORT=5442  POSTGREST_PORT=5440</span>
+<span class="comment"># APP_PORT=7230  AUTH_PORT=7231  DENO_PORT=7233</span>
+
+<span class="comment"># 启动各项目</span>
+docker compose -f docker-compose.prod.yml --env-file .env.project1 -p project1 up -d
+docker compose -f docker-compose.prod.yml --env-file .env.project2 -p project2 up -d
+
+<span class="comment"># 管理命令</span>
+docker compose -f docker-compose.prod.yml --env-file .env.project1 -p project1 <span class="func">ps</span>
+docker compose -f docker-compose.prod.yml --env-file .env.project1 -p project1 <span class="func">logs -f</span>
+docker compose -f docker-compose.prod.yml --env-file .env.project1 -p project1 <span class="func">down</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>📊 由 AI 深度分析生成 | 数据来源: GitHub, WebSearch | 分析时间: 2026-05-07</p>
+        <p style="margin-top: 8px;">
+            <a href="https://github.com/InsForge/InsForge" target="_blank">GitHub 仓库</a>
+            &nbsp;·&nbsp;
+            <a href="https://insforge.dev" target="_blank">官方网站</a>
+            &nbsp;·&nbsp;
+            <a href="https://docs.insforge.dev" target="_blank">文档</a>
+        </p>
+    </footer>
+</body>
+</html>
