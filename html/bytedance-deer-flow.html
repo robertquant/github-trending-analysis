@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeerFlow 2.0 - 字节跳动开源SuperAgent引擎 | GitHub Trending 深度分析</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Header */
+  .header { text-align: center; padding: 48px 0 40px; border-bottom: 1px solid rgba(59, 130, 246, 0.2); }
+  .header .badge { display: inline-block; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 20px; padding: 6px 18px; font-size: 13px; color: #60a5fa; margin-bottom: 20px; letter-spacing: 1px; }
+  .header h1 { font-size: 2.2em; background: linear-gradient(135deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .header .subtitle { font-size: 1.1em; color: #94a3b8; }
+  .header .meta { margin-top: 20px; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+  .header .meta span { font-size: 14px; color: #64748b; }
+  .header .meta span strong { color: #cbd5e1; }
+
+  /* Score */
+  .score-section { margin: 40px 0; }
+  .score-card { background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(6, 182, 212, 0.08)); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 32px; text-align: center; }
+  .score-card .total-score { font-size: 3.5em; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .score-card .total-label { font-size: 14px; color: #64748b; margin-top: 4px; }
+  .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 28px; }
+  .score-item { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 12px; padding: 20px 12px; text-align: center; }
+  .score-item .dim-name { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+  .score-item .dim-score { font-size: 1.8em; font-weight: 600; color: #60a5fa; }
+  .score-item .dim-bar { height: 4px; background: rgba(59, 130, 246, 0.15); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .score-item .dim-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+
+  /* Section */
+  .section { margin: 36px 0; }
+  .section h2 { font-size: 1.4em; color: #e2e8f0; margin-bottom: 20px; padding-left: 16px; border-left: 3px solid #3b82f6; }
+  .section h3 { font-size: 1.15em; color: #cbd5e1; margin: 20px 0 12px; }
+
+  /* Info table */
+  .info-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  .info-table td { padding: 12px 16px; border-bottom: 1px solid rgba(59, 130, 246, 0.1); font-size: 14px; }
+  .info-table td:first-child { color: #94a3b8; width: 140px; white-space: nowrap; }
+  .info-table td:last-child { color: #e2e8f0; }
+  .info-table a { color: #60a5fa; text-decoration: none; }
+  .info-table a:hover { text-decoration: underline; }
+
+  /* Feature cards */
+  .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+  .feature-card { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 12px; padding: 20px; }
+  .feature-card .fc-icon { font-size: 1.6em; margin-bottom: 8px; }
+  .feature-card .fc-title { font-size: 15px; font-weight: 600; color: #60a5fa; margin-bottom: 6px; }
+  .feature-card .fc-desc { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+
+  /* Tag */
+  .tag { display: inline-block; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 4px; padding: 2px 10px; font-size: 12px; margin: 2px 4px 2px 0; }
+  .tag.cyan { background: rgba(6, 182, 212, 0.12); color: #22d3ee; border-color: rgba(6, 182, 212, 0.2); }
+  .tag.amber { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
+
+  /* Code block */
+  .code-block { background: #0f172a; border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 10px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .code-block code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; color: #e2e8f0; line-height: 1.8; }
+  .code-block .comment { color: #4b5563; }
+  .code-block .keyword { color: #3b82f6; }
+  .code-block .string { color: #22d3ee; }
+  .code-block .func { color: #a78bfa; }
+
+  /* Reason list */
+  .reason-list { list-style: none; padding: 0; }
+  .reason-list li { padding: 14px 20px; margin: 8px 0; background: rgba(15, 23, 42, 0.5); border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; font-size: 14px; color: #cbd5e1; }
+  .reason-list li strong { color: #60a5fa; }
+
+  /* Comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  .compare-table th { background: rgba(59, 130, 246, 0.12); padding: 12px 16px; text-align: center; font-size: 13px; color: #60a5fa; font-weight: 600; }
+  .compare-table th:first-child { text-align: left; }
+  .compare-table td { padding: 12px 16px; border-bottom: 1px solid rgba(59, 130, 246, 0.08); font-size: 13px; text-align: center; color: #cbd5e1; }
+  .compare-table td:first-child { text-align: left; color: #94a3b8; }
+  .compare-table .best { color: #22d3ee; font-weight: 600; }
+
+  /* Scenario tags */
+  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .scenario-item { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(59, 130, 246, 0.12); border-radius: 10px; padding: 16px; text-align: center; }
+  .scenario-item .sc-emoji { font-size: 1.5em; margin-bottom: 8px; }
+  .scenario-item .sc-text { font-size: 13px; color: #cbd5e1; }
+
+  /* Architecture flow */
+  .arch-flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+  .arch-node { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 120px; }
+  .arch-node .an-title { font-size: 13px; font-weight: 600; color: #60a5fa; margin-bottom: 4px; }
+  .arch-node .an-desc { font-size: 11px; color: #64748b; }
+  .arch-arrow { color: #3b82f6; font-size: 18px; }
+
+  /* Footer */
+  .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(59, 130, 246, 0.15); font-size: 13px; color: #475569; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .score-grid { grid-template-columns: repeat(3, 1fr); }
+    .feature-grid { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: repeat(2, 1fr); }
+    .header h1 { font-size: 1.6em; }
+    .header .meta { gap: 12px; }
+    .arch-flow { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">BYTEANCE OPEN SOURCE</div>
+    <h1>DeerFlow 2.0</h1>
+    <div class="subtitle">Deep Exploration and Efficient Research Flow — 开源 SuperAgent 引擎</div>
+    <div class="meta">
+      <span>⭐ <strong>65,351</strong> Stars (+328 today)</span>
+      <span>🐍 <strong>Python + TypeScript</strong></span>
+      <span>📄 <strong>MIT License</strong></span>
+      <span>📅 <strong>2026-05-07</strong> 分析</span>
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div class="score-section">
+    <div class="score-card">
+      <div class="total-score">8.8 / 10</div>
+      <div class="total-label">综合评分</div>
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="dim-name">创新性</div>
+          <div class="dim-score">9.0</div>
+          <div class="dim-bar"><div class="dim-bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="dim-name">代码质量</div>
+          <div class="dim-score">8.5</div>
+          <div class="dim-bar"><div class="dim-bar-fill" style="width:85%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="dim-name">实用性</div>
+          <div class="dim-score">9.0</div>
+          <div class="dim-bar"><div class="dim-bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="dim-name">文档完善度</div>
+          <div class="dim-score">9.0</div>
+          <div class="dim-bar"><div class="dim-bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="dim-name">社区活跃度</div>
+          <div class="dim-score">8.5</div>
+          <div class="dim-bar"><div class="dim-bar-fill" style="width:85%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <div class="section">
+    <h2>项目概览</h2>
+    <table class="info-table">
+      <tr><td>仓库</td><td><a href="https://github.com/bytedance/deer-flow">bytedance/deer-flow</a></td></tr>
+      <tr><td>全称</td><td>DeerFlow 2.0 (Deep Exploration and Efficient Research Flow)</td></tr>
+      <tr><td>开发商</td><td>字节跳动 (ByteDance)</td></tr>
+      <tr><td>开源时间</td><td>2026-02-27 (v1) → 2026-Q1 (v2.0 完全重写)</td></tr>
+      <tr><td>定位</td><td>开源 SuperAgent Harness — 电池全包，完全可扩展</td></tr>
+      <tr><td>技术栈</td><td><span class="tag">LangGraph</span> <span class="tag">LangChain</span> <span class="tag">Python</span> <span class="tag">Next.js</span> <span class="tag">Docker</span></td></tr>
+      <tr><td>推荐模型</td><td>Doubao-Seed-2.0-Code / DeepSeek v3.2 / Kimi 2.5</td></tr>
+      <tr><td>IM 集成</td><td>Telegram / Slack / 飞书 / 微信 / 企业微信 / 钉钉</td></tr>
+      <tr><td>外部评价</td><td>awesomeagents.ai 评分 <strong style="color:#22d3ee">8.1/10</strong> — "最可信的开源 Agent 执行引擎"</td></tr>
+    </table>
+  </div>
+
+  <!-- Architecture -->
+  <div class="section">
+    <h2>核心架构</h2>
+    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+      DeerFlow 2.0 是从零完全重写的版本，基于 LangGraph + LangChain 构建。它不只是一个研究工具，而是一个完整的 Agent 运行时环境。
+    </p>
+
+    <div class="arch-flow">
+      <div class="arch-node">
+        <div class="an-title">SuperAgent</div>
+        <div class="an-desc">任务调度中枢</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="an-title">Sub-Agents</div>
+        <div class="an-desc">并行子代理执行</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="an-title">Skills</div>
+        <div class="an-desc">可扩展技能模块</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="an-title">Sandbox</div>
+        <div class="an-desc">Docker 隔离执行</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="an-title">Output</div>
+        <div class="an-desc">报告/幻灯片/网页</div>
+      </div>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="fc-icon">🤖</div>
+        <div class="fc-title">多代理编排 (Multi-Agent Orchestration)</div>
+        <div class="fc-desc">
+          基于LangGraph的有向图编排，SuperAgent自动拆解复杂任务并分派给并行执行的子代理。每个子代理拥有独立上下文，支持长时运行（多小时级别任务）。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🛡️</div>
+        <div class="fc-title">Docker 沙箱执行</div>
+        <div class="fc-desc">
+          每个任务在隔离的Docker容器中运行，拥有完整文件系统。支持Bash执行、文件I/O、图片查看，安全隔离主机环境。支持本地/Docker/Kubernetes三种执行模式。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🧩</div>
+        <div class="fc-title">Skills 技能系统</div>
+        <div class="fc-desc">
+          基于Markdown定义的结构化技能模块，支持深度研究、报告生成、幻灯片创建、网页生成、图片/视频生成等。开发者可轻松创建自定义技能。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🧠</div>
+        <div class="fc-title">长期记忆 & 上下文工程</div>
+        <div class="fc-desc">
+          跨会话持久化记忆，子代理上下文隔离与压缩，自动摘要和工具调用恢复。让Agent在长任务中保持连贯性，不会因上下文溢出而"失忆"。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">📡</div>
+        <div class="fc-title">MCP Server 支持</div>
+        <div class="fc-desc">
+          原生支持Model Context Protocol，可通过HTTP/SSE接入外部工具和数据源。扩展Agent的能力边界，连接企业内部系统和第三方服务。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">💬</div>
+        <div class="fc-title">6大IM渠道</div>
+        <div class="fc-desc">
+          原生集成 Telegram、Slack、飞书、微信、企业微信、钉钉。同时支持 Claude Code 终端交互和 Embedded Python Client 嵌入式调用。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div class="section">
+    <h2>内置技能</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="fc-icon">🔍</div>
+        <div class="fc-title">深度研究 (Deep Research)</div>
+        <div class="fc-desc">
+          自动多步骤研究流程：搜索 → 信息提取 → 分析 → 综合 → 报告。支持多轮搜索和交叉验证，生成带引用的深度研究报告。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">📝</div>
+        <div class="fc-title">报告生成 (Report)</div>
+        <div class="fc-desc">
+          生成长篇结构化报告，自动组织章节、插入图表和数据可视化。支持Markdown和PDF输出。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">📊</div>
+        <div class="fc-title">幻灯片创建 (Slides)</div>
+        <div class="fc-desc">
+          自动将研究内容转化为演示文稿，生成PPT/Keynote格式。智能布局和视觉设计。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🌐</div>
+        <div class="fc-title">网页生成 (Web Page)</div>
+        <div class="fc-desc">
+          根据需求生成完整的Web页面，包含HTML/CSS/JS。适合快速原型和数据展示。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🎨</div>
+        <div class="fc-title">图片/视频生成</div>
+        <div class="fc-desc">
+          集成AI图片和视频生成能力，在研究和工作流中直接产出多媒体内容。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">💻</div>
+        <div class="fc-title">代码执行 (Code)</div>
+        <div class="fc-desc">
+          在Docker沙箱中安全执行任意代码，支持数据分析和处理任务。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why Trending -->
+  <div class="section">
+    <h2>热门原因</h2>
+    <ul class="reason-list">
+      <li><strong>字节跳动出品</strong> — 大厂开源项目自带流量，v1发布24小时内登顶GitHub Trending #1，65K+ Stars验证了市场认可</li>
+      <li><strong>SuperAgent范式引领</strong> — 不只是Agent框架，而是完整的Agent运行时。2026年"SuperAgent"概念正成为AI行业热点</li>
+      <li><strong>"电池全包"设计哲学</strong> — Docker沙箱、记忆系统、MCP支持、IM集成全部开箱即用，无需拼凑多个工具</li>
+      <li><strong>LangGraph生态加持</strong> — 基于LangGraph构建，天然继承强大的工作流编排能力，同时保持易用性</li>
+      <li><strong>从研究到生产的完整路径</strong> — 支持本地开发、Docker部署、Kubernetes扩展，从个人到企业级场景全覆盖</li>
+      <li><strong>极其活跃的开发节奏</strong> — 单周合并69个PR，持续快速迭代，社区贡献踊跃</li>
+    </ul>
+  </div>
+
+  <!-- Comparison -->
+  <div class="section">
+    <h2>竞品对比</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>特性</th>
+          <th>DeerFlow 2.0</th>
+          <th>CrewAI</th>
+          <th>OpenAI Agents SDK</th>
+          <th>LangGraph 原生</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>定位</td>
+          <td class="best">SuperAgent 运行时</td>
+          <td>角色协作框架</td>
+          <td>SDK</td>
+          <td>底层编排</td>
+        </tr>
+        <tr>
+          <td>沙箱执行</td>
+          <td class="best">Docker 原生</td>
+          <td>需自建</td>
+          <td>需自建</td>
+          <td>需自建</td>
+        </tr>
+        <tr>
+          <td>长期记忆</td>
+          <td class="best">内置持久化</td>
+          <td>插件</td>
+          <td>有限</td>
+          <td>需自建</td>
+        </tr>
+        <tr>
+          <td>IM 集成</td>
+          <td class="best">6大平台</td>
+          <td>需自建</td>
+          <td>无</td>
+          <td>需自建</td>
+        </tr>
+        <tr>
+          <td>MCP 支持</td>
+          <td class="best">HTTP/SSE</td>
+          <td>部分</td>
+          <td>部分</td>
+          <td>部分</td>
+        </tr>
+        <tr>
+          <td>开箱即用</td>
+          <td class="best">电池全包</td>
+          <td>中等</td>
+          <td>中等</td>
+          <td>低</td>
+        </tr>
+        <tr>
+          <td>Stars</td>
+          <td class="best">65K+</td>
+          <td>30K+</td>
+          <td>N/A (官方)</td>
+          <td>15K+</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="color: #64748b; font-size: 13px; margin-top: 12px;">
+      关键差异：DeerFlow 是唯一将沙箱、记忆、MCP、IM集成作为一等公民的开源Agent引擎。CrewAI 更适合角色协作场景，LangGraph 是更底层的编排工具。
+    </p>
+  </div>
+
+  <!-- Code Example -->
+  <div class="section">
+    <h2>快速开始</h2>
+    <div class="code-block">
+      <code>
+<span class="comment"># 方式一：Docker 一键部署（推荐）</span>
+git clone https://github.com/bytedance/deer-flow.git
+<span class="keyword">cd</span> deer-flow<br><br>
+<span class="comment"># 配置环境变量</span>
+cp .env.example .env
+<span class="comment"># 编辑 .env 填入 LLM API Key（支持任何 OpenAI 兼容接口）</span><br><br>
+<span class="comment"># Docker 启动</span>
+docker compose up -d<br><br>
+<span class="comment"># 访问 Web UI</span>
+<span class="comment"># http://localhost:3000</span><br><br>
+<span class="comment"># 方式二：本地开发</span>
+pip install -e <span class="string">".[dev]"</span>
+python -m src.main<br><br>
+<span class="comment"># 方式三：嵌入式 Python Client</span>
+<span class="keyword">from</span> deerflow <span class="keyword">import</span> DeerFlowClient<br><br>
+client = <span class="func">DeerFlowClient</span>(base_url=<span class="string">"http://localhost:8000"</span>)
+result = client.<span class="func">run</span>(
+    task=<span class="string">"分析2026年AI Agent市场趋势，生成深度研究报告"</span>,
+    skills=[<span class="string">"deep_research"</span>, <span class="string">"report"</span>]
+)
+      </code>
+    </div>
+  </div>
+
+  <!-- Scenarios -->
+  <div class="section">
+    <h2>应用场景</h2>
+    <div class="scenario-grid">
+      <div class="scenario-item">
+        <div class="sc-emoji">🔬</div>
+        <div class="sc-text">自动化深度研究与分析报告</div>
+      </div>
+      <div class="scenario-item">
+        <div class="sc-emoji">📊</div>
+        <div class="sc-text">自动生成商业演示文稿</div>
+      </div>
+      <div class="scenario-item">
+        <div class="sc-emoji">💻</div>
+        <div class="sc-text">全栈代码生成与调试</div>
+      </div>
+      <div class="scenario-item">
+        <div class="sc-emoji">📰</div>
+        <div class="sc-text">内容创作与多媒体生成</div>
+      </div>
+      <div class="scenario-item">
+        <div class="sc-emoji">🏢</div>
+        <div class="sc-text">企业工作流自动化</div>
+      </div>
+      <div class="scenario-item">
+        <div class="sc-emoji">🎓</div>
+        <div class="sc-text">AI Agent 开发学习与实践</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Community -->
+  <div class="section">
+    <h2>社区生态</h2>
+    <table class="info-table">
+      <tr><td>GitHub Stars</td><td>65,351 (GitHub Trending #1 on 2026-02-28)</td></tr>
+      <tr><td>开发活跃度</td><td>单周合并 69 个 PR，持续快速迭代</td></tr>
+      <tr><td>开源协议</td><td>MIT License — 完全自由商用</td></tr>
+      <tr><td>部署方式</td><td>Docker / 本地 / Kubernetes 三种模式</td></tr>
+      <tr><td>推荐配置</td><td>4-16 vCPU, 8-32GB RAM（按规模选择）</td></tr>
+      <tr><td>可观测性</td><td>LangSmith & Langfuse 追踪集成</td></tr>
+      <tr><td>外部评价</td><td>awesomeagents.ai: 8.1/10 — "最可信的开源Agent执行引擎"</td></tr>
+    </table>
+  </div>
+
+  <!-- Who Should Use -->
+  <div class="section">
+    <h2>适合谁使用</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="fc-icon">👨‍💻</div>
+        <div class="fc-title">独立开发者 / 创业者</div>
+        <div class="fc-desc">
+          需要一个"什么都能做"的AI助手来加速产品开发。DeerFlow的"电池全包"设计意味着无需拼凑多个工具。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🏢</div>
+        <div class="fc-title">企业IT团队</div>
+        <div class="fc-desc">
+          需要构建内部AI自动化工作流。Docker沙箱保证安全，MCP连接企业系统，IM集成打通协作。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🔬</div>
+        <div class="fc-title">研究人员 / 分析师</div>
+        <div class="fc-desc">
+          需要自动化深度研究流程。DeerFlow的研究技能可以自动搜索、提取、分析、综合并生成报告。
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">🎓</div>
+        <div class="fc-title">AI Agent 开发者</div>
+        <div class="fc-desc">
+          学习最前沿的Agent架构设计。DeerFlow 2.0的代码结构和设计模式是2026年Agent工程的最佳实践。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    🤖 由 AI 深度分析生成 | Powered by Claude Code
+  </div>
+
+</div>
+</body>
+</html>
