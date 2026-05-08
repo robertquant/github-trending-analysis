@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-DLC Workflows 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:50px 20px 40px;background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%);border-bottom:1px solid #21262d}
+.header h1{font-size:2.6em;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.header .subtitle{color:#8b949e;font-size:1.15em;max-width:700px;margin:0 auto}
+.badges{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:600;border:1px solid #30363d;background:#161b22}
+.badge.lang{border-color:#3572A5;color:#79c0ff}
+.badge.stars{border-color:#e3b341;color:#e3b341}
+.badge.license{border-color:#3fb950;color:#3fb950}
+.badge.platform{border-color:#bc8cff;color:#d2a8ff}
+.section{margin-top:36px}
+.section-title{font-size:1.5em;color:#58a6ff;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}
+.section-title .icon{font-size:1.1em}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:16px}
+.card h3{color:#f0f6fc;margin-bottom:10px;font-size:1.15em}
+.card p{color:#8b949e;line-height:1.8}
+.card ul{color:#8b949e;padding-left:20px}
+.card li{margin-bottom:6px}
+.highlight{color:#58a6ff;font-weight:600}
+.green{color:#3fb950}
+.red{color:#f85149}
+.purple{color:#bc8cff}
+.orange{color:#d29922}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.score-item{text-align:center;padding:20px 12px;background:#0d1117;border:1px solid #21262d;border-radius:10px}
+.score-value{font-size:2em;font-weight:700;margin-bottom:4px}
+.score-label{font-size:.8em;color:#8b949e}
+.score-bar{width:100%;height:6px;background:#21262d;border-radius:3px;margin-top:10px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9em}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;background:#0d1117}
+td{color:#c9d1d9}
+tr:hover td{background:#161b22}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;font-family:'Fira Code',monospace;font-size:.88em;overflow-x:auto;color:#79c0ff;margin:12px 0}
+.code-comment{color:#484f58}
+.code-keyword{color:#ff7b72}
+.code-string{color:#a5d6ff}
+.vs-table{margin-top:12px}
+.vs-table td:first-child{font-weight:600;color:#f0f6fc}
+.scenario-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.scenario-item{padding:16px;background:#0d1117;border:1px solid #21262d;border-radius:8px;border-left:3px solid #58a6ff}
+.scenario-item h4{color:#58a6ff;margin-bottom:6px;font-size:.95em}
+.scenario-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.quick-start{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:24px;margin-top:12px}
+.quick-start h4{color:#3fb950;margin-bottom:12px;font-size:1em}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{background:linear-gradient(135deg,#58a6ff,#bc8cff);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;flex-shrink:0;margin-top:2px}
+.step-text{color:#c9d1d9;font-size:.92em}
+.step-text code{background:#21262d;padding:2px 8px;border-radius:4px;font-size:.88em;color:#79c0ff}
+.phase-flow{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+.phase-box{flex:1;min-width:250px;max-width:320px;padding:20px;border-radius:10px;border:1px solid #21262d;text-align:center}
+.phase-box h4{margin-bottom:8px;font-size:1.05em}
+.phase-box p{font-size:.88em;color:#8b949e;line-height:1.6}
+.phase-box.phase-1{background:linear-gradient(135deg,#0d1117,#1a1e3a);border-color:#58a6ff}
+.phase-box.phase-1 h4{color:#58a6ff}
+.phase-box.phase-2{background:linear-gradient(135deg,#0d1117,#1a2e1a);border-color:#3fb950}
+.phase-box.phase-2 h4{color:#3fb950}
+.phase-box.phase-3{background:linear-gradient(135deg,#0d1117,#2e1a2e);border-color:#bc8cff}
+.phase-box.phase-3 h4{color:#bc8cff}
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.platform-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:14px;text-align:center;font-size:.88em}
+.platform-item .name{color:#f0f6fc;font-weight:600;margin-bottom:4px}
+.platform-item .type{color:#8b949e;font-size:.8em}
+.footer{text-align:center;padding:40px 20px;color:#484f58;font-size:.85em;border-top:1px solid #21262d;margin-top:50px}
+@media(max-width:768px){
+  .header h1{font-size:1.8em}
+  .score-grid{grid-template-columns:repeat(3,1fr)}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>AI-DLC Workflows</h1>
+  <p class="subtitle">AWS Labs 出品的 AI 驱动开发生命周期方法论 — 用 Markdown 规则文件为 AI 编程助手构建结构化工作流</p>
+  <div class="badges">
+    <span class="badge lang">Markdown / Python</span>
+    <span class="badge stars">1,680 Stars (+92 today)</span>
+    <span class="badge license">MIT-0 License</span>
+    <span class="badge platform">7+ IDE 平台支持</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 项目简介 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📋</span> 项目简介</h2>
+    <div class="card">
+      <h3>AI-DLC：重新定义 AI 辅助开发的工作方式</h3>
+      <p><strong>awslabs/aidlc-workflows</strong> 不是传统意义上的软件项目 — 它没有可执行代码，没有 API，没有编译产物。它的核心产品是一套 <span class="highlight">Markdown 规则文件</span>，定义了 AI 编程助手在软件开发生命周期中应该遵循的结构化工作流。</p>
+      <p style="margin-top:12px">AI-DLC（AI-Driven Development Life Cycle）将软件开发分为三个自适应阶段，通过"规则即代码"的方式，让 Cursor、Claude Code、GitHub Copilot 等 AI 编程助手从随意的对话工具，转变为 <span class="highlight">遵循工程化流程的协作伙伴</span>。</p>
+      <p style="margin-top:12px;color:#8b949e">关键词：AI-DLC、自适应工作流、规则驱动开发、Human-in-the-Loop、多平台 IDE 支持</p>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🏗️</span> 技术架构</h2>
+
+    <div class="card">
+      <h3>三阶段自适应生命周期</h3>
+      <p style="margin-bottom:14px">AI-DLC 的核心是三个递进阶段，每个阶段有不同的 AI 行为模式：</p>
+      <div class="phase-flow">
+        <div class="phase-box phase-1">
+          <h4>Phase 1: Inception</h4>
+          <p><strong>目标：</strong>定义 WHAT &amp; WHY<br>需求分析、功能规划、架构决策<br>AI 模式：提问驱动，引导思考</p>
+        </div>
+        <div class="phase-box phase-2">
+          <h4>Phase 2: Construction</h4>
+          <p><strong>目标：</strong>定义 HOW<br>编码实现、测试编写、代码审查<br>AI 模式：执行驱动，渐进构建</p>
+        </div>
+        <div class="phase-box phase-3">
+          <h4>Phase 3: Operations</h4>
+          <p><strong>目标：</strong>部署与维护<br>CI/CD 配置、监控告警、迭代优化<br>AI 模式：运维驱动，自动修复</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>规则引擎设计</h3>
+      <p>项目的核心产物是 <code>aidlc-rules/</code> 目录下的 Markdown 文件，每条规则包含：</p>
+      <ul>
+        <li><strong>触发条件</strong>：什么场景下激活该规则</li>
+        <li><strong>AI 行为约束</strong>：AI 应该做什么、不应该做什么</li>
+        <li><strong>人机交互协议</strong>：何时需要人类确认，何时可自主执行</li>
+        <li><strong>风险评级</strong>：基于复杂度自动调整行为深度</li>
+      </ul>
+      <div class="code-block">
+        <span class="code-comment"># 示例：用户通过特定指令激活 AI-DLC 工作流</span><br>
+        <span class="code-keyword">用户输入：</span> <span class="code-string">"Using AI-DLC, I want to build a REST API for user management"</span><br>
+        <br>
+        <span class="code-comment"># AI 自动进入 Inception 阶段</span><br>
+        <span class="code-keyword">AI 行为：</span> 提问驱动 — 分析需求复杂度 → 生成澄清问题 →<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;确认技术栈 → 创建 <span class="code-string">inception.md</span> 文档
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>多平台适配架构</h3>
+      <p style="margin-bottom:12px">AI-DLC 通过平台特定的规则文件适配不同的 AI 编程助手：</p>
+      <div class="platform-grid">
+        <div class="platform-item">
+          <div class="name">Kiro</div>
+          <div class="type">原生支持</div>
+        </div>
+        <div class="platform-item">
+          <div class="name">Amazon Q</div>
+          <div class="type">原生支持</div>
+        </div>
+        <div class="platform-item">
+          <div class="name">Cursor</div>
+          <div class="type">.cursor/rules</div>
+        </div>
+        <div class="platform-item">
+          <div class="name">Cline</div>
+          <div class="type">.clinerules</div>
+        </div>
+        <div class="platform-item">
+          <div class="name">Claude Code</div>
+          <div class="type">CLAUDE.md</div>
+        </div>
+        <div class="platform-item">
+          <div class="name">GitHub Copilot</div>
+          <div class="type">.github/copilot</div>
+        </div>
+        <div class="platform-item">
+          <div class="name">OpenAI Codex</div>
+          <div class="type">codex.md</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>扩展系统</h3>
+      <p>AI-DLC 提供了灵活的扩展机制：</p>
+      <ul>
+        <li><strong>安全基线扩展</strong>：强制 AI 遵循 OWASP 安全最佳实践</li>
+        <li><strong>属性测试扩展</strong>：引导 AI 生成基于属性的测试用例</li>
+        <li><strong>自定义组织规则</strong>：团队可定义符合内部规范的扩展规则</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 使用场景 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">💡</span> 典型使用场景</h2>
+    <div class="scenario-list">
+      <div class="scenario-item">
+        <h4>新项目启动</h4>
+        <p>团队启动新项目时，AI-DLC 引导 AI 助手从需求澄清开始，逐步推进到架构设计和编码实现，避免"跳过设计直接编码"的常见陷阱。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>大型代码库维护</h4>
+        <p>在已有项目中引入 AI-DLC 规则，让 AI 助手在修改代码时自动遵循项目既定规范和架构约束，减少不合规的代码修改。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>代码审查自动化</h4>
+        <p>AI 在 Construction 阶段自动执行结构化代码审查，检查安全漏洞、性能问题和代码规范，减少人工审查负担。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>团队协作标准化</h4>
+        <p>多个开发者使用不同 AI 工具时，AI-DLC 确保所有工具遵循统一的工作流程，实现跨平台的开发一致性。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>DevOps 流程集成</h4>
+        <p>在 Operations 阶段，AI 自动生成 CI/CD 配置、监控仪表盘和告警规则，加速从开发到部署的过渡。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>AI 编程教学</h4>
+        <p>新接触 AI 编程助手的开发者可以通过 AI-DLC 学习最佳实践，理解如何有效地与 AI 协作而非盲目接受生成代码。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 为什么 Trending -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 为什么登上 Trending</h2>
+    <div class="card">
+      <h3>核心驱动力</h3>
+      <ul>
+        <li><strong>AI 编程的"缺失环节"</strong>：AI 编程助手（Cursor、Claude Code 等）日益普及，但缺乏结构化的工作流程引导。AI-DLC 填补了这一空白，让 AI 辅助开发从"随意对话"升级为"工程化流程"。</li>
+        <li><strong>AWS Labs 背书的权威性</strong>：作为 AWS 官方实验室项目，自带企业级可信度。开发者更愿意采用有 AWS 背书的方法论。</li>
+        <li><strong>多平台统一方案</strong>：支持 Cursor、Claude Code、GitHub Copilot 等 7+ 主流平台，解决了"每个工具各搞一套"的碎片化问题。</li>
+        <li><strong>MIT-0 许可证</strong>：几乎无使用限制，企业可以自由定制和集成。</li>
+        <li><strong>行业趋势共鸣</strong>：社区讨论热烈 — "Your AI Coding Assistant Is Making You Slower" 等文章反映出开发者对结构化 AI 工作流的迫切需求。</li>
+        <li><strong>"规则即代码"范式</strong>：不写一行可执行代码，用 Markdown 改变 AI 行为。这种新颖的"产品形态"引发技术社区的好奇和讨论。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">⚔️</span> 竞品对比</h2>
+    <table class="vs-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>AI-DLC Workflows</th>
+          <th>addyosmani/agent-skills</th>
+          <th>传统 Prompt Engineering</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>方法论完整性</td>
+          <td><span class="green">完整三阶段生命周期</span></td>
+          <td>技能片段集合，缺乏统一流程</td>
+          <td>无系统方法论</td>
+        </tr>
+        <tr>
+          <td>多平台支持</td>
+          <td><span class="green">7+ IDE 原生适配</span></td>
+          <td>主要面向通用 prompt</td>
+          <td>平台无关但需手动适配</td>
+        </tr>
+        <tr>
+          <td>自适应能力</td>
+          <td><span class="green">基于风险评级自动调整</span></td>
+          <td>静态规则</td>
+          <td>完全手动</td>
+        </tr>
+        <tr>
+          <td>扩展性</td>
+          <td><span class="green">插件化规则扩展系统</span></td>
+          <td>可通过 PR 添加技能</td>
+          <td>灵活但无标准化</td>
+        </tr>
+        <tr>
+          <td>企业支持</td>
+          <td><span class="green">AWS Labs 官方维护</span></td>
+          <td>个人开发者维护</td>
+          <td>社区驱动</td>
+        </tr>
+        <tr>
+          <td>学习曲线</td>
+          <td><span class="orange">中等 — 需理解方法论</span></td>
+          <td>低 — 直接使用技能</td>
+          <td>低 — 自然语言</td>
+        </tr>
+        <tr>
+          <td>社区规模</td>
+          <td>1,680 Stars</td>
+          <td><span class="green">34,788 Stars</span></td>
+          <td>N/A</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 目标用户 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">👥</span> 目标用户画像</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>全栈工程师</h3>
+        <p>日常使用 Cursor/Claude Code 的开发者，希望 AI 助手更有章法而非随机生成代码。通过 AI-DLC 获得结构化的 AI 协作体验。</p>
+      </div>
+      <div class="card">
+        <h3>技术团队负责人</h3>
+        <p>需要统一团队 AI 编程规范的 Tech Lead。AI-DLC 提供了跨工具的标准化工作流，确保团队成员的 AI 使用方式一致。</p>
+      </div>
+      <div class="card">
+        <h3>DevOps 工程师</h3>
+        <p>希望将 AI 辅助融入 CI/CD 流水线的运维人员。AI-DLC 的 Operations 阶段为 AI 驱动的运维自动化提供框架。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 快速上手指南</h2>
+    <div class="quick-start">
+      <h4>5 分钟集成 AI-DLC 到你的项目</h4>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">下载最新发布的规则包：<code>wget https://github.com/awslabs/aidlc-workflows/releases/latest/download/aidlc-rules.zip</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">解压到项目根目录：<code>unzip aidlc-rules.zip -d .</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">根据你的 IDE 选择对应的规则文件（如 Cursor 使用 <code>.cursor/rules/</code>，Claude Code 使用 <code>CLAUDE.md</code>）</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">在 AI 对话中输入激活指令：<code>"Using AI-DLC, I want to build [your project description]"</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text">AI 将自动进入 Inception 阶段，开始提问驱动式的需求分析</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📊</span> 综合评分</h2>
+    <div class="card">
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-value" style="color:#58a6ff">8.5</div>
+          <div class="score-label">创新性</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#3fb950">8.0</div>
+          <div class="score-label">代码质量</div>
+          <div class="score-bar"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#3fb950,#56d364)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#d29922">8.5</div>
+          <div class="score-label">实用性</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#d29922,#e3b341)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#bc8cff">9.0</div>
+          <div class="score-label">文档完善度</div>
+          <div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#bc8cff,#d2a8ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#f778ba">7.5</div>
+          <div class="score-label">社区活跃度</div>
+          <div class="score-bar"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#f778ba,#ff9ec6)"></div></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #21262d">
+        <div style="font-size:2.4em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8.3 / 10</div>
+        <div style="color:#8b949e;margin-top:6px">综合评分</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📝</span> 分析总结</h2>
+    <div class="card">
+      <p>AI-DLC Workflows 代表了 AI 辅助开发领域的一个重要范式转变 — <span class="highlight">从"让 AI 写代码"到"让 AI 遵循工程化流程写代码"</span>。作为 AWS Labs 的项目，它具有天然的企业级可信度，而其"Markdown 规则即产品"的形式也极具创新性。</p>
+      <p style="margin-top:12px">三阶段生命周期设计（Inception → Construction → Operations）覆盖了软件开发的完整流程，自适应机制让同一套规则能适用于不同复杂度的项目。多平台支持（7+ IDE）是其核心竞争优势。</p>
+      <p style="margin-top:12px">目前的主要挑战在于社区规模（1,680 Stars 相对较小）和方法论的学习曲线。但随着 AI 编程助手的持续普及，对结构化工作流的需求只会增长，AI-DLC 有望成为该领域的重要参考标准。</p>
+      <p style="margin-top:12px"><span class="green">推荐指数：★★★★☆</span> — 适合已在日常开发中使用 AI 编程助手的团队和个人。</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>AI-DLC Workflows 深度分析 | GitHub Trending Analysis</p>
+  <p>由 AI 自动分析生成 | Powered by Claude Code | 2026-05-09</p>
+</div>
+</body>
+</html>
