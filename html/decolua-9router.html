@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9Router 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e17;color:#e0e6f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:960px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:48px 20px 36px;background:linear-gradient(135deg,#0d1321 0%,#1a1040 50%,#0d1321 100%);border-radius:16px;margin-bottom:28px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(99,102,241,0.08) 0%,transparent 70%);animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+.header h1{font-size:2.4em;background:linear-gradient(135deg,#818cf8,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;position:relative}
+.header .subtitle{color:#94a3b8;font-size:1.05em;position:relative}
+.badge-row{display:flex;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap;position:relative}
+.badge{padding:5px 14px;border-radius:20px;font-size:0.8em;font-weight:600;letter-spacing:0.5px}
+.badge-lang{background:rgba(247,223,30,0.15);color:#f7df1e;border:1px solid rgba(247,223,30,0.3)}
+.badge-stars{background:rgba(250,204,21,0.15);color:#facc15;border:1px solid rgba(250,204,21,0.3)}
+.badge-license{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.3)}
+.badge-today{background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3)}
+.section{background:linear-gradient(135deg,rgba(15,20,35,0.95),rgba(20,15,45,0.95));border:1px solid rgba(99,102,241,0.15);border-radius:14px;padding:28px 30px;margin-bottom:22px;transition:border-color 0.3s}
+.section:hover{border-color:rgba(99,102,241,0.35)}
+.section h2{font-size:1.4em;color:#a5b4fc;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2em}
+.section h3{font-size:1.1em;color:#c4b5fd;margin:16px 0 10px}
+.section p,.section li{color:#cbd5e1;font-size:0.95em}
+.section ul{padding-left:20px}
+.section li{margin-bottom:6px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-item{background:rgba(30,30,60,0.5);border-radius:10px;padding:14px 18px;border:1px solid rgba(99,102,241,0.1)}
+.info-item .label{color:#818cf8;font-size:0.82em;font-weight:600;margin-bottom:4px}
+.info-item .value{color:#e2e8f0;font-size:1em;font-weight:500}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:14px}
+.feature-card{background:rgba(30,30,60,0.4);border:1px solid rgba(99,102,241,0.12);border-radius:10px;padding:16px;transition:transform 0.2s,border-color 0.2s}
+.feature-card:hover{transform:translateY(-2px);border-color:rgba(99,102,241,0.3)}
+.feature-card .fc-title{color:#c084fc;font-weight:600;margin-bottom:6px;font-size:0.95em}
+.feature-card .fc-desc{color:#94a3b8;font-size:0.85em;line-height:1.5}
+.arch-box{background:rgba(10,14,30,0.8);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:22px;margin:14px 0;font-family:'Fira Code',monospace;font-size:0.85em;color:#a5b4fc;overflow-x:auto;line-height:1.8}
+.compare-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:0.88em}
+.compare-table th{background:rgba(99,102,241,0.15);color:#a5b4fc;padding:12px 14px;text-align:left;border-bottom:2px solid rgba(99,102,241,0.3)}
+.compare-table td{padding:11px 14px;border-bottom:1px solid rgba(99,102,241,0.08);color:#cbd5e1}
+.compare-table tr:hover td{background:rgba(99,102,241,0.05)}
+.compare-table .highlight{color:#4ade80;font-weight:600}
+.compare-table .dim{color:#64748b}
+.score-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.score-bar .score-label{width:100px;color:#94a3b8;font-size:0.9em;text-align:right}
+.score-bar .bar-bg{flex:1;height:10px;background:rgba(30,30,60,0.6);border-radius:5px;overflow:hidden}
+.score-bar .bar-fill{height:100%;border-radius:5px;transition:width 1s ease}
+.score-bar .score-val{width:55px;color:#e2e8f0;font-weight:600;font-size:0.95em}
+.total-score{text-align:center;margin-top:24px;padding:24px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(192,132,252,0.1));border-radius:12px;border:1px solid rgba(192,132,252,0.2)}
+.total-score .ts-num{font-size:3em;font-weight:800;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .ts-label{color:#94a3b8;font-size:0.9em;margin-top:4px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tag{padding:4px 12px;border-radius:14px;font-size:0.78em;background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2)}
+.code-block{background:rgba(10,14,30,0.8);border:1px solid rgba(99,102,241,0.15);border-radius:8px;padding:16px;margin:12px 0;font-family:'Fira Code',monospace;font-size:0.83em;color:#a5b4fc;overflow-x:auto;line-height:1.7}
+.user-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.user-card{background:rgba(30,30,60,0.4);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(99,102,241,0.1)}
+.user-card .uc-type{color:#e2e8f0;font-weight:600;margin-bottom:4px}
+.user-card .uc-rec{font-size:1.6em}
+.user-card .uc-reason{color:#94a3b8;font-size:0.82em}
+.tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.tier-card{background:rgba(30,30,60,0.4);border-radius:10px;padding:16px;border:1px solid rgba(99,102,241,0.1);text-align:center}
+.tier-card .tier-name{font-weight:700;font-size:1.1em;margin-bottom:8px}
+.tier-card .tier-name.free{color:#4ade80}
+.tier-card .tier-name.cheap{color:#facc15}
+.tier-card .tier-name.sub{color:#60a5fa}
+.tier-card .tier-examples{color:#94a3b8;font-size:0.82em;line-height:1.6}
+.footer{text-align:center;padding:28px;color:#475569;font-size:0.82em;border-top:1px solid rgba(99,102,241,0.1);margin-top:16px}
+@media(max-width:640px){.info-grid,.user-grid{grid-template-columns:1fr}.tier-grid{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.header h1{font-size:1.8em}.compare-table{font-size:0.78em}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>9Router</h1>
+  <div class="subtitle">FREE AI Router & Token Saver — 40+ 提供商，100+ 模型，永远不断线</div>
+  <div class="badge-row">
+    <span class="badge badge-lang">JavaScript / TypeScript</span>
+    <span class="badge badge-stars">⭐ 4,292</span>
+    <span class="badge badge-today">🔥 +249 today</span>
+    <span class="badge badge-license">MIT License</span>
+  </div>
+</div>
+
+<div class="tags">
+  <span class="tag">AI Router</span><span class="tag">Token Saver</span><span class="tag">RTK</span>
+  <span class="tag">Multi-LLM</span><span class="tag">Auto Fallback</span><span class="tag">Next.js</span>
+  <span class="tag">OpenAI Compatible</span><span class="tag">Free AI</span><span class="tag">Claude Code</span>
+  <span class="tag">Codex</span><span class="tag">Cursor</span><span class="tag">40+ Providers</span>
+</div>
+
+<div class="section">
+  <h2><span class="icon">📋</span> 基本信息</h2>
+  <div class="info-grid">
+    <div class="info-item"><div class="label">仓库</div><div class="value">decolua/9router</div></div>
+    <div class="info-item"><div class="label">技术栈</div><div class="value">Next.js 16 + React 19 + Tailwind CSS 4</div></div>
+    <div class="info-item"><div class="label">运行环境</div><div class="value">Node.js 20+</div></div>
+    <div class="info-item"><div class="label">许可协议</div><div class="value">MIT License</div></div>
+    <div class="info-item"><div class="label">npm 包</div><div class="value">9router</div></div>
+    <div class="info-item"><div class="label">默认端口</div><div class="value">localhost:20128</div></div>
+    <div class="info-item"><div class="label">支持的 CLI 工具</div><div class="value">Claude Code / Codex / Cursor / Cline / Copilot / OpenClaw</div></div>
+    <div class="info-item"><div class="label">提供商</div><div class="value">40+ Providers / 100+ Models</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🎯</span> 项目简介与核心功能</h2>
+  <p><strong>9Router</strong> 是一个开源的 AI 编码路由器和 Token 节省工具。它在你的本地运行一个代理服务，将所有 AI 编码工具（Claude Code、Codex、Cursor、Cline、Copilot、OpenClaw 等）的请求路由到 40+ AI 提供商，实现自动降级、Token 节省和零停机编码。</p>
+  <h3>解决的核心痛点</h3>
+  <ul>
+    <li>订阅额度用不完就过期了</li>
+    <li>编码中途被 Rate Limit 打断</li>
+    <li>工具输出（git diff、grep 等）快速消耗 Token</li>
+    <li>多个 AI 提供商之间手动切换麻烦</li>
+    <li>API 费用昂贵（$20-50/月/提供商）</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🏗️</span> 技术架构</h2>
+  <div class="arch-box">
+┌─────────────────┐
+│   Your CLI Tool  │  Claude Code / Codex / Cursor / Cline / Copilot
+└────────┬────────┘
+         │ http://localhost:20128/v1
+         ▼
+┌─────────────────────────────────────────┐
+│           9Router (Smart Router)         │
+│  • RTK Token Saver (cut tool_result)     │
+│  • Caveman Mode ( terse output)          │
+│  • Format Translation (OpenAI↔Claude↔…)  │
+│  • Quota Tracking + Auto Token Refresh   │
+└────────┬────────────────────────────────┘
+         │
+         ├──→ [Tier 1: SUBSCRIPTION] Claude Code / Codex / Copilot
+         │    ↓ quota exhausted
+         ├──→ [Tier 2: CHEAP] GLM ($0.6/1M) / MiniMax ($0.2/1M)
+         │    ↓ budget limit
+         └──→ [Tier 3: FREE] Kiro / OpenCode Free / Vertex ($300 credits)
+  </div>
+  <h3>三大降级层级</h3>
+  <div class="tier-grid">
+    <div class="tier-card">
+      <div class="tier-name sub">Tier 1: 订阅</div>
+      <div class="tier-examples">Claude Code Pro/Max<br>Codex Plus/Pro<br>GitHub Copilot<br>Cursor IDE</div>
+    </div>
+    <div class="tier-card">
+      <div class="tier-name cheap">Tier 2: 廉价</div>
+      <div class="tier-examples">GLM-5.1 ($0.6/1M)<br>MiniMax M2.7 ($0.2/1M)<br>Kimi K2.5 ($9/mo)<br>日/5小时重置</div>
+    </div>
+    <div class="tier-card">
+      <div class="tier-name free">Tier 3: 免费</div>
+      <div class="tier-examples">Kiro AI (无限免费)<br>OpenCode Free (无认证)<br>Vertex AI ($300 额度)<br>真正的 $0</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">💡</span> 核心特性</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="fc-title">🚀 RTK Token Saver</div>
+      <div class="fc-desc">自动压缩 tool_result 内容（git diff、grep、ls 等），每次请求节省 20-40% Token。支持 9 种过滤器，自动检测类型，安全设计。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🪨 Caveman Mode</div>
+      <div class="fc-desc">注入简洁提示让 LLM 回复更精炼，技术内容保留不变。输出 Token 节省高达 65%。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🎯 Smart 3-Tier Fallback</div>
+      <div class="fc-desc">自动降级：订阅 → 廉价 → 免费。额度耗尽自动切换，零停机。支持自定义 Combo 组合。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🔄 Format Translation</div>
+      <div class="fc-desc">OpenAI ↔ Claude ↔ Gemini ↔ Cursor ↔ Kiro ↔ Vertex 多格式自动转换，任何 CLI 工具都能用。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">📊 Real-Time Quota</div>
+      <div class="fc-desc">实时 Token 消耗追踪，重置倒计时（5小时/日/周/月），费用估算和月度报告。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">👥 Multi-Account</div>
+      <div class="fc-desc">每个提供商支持多账号，自动 Round-Robin 或优先级路由，负载均衡 + 冗余。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🔄 Auto Token Refresh</div>
+      <div class="fc-desc">OAuth Token 自动刷新，无需手动重新登录，无缝体验。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🎨 Custom Combos</div>
+      <div class="fc-desc">创建无限模型组合，混合订阅/廉价/免费层，命名保存，跨设备同步。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">💾 Cloud Sync</div>
+      <div class="fc-desc">跨设备同步提供商、Combo、设置。自动后台同步，加密存储。</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">💰</span> 费用对比</h2>
+  <table class="compare-table">
+    <tr><th>层级</th><th>提供商</th><th>费用</th><th>额度重置</th></tr>
+    <tr><td>🚀 RTK</td><td>内置</td><td class="highlight">FREE（始终开启）</td><td>每次请求省 20-40%</td></tr>
+    <tr><td>💳 订阅</td><td>Claude Code Pro</td><td>$20-200/月</td><td>5h + 每周</td></tr>
+    <tr><td>💳 订阅</td><td>Codex Plus/Pro</td><td>$20-200/月</td><td>5h + 每周</td></tr>
+    <tr><td>💰 廉价</td><td>GLM-5.1</td><td>$0.6/1M tokens</td><td>每日 10AM</td></tr>
+    <tr><td>💰 廉价</td><td>MiniMax M2.7</td><td>$0.2/1M tokens</td><td>5h 滚动</td></tr>
+    <tr><td>🆓 免费</td><td>Kiro AI</td><td class="highlight">$0 无限</td><td>Claude 4.5 + GLM-5 免费</td></tr>
+    <tr><td>🆓 免费</td><td>OpenCode Free</td><td class="highlight">$0 无需认证</td><td>自动获取模型</td></tr>
+    <tr><td>🆓 免费</td><td>Vertex AI</td><td class="highlight">$300 额度</td><td>新 GCP 账号 90 天</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+  <ul>
+    <li><strong>直击痛点</strong>：AI 编码工具用户最头疼的问题 — 额度耗尽、Rate Limit、Token 浪费</li>
+    <li><strong>真正的免费</strong>：Kiro + OpenCode Free 组合 = $0 永久免费使用 Claude/GPT/Gemini</li>
+    <li><strong>RTK 创新</strong>：智能压缩 tool_result，20-40% Token 节省，行业首创</li>
+    <li><strong>一键接入</strong>：npm install -g 9router，两分钟配置完所有 AI 编码工具</li>
+    <li><strong>万能兼容</strong>：Claude Code / Codex / Cursor / Cline / Copilot 全支持</li>
+    <li><strong>40+ 提供商</strong>：覆盖所有主流 AI 模型，一个入口搞定所有</li>
+    <li><strong>开发者友好</strong>：MIT 开源、完善的文档、Dashboard UI</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+  <table class="compare-table">
+    <tr><th>维度</th><th class="highlight">9Router</th><th>Claude Code Router</th><th>One API</th><th>LiteLLM</th></tr>
+    <tr><td>开源</td><td class="highlight">✅ MIT</td><td class="dim">✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>Token 节省 (RTK)</td><td class="highlight">✅ 20-40%</td><td class="dim">❌</td><td>❌</td><td>❌</td></tr>
+    <tr><td>3-Tier 降级</td><td class="highlight">✅ 自动</td><td class="dim">手动</td><td>✅</td><td>✅</td></tr>
+    <tr><td>免费提供商</td><td class="highlight">✅ 3+</td><td class="dim">❌</td><td>❌</td><td>❌</td></tr>
+    <tr><td>Dashboard UI</td><td class="highlight">✅ Next.js</td><td class="dim">❌</td><td>✅</td><td>❌</td></tr>
+    <tr><td>格式转换</td><td class="highlight">✅ 9种</td><td class="dim">Claude only</td><td>部分</td><td>✅</td></tr>
+    <tr><td>Quota 追踪</td><td class="highlight">✅ 实时</td><td class="dim">❌</td><td>❌</td><td>❌</td></tr>
+    <tr><td>多账号</td><td class="highlight">✅</td><td class="dim">❌</td><td>✅</td><td>部分</td></tr>
+    <tr><td>Cloud Sync</td><td class="highlight">✅</td><td class="dim">❌</td><td>❌</td><td>❌</td></tr>
+    <tr><td>提供商数量</td><td class="highlight">40+</td><td class="dim">1</td><td>10+</td><td>100+</td></tr>
+    <tr><td>专为编码优化</td><td class="highlight">✅</td><td class="dim">✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+  <p style="margin-top:12px;color:#94a3b8;font-size:0.88em">总结：9Router 在 AI 编码场景的针对性最强 — RTK Token 节省、免费提供商接入、实时 Quota 追踪都是独家特性。</p>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🎯</span> 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-card">
+      <div class="uc-type">👨‍💻 独立开发者</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">免费 Combo + RTK = 零成本 AI 编码</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🏢 开发团队</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">多账号负载均衡 + 费用追踪</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🎓 学生 / 学习者</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">$0 入门门槛，免费使用顶级模型</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">⚡ 重度 AI 编码用户</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">3-Tier 降级保证 24/7 不间断</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🔧 DevOps / SRE</div>
+      <div class="uc-rec">⭐⭐⭐⭐</div>
+      <div class="uc-reason">VPS/Docker/Cloudflare 灵活部署</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">💰 成本敏感企业</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">RTK 省 20-40% + 免费层兜底</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🚀</span> 快速上手</h2>
+  <h3>1. 安装并启动</h3>
+  <div class="code-block">npm install -g 9router && 9router</div>
+  <h3>2. 连接免费提供商</h3>
+  <div class="code-block">Dashboard → Providers → Connect Kiro AI (免费 Claude 无限) 或 OpenCode Free (无需认证)</div>
+  <h3>3. 配置 CLI 工具</h3>
+  <div class="code-block"># Claude Code
+# 编辑 ~/.claude/config.json:
+{
+  "anthropic_api_base": "http://localhost:20128/v1",
+  "anthropic_api_key": "your-9router-api-key"
+}
+
+# Codex CLI
+export OPENAI_BASE_URL="http://localhost:20128"
+export OPENAI_API_KEY="your-9router-api-key"</div>
+  <h3>4. 推荐免费 Combo</h3>
+  <div class="code-block">Combo: "free-forever"
+  1. kr/claude-sonnet-4.5    (Claude 4.5 免费无限)
+  2. kr/glm-5                (GLM-5 免费通过 Kiro)
+  3. oc/<auto>               (OpenCode Free, 无需认证)
+月费: $0  + RTK 省 20-40% Token</div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">📊</span> 综合评分</h2>
+  <div class="score-bar">
+    <span class="score-label">🧪 创新性</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:88%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+    <span class="score-val">8.8 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">🔧 代码质量</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:80%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+    <span class="score-val">8.0 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">🎯 实用性</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:95%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+    <span class="score-val">9.5 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">📖 文档完善度</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+    <span class="score-val">9.0 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">🌐 社区活跃度</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:78%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+    <span class="score-val">7.8 / 10</span>
+  </div>
+  <div class="total-score">
+    <div class="ts-num">8.6</div>
+    <div class="ts-label">综合评分 / 10</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">📌</span> 总结</h2>
+  <p>9Router 是 AI 编码工具生态中的一个关键基础设施项目。它通过 RTK Token 节省、3-Tier 智能降级和 40+ 提供商接入，解决了 AI 编码用户最关心的三大问题：成本、中断和复杂性。对于想要零成本使用顶级 AI 模型的开发者来说，Kiro + OpenCode Free + RTK 的组合提供了目前市场上最实用的免费 AI 编码方案。MIT 开源许可、完善的文档和活跃的社区使其成为个人和团队降低 AI 编码成本的首选工具。</p>
+</div>
+
+<div class="footer">
+  📊 由 AI 深度分析生成 | Powered by Claude Code<br>
+  分析日期：2026-05-08 | 数据来源：GitHub, WebSearch
+</div>
+
+</div>
+</body>
+</html>
