@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloakBrowser 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:50px 20px 40px;background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%);border-bottom:1px solid #21262d}
+.header h1{font-size:2.6em;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.header .subtitle{color:#8b949e;font-size:1.15em;max-width:700px;margin:0 auto}
+.badges{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:600;border:1px solid #30363d;background:#161b22}
+.badge.python{border-color:#3572A5;color:#79c0ff}
+.badge.stars{border-color:#e3b341;color:#e3b341}
+.badge.license{border-color:#3fb950;color:#3fb950}
+.badge.platform{border-color:#bc8cff;color:#d2a8ff}
+.section{margin-top:36px}
+.section-title{font-size:1.5em;color:#58a6ff;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}
+.section-title .icon{font-size:1.1em}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:16px}
+.card h3{color:#f0f6fc;margin-bottom:10px;font-size:1.15em}
+.card p{color:#8b949e;line-height:1.8}
+.card ul{color:#8b949e;padding-left:20px}
+.card li{margin-bottom:6px}
+.highlight{color:#58a6ff;font-weight:600}
+.green{color:#3fb950}
+.red{color:#f85149}
+.purple{color:#bc8cff}
+.orange{color:#d29922}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.score-item{text-align:center;padding:20px 12px;background:#0d1117;border:1px solid #21262d;border-radius:10px}
+.score-value{font-size:2em;font-weight:700;margin-bottom:4px}
+.score-label{font-size:.8em;color:#8b949e}
+.score-bar{width:100%;height:6px;background:#21262d;border-radius:3px;margin-top:10px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9em}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;background:#0d1117}
+td{color:#c9d1d9}
+tr:hover td{background:#161b22}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;font-family:'Fira Code',monospace;font-size:.88em;overflow-x:auto;color:#79c0ff;margin:12px 0}
+.code-comment{color:#484f58}
+.code-keyword{color:#ff7b72}
+.code-string{color:#a5d6ff}
+.vs-table{margin-top:12px}
+.vs-table td:first-child{font-weight:600;color:#f0f6fc}
+.scenario-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.scenario-item{padding:16px;background:#0d1117;border:1px solid #21262d;border-radius:8px;border-left:3px solid #58a6ff}
+.scenario-item h4{color:#58a6ff;margin-bottom:6px;font-size:.95em}
+.scenario-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.quick-start{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:24px;margin-top:12px}
+.quick-start h4{color:#3fb950;margin-bottom:12px;font-size:1em}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{background:linear-gradient(135deg,#58a6ff,#bc8cff);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;flex-shrink:0;margin-top:2px}
+.step-text{color:#c9d1d9;font-size:.92em}
+.step-text code{background:#21262d;padding:2px 8px;border-radius:4px;font-size:.88em;color:#79c0ff}
+.footer{text-align:center;padding:40px 20px;color:#484f58;font-size:.85em;border-top:1px solid #21262d;margin-top:50px}
+@media(max-width:768px){
+  .header h1{font-size:1.8em}
+  .score-grid{grid-template-columns:repeat(3,1fr)}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>CloakBrowser</h1>
+  <p class="subtitle">Stealth Chromium — 通过所有反机器人检测测试的隐身浏览器引擎，源码级指纹补丁的 Playwright 替代方案</p>
+  <div class="badges">
+    <span class="badge python">Python / TypeScript</span>
+    <span class="badge stars">2,730 Stars (+482 today)</span>
+    <span class="badge license">MIT License (Wrapper)</span>
+    <span class="badge platform">Chromium 146</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- 项目简介 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">📋</span> 项目简介与核心功能</h2>
+  <div class="card">
+    <h3>什么是 CloakBrowser？</h3>
+    <p>CloakBrowser 是一个基于 <span class="highlight">Chromium 源码修改</span> 的隐身浏览器，通过在 C++ 层面修改浏览器指纹来绕过所有主流反机器人检测系统。它不是通过 JavaScript 注入或配置参数伪装，而是直接编译进 Chromium 二进制文件，使检测系统将其识别为真实浏览器——因为它的确是真实浏览器。</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>源码级 C++ 补丁</h3>
+      <p><span class="highlight">57 个源码级补丁</span>覆盖 canvas、WebGL、音频、字体、GPU、屏幕、WebRTC、网络计时、自动化信号和 CDP 输入行为。编译进二进制而非注入 JS。</p>
+    </div>
+    <div class="card">
+      <h3>人性化行为模拟</h3>
+      <p><span class="highlight">humanize=True</span> 一行代码启用人类级鼠标轨迹（贝塞尔曲线）、键盘输入节奏、滚动模式。24/24 行为检测信号通过。</p>
+    </div>
+    <div class="card">
+      <h3>顶级的检测通过率</h3>
+      <p><span class="green">reCAPTCHA v3 评分 0.9</span>（人类级别）、通过 Cloudflare Turnstile、FingerprintJS、BrowserScan 等超过 30 个检测站点的测试。</p>
+    </div>
+    <div class="card">
+      <h3>零配置即插即用</h3>
+      <p>只需 <span class="highlight">3 行代码</span>即可替代 Playwright/Puppeteer。支持 Python 和 JavaScript，二进制文件自动下载，无需手动配置。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">🔧</span> 技术架构与特点</h2>
+  <div class="card">
+    <h3>架构层次</h3>
+    <table>
+      <tr><th>层次</th><th>技术</th><th>说明</th></tr>
+      <tr><td>浏览器内核</td><td>Chromium 146</td><td>基于最新 Chromium，57 个 C++ 源码级补丁编译进二进制</td></tr>
+      <tr><td>Python 包装层</td><td>Playwright API</td><td>完整兼容 Playwright API，支持同步/异步</td></tr>
+      <tr><td>JavaScript 包装层</td><td>Playwright / Puppeteer</td><td>双引擎支持，TypeScript 类型完整</td></tr>
+      <tr><td>人性化引擎</td><td>自定义行为模拟</td><td>贝塞尔曲线鼠标、字符级键盘、微步滚动</td></tr>
+      <tr><td>指纹管理</td><td>种子随机化</td><td>每次启动自动生成一致指纹，或固定种子保持身份</td></tr>
+      <tr><td>容器化</td><td>Docker</td><td>预构建镜像，CDP 服务器模式，多连接指纹隔离</td></tr>
+    </table>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>关键 C++ 补丁覆盖范围</h3>
+      <ul>
+        <li><span class="highlight">Canvas 指纹</span> — 噪声注入</li>
+        <li><span class="highlight">WebGL 渲染器</span> — GPU 信息伪装</li>
+        <li><span class="highlight">音频指纹</span> — AudioContext 噪声</li>
+        <li><span class="highlight">字体枚举</span> — 系统字体列表模拟</li>
+        <li><span class="highlight">navigator 属性</span> — webdriver/plugins/chrome</li>
+        <li><span class="highlight">TLS 指纹</span> — ja3/ja4 匹配真实 Chrome</li>
+        <li><span class="highlight">WebRTC IP</span> — ICE 候选 IP 替换</li>
+        <li><span class="highlight">屏幕/硬件</span> — 分辨率/内存/并发数</li>
+        <li><span class="highlight">网络计时</span> — DNS/SSL 延迟归零</li>
+        <li><span class="highlight">CDP 检测</span> — 自动化信号移除</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>平台支持</h3>
+      <table>
+        <tr><th>平台</th><th>Chromium</th><th>补丁数</th></tr>
+        <tr><td>Linux x86_64</td><td>146</td><td><span class="green">57</span></td></tr>
+        <tr><td>Linux arm64</td><td>146</td><td><span class="green">57</span></td></tr>
+        <tr><td>Windows x86_64</td><td>146</td><td><span class="green">57</span></td></tr>
+        <tr><td>macOS arm64</td><td>145</td><td>26</td></tr>
+        <tr><td>macOS x86_64</td><td>145</td><td>26</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 检测测试结果 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">✅</span> 检测测试结果对比</h2>
+  <div class="card">
+    <table>
+      <tr><th>检测服务</th><th>原生 Playwright</th><th>CloakBrowser</th></tr>
+      <tr><td>reCAPTCHA v3</td><td><span class="red">0.1 (bot)</span></td><td><span class="green">0.9 (human)</span></td></tr>
+      <tr><td>Cloudflare Turnstile (非交互)</td><td><span class="red">FAIL</span></td><td><span class="green">PASS</span></td></tr>
+      <tr><td>Cloudflare Turnstile (managed)</td><td><span class="red">FAIL</span></td><td><span class="green">PASS</span></td></tr>
+      <tr><td>ShieldSquare</td><td><span class="red">BLOCKED</span></td><td><span class="green">PASS</span></td></tr>
+      <tr><td>FingerprintJS 机器人检测</td><td><span class="red">DETECTED</span></td><td><span class="green">PASS</span></td></tr>
+      <tr><td>BrowserScan 机器人检测</td><td><span class="red">DETECTED</span></td><td><span class="green">NORMAL (4/4)</span></td></tr>
+      <tr><td>navigator.webdriver</td><td><span class="red">true</span></td><td><span class="green">false</span></td></tr>
+      <tr><td>CDP 检测</td><td><span class="red">Detected</span></td><td><span class="green">Not detected</span></td></tr>
+      <tr><td>TLS 指纹</td><td><span class="red">Mismatch</span></td><td><span class="green">匹配 Chrome</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">🎯</span> 应用场景</h2>
+  <div class="scenario-list">
+    <div class="scenario-item">
+      <h4>智能网页爬虫</h4>
+      <p>绕过 Cloudflare、DataDome 等反爬保护，采集受保护网站数据。适合价格监控、新闻聚合等合法数据采集场景。</p>
+    </div>
+    <div class="scenario-item">
+      <h4>AI Agent 浏览器自动化</h4>
+      <p>为 browser-use、Crawl4AI、LangChain 等 AI Agent 框架提供隐身浏览器底层，让 AI Agent 自由浏览网页。</p>
+    </div>
+    <div class="scenario-item">
+      <h4>自动化测试</h4>
+      <p>在真实环境下测试应用功能，不受反机器人机制干扰。模拟真实用户操作流程和设备指纹。</p>
+    </div>
+    <div class="scenario-item">
+      <h4>多账号管理</h4>
+      <p>通过 Profile Manager 创建独立指纹的浏览器配置文件，配合代理实现多账号安全管理。替代 Multilogin、GoLogin。</p>
+    </div>
+    <div class="scenario-item">
+      <h4>SEO 与广告验证</h4>
+      <p>从不同地区和设备视角验证搜索排名、广告展示效果，不受 IP 和指纹检测干扰。</p>
+    </div>
+    <div class="scenario-item">
+      <h4>安全研究与审计</h4>
+      <p>安全研究人员用于测试自身系统的反机器人检测能力，评估防护效果并发现漏洞。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>1. 解决真实痛点</h3>
+      <p>浏览器自动化被反机器人系统封杀是开发者普遍头疼的问题。传统方案（playwright-stealth、undetected-chromedriver）依赖 JS 注入或配置补丁，每次 Chrome 更新都会失效。CloakBrowser 从源码层面解决问题，可靠性根本不同。</p>
+    </div>
+    <div class="card">
+      <h3>2. AI Agent 生态爆发</h3>
+      <p>随着 browser-use、Crawl4AI、LangChain 等 AI 浏览器 Agent 框架快速增长，隐身浏览器成为刚需基础设施。CloakBrowser 完美契合这一趋势，提供了开箱即用的集成方案。</p>
+    </div>
+    <div class="card">
+      <h3>3. 零门槛迁移</h3>
+      <p>只需替换一行 import 语句即可从 Playwright 迁移，API 完全兼容。开发者无需学习新工具，这极大地降低了采用成本。</p>
+    </div>
+    <div class="card">
+      <h3>4. 开源免费</h3>
+      <p>同类商业产品（Multilogin、GoLogin、AdsPower）月费数十美元。CloakBrowser 完全免费开源（MIT 协议），加上自托管 Profile Manager，对个人开发者和中小企业极具吸引力。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 同类项目对比 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">⚖️</span> 同类项目对比</h2>
+  <div class="card">
+    <table class="vs-table">
+      <tr><th>特性</th><th>Playwright</th><th>playwright-stealth</th><th>undetected-chromedriver</th><th>Camoufox</th><th style="color:#f0f6fc">CloakBrowser</th></tr>
+      <tr><td>reCAPTCHA v3</td><td>0.1</td><td>0.3-0.5</td><td>0.3-0.7</td><td>0.7-0.9</td><td class="green">0.9</td></tr>
+      <tr><td>Cloudflare Turnstile</td><td>Fail</td><td>偶尔</td><td>偶尔</td><td>Pass</td><td class="green">Pass</td></tr>
+      <tr><td>补丁层级</td><td>无</td><td>JS 注入</td><td>配置补丁</td><td>C++ (Firefox)</td><td class="green">C++ (Chromium)</td></tr>
+      <tr><td>Chrome 更新兼容</td><td>N/A</td><td class="red">经常失效</td><td class="red">经常失效</td><td>是</td><td class="green">是</td></tr>
+      <tr><td>维护状态</td><td>活跃</td><td>停滞</td><td>停滞</td><td>不稳定</td><td class="green">活跃</td></tr>
+      <tr><td>浏览器引擎</td><td>Chromium</td><td>Chromium</td><td>Chrome</td><td>Firefox</td><td>Chromium</td></tr>
+      <tr><td>Playwright API</td><td>原生</td><td>原生</td><td>否 (Selenium)</td><td>否</td><td class="green">原生</td></tr>
+      <tr><td>多语言支持</td><td>多语言</td><td>JS only</td><td>Python only</td><td>Python</td><td class="green">Python + JS</td></tr>
+      <tr><td>价格</td><td>免费</td><td>免费</td><td>免费</td><td>免费</td><td class="green">免费</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 适合谁使用 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">👥</span> 适合谁使用</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>爬虫开发者</h3>
+      <p>需要绕过反爬机制采集数据的开发者。CloakBrowser 提供了最简单、最可靠的方案，无需维护复杂的检测对抗代码。</p>
+    </div>
+    <div class="card">
+      <h3>AI Agent 开发者</h3>
+      <p>构建浏览器自动化 AI Agent 的开发者。与 browser-use、Crawl4AI、Stagehand 等框架无缝集成。</p>
+    </div>
+    <div class="card">
+      <h3>自动化测试工程师</h3>
+      <p>需要在真实环境中进行端到端测试的 QA 团队，不受反机器人检测干扰。</p>
+    </div>
+    <div class="card">
+      <h3>安全研究员</h3>
+      <p>测试和评估反机器人检测系统的安全研究人员，用于合法渗透测试和安全审计。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">🚀</span> 快速上手指南</h2>
+  <div class="quick-start">
+    <h4>Python 快速开始</h4>
+    <div class="step">
+      <span class="step-num">1</span>
+      <div class="step-text">安装包：<code>pip install cloakbrowser</code></div>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <div class="step-text">编写代码：
+        <div class="code-block"><span class="code-keyword">from</span> cloakbrowser <span class="code-keyword">import</span> launch<br><br>browser = launch()<br>page = browser.new_page()<br>page.goto(<span class="code-string">"https://protected-site.com"</span>)<br><span class="code-comment"># 不再被封！</span><br>browser.close()</div>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <div class="step-text">运行脚本，二进制文件自动下载（~200MB），首次启动即用。</div>
+    </div>
+  </div>
+  <div class="quick-start" style="margin-top:16px">
+    <h4>JavaScript / Node.js 快速开始</h4>
+    <div class="step">
+      <span class="step-num">1</span>
+      <div class="step-text">安装包：<code>npm install cloakbrowser playwright-core</code></div>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <div class="step-text">编写代码：
+        <div class="code-block"><span class="code-keyword">import</span> { launch } <span class="code-keyword">from</span> <span class="code-string">'cloakbrowser'</span>;<br><br><span class="code-keyword">const</span> browser = <span class="code-keyword">await</span> launch();<br><span class="code-keyword">const</span> page = <span class="code-keyword">await</span> browser.newPage();<br><span class="code-keyword">await</span> page.goto(<span class="code-string">'https://protected-site.com'</span>);<br><span class="code-keyword">await</span> browser.close();</div>
+      </div>
+    </div>
+  </div>
+  <div class="quick-start" style="margin-top:16px">
+    <h4>Docker 一键测试</h4>
+    <div class="code-block">docker run --rm cloakhq/cloakbrowser cloaktest</div>
+  </div>
+  <div class="quick-start" style="margin-top:16px">
+    <h4>从 Playwright 迁移（一行改动）</h4>
+    <div class="code-block"><span class="code-comment"># 改之前</span><br><span class="code-keyword">from</span> playwright.sync_api <span class="code-keyword">import</span> sync_playwright<br>pw = sync_playwright().start()<br>browser = pw.chromium.launch()<br><br><span class="code-comment"># 改之后</span><br><span class="code-keyword">from</span> cloakbrowser <span class="code-keyword">import</span> launch<br>browser = launch()<br><br><span class="code-comment"># 剩余代码完全不变</span><br>page = browser.new_page()<br>page.goto(<span class="code-string">"https://example.com"</span>)</div>
+  </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+  <h2 class="section-title"><span class="icon">⭐</span> 综合评分</h2>
+  <div class="card">
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="score-value" style="color:#3fb950">9.0</div>
+        <div class="score-label">创新性</div>
+        <div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#3fb950,#58a6ff)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-value" style="color:#58a6ff">8.5</div>
+        <div class="score-label">代码质量</div>
+        <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#58a6ff,#bc8cff)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-value" style="color:#bc8cff">9.5</div>
+        <div class="score-label">实用性</div>
+        <div class="score-bar"><div class="score-fill" style="width:95%;background:linear-gradient(90deg,#bc8cff,#f778ba)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-value" style="color:#d29922">9.0</div>
+        <div class="score-label">文档完善度</div>
+        <div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#d29922,#e3b341)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-value" style="color:#f778ba">8.5</div>
+        <div class="score-label">社区活跃度</div>
+        <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#f778ba,#f85149)"></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #21262d">
+      <div style="font-size:.9em;color:#8b949e">综合评分</div>
+      <div style="font-size:2.5em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8.9 / 10</div>
+      <div style="font-size:.85em;color:#3fb950">优秀 — 强烈推荐关注</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="card" style="border-left:3px solid #d29922">
+    <h3 style="color:#d29922">使用提示</h3>
+    <p>CloakBrowser 适用于合法的自动化测试、数据采集和安全研究。请遵守目标网站的服务条款和当地法律法规。项目明确声明不鼓励未经授权的自动化、凭证填充和账号滥用。</p>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p>GitHub Trending 深度分析 | 分析时间：2026-05-09 | 数据来源：github.com/CloakHQ/CloakBrowser</p>
+</div>
+</body>
+</html>
