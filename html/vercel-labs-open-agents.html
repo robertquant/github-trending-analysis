@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Agents 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e17;color:#e0e6f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:960px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:48px 20px 36px;background:linear-gradient(135deg,#0d1321 0%,#1a1040 50%,#0d1321 100%);border-radius:16px;margin-bottom:28px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(139,92,246,0.1) 0%,transparent 70%);animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+.header h1{font-size:2.4em;background:linear-gradient(135deg,#8b5cf6,#06b6d4,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;position:relative}
+.header .subtitle{color:#94a3b8;font-size:1.05em;position:relative}
+.badge-row{display:flex;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap;position:relative}
+.badge{padding:5px 14px;border-radius:20px;font-size:0.8em;font-weight:600;letter-spacing:0.5px}
+.badge-lang{background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3)}
+.badge-stars{background:rgba(250,204,21,0.15);color:#facc15;border:1px solid rgba(250,204,21,0.3)}
+.badge-official{background:rgba(139,92,246,0.15);color:#8b5cf6;border:1px solid rgba(139,92,246,0.3)}
+.badge-today{background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3)}
+.section{background:linear-gradient(135deg,rgba(15,20,35,0.95),rgba(20,15,45,0.95));border:1px solid rgba(139,92,246,0.12);border-radius:14px;padding:28px 30px;margin-bottom:22px;transition:border-color 0.3s}
+.section:hover{border-color:rgba(139,92,246,0.3)}
+.section h2{font-size:1.4em;color:#a78bfa;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.2em}
+.section h3{font-size:1.1em;color:#c4b5fd;margin:16px 0 10px}
+.section p,.section li{color:#cbd5e1;font-size:0.95em}
+.section ul{padding-left:20px}
+.section li{margin-bottom:6px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-item{background:rgba(30,30,60,0.5);border-radius:10px;padding:14px 18px;border:1px solid rgba(139,92,246,0.1)}
+.info-item .label{color:#a78bfa;font-size:0.82em;font-weight:600;margin-bottom:4px}
+.info-item .value{color:#e2e8f0;font-size:1em;font-weight:500}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:14px}
+.feature-card{background:rgba(30,30,60,0.4);border:1px solid rgba(139,92,246,0.1);border-radius:10px;padding:16px;transition:transform 0.2s,border-color 0.2s}
+.feature-card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,0.25)}
+.feature-card .fc-title{color:#c084fc;font-weight:600;margin-bottom:6px;font-size:0.95em}
+.feature-card .fc-desc{color:#94a3b8;font-size:0.85em;line-height:1.5}
+.arch-box{background:rgba(10,14,30,0.8);border:1px solid rgba(139,92,246,0.15);border-radius:12px;padding:22px;margin:14px 0;font-family:'Fira Code',monospace;font-size:0.82em;color:#a78bfa;overflow-x:auto;line-height:1.8}
+.compare-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:0.88em}
+.compare-table th{background:rgba(139,92,246,0.12);color:#a78bfa;padding:12px 14px;text-align:left;border-bottom:2px solid rgba(139,92,246,0.25)}
+.compare-table td{padding:11px 14px;border-bottom:1px solid rgba(139,92,246,0.06);color:#cbd5e1}
+.compare-table tr:hover td{background:rgba(139,92,246,0.04)}
+.compare-table .highlight{color:#4ade80;font-weight:600}
+.compare-table .dim{color:#64748b}
+.score-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.score-bar .score-label{width:100px;color:#94a3b8;font-size:0.9em;text-align:right}
+.score-bar .bar-bg{flex:1;height:10px;background:rgba(30,30,60,0.6);border-radius:5px;overflow:hidden}
+.score-bar .bar-fill{height:100%;border-radius:5px;transition:width 1s ease}
+.score-bar .score-val{width:55px;color:#e2e8f0;font-weight:600;font-size:0.95em}
+.total-score{text-align:center;margin-top:24px;padding:24px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(6,182,212,0.08));border-radius:12px;border:1px solid rgba(139,92,246,0.15)}
+.total-score .ts-num{font-size:3em;font-weight:800;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score .ts-label{color:#94a3b8;font-size:0.9em;margin-top:4px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tag{padding:4px 12px;border-radius:14px;font-size:0.78em;background:rgba(139,92,246,0.08);color:#a78bfa;border:1px solid rgba(139,92,246,0.15)}
+.code-block{background:rgba(10,14,30,0.8);border:1px solid rgba(139,92,246,0.1);border-radius:8px;padding:16px;margin:12px 0;font-family:'Fira Code',monospace;font-size:0.83em;color:#a78bfa;overflow-x:auto;line-height:1.7}
+.user-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.user-card{background:rgba(30,30,60,0.4);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(139,92,246,0.08)}
+.user-card .uc-type{color:#e2e8f0;font-weight:600;margin-bottom:4px}
+.user-card .uc-rec{font-size:1.6em}
+.user-card .uc-reason{color:#94a3b8;font-size:0.82em}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.why-card{background:rgba(30,30,60,0.4);border-radius:10px;padding:16px;border:1px solid rgba(139,92,246,0.08)}
+.why-card .wc-title{color:#a78bfa;font-weight:600;margin-bottom:4px}
+.why-card .wc-desc{color:#94a3b8;font-size:0.85em}
+.repo-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.repo-card{background:rgba(30,30,60,0.4);border-radius:10px;padding:16px;border:1px solid rgba(139,92,246,0.08)}
+.repo-card .rc-path{color:#22d3ee;font-family:'Fira Code',monospace;font-size:0.9em;margin-bottom:4px}
+.repo-card .rc-desc{color:#94a3b8;font-size:0.85em}
+.footer{text-align:center;padding:28px;color:#475569;font-size:0.82em;border-top:1px solid rgba(139,92,246,0.08);margin-top:16px}
+@media(max-width:640px){.info-grid,.user-grid,.why-grid,.repo-layout{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.header h1{font-size:1.8em}.compare-table{font-size:0.78em}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>Open Agents</h1>
+  <div class="subtitle">Vercel Labs 出品 — 在云端生成永不停止的编码 Agent</div>
+  <div class="badge-row">
+    <span class="badge badge-lang">TypeScript / Next.js</span>
+    <span class="badge badge-stars">⭐ 4,944</span>
+    <span class="badge badge-today">🔥 +160 today</span>
+    <span class="badge badge-official">Vercel Labs Official</span>
+  </div>
+</div>
+
+<div class="tags">
+  <span class="tag">Cloud Agent</span><span class="tag">Coding Agent</span><span class="tag">Sandbox</span>
+  <span class="tag">Durable Workflow</span><span class="tag">Vercel</span><span class="tag">Open Source</span>
+  <span class="tag">Background Agent</span><span class="tag">Multi-LLM</span><span class="tag">GitHub Integration</span>
+  <span class="tag">Workflow SDK</span><span class="tag">No Timeout</span><span class="tag">Auto-Debug</span>
+</div>
+
+<div class="section">
+  <h2><span class="icon">📋</span> 基本信息</h2>
+  <div class="info-grid">
+    <div class="info-item"><div class="label">仓库</div><div class="value">vercel-labs/open-agents</div></div>
+    <div class="info-item"><div class="label">技术栈</div><div class="value">Next.js + AI SDK + Workflow SDK + Sandbox</div></div>
+    <div class="info-item"><div class="label">运行时</div><div class="value">Bun + Node.js</div></div>
+    <div class="info-item"><div class="label">出品方</div><div class="value">Vercel Labs</div></div>
+    <div class="info-item"><div class="label">官方网站</div><div class="value">open-agents.dev</div></div>
+    <div class="info-item"><div class="label">发布时间</div><div class="value">2026 年 4 月</div></div>
+    <div class="info-item"><div class="label">支持的 CLI Agent</div><div class="value">Claude Code / Codex / Copilot / Cursor / Gemini CLI</div></div>
+    <div class="info-item"><div class="label">数据库</div><div class="value">Postgres (Neon)</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">☁️</span> 项目简介与核心功能</h2>
+  <p><strong>Open Agents</strong> 是 Vercel Labs 发布的开源参考应用，用于构建和运行<strong>后台云端编码 Agent</strong>。包含完整的 Web UI、Agent 运行时、沙箱编排和 GitHub 集成——从提示词到代码变更，全程无需保持电脑开机。</p>
+
+  <h3>核心架构：Agent ≠ Sandbox</h3>
+  <p>这是整个项目最关键的架构决策：<strong>Agent 不在 VM 内运行</strong>。Agent 在沙箱外部运行，通过文件读写、搜索、Shell 命令等工具与沙箱交互。这种分离带来了巨大的灵活性和可靠性。</p>
+
+  <h3>核心能力</h3>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="fc-title">🔄 Durable Workflow</div>
+      <div class="fc-desc">基于 Workflow SDK 的持久化执行。Agent 不受单次请求生命周期限制，可跨越多个持久化步骤继续运行。断线重连后自动恢复。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🛡️ 隔离沙箱</div>
+      <div class="fc-desc">基于 Vercel Sandbox 的隔离 VM 环境。支持快照恢复、端口暴露 (3000/5173/4321/8000)、空闲自动休眠。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🐙 GitHub 深度集成</div>
+      <div class="fc-desc">仓库克隆、分支操作、自动 Commit/Push、PR 创建。GitHub App 安装式访问，支持组织级部署。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🛑 98% 错误循环减少</div>
+      <div class="fc-desc">内置 Auto-Debug 机制。Agent 遇到错误自动修复，避免陷入死循环。支持 1000 倍更大的项目。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">⏰ 无超时限制</div>
+      <div class="fc-desc">Agent 可以自主工作数小时甚至更久。不依赖你的笔记本电脑保持开机。后台持续运行。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🔗 多 Agent 支持</div>
+      <div class="fc-desc">支持子 Agent、技能系统和多 Agent 并行执行。可同时运行多个 Agent 处理不同任务。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🎤 语音输入</div>
+      <div class="fc-desc">可选集成 ElevenLabs 语音转录。用语音描述任务，Agent 自动执行。</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">📋 会话分享</div>
+      <div class="fc-desc">只读链接分享 Agent 会话。团队成员可以查看 Agent 的工作过程和结果。</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🏗️</span> 技术架构</h2>
+  <div class="arch-box">
+┌──────────────────────────────────────────────────────────┐
+│                    Web Layer (Next.js)                     │
+│  Auth (Better Auth) • Sessions • Chat UI • Streaming      │
+└──────────────────────────┬───────────────────────────────┘
+                           │ Chat Request → starts a Workflow Run
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│              Agent Workflow (Durable Execution)            │
+│  AI SDK + Gateway • Tools • Subagents • Skills            │
+│  Each agent turn spans many persisted workflow steps       │
+│  Active runs can be resumed by reconnecting to stream      │
+└──────────────────────────┬───────────────────────────────┘
+                           │ File read/write, Shell, Search, Git
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│               Sandbox VM (Vercel Sandbox)                  │
+│  Isolated filesystem • Shell • Git • Dev servers           │
+│  Snapshot-based resume • Hibernate on idle                 │
+│  Exposed ports: 3000, 5173, 4321, 8000                    │
+└──────────────────────────────────────────────────────────┘
+
+🔑 关键: Agent 在 Sandbox 外部运行
+  → 执行不绑定请求生命周期
+  → Sandbox 可独立休眠/恢复
+  → 模型/Provider 可独立更换
+  → VM 保持为纯净执行环境</div>
+
+  <h3>仓库结构</h3>
+  <div class="repo-layout">
+    <div class="repo-card">
+      <div class="rc-path">apps/web</div>
+      <div class="rc-desc">Next.js 应用，Workflows，Auth，Chat UI，API 路由</div>
+    </div>
+    <div class="repo-card">
+      <div class="rc-path">packages/agent</div>
+      <div class="rc-desc">Agent 实现，工具集，子 Agent，技能系统</div>
+    </div>
+    <div class="repo-card">
+      <div class="rc-path">packages/sandbox</div>
+      <div class="rc-desc">沙箱抽象层 + Vercel Sandbox 集成</div>
+    </div>
+    <div class="repo-card">
+      <div class="rc-path">packages/shared</div>
+      <div class="rc-desc">共享工具函数和类型定义</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🌍</span> 应用场景</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="fc-title">💻 后台编码</div>
+      <div class="fc-desc">提交任务后关机，Agent 在云端自主完成编码、测试、PR 创建</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🏢 团队协作</div>
+      <div class="fc-desc">共享 Agent 会话，多个团队成员查看和交互，GitHub 组织级部署</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🤖 CI/CD 集成</div>
+      <div class="fc-desc">GitHub Webhook 触发 Agent 自动修复 Bug、更新依赖、重构代码</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🧪 大规模重构</div>
+      <div class="fc-desc">1000× 更大项目支持，Agent 长时间运行处理跨文件重构任务</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🔧 代码审查</div>
+      <div class="fc-desc">Agent 自动审查 PR，生成修改建议，自动创建修复 PR</div>
+    </div>
+    <div class="feature-card">
+      <div class="fc-title">🏗️ 自定义 Agent 平台</div>
+      <div class="fc-desc">Fork 并适配，构建自有品牌和功能的云端编码 Agent 平台</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="wc-title">🏛️ Vercel Labs 官方出品</div>
+      <div class="wc-desc">不是个人项目，是 Vercel 官方 Labs 团队的参考实现，工程质量和长期维护有保障</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-title">⏰ 解决"笔记本必须开着"痛点</div>
+      <div class="wc-desc">Claude Code / Codex 等都需要本地运行。Open Agents 让 Agent 在云端永不停止</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-title">🛑 98% 错误循环减少</div>
+      <div class="wc-desc">Auto-Debug 内置机制是杀手级特性，Agent 不再陷入无休止的修复循环</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-title">📐 Agent ≠ Sandbox 架构创新</div>
+      <div class="wc-desc">将 Agent 执行与沙箱环境分离，这是编码 Agent 平台设计的新范式</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-title">📰 行业媒体广泛报道</div>
+      <div class="wc-desc">InfoQ 专题报道、多个 YouTube 技术频道 walkthrough、LinkedIn 热议</div>
+    </div>
+    <div class="why-card">
+      <div class="wc-title">🔗 多 CLI Agent 支持</div>
+      <div class="wc-desc">不绑定特定 LLM，Claude Code / Codex / Copilot / Cursor / Gemini CLI 全兼容</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+  <table class="compare-table">
+    <tr><th>维度</th><th class="highlight">Open Agents</th><th>Claude Code</th><th>Devin</th><th>Factory</th><th>E2B</th></tr>
+    <tr><td>开源</td><td class="highlight">✅</td><td class="dim">❌</td><td class="dim">❌</td><td class="dim">❌</td><td>✅</td></tr>
+    <tr><td>云端运行</td><td class="highlight">✅</td><td class="dim">❌ 本地</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>后台执行</td><td class="highlight">✅ 永不停止</td><td class="dim">❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>多 LLM</td><td class="highlight">✅ 5+ Agent</td><td>Claude only</td><td>Claude/GPT</td><td>多模型</td><td>不限</td></tr>
+    <tr><td>Sandbox</td><td class="highlight">✅ Vercel</td><td class="dim">本地</td><td>自研</td><td>自研</td><td class="highlight">✅ 自研</td></tr>
+    <tr><td>Durable Workflow</td><td class="highlight">✅</td><td class="dim">❌</td><td>✅</td><td>✅</td><td class="dim">❌</td></tr>
+    <tr><td>Auto-Debug</td><td class="highlight">✅ 98%↓</td><td>基础</td><td>✅</td><td>部分</td><td class="dim">❌</td></tr>
+    <tr><td>GitHub 集成</td><td class="highlight">✅ 深度</td><td>✅</td><td>✅</td><td>✅</td><td>部分</td></tr>
+    <tr><td>Web UI</td><td class="highlight">✅</td><td class="dim">❌ CLI</td><td>✅</td><td>✅</td><td class="dim">❌</td></tr>
+    <tr><td>Fork & 自定义</td><td class="highlight">✅ 完整</td><td class="dim">❌</td><td class="dim">❌</td><td class="dim">❌</td><td>部分</td></tr>
+    <tr><td>费用</td><td class="highlight">开源 + Vercel 用量</td><td>$20-200/月</td><td>$500/月</td><td>$50+/月</td><td>$0.06/次</td></tr>
+  </table>
+  <p style="margin-top:12px;color:#94a3b8;font-size:0.88em">总结：Open Agents 是唯一同时满足「开源 + 云端 + 后台执行 + 多 LLM + 可 Fork 自定义」的编码 Agent 平台。它填补了 Claude Code（本地/闭源）和 Devin（云端/闭源）之间的空白。</p>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🎯</span> 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-card">
+      <div class="uc-type">🏗️ 平台开发者</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">Fork 并构建自有云端 Agent 平台，参考实现完整</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🏢 企业团队</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">后台编码 Agent + GitHub 集成 + 组织级部署</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">👨‍💻 重度 AI 编码用户</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">告别"必须开着笔记本"，Agent 云端自主运行</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🤖 AI Agent 研究者</div>
+      <div class="uc-rec">⭐⭐⭐⭐⭐</div>
+      <div class="uc-reason">Agent ≠ Sandbox 架构范式，Durable Workflow 模式</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🔧 DevOps 工程师</div>
+      <div class="uc-rec">⭐⭐⭐⭐</div>
+      <div class="uc-reason">GitHub Webhook 自动修复、CI/CD Agent 集成</div>
+    </div>
+    <div class="user-card">
+      <div class="uc-type">🎓 AI 初学者</div>
+      <div class="uc-rec">⭐⭐⭐</div>
+      <div class="uc-reason">需要 Vercel 账号和配置能力，门槛较高</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">🚀</span> 快速上手</h2>
+  <h3>1. 一键部署到 Vercel</h3>
+  <div class="code-block">1. Fork vercel-labs/open-agents 到你的 GitHub
+2. 在 Vercel 导入 Fork 的仓库（Neon Postgres 自动配置）
+3. 生成密钥: openssl rand -base64 32  →  BETTER_AUTH_SECRET
+4. 设置环境变量: POSTGRES_URL, BETTER_AUTH_SECRET
+5. 部署获取生产 URL → 创建 Vercel OAuth App → 配置回调 URL
+6. (可选) 创建 GitHub App 实现完整编码 Agent 流程</div>
+  <h3>2. 本地开发</h3>
+  <div class="code-block"># 克隆仓库
+git clone https://github.com/vercel-labs/open-agents.git
+cd open-agents
+
+# 安装依赖
+bun install
+
+# 配置环境变量
+cp apps/web/.env.example apps/web/.env
+# 编辑 .env 填入必要值
+
+# 或从已关联的 Vercel 项目拉取
+vc env pull
+
+# 启动开发服务器
+bun run web</div>
+  <h3>3. 常用命令</h3>
+  <div class="code-block">bun run web              # 启动开发服务器
+bun run check            # Lint + 格式检查
+bun run fix              # Lint + 格式修复
+bun run typecheck        # 类型检查所有包
+bun run ci               # 完整 CI: check + typecheck + test + migration
+bun run sandbox:snapshot-base  # 刷新沙箱基础快照</div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">📊</span> 综合评分</h2>
+  <div class="score-bar">
+    <span class="score-label">🧪 创新性</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:92%;background:linear-gradient(90deg,#8b5cf6,#06b6d4)"></div></div>
+    <span class="score-val">9.2 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">🔧 代码质量</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:93%;background:linear-gradient(90deg,#8b5cf6,#06b6d4)"></div></div>
+    <span class="score-val">9.3 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">🎯 实用性</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,#8b5cf6,#06b6d4)"></div></div>
+    <span class="score-val">9.0 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">📖 文档完善度</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:88%;background:linear-gradient(90deg,#8b5cf6,#06b6d4)"></div></div>
+    <span class="score-val">8.8 / 10</span>
+  </div>
+  <div class="score-bar">
+    <span class="score-label">🌐 社区活跃度</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:85%;background:linear-gradient(90deg,#8b5cf6,#06b6d4)"></div></div>
+    <span class="score-val">8.5 / 10</span>
+  </div>
+  <div class="total-score">
+    <div class="ts-num">9.0</div>
+    <div class="ts-label">综合评分 / 10</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2><span class="icon">📌</span> 总结</h2>
+  <p>Open Agents 是云端编码 Agent 基础设施的重要里程碑。Vercel Labs 用开源方式给出了一个完整的参考实现——三层架构（Web → Agent Workflow → Sandbox VM）、Agent ≠ Sandbox 的创新分离、Durable Workflow 持久化执行、98% 错误循环减少——这些都是下一代编码 Agent 平台的核心设计范式。作为 Vercel 官方项目，它不是玩具，而是一个可 Fork、可定制、可商用的生产级模板。对于想要构建自有云端 Agent 平台的团队，Open Agents 是目前最好的起点。</p>
+</div>
+
+<div class="footer">
+  📊 由 AI 深度分析生成 | Powered by Claude Code<br>
+  分析日期：2026-05-08 | 数据来源：GitHub, WebSearch, InfoQ, Vercel
+</div>
+
+</div>
+</body>
+</html>
