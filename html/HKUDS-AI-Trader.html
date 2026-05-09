@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Trader 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:50px 20px 40px;background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%);border-bottom:1px solid #21262d}
+.header h1{font-size:2.6em;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.header .subtitle{color:#8b949e;font-size:1.15em;max-width:700px;margin:0 auto}
+.badges{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:600;border:1px solid #30363d;background:#161b22}
+.badge.lang{border-color:#3572A5;color:#79c0ff}
+.badge.stars{border-color:#e3b341;color:#e3b341}
+.badge.license{border-color:#3fb950;color:#3fb950}
+.badge.platform{border-color:#bc8cff;color:#d2a8ff}
+.section{margin-top:36px}
+.section-title{font-size:1.5em;color:#58a6ff;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}
+.section-title .icon{font-size:1.1em}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:16px}
+.card h3{color:#f0f6fc;margin-bottom:10px;font-size:1.15em}
+.card p{color:#8b949e;line-height:1.8}
+.card ul{color:#8b949e;padding-left:20px}
+.card li{margin-bottom:6px}
+.highlight{color:#58a6ff;font-weight:600}
+.green{color:#3fb950}
+.red{color:#f85149}
+.purple{color:#bc8cff}
+.orange{color:#d29922}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.score-item{text-align:center;padding:20px 12px;background:#0d1117;border:1px solid #21262d;border-radius:10px}
+.score-value{font-size:2em;font-weight:700;margin-bottom:4px}
+.score-label{font-size:.8em;color:#8b949e}
+.score-bar{width:100%;height:6px;background:#21262d;border-radius:3px;margin-top:10px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9em}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;background:#0d1117}
+td{color:#c9d1d9}
+tr:hover td{background:#161b22}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;font-family:'Fira Code',monospace;font-size:.88em;overflow-x:auto;color:#79c0ff;margin:12px 0}
+.code-comment{color:#484f58}
+.code-keyword{color:#ff7b72}
+.code-string{color:#a5d6ff}
+.vs-table{margin-top:12px}
+.vs-table td:first-child{font-weight:600;color:#f0f6fc}
+.scenario-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.scenario-item{padding:16px;background:#0d1117;border:1px solid #21262d;border-radius:8px;border-left:3px solid #58a6ff}
+.scenario-item h4{color:#58a6ff;margin-bottom:6px;font-size:.95em}
+.scenario-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.quick-start{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:24px;margin-top:12px}
+.quick-start h4{color:#3fb950;margin-bottom:12px;font-size:1em}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{background:linear-gradient(135deg,#58a6ff,#bc8cff);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;flex-shrink:0;margin-top:2px}
+.step-text{color:#c9d1d9;font-size:.92em}
+.step-text code{background:#21262d;padding:2px 8px;border-radius:4px;font-size:.88em;color:#79c0ff}
+.arch-tree{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:20px;margin:12px 0;font-family:'Fira Code',monospace;font-size:.88em;color:#8b949e;line-height:1.9}
+.arch-tree .dir{color:#79c0ff}
+.arch-tree .desc{color:#484f58}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:14px}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px}
+.feature-item h4{color:#f0f6fc;margin-bottom:6px;font-size:1em}
+.feature-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.footer{text-align:center;padding:40px 20px;color:#484f58;font-size:.85em;border-top:1px solid #21262d;margin-top:50px}
+@media(max-width:768px){
+  .header h1{font-size:1.8em}
+  .score-grid{grid-template-columns:repeat(3,1fr)}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>AI-Trader</h1>
+  <p class="subtitle">全球首个 Agent-Native 交易平台 — 让 AI 智能体在真实金融市场中自主交易、协作、竞争</p>
+  <div class="badges">
+    <span class="badge lang">Python / TypeScript</span>
+    <span class="badge stars">14,470 Stars (+189 today)</span>
+    <span class="badge platform">Agent-Native Trading</span>
+    <span class="badge lang">HKUDS (香港大学)</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 项目简介 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📋</span> 项目简介</h2>
+    <div class="card">
+      <h3>AI-Trader：为 AI Agent 而生的交易平台</h3>
+      <p><strong>HKUDS/AI-Trader</strong> 是香港大学数据科学实验室（HKUDS）开发的全球首个 <span class="highlight">Agent-Native 交易平台</span>。与传统交易平台不同，AI-Trader 的整个架构从底层开始就是为 AI 智能体而非人类交易员设计的。</p>
+      <p style="margin-top:12px">核心理念非常简洁：<span class="highlight">"就像人类有自己的交易平台，AI Agent 也需要自己的。"</span> 在这个平台上，AI Agent 可以自主发布交易信号、参与策略讨论、跟随顶级交易者、跨平台同步信号，并赚取奖励积分。</p>
+      <p style="margin-top:12px">平台已于 2026 年初发布 <span class="green">AI-Trader 2.0</span> 版本，支持股票、加密货币、外汇、期权、期货等多市场接入，兼容 Binance、Coinbase、Interactive Brokers 等主流券商。</p>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🏗️</span> 技术架构</h2>
+
+    <div class="card">
+      <h3>系统架构</h3>
+      <div class="arch-tree">
+<span class="dir">AI-Trader/</span>
+├── <span class="dir">skills/</span>              <span class="desc"># Agent 技能定义（SKILL.md）</span>
+│   ├── <span class="dir">ai4trade/</span>        <span class="desc"># 核心交易技能</span>
+│   ├── <span class="dir">copytrade/</span>       <span class="desc"># 跟单交易技能</span>
+│   └── <span class="dir">tradesync/</span>       <span class="desc"># 信号同步技能</span>
+├── <span class="dir">docs/</span>                <span class="desc"># 文档</span>
+│   ├── <span class="dir">api/</span>             <span class="desc"># OpenAPI 规范（YAML）</span>
+│   ├── README_AGENT.md  <span class="desc"># Agent 集成指南</span>
+│   └── README_USER.md   <span class="desc"># 用户使用手册</span>
+├── <span class="dir">service/</span>             <span class="desc"># 核心服务</span>
+│   ├── <span class="dir">server/</span>          <span class="desc"># FastAPI 后端</span>
+│   └── <span class="dir">frontend/</span>        <span class="desc"># React 前端</span>
+└── <span class="dir">assets/</span>              <span class="desc"># Logo 和图片资源</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>核心技术栈</h3>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h4>FastAPI 后端</h4>
+          <p>高性能异步 API 服务，与后台工作进程分离运行，保持页面响应和健康检查的稳定性。</p>
+        </div>
+        <div class="feature-item">
+          <h4>React 前端</h4>
+          <p>现代化的 Web Dashboard，提供统一的交易洞察控制中心，支持实时数据可视化。</p>
+        </div>
+        <div class="feature-item">
+          <h4>Agent Skill 系统</h4>
+          <p>基于 SKILL.md 的技能定义，任何 AI Agent 读取一条消息即可自动注册并开始交易。</p>
+        </div>
+        <div class="feature-item">
+          <h4>OpenAPI 规范</h4>
+          <p>完整的 API 文档（YAML 格式），覆盖核心交易、跟单、信号同步等全部接口。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>核心功能特性</h3>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h4>🤖 即时 Agent 集成</h4>
+          <p>向 AI Agent 发送一条消息即可接入平台，支持 Claude Code、Codex、Cursor、OpenClaw 等主流 Agent。</p>
+        </div>
+        <div class="feature-item">
+          <h4>💬 集体智慧交易</h4>
+          <p>Agent 之间自动协作和辩论，涌现出最优交易策略，三种信号类型：策略、操作、讨论。</p>
+        </div>
+        <div class="feature-item">
+          <h4>📡 跨平台信号同步</h4>
+          <p>保留现有券商账户，无缝同步交易信号，支持 Binance、Coinbase、Interactive Brokers 等。</p>
+        </div>
+        <div class="feature-item">
+          <h4>📊 一键跟单交易</h4>
+          <p>实时跟随顶级交易者，自动镜像其持仓，支持 Copy Trading 功能。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🌐 全市场接入</h4>
+          <p>股票、加密货币、外汇、期权、期货 — 覆盖全球主要金融市场。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🏆 奖励系统</h4>
+          <p>发布信号和获得关注者可赚取积分，激励高质量交易策略的产出。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 使用场景 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">💡</span> 典型使用场景</h2>
+    <div class="scenario-list">
+      <div class="scenario-item">
+        <h4>AI Agent 自主交易</h4>
+        <p>开发者将自己的 AI Agent 接入平台，Agent 自动分析市场、发布信号、执行交易，全程无需人工干预。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>多 Agent 协作交易</h4>
+        <p>多个 AI Agent 在平台上协作讨论，共享市场洞察，形成集体智慧，提高交易决策质量。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>策略回测与模拟</h4>
+        <p>利用 $100K 模拟资金进行 Paper Trading，在零风险环境下验证策略有效性，支持 Polymarket 实时数据。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>跟单交易社区</h4>
+        <p>人类交易者可以跟随表现优秀的 AI Agent 或人类交易员，一键复制其交易策略。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>AI 交易竞赛平台</h4>
+        <p>不同 AI Agent 在同一市场环境下竞技，通过奖励系统评比交易表现，促进策略进化。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>学术研究平台</h4>
+        <p>研究人员可以在真实市场环境中测试 AI 交易算法，验证强化学习等策略的实际效果。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 为什么 Trending -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 为什么登上 Trending</h2>
+    <div class="card">
+      <h3>核心驱动力</h3>
+      <ul>
+        <li><strong>Agent-Native 范式开创者</strong>：全球第一个完全为 AI Agent 而非人类设计的交易平台。在 AI Agent 爆发的时代背景下，这个定位极具前瞻性。</li>
+        <li><strong>HKUDS 学术背书</strong>：来自香港大学数据科学实验室，由范天宇等研究人员主导。学术背景赋予项目更高的可信度，知乎上的技术分享也增加了中文社区的关注度。</li>
+        <li><strong>AI-Trader 2.0 发布</strong>：2026 年初发布的 2.0 版本进行了重大架构升级 — 代码精简、模块化改进、生产稳定性增强，吸引了大量新用户。</li>
+        <li><strong>零门槛 Agent 接入</strong>：一条消息即可让任何 AI Agent 注册并开始交易，这种极简集成方式降低了参与门槛。</li>
+        <li><strong>多市场 + 模拟交易</strong>：覆盖股票、加密货币等全市场，$100K 模拟资金让零经验用户也能安全参与。</li>
+        <li><strong>LinkedIn 社区热议</strong>：多位行业 KOL 在 LinkedIn 和 X/Twitter 上讨论，称"前所未见"（"honestly never seen anything like this before"），形成病毒式传播。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">⚔️</span> 竞品对比</h2>
+    <table class="vs-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>AI-Trader</th>
+          <th>TradingAgents</th>
+          <th>传统量化平台</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>设计理念</td>
+          <td><span class="green">Agent-Native</span></td>
+          <td>多 Agent 协作框架</td>
+          <td>为人设计的工具</td>
+        </tr>
+        <tr>
+          <td>Agent 接入方式</td>
+          <td><span class="green">一条消息即接入</span></td>
+          <td>需要编写代码</td>
+          <td>不原生支持 AI Agent</td>
+        </tr>
+        <tr>
+          <td>市场覆盖</td>
+          <td><span class="green">股票/加密/外汇/期权/期货</span></td>
+          <td>主要是股票</td>
+          <td>通常单一市场</td>
+        </tr>
+        <tr>
+          <td>跟单交易</td>
+          <td><span class="green">内置一键跟单</span></td>
+          <td>无</td>
+          <td>部分支持</td>
+        </tr>
+        <tr>
+          <td>模拟交易</td>
+          <td><span class="green">$100K Paper Trading</span></td>
+          <td>回测为主</td>
+          <td>视平台而定</td>
+        </tr>
+        <tr>
+          <td>集体智慧</td>
+          <td><span class="green">Agent 协作辩论</span></td>
+          <td>多 Agent 讨论</td>
+          <td>无</td>
+        </tr>
+        <tr>
+          <td>学术背景</td>
+          <td><span class="green">香港大学 HKUDS</span></td>
+          <td>TauricResearch</td>
+          <td>商业公司</td>
+        </tr>
+        <tr>
+          <td>GitHub Stars</td>
+          <td>14,470</td>
+          <td>较低</td>
+          <td>N/A</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 目标用户 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">👥</span> 目标用户画像</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>AI Agent 开发者</h3>
+        <p>正在开发 AI Agent 的工程师，希望让 Agent 在真实金融市场中验证其决策能力。AI-Trader 提供了开箱即用的交易环境。</p>
+      </div>
+      <div class="card">
+        <h3>量化交易研究者</h3>
+        <p>从事金融 AI 研究的学者和学生，可以在平台上测试强化学习、多 Agent 协作等算法的实际交易效果。</p>
+      </div>
+      <div class="card">
+        <h3>加密货币交易者</h3>
+        <p>希望借助 AI 力量提升交易效率的个人交易者，可以通过跟单功能跟随表现优秀的 AI Agent。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 快速上手指南</h2>
+    <div class="quick-start">
+      <h4>AI Agent 接入（30秒）</h4>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">向你的 AI Agent 发送消息：<code>Read https://ai4trade.ai/SKILL.md and register.</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Agent 自动读取集成指南、安装必要组件、在平台注册</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">注册完成后，Agent 即可发布交易信号、参与讨论、跟单交易</div>
+      </div>
+    </div>
+    <div class="quick-start" style="margin-top:16px">
+      <h4>人类用户接入</h4>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">访问 <code>https://ai4trade.ai</code>，用邮箱注册</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">获得 $100K 模拟资金，浏览信号源，开始交易</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">一键跟随顶级 AI Agent 或交易员，自动镜像交易策略</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📊</span> 综合评分</h2>
+    <div class="card">
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-value" style="color:#58a6ff">9.0</div>
+          <div class="score-label">创新性</div>
+          <div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#3fb950">8.0</div>
+          <div class="score-label">代码质量</div>
+          <div class="score-bar"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#3fb950,#56d364)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#d29922">8.5</div>
+          <div class="score-label">实用性</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#d29922,#e3b341)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#bc8cff">8.5</div>
+          <div class="score-label">文档完善度</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#bc8cff,#d2a8ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#f778ba">8.5</div>
+          <div class="score-label">社区活跃度</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#f778ba,#ff9ec6)"></div></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #21262d">
+        <div style="font-size:2.4em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8.5 / 10</div>
+        <div style="color:#8b949e;margin-top:6px">综合评分</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📝</span> 分析总结</h2>
+    <div class="card">
+      <p>AI-Trader 是一个极具创新性的项目，它开创了 <span class="highlight">"Agent-Native Trading"</span> 这一全新范式 — 不是给人类交易员提供 AI 工具，而是直接为 AI Agent 建造专属的交易世界。这个定位在 AI Agent 大爆发的 2026 年恰逢其时。</p>
+      <p style="margin-top:12px">技术上，FastAPI + React 的架构选择合理，SKILL.md 驱动的 Agent 集成方式极为优雅。多市场覆盖、跟单交易、集体智慧辩论等功能形成了完整的产品闭环。HKUDS 的学术背景和 2.0 版本的工程质量都令人印象深刻。</p>
+      <p style="margin-top:12px">风险提示：作为涉及金融交易的项目，AI-Trader 面临监管合规、市场风险、Agent 决策可解释性等挑战。Paper Trading 模式在一定程度上缓解了实盘风险，但用户仍需谨慎。总体而言，这是 AI + 金融交叉领域 <span class="green">最值得关注的创新项目之一</span>。</p>
+      <p style="margin-top:12px"><span class="green">推荐指数：★★★★★</span> — AI Agent 与金融交易交叉领域的开创性工作，极具研究价值和实用潜力。</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>AI-Trader 深度分析 | GitHub Trending Analysis</p>
+  <p>由 AI 自动分析生成 | Powered by Claude Code | 2026-05-09</p>
+</div>
+</body>
+</html>
