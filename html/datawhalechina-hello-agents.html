@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hello-Agents 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:50px 20px 40px;background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%);border-bottom:1px solid #21262d}
+.header h1{font-size:2.6em;background:linear-gradient(135deg,#58a6ff,#3fb950,#e3b341);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.header .subtitle{color:#8b949e;font-size:1.15em;max-width:700px;margin:0 auto}
+.badges{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:600;border:1px solid #30363d;background:#161b22}
+.badge.lang{border-color:#3572A5;color:#79c0ff}
+.badge.stars{border-color:#e3b341;color:#e3b341}
+.badge.license{border-color:#3fb950;color:#3fb950}
+.badge.type{border-color:#bc8cff;color:#d2a8ff}
+.section{margin-top:36px}
+.section-title{font-size:1.5em;color:#58a6ff;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}
+.section-title .icon{font-size:1.1em}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:16px}
+.card h3{color:#f0f6fc;margin-bottom:10px;font-size:1.15em}
+.card p{color:#8b949e;line-height:1.8}
+.card ul{color:#8b949e;padding-left:20px}
+.card li{margin-bottom:6px}
+.highlight{color:#58a6ff;font-weight:600}
+.green{color:#3fb950}
+.red{color:#f85149}
+.purple{color:#bc8cff}
+.orange{color:#d29922}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.score-item{text-align:center;padding:20px 12px;background:#0d1117;border:1px solid #21262d;border-radius:10px}
+.score-value{font-size:2em;font-weight:700;margin-bottom:4px}
+.score-label{font-size:.8em;color:#8b949e}
+.score-bar{width:100%;height:6px;background:#21262d;border-radius:3px;margin-top:10px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9em}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;background:#0d1117}
+td{color:#c9d1d9}
+tr:hover td{background:#161b22}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;font-family:'Fira Code',monospace;font-size:.88em;overflow-x:auto;color:#79c0ff;margin:12px 0}
+.vs-table{margin-top:12px}
+.vs-table td:first-child{font-weight:600;color:#f0f6fc}
+.scenario-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.scenario-item{padding:16px;background:#0d1117;border:1px solid #21262d;border-radius:8px;border-left:3px solid #3fb950}
+.scenario-item h4{color:#3fb950;margin-bottom:6px;font-size:.95em}
+.scenario-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.chapter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.chapter-card{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;border-left:3px solid #58a6ff}
+.chapter-card h4{color:#f0f6fc;margin-bottom:6px;font-size:.95em}
+.chapter-card p{color:#8b949e;font-size:.85em;line-height:1.5}
+.chapter-card .ch-num{display:inline-block;background:linear-gradient(135deg,#58a6ff,#bc8cff);color:#fff;padding:2px 10px;border-radius:12px;font-size:.75em;font-weight:600;margin-bottom:8px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px}
+.feature-item h4{color:#f0f6fc;margin-bottom:6px;font-size:1em}
+.feature-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.pillar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+.pillar-card{border-radius:12px;padding:24px;text-align:center;border:1px solid #21262d}
+.pillar-card h4{font-size:1.1em;margin-bottom:10px}
+.pillar-card p{font-size:.88em;line-height:1.7}
+.pillar-card.p1{background:linear-gradient(135deg,#0d1117,#1a1e3a);border-color:#58a6ff}
+.pillar-card.p1 h4{color:#58a6ff}
+.pillar-card.p2{background:linear-gradient(135deg,#0d1117,#1a2e1a);border-color:#3fb950}
+.pillar-card.p2 h4{color:#3fb950}
+.pillar-card.p3{background:linear-gradient(135deg,#0d1117,#2e1a2e);border-color:#bc8cff}
+.pillar-card.p3 h4{color:#bc8cff}
+.pillar-card.p4{background:linear-gradient(135deg,#0d1117,#2e2a1a);border-color:#e3b341}
+.pillar-card.p4 h4{color:#e3b341}
+.pillar-card.p5{background:linear-gradient(135deg,#0d1117,#1a2e2e);border-color:#39d2c0}
+.pillar-card.p5 h4{color:#39d2c0}
+.quick-start{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:24px;margin-top:12px}
+.quick-start h4{color:#3fb950;margin-bottom:12px;font-size:1em}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{background:linear-gradient(135deg,#58a6ff,#bc8cff);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;flex-shrink:0;margin-top:2px}
+.step-text{color:#c9d1d9;font-size:.92em}
+.step-text code{background:#21262d;padding:2px 8px;border-radius:4px;font-size:.88em;color:#79c0ff}
+.footer{text-align:center;padding:40px 20px;color:#484f58;font-size:.85em;border-top:1px solid #21262d;margin-top:50px}
+@media(max-width:768px){
+  .header h1{font-size:1.8em}
+  .score-grid{grid-template-columns:repeat(3,1fr)}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Hello-Agents</h1>
+  <p class="subtitle">从零开始构建智能体 — Datawhale 出品的 AI Agent 系统性学习教程，从理论到实战全面覆盖</p>
+  <div class="badges">
+    <span class="badge lang">Python</span>
+    <span class="badge stars">44,457 Stars (+645 today)</span>
+    <span class="badge license">CC BY-NC-SA 4.0</span>
+    <span class="badge type">16章 / 5部分 完整教程</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 项目简介 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📋</span> 项目简介</h2>
+    <div class="card">
+      <h3>Hello-Agents：AI Agent 时代的系统学习指南</h3>
+      <p><strong>datawhalechina/hello-agents</strong>（全名《从零开始构建智能体》）是 <span class="highlight">Datawhale</span> 社区推出的系统性智能体学习教程。如果说 2024 年是"百模大战"元年，2025 年开启了"Agent 元年"，那么 Hello-Agents 正是为了填补当前 Agent 教育的空白而生。</p>
+      <p style="margin-top:12px">教程明确区分了两种 Agent 构建路线：<span class="highlight">软件工程类 Agent</span>（Dify、Coze、n8n 等流程驱动工具）与 <span class="highlight">AI Native Agent</span>（真正以 AI 驱动的智能体）。本教程聚焦后者，带领学习者从核心原理出发，深入经典范式，最终亲手构建属于自己的多智能体应用。</p>
+      <p style="margin-top:12px">作为拥有 <span class="green">44K+ Stars</span> 的中文开源教程项目，Hello-Agents 已成为中国最大的 AI Agent 学习社区之一，配套自研框架 HelloAgents V1.0.0、PDF 下载、在线阅读、视频课程（规划中）等完整学习资源。</p>
+    </div>
+  </div>
+
+  <!-- 五大部分 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📚</span> 内容架构：五大部分</h2>
+    <div class="pillar-grid">
+      <div class="pillar-card p1">
+        <h4>第一部分：基础</h4>
+        <p>智能体定义、发展史、大语言模型基础<br>第1-3章 · 理论地基</p>
+      </div>
+      <div class="pillar-card p2">
+        <h4>第二部分：构建</h4>
+        <p>经典范式、低代码平台、框架开发、自研框架<br>第4-7章 · 动手实践</p>
+      </div>
+      <div class="pillar-card p3">
+        <h4>第三部分：进阶</h4>
+        <p>记忆检索、上下文工程、通信协议、RL训练、评估<br>第8-12章 · 高级技能</p>
+      </div>
+      <div class="pillar-card p4">
+        <h4>第四部分：实战</h4>
+        <p>旅行助手、深度研究Agent、赛博小镇<br>第13-15章 · 综合案例</p>
+      </div>
+      <div class="pillar-card p5">
+        <h4>第五部分：毕业</h4>
+        <p>完整多智能体应用设计与实现<br>第16章 · 毕业设计</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🏗️</span> 技术架构与核心内容</h2>
+
+    <div class="card">
+      <h3>章节内容全景</h3>
+      <div class="chapter-grid">
+        <div class="chapter-card">
+          <span class="ch-num">第1-3章</span>
+          <h4>智能体与语言模型基础</h4>
+          <p>智能体定义、类型、范式与应用 → 符号主义到 LLM 驱动的演进史 → Transformer、提示工程、主流 LLM 及其局限</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第4章</span>
+          <h4>智能体经典范式构建</h4>
+          <p>手把手实现 ReAct、Plan-and-Solve、Reflection 三大经典范式</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第5章</span>
+          <h4>低代码平台智能体搭建</h4>
+          <p>Coze、Dify、n8n 等低代码平台的使用与对比</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第6章</span>
+          <h4>框架开发实践</h4>
+          <p>AutoGen、AgentScope、LangGraph 等主流框架的应用实践</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第7章</span>
+          <h4>自研 Agent 框架</h4>
+          <p>基于 OpenAI 原生 API 从零构建 HelloAgents 框架（V1.0.0）</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第8-9章</span>
+          <h4>记忆与上下文工程</h4>
+          <p>记忆系统、RAG、存储 → 持续交互的情境理解与上下文工程</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第10章</span>
+          <h4>智能体通信协议</h4>
+          <p>MCP、A2A、ANP 等协议深度解析</p>
+        </div>
+        <div class="chapter-card">
+          <span class="ch-num">第11-12章</span>
+          <h4>RL训练与性能评估</h4>
+          <p>从 SFT 到 GRPO 的 LLM 训练实战 → 核心指标、基准测试与评估框架</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>核心特色</h3>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h4>🎯 AI Native 聚焦</h4>
+          <p>不是教你用工具，而是教你理解原理、造工具。穿透框架表象，直达 Agent 核心。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🔧 自研 HelloAgents 框架</h4>
+          <p>基于 OpenAI 原生 API 从零构建，兼具"用轮子"与"造轮子"的能力。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🧪 理论+实战并重</h4>
+          <p>每个章节配备完整代码，从 ReAct 到多智能体协作，全部可动手运行。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🌐 全协议覆盖</h4>
+          <p>MCP、A2A、ANP 等前沿通信协议深度解析，紧跟行业标准。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🤖 Agentic RL 实战</h4>
+          <p>从 SFT 到 GRPO 全流程训练 LLM，掌握 Agent 模型训练能力。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🎮 三大综合案例</h4>
+          <p>智能旅行助手 + 深度研究Agent + 赛博小镇，真实项目淬炼能力。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>社区精选（Community Blog）</h3>
+      <p>除主体内容外，社区贡献了 10+ 篇精选内容，涵盖面试题总结、Dify 教程、MCP 对比解读、GUI Agent 实战、Skill 写作最佳实践等，持续丰富学习生态。</p>
+    </div>
+  </div>
+
+  <!-- 使用场景 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">💡</span> 典型使用场景</h2>
+    <div class="scenario-list">
+      <div class="scenario-item">
+        <h4>AI 开发者系统学习</h4>
+        <p>从零开始系统性掌握 Agent 开发全流程，从 LLM 基础到多智能体系统构建。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>面试求职准备</h4>
+        <p>配套 Agent 面试题与答案，帮助求职者系统准备 AI Agent 相关岗位面试。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>高校课程教学</h4>
+        <p>Datawhale 覆盖全球 2000+ 高校，教程适合作为 AI Agent 课程教材或参考资料。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>企业内部培训</h4>
+        <p>企业可基于此教程构建 Agent 开发培训体系，快速提升团队 AI 工程能力。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>自研框架参考</h4>
+        <p>HelloAgents 框架代码可作为自建 Agent 框架的参考蓝本，轻量化设计易于理解和扩展。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>研究论文复现</h4>
+        <p>ReAct、Plan-and-Solve、Reflection 等经典范式的代码实现，可用于论文理解和实验复现。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 为什么 Trending -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 为什么登上 Trending</h2>
+    <div class="card">
+      <h3>AI Agent 教育的稀缺资源</h3>
+      <ul>
+        <li><strong>Agent 元年的教育刚需</strong>：2025-2026 年 Agent 全面爆发，但系统性的中文学习教程极度匮乏。Hello-Agents 填补了这一空白。</li>
+        <li><strong>Datawhale 社区品牌效应</strong>：Datawhale 是中国最大的 AI 开源学习社区，覆盖全球 2000+ 高校，品牌信任度极高。</li>
+        <li><strong>44K+ Stars 的口碑</strong>：社区口碑驱动传播，学习者自发推荐，知乎、CSDN、B站等平台大量好评。</li>
+        <li><strong>理论与实践完美结合</strong>：不仅讲"是什么"，更讲"为什么"和"怎么做"。从原理到代码，从范式到框架，学习路径完整。</li>
+        <li><strong>前沿内容持续更新</strong>：MCP/A2A 协议、Agentic RL、上下文工程等最新技术均已覆盖，紧跟行业前沿。</li>
+        <li><strong>完全免费开源</strong>：在线阅读、PDF 下载、代码示例全部免费，CC BY-NC-SA 4.0 协议开放。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">⚔️</span> 竞品对比</h2>
+    <table class="vs-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>Hello-Agents</th>
+          <th>Microsoft AI Agents for Beginners</th>
+          <th>LangChain/AutoGen 文档</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>定位</td>
+          <td><span class="green">系统教程（理论+实战）</span></td>
+          <td>入门课程（12课）</td>
+          <td>框架文档（使用指南）</td>
+        </tr>
+        <tr>
+          <td>语言</td>
+          <td><span class="green">中文（原生）</span></td>
+          <td>英文</td>
+          <td>英文为主</td>
+        </tr>
+        <tr>
+          <td>章节数</td>
+          <td><span class="green">16章 + 社区精选</span></td>
+          <td>12课</td>
+          <td>按功能模块划分</td>
+        </tr>
+        <tr>
+          <td>深度</td>
+          <td><span class="green">极深（含 RL 训练）</span></td>
+          <td>入门级</td>
+          <td>框架使用级</td>
+        </tr>
+        <tr>
+          <td>自研框架</td>
+          <td><span class="green">HelloAgents V1.0.0</span></td>
+          <td>无</td>
+          <td>各自框架本身</td>
+        </tr>
+        <tr>
+          <td>综合案例</td>
+          <td><span class="green">旅行助手/研究Agent/赛博小镇</span></td>
+          <td>简单示例</td>
+          <td>框架示例</td>
+        </tr>
+        <tr>
+          <td>面试支持</td>
+          <td><span class="green">面试题+答案</span></td>
+          <td>无</td>
+          <td>无</td>
+        </tr>
+        <tr>
+          <td>Stars</td>
+          <td><span class="green">44,457</span></td>
+          <td>~15K</td>
+          <td>N/A（文档）</td>
+        </tr>
+        <tr>
+          <td>社区活跃度</td>
+          <td><span class="green">读者群+Datawhale社区</span></td>
+          <td>GitHub Issues</td>
+          <td>Discord/GitHub</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 目标用户 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">👥</span> 目标用户画像</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>AI 开发者</h3>
+        <p>有一定编程基础，希望从"使用 LLM"进化为"构建 Agent 系统"的开发者。需要系统性的学习路径和实战指导。</p>
+      </div>
+      <div class="card">
+        <h3>在校学生</h3>
+        <p>计算机/AI 相关专业学生，想掌握前沿 Agent 技术，为求职或研究做准备。Datawhale 覆盖 2000+ 高校。</p>
+      </div>
+      <div class="card">
+        <h3>自学者/转行者</h3>
+        <p>对 AI Agent 技术有浓厚兴趣，有基础 Python 能力，希望从零开始系统学习 Agent 开发的自学者。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 快速上手指南</h2>
+    <div class="quick-start">
+      <h4>在线阅读（最快）</h4>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">访问 <code>https://github.com/datawhalechina/hello-agents</code> 查看在线阅读链接</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">从第一章开始，按顺序阅读。每章配有完整代码，可在 <code>code/</code> 目录下找到</div>
+      </div>
+    </div>
+    <div class="quick-start" style="margin-top:16px">
+      <h4>本地学习</h4>
+      <div class="code-block">
+<span class="code-keyword">git</span> clone https://github.com/datawhalechina/hello-agents.git
+<span class="code-keyword">cd</span> hello-agents
+<span class="code-comment"># 在线阅读内容在 docs/ 目录下</span>
+<span class="code-comment"># 配套代码在 code/ 目录下</span>
+<span class="code-comment"># PDF 版本：https://github.com/datawhalechina/hello-agents/releases/latest</span>
+      </div>
+    </div>
+    <div class="quick-start" style="margin-top:16px">
+      <h4>HelloAgents 框架</h4>
+      <div class="code-block">
+<span class="code-keyword">pip</span> install helloagents
+<span class="code-comment"># 或从源码安装</span>
+<span class="code-keyword">cd</span> code/HelloAgents
+<span class="code-keyword">pip</span> install -e .
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📊</span> 综合评分</h2>
+    <div class="card">
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-value" style="color:#58a6ff">7.5</div>
+          <div class="score-label">创新性</div>
+          <div class="score-bar"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#3fb950">8.5</div>
+          <div class="score-label">代码质量</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#3fb950,#56d364)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#d29922">9.0</div>
+          <div class="score-label">实用性</div>
+          <div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#d29922,#e3b341)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#bc8cff">9.5</div>
+          <div class="score-label">文档完善度</div>
+          <div class="score-bar"><div class="score-fill" style="width:95%;background:linear-gradient(90deg,#bc8cff,#d2a8ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#f778ba">9.5</div>
+          <div class="score-label">社区活跃度</div>
+          <div class="score-bar"><div class="score-fill" style="width:95%;background:linear-gradient(90deg,#f778ba,#ff9ec6)"></div></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #21262d">
+        <div style="font-size:2.4em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8.8 / 10</div>
+        <div style="color:#8b949e;margin-top:6px">综合评分</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📝</span> 分析总结</h2>
+    <div class="card">
+      <p>Hello-Agents 是 <span class="highlight">中文 AI Agent 教育领域的标杆项目</span>。在 Agent 技术全面爆发的 2025-2026 年，它精准地抓住了"系统性中文教程极度匮乏"这一痛点，以 16 章的完整体系从理论到实战构建了一条清晰的学习路径。</p>
+      <p style="margin-top:12px">项目最大的差异化在于 <span class="green">"AI Native" 定位</span>——不教你用 Dify/Coze 拖拽流程，而是带你理解 ReAct/Reflection 等核心范式，从零构建自己的 Agent 框架。配套的 HelloAgents 框架、Agentic RL 训练、MCP/A2A 协议解析等内容紧跟前沿。44K+ Stars 和 Datawhale 社区品牌证明了市场认可。</p>
+      <p style="margin-top:12px">不足之处在于创新性评分偏低（它是教程而非技术创新），以及 CC BY-NC-SA 4.0 协议限制了商业使用。但对于 <span class="highlight">学习者、教育者和求职者</span> 来说，这无疑是当前最好的中文 Agent 学习资源。</p>
+      <p style="margin-top:12px"><span class="green">推荐指数：★★★★★</span> — AI Agent 中文学习第一教程。</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>Hello-Agents 深度分析 | GitHub Trending Analysis</p>
+  <p>由 AI 自动分析生成 | Powered by Claude Code | 2026-05-09</p>
+</div>
+</body>
+</html>
