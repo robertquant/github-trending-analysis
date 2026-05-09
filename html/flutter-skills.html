@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flutter Skills 深度分析 | GitHub Trending</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.header{text-align:center;padding:50px 20px 40px;background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%);border-bottom:1px solid #21262d}
+.header h1{font-size:2.6em;background:linear-gradient(135deg,#54C5F8,#027DFD,#FFC108);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.header .subtitle{color:#8b949e;font-size:1.15em;max-width:700px;margin:0 auto}
+.badges{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:600;border:1px solid #30363d;background:#161b22}
+.badge.lang{border-color:#00B4AB;color:#54C5F8}
+.badge.stars{border-color:#e3b341;color:#e3b341}
+.badge.license{border-color:#3fb950;color:#3fb950}
+.badge.owner{border-color:#f778ba;color:#f778ba}
+.section{margin-top:36px}
+.section-title{font-size:1.5em;color:#58a6ff;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}
+.section-title .icon{font-size:1.1em}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:16px}
+.card h3{color:#f0f6fc;margin-bottom:10px;font-size:1.15em}
+.card p{color:#8b949e;line-height:1.8}
+.card ul{color:#8b949e;padding-left:20px}
+.card li{margin-bottom:6px}
+.highlight{color:#58a6ff;font-weight:600}
+.green{color:#3fb950}
+.red{color:#f85149}
+.purple{color:#bc8cff}
+.orange{color:#d29922}
+.blue{color:#54C5F8}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+.score-item{text-align:center;padding:20px 12px;background:#0d1117;border:1px solid #21262d;border-radius:10px}
+.score-value{font-size:2em;font-weight:700;margin-bottom:4px}
+.score-label{font-size:.8em;color:#8b949e}
+.score-bar{width:100%;height:6px;background:#21262d;border-radius:3px;margin-top:10px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9em}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;background:#0d1117}
+td{color:#c9d1d9}
+tr:hover td{background:#161b22}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;font-family:'Fira Code',monospace;font-size:.88em;overflow-x:auto;color:#79c0ff;margin:12px 0}
+.vs-table{margin-top:12px}
+.vs-table td:first-child{font-weight:600;color:#f0f6fc}
+.scenario-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.scenario-item{padding:16px;background:#0d1117;border:1px solid #21262d;border-radius:8px;border-left:3px solid #54C5F8}
+.scenario-item h4{color:#54C5F8;margin-bottom:6px;font-size:.95em}
+.scenario-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.skill-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;border-left:3px solid #027DFD}
+.skill-item h4{color:#54C5F8;margin-bottom:6px;font-size:.95em}
+.skill-item p{color:#8b949e;font-size:.85em;line-height:1.5}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
+.feature-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px}
+.feature-item h4{color:#f0f6fc;margin-bottom:6px;font-size:1em}
+.feature-item p{color:#8b949e;font-size:.88em;line-height:1.6}
+.quick-start{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:24px;margin-top:12px}
+.quick-start h4{color:#3fb950;margin-bottom:12px;font-size:1em}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{background:linear-gradient(135deg,#54C5F8,#027DFD);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;flex-shrink:0;margin-top:2px}
+.step-text{color:#c9d1d9;font-size:.92em}
+.step-text code{background:#21262d;padding:2px 8px;border-radius:4px;font-size:.88em;color:#79c0ff}
+.footer{text-align:center;padding:40px 20px;color:#484f58;font-size:.85em;border-top:1px solid #21262d;margin-top:50px}
+@media(max-width:768px){
+  .header h1{font-size:1.8em}
+  .score-grid{grid-template-columns:repeat(3,1fr)}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Flutter Skills</h1>
+  <p class="subtitle">Google Flutter 官方 Agent Skills — 让 AI 编码助手真正精通 Flutter 开发</p>
+  <div class="badges">
+    <span class="badge lang">Dart / Flutter</span>
+    <span class="badge stars">1,590 Stars (+168 today)</span>
+    <span class="badge owner">Google Flutter 官方</span>
+    <span class="badge license">11 Skills</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 项目简介 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📋</span> 项目简介</h2>
+    <div class="card">
+      <h3>Flutter Skills：框架官方拥抱 AI Agent 的标志性项目</h3>
+      <p><strong>flutter/skills</strong> 是 Google Flutter 团队推出的 <span class="highlight">官方 Agent Skills 仓库</span>。它提供了一套结构化的技能提示词（Skill Prompts），让 AI 编码助手（Claude Code、Cursor、GitHub Copilot 等）在 Flutter 项目中能够执行复杂的开发流程。</p>
+      <p style="margin-top:12px">这个项目的核心洞察是：通用的 AI 编码助手在面对 Flutter 特有的架构模式（Riverpod、Bloc、Freezed）、布局系统、无障碍标准时，往往产出质量低下的代码。flutter/skills 通过 <span class="highlight">Skills 即领域知识注入</span> 的方式解决这一问题。</p>
+      <p style="margin-top:12px">作为 Flutter 2026 AI 战略的重要组成部分，flutter/skills 与 <span class="blue">MCP Server</span>、<span class="blue">AI Rules</span> 一起构成了 Flutter 的 AI-First 开发者体验三驾马车。Flutter 也因此成为 <span class="green">首个推出官方 Agent Skills 的主流 UI 框架</span>。</p>
+    </div>
+  </div>
+
+  <!-- 11 Skills -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🛠️</span> 11 个官方 Skills</h2>
+    <div class="skill-grid">
+      <div class="skill-item">
+        <h4>flutter-accessibility-audit</h4>
+        <p>触发无障碍扫描，自动添加 Semantics 组件和缺失标签。让 Flutter 应用对所有用户可访问。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-add-integration-test</h4>
+        <p>配置 Flutter Driver，将 MCP 操作转换为持久集成测试。自动化用户流程测试。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-add-widget-preview</h4>
+        <p>使用 previews.dart 系统添加交互式 Widget 预览。确保组件设计和交互测试的一致性。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-add-widget-test</h4>
+        <p>使用 WidgetTester 实现组件级测试，验证 UI 渲染和用户交互（点击、滚动、输入）。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-apply-architecture-best-practices</h4>
+        <p>使用推荐的分层架构（UI / Logic / Data）搭建 Flutter 应用。新项目或重构利器。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-build-responsive-layout</h4>
+        <p>使用 LayoutBuilder、MediaQuery、Expanded/Flexible 创建自适应布局。适配手机/平板/桌面。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-fix-layout-issues</h4>
+        <p>修复 Flutter 布局错误（溢出、无限约束）。解决 "RenderFlex overflowed" 等经典报错。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-implement-json-serialization</h4>
+        <p>创建带 fromJson/toJson 方法的模型类。使用 dart:convert 进行 JSON 序列化。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-setup-declarative-routing</h4>
+        <p>使用 go_router 配置 MaterialApp.router，支持 URL 路由和深度链接。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-setup-localization</h4>
+        <p>添加 flutter_localizations 和 intl 依赖，配置 l10n.yaml。一键启用多语言支持。</p>
+      </div>
+      <div class="skill-item">
+        <h4>flutter-use-http-package</h4>
+        <p>使用 http 包执行 GET/POST/PUT/DELETE 请求。Flutter 项目中调用 REST API 的标准方式。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🏗️</span> 技术架构与设计</h2>
+
+    <div class="card">
+      <h3>Skills 设计哲学</h3>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h4>🎯 领域知识注入</h4>
+          <p>不是替代开发者，而是给 AI Agent 注入 Flutter/Dart 的领域专长，让 Agent 输出符合框架最佳实践的代码。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🔧 MCP 原生集成</h4>
+          <p>Skills 与 Flutter MCP Server 协同工作，Agent 可直接操作 Flutter Inspector、Widget 树、Layout 工具。</p>
+        </div>
+        <div class="feature-item">
+          <h4>📦 npx 一键安装</h4>
+          <p>一行命令 <code>npx skills add flutter/skills</code> 即可注入全部 11 个 Skills，零配置使用。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🔄 持续更新</h4>
+          <p><code>npx skills update flutter/skills</code> 保持 Skills 与 Flutter 最新版本同步。</p>
+        </div>
+        <div class="feature-item">
+          <h4>🤝 Agent 无关</h4>
+          <p>支持 Claude Code、Cursor、GitHub Copilot、Windsurf 等所有主流 AI 编码助手。</p>
+        </div>
+        <div class="feature-item">
+          <h4>📐 覆盖全生命周期</h4>
+          <p>从架构搭建、UI 构建、测试、无障碍、国际化到网络请求，覆盖 Flutter 开发全流程。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Flutter 2026 AI 战略三驾马车</h3>
+      <table>
+        <thead>
+          <tr><th>组件</th><th>作用</th><th>状态</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="blue">Agent Skills</span></td>
+            <td>给 AI Agent 注入 Flutter 领域知识</td>
+            <td>已发布（flutter/skills）</td>
+          </tr>
+          <tr>
+            <td><span class="blue">MCP Server</span></td>
+            <td>让 AI Agent 直接操作 Flutter 工具链</td>
+            <td>已发布</td>
+          </tr>
+          <tr>
+            <td><span class="blue">AI Rules</span></td>
+            <td>定义 Flutter 项目的 AI 行为规则</td>
+            <td>已发布（docs.flutter.dev/ai/ai-rules）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>生态系统</h3>
+      <p><strong>JetBrains 插件</strong>：Flutter Skill Plugin 可将 AI Agent 直接连接到运行中的 Flutter 应用，Agent 可以看到屏幕、点击按钮、输入文本。</p>
+      <p style="margin-top:8px"><strong>社区 Skills</strong>：RobertAlvv/flutter-skills 等社区仓库提供额外的 Builder Skills，指导 AI Agent 实现生产级代码。</p>
+      <p style="margin-top:8px"><strong>Dart Skills</strong>：配套的 Dart 语言 Skills 仓库也已发布，覆盖 Dart 特有的开发任务。</p>
+    </div>
+  </div>
+
+  <!-- 使用场景 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">💡</span> 典型使用场景</h2>
+    <div class="scenario-list">
+      <div class="scenario-item">
+        <h4>AI 辅助 Flutter 开发</h4>
+        <p>使用 Claude Code / Cursor 等工具开发 Flutter 项目时，安装 Skills 让 AI 输出更专业的 Flutter 代码。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>新项目快速搭建</h4>
+        <p>让 AI Agent 使用 architecture-best-practices + routing + localization Skills 一键搭建生产级项目骨架。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>布局问题自动修复</h4>
+        <p>遇到 "RenderFlex overflowed" 等经典 Flutter 布局错误，AI Agent 可自动诊断和修复。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>无障碍合规</h4>
+        <p>accessibility-audit Skill 自动扫描并修复无障碍问题，确保应用对所有用户可访问。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>测试自动化</h4>
+        <p>一键添加 Widget 测试和集成测试，AI Agent 自动生成测试用例并执行验证。</p>
+      </div>
+      <div class="scenario-item">
+        <h4>Flutter 团队协作</h4>
+        <p>团队成员共享 Skills 配置，确保 AI 辅助开发的一致性和规范性。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 为什么 Trending -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 为什么登上 Trending</h2>
+    <div class="card">
+      <h3>主流框架拥抱 AI Agent 的标志性事件</h3>
+      <ul>
+        <li><strong>首个推出官方 Agent Skills 的主流 UI 框架</strong>：Flutter/Google 率先将 "Skills" 模式纳入框架官方支持，具有行业风向标意义。</li>
+        <li><strong>解决真实痛点</strong>：Reddit 社区长期抱怨 "AI coding agents write terrible Flutter code"，flutter/skills 正是针对这一痛点的官方解决方案。</li>
+        <li><strong>Flutter 2026 AI 战略的落地</strong>：配合 Flutter 官方博客发布的 2026 AI 战略文，形成完整叙事。MCP + Skills + Rules 三位一体。</li>
+        <li><strong>npx 一键安装的极低门槛</strong>：一行命令即可使用，无需复杂配置，降低了开发者体验 AI-First 开发的门槛。</li>
+        <li><strong>Google 官方品牌背书</strong>：Flutter 团队直接维护，非社区项目。Google 在 AI 开发工具领域的战略布局。</li>
+        <li><strong>社区热议</strong>：Reddit r/FlutterDev 称其为 "game-changer"，知乎、Medium 等平台大量讨论和教程。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">⚔️</span> 竞品对比</h2>
+    <table class="vs-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>flutter/skills</th>
+          <th>addyosmani/agent-skills</th>
+          <th>社区 Skills 仓库</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>维护方</td>
+          <td><span class="green">Google Flutter 官方</span></td>
+          <td>个人开发者（Addy Osmani）</td>
+          <td>社区开发者</td>
+        </tr>
+        <tr>
+          <td>领域</td>
+          <td><span class="green">Flutter/Dart 专属</span></td>
+          <td>通用前端工程</td>
+          <td>各领域</td>
+        </tr>
+        <tr>
+          <td>Skills 数量</td>
+          <td>11 个（持续增加）</td>
+          <td><span class="green">20+ 个</span></td>
+          <td>不等</td>
+        </tr>
+        <tr>
+          <td>深度</td>
+          <td><span class="green">深度框架集成</span></td>
+          <td>广泛覆盖</td>
+          <td>参差不齐</td>
+        </tr>
+        <tr>
+          <td>MCP 集成</td>
+          <td><span class="green">官方 MCP Server 配套</span></td>
+          <td>不涉及</td>
+          <td>部分</td>
+        </tr>
+        <tr>
+          <td>官方文档</td>
+          <td><span class="green">docs.flutter.dev/ai/</span></td>
+          <td>README</td>
+          <td>README</td>
+        </tr>
+        <tr>
+          <td>安装方式</td>
+          <td><span class="green">npx skills add</span></td>
+          <td>手动复制</td>
+          <td>手动/npx</td>
+        </tr>
+        <tr>
+          <td>稳定性</td>
+          <td>标记 "in development"</td>
+          <td><span class="green">已稳定</span></td>
+          <td>不等</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 目标用户 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">👥</span> 目标用户画像</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Flutter 开发者</h3>
+        <p>日常使用 AI 编码助手（Claude Code / Cursor / Copilot）进行 Flutter 开发，希望 AI 输出更专业的代码。</p>
+      </div>
+      <div class="card">
+        <h3>AI-First 开发团队</h3>
+        <p>采用 AI Agent 驱动的开发流程，需要在 Flutter 项目中保持代码质量和架构一致性。</p>
+      </div>
+      <div class="card">
+        <h3>Flutter 初学者</h3>
+        <p>借助 AI Agent + Skills 快速上手 Flutter 开发，通过 AI 引导学习框架最佳实践。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 快速上手指南</h2>
+    <div class="quick-start">
+      <h4>安装（1条命令）</h4>
+      <div class="code-block">
+<span class="code-comment"># 在 Flutter 项目根目录执行</span>
+npx skills add flutter/skills
+
+<span class="code-comment"># AI Agent 自动获得 11 个 Flutter Skills</span>
+<span class="code-comment"># 支持 Claude Code / Cursor / Copilot 等所有主流 Agent</span>
+      </div>
+    </div>
+    <div class="quick-start" style="margin-top:16px">
+      <h4>更新 Skills</h4>
+      <div class="code-block">
+npx skills update flutter/skills
+      </div>
+    </div>
+    <div class="quick-start" style="margin-top:16px">
+      <h4>搭配使用</h4>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">安装 Dart Skills：<code>npx skills add dart/skills</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">配置 AI Rules：参考 <code>docs.flutter.dev/ai/ai-rules</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">启用 Flutter MCP Server 获得完整的 Agent-Flutter 集成</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📊</span> 综合评分</h2>
+    <div class="card">
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-value" style="color:#54C5F8">8.0</div>
+          <div class="score-label">创新性</div>
+          <div class="score-bar"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#54C5F8,#027DFD)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#3fb950">8.0</div>
+          <div class="score-label">代码质量</div>
+          <div class="score-bar"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#3fb950,#56d364)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#d29922">9.0</div>
+          <div class="score-label">实用性</div>
+          <div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#d29922,#e3b341)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#bc8cff">8.5</div>
+          <div class="score-label">文档完善度</div>
+          <div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#bc8cff,#d2a8ff)"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-value" style="color:#f778ba">7.5</div>
+          <div class="score-label">社区活跃度</div>
+          <div class="score-bar"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#f778ba,#ff9ec6)"></div></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #21262d">
+        <div style="font-size:2.4em;font-weight:700;background:linear-gradient(135deg,#54C5F8,#027DFD);-webkit-background-clip:text;-webkit-text-fill-color:transparent">8.2 / 10</div>
+        <div style="color:#8b949e;margin-top:6px">综合评分</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📝</span> 分析总结</h2>
+    <div class="card">
+      <p>flutter/skills 是 <span class="highlight">主流 UI 框架拥抱 AI Agent 的标志性项目</span>。它代表了 2026 年软件开发的一个重要趋势：框架团队不再只是为人类开发者编写文档和工具，而是开始直接为 AI Agent 提供"领域知识注入"。</p>
+      <p style="margin-top:12px">11 个 Skills 覆盖了 Flutter 开发的核心场景：从架构搭建、UI 构建、布局修复到测试、无障碍、国际化和网络请求。配合 MCP Server 和 AI Rules，形成了完整的 <span class="blue">AI-First Flutter 开发体验</span>。npx 一键安装的设计降低了使用门槛。</p>
+      <p style="margin-top:12px">不足之处在于：项目仍标记为 "in development"，Skills 数量相对有限（11 个），1,590 Stars 虽然对于新仓库来说增长迅速，但与 Flutter 庞大的生态系统相比还处于早期。部分 Skills 的深度有待观察实际效果。</p>
+      <p style="margin-top:12px">但作为 <span class="green">Google Flutter 官方的战略性项目</span>，它的意义超越了项目本身 — 它定义了"框架如何拥抱 AI Agent"的行业范式。预计 React、Vue、SwiftUI 等框架将跟进类似模式。</p>
+      <p style="margin-top:12px"><span class="green">推荐指数：★★★★☆</span> — AI-First Flutter 开发的必备工具，行业趋势的风向标。</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>Flutter Skills 深度分析 | GitHub Trending Analysis</p>
+  <p>由 AI 自动分析生成 | Powered by Claude Code | 2026-05-09</p>
+</div>
+</body>
+</html>
