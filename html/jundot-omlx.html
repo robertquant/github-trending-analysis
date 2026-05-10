@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jundot/omlx - GitHub项目深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:960px;margin:0 auto;padding:20px}
+h1{font-size:2.2em;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:8px}
+.subtitle{text-align:center;color:#8b949e;font-size:1.1em;margin-bottom:30px}
+.badge-row{text-align:center;margin-bottom:30px}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.85em;margin:3px}
+.badge-python{background:#1a3a2a;color:#58d68d;border:1px solid #2d6a4f}
+.badge-stars{background:#2a1a3a;color:#bb86fc;border:1px solid #4a2d6a}
+.badge-license{background:#1a2a3a;color:#58a6ff;border:1px solid #2d4a6a}
+.badge-platform{background:#3a2a1a;color:#ffa657;border:1px solid #6a4a2d}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{color:#58a6ff;font-size:1.4em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #21262d}
+.card h3{color:#bc8cff;font-size:1.1em;margin:14px 0 8px}
+.card p,.card li{color:#c9d1d9;font-size:.95em}
+.card ul{padding-left:20px}
+.card ul li{margin-bottom:6px}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+.score-item{text-align:center;padding:16px 8px;background:#0d1117;border-radius:10px;border:1px solid #30363d}
+.score-item .label{color:#8b949e;font-size:.8em;margin-bottom:6px}
+.score-item .value{font-size:2em;font-weight:700}
+.score-overall{text-align:center;padding:20px;background:linear-gradient(135deg,#1a1a3a,#2a1a2a);border-radius:12px;border:1px solid #4a2d6a;margin-top:16px}
+.score-overall .value{font-size:3em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.score-overall .label{color:#8b949e;font-size:1em;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th{background:#21262d;color:#58a6ff;padding:10px 14px;text-align:left;font-size:.9em}
+td{padding:10px 14px;border-bottom:1px solid #21262d;font-size:.9em}
+tr:hover td{background:#161b22}
+code{background:#1a1a2a;padding:2px 8px;border-radius:4px;font-size:.88em;color:#e6b422;font-family:'SF Mono',Consolas,monospace}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;padding:0;color:#c9d1d9}
+.highlight{color:#58a6ff}
+.warn{color:#ffa657}
+.good{color:#3fb950}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8em;margin:2px}
+.tag-green{background:#1a3a2a;color:#3fb950;border:1px solid #2d6a4f}
+.tag-blue{background:#1a2a3a;color:#58a6ff;border:1px solid #2d4a6a}
+.tag-purple{background:#2a1a3a;color:#bc8cff;border:1px solid #4a2d6a}
+.tag-orange{background:#3a2a1a;color:#ffa657;border:1px solid #6a4a2d}
+.arch-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin:12px 0;font-family:monospace;font-size:.85em;line-height:1.8;white-space:pre-wrap;color:#8b949e}
+.arch-box .hl-blue{color:#58a6ff}
+.arch-box .hl-purple{color:#bc8cff}
+.arch-box .hl-green{color:#3fb950}
+.arch-box .hl-orange{color:#ffa657}
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+.compare-col{background:#0d1117;padding:14px;border-radius:8px;border:1px solid #30363d}
+.compare-col h4{color:#ffa657;margin-bottom:8px;font-size:.95em}
+.footer{text-align:center;color:#484f58;font-size:.8em;margin-top:30px;padding:20px 0;border-top:1px solid #21262d}
+@media(max-width:640px){.score-grid{grid-template-columns:repeat(3,1fr)}.compare-row{grid-template-columns:1fr}h1{font-size:1.6em}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>jundot/omlx</h1>
+<p class="subtitle">LLM Inference Server with Continuous Batching &amp; SSD Caching for Apple Silicon</p>
+<div class="badge-row">
+<span class="badge badge-python">Python</span>
+<span class="badge badge-stars">13,105 ⭐ (+187 today)</span>
+<span class="badge badge-license">Apache 2.0</span>
+<span class="badge badge-platform">Apple Silicon (M1/M2/M3/M4)</span>
+</div>
+
+<div class="card">
+<h2>📋 项目简介</h2>
+<p><strong>oMLX</strong> 是一个专为 Apple Silicon（M系列芯片）优化的本地 LLM 推理服务器。它将<strong>连续批处理（Continuous Batching）</strong>和<strong>分层 KV 缓存（Hot RAM + Cold SSD）</strong>结合，通过原生 macOS 菜单栏应用管理，让 Mac 用户能够以生产级效率运行大语言模型。</p>
+<p style="margin-top:10px">项目源自 vllm-mlx v0.1.0，但已大幅演进：增加了多模型服务、分层 KV 缓存、VLM 支持、管理后台和 macOS 菜单栏应用等核心功能。</p>
+<h3>核心功能</h3>
+<ul>
+<li><strong>分层 KV 缓存</strong> — 热数据常驻内存，冷数据自动卸载至 SSD（safetensors 格式），服务器重启后仍可恢复</li>
+<li><strong>连续批处理</strong> — 基于 mlx-lm BatchGenerator，支持可配置的最大并发请求数</li>
+<li><strong>多模型服务</strong> — 同一服务器运行 LLM、VLM、Embedding、Reranker，支持 LRU 驱逐、模型钉住、TTL</li>
+<li><strong>macOS 菜单栏 App</strong> — 原生 PyObjC 实现（非 Electron），启动/停止/监控一步到位</li>
+<li><strong>Web 管理后台</strong> — 实时监控、模型管理、内置 Chat、一键基准测试、模型下载器</li>
+<li><strong>OpenAI/Anthropic API 兼容</strong> — 滴入式替换，支持流式输出、Vision 输入</li>
+<li><strong>Claude Code 优化</strong> — 上下文缩放支持，SSE 保活防止长 prefill 超时</li>
+<li><strong>Tool Calling</strong> — 支持 Llama/Qwen/DeepSeek/GLM/Kimi K2 等多种格式的函数调用</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🏗️ 技术架构</h2>
+<div class="arch-box">
+<span class="hl-blue">FastAPI Server</span> (OpenAI / Anthropic API)
+    │
+    ├── <span class="hl-purple">EnginePool</span> (multi-model, LRU eviction, TTL, manual load/unload)
+    │   ├── <span class="hl-green">BatchedEngine</span> (LLMs, continuous batching)
+    │   ├── <span class="hl-green">VLMEngine</span> (vision-language models)
+    │   ├── <span class="hl-green">EmbeddingEngine</span>
+    │   └── <span class="hl-green">RerankerEngine</span>
+    │
+    ├── <span class="hl-orange">ProcessMemoryEnforcer</span> (total memory limit, TTL checks)
+    │
+    ├── <span class="hl-purple">Scheduler</span> (FCFS, configurable concurrency)
+    │   └── mlx-lm BatchGenerator
+    │
+    └── <span class="hl-blue">Cache Stack</span>
+        ├── <span class="hl-green">PagedCacheManager</span> (GPU, block-based, CoW, prefix sharing)
+        ├── <span class="hl-orange">Hot Cache</span> (in-memory tier, write-back)
+        └── <span class="hl-orange">PagedSSDCacheManager</span> (SSD cold tier, safetensors format)</div>
+<h3>技术特点</h3>
+<ul>
+<li>基于 Apple <code>mlx-lm</code> 框架，专为 Apple Silicon GPU/Neural Engine 优化</li>
+<li>块级 KV 缓存管理（借鉴 vLLM），支持前缀共享和写时复制（Copy-on-Write）</li>
+<li>SSD 冷缓存使用 safetensors 格式存储，重启后无需重新计算历史上下文</li>
+<li>进程级内存强制限制（默认：系统 RAM - 8GB），防止系统 OOM</li>
+<li>所有 CDN 依赖本地化，支持完全离线运行</li>
+<li>支持 macOS 15.0+（Sequoia）、Python 3.10+</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🎯 应用场景</h2>
+<ul>
+<li><strong>本地编码助手</strong> — 配合 Claude Code、OpenClaw、Cursor 等工具，实现本地模型辅助编程</li>
+<li><strong>隐私优先推理</strong> — 数据不离开本地 Mac，适合金融、医疗、法律等敏感场景</li>
+<li><strong>多模型并行服务</strong> — 同时运行对话模型、视觉模型、Embedding 模型，统一 API 入口</li>
+<li><strong>离线 AI 环境</strong> — 完全离线运行，适合无网络或受限网络环境</li>
+<li><strong>AI 应用开发测试</strong> — 本地开发时使用 OpenAI 兼容 API，生产切换到云端无需改代码</li>
+<li><strong>VLM/OCR 本地处理</strong> — 图像理解、OCR 文档处理，无需云端 API</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🔥 为什么火（Trending 原因）</h2>
+<ul>
+<li><strong>Apple Silicon 生态爆发</strong> — M4 系列芯片统一内存架构天然适合大模型推理，Mac 用户群快速增长</li>
+<li><strong>SSD KV 缓存创新</strong> — 分层缓存让 Mac 在有限内存下运行大模型成为可能，这是独特卖点</li>
+<li><strong>Claude Code 集成</strong> — 恰逢 Claude Code 热潮，提供本地模型替代方案，解决 API 成本和隐私问题</li>
+<li><strong>极致易用</strong> — DMG 拖拽安装或 Homebrew 一键部署，菜单栏管理，零配置启动</li>
+<li><strong>多模态全覆盖</strong> — 文本/视觉/OCR/Embedding/Reranker 一站式解决，无需多个工具</li>
+<li><strong>社区口碑传播</strong> — Reddit/LinkedIn/X 等平台积极讨论，Brian Roemmele 等知名人士推荐</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>⚔️ 同类项目对比</h2>
+<table>
+<tr><th>项目</th><th>平台</th><th>SSD缓存</th><th>连续批处理</th><th>菜单栏</th><th>多模态</th></tr>
+<tr><td><strong>oMLX</strong></td><td>Apple Silicon</td><td class="good">✅</td><td class="good">✅</td><td class="good">✅</td><td class="good">✅</td></tr>
+<tr><td>Ollama</td><td>全平台</td><td>❌</td><td>❌</td><td>❌</td><td>⚠️ 有限</td></tr>
+<tr><td>LM Studio</td><td>全平台</td><td>❌</td><td>❌</td><td>❌</td><td>⚠️ 有限</td></tr>
+<tr><td>llama.cpp</td><td>全平台</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+<tr><td>vLLM</td><td>NVIDIA GPU</td><td>⚠️ 实验</td><td class="good">✅</td><td>❌</td><td>⚠️ 有限</td></tr>
+<tr><td>MLX Server</td><td>Apple Silicon</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+</table>
+<div class="compare-row">
+<div class="compare-col">
+<h4>oMLX 优势</h4>
+<ul>
+<li>唯一支持 SSD KV 缓存的 Apple Silicon 方案</li>
+<li>连续批处理提升多请求吞吐量</li>
+<li>原生 macOS 体验（菜单栏 + DMG）</li>
+<li>内置管理后台和基准测试</li>
+<li>Claude Code 深度优化</li>
+</ul>
+</div>
+<div class="compare-col">
+<h4>oMLX 劣势</h4>
+<ul>
+<li>仅支持 Apple Silicon，无跨平台</li>
+<li>相对年轻，社区生态不及 Ollama</li>
+<li>依赖 macOS 15.0+ (Sequoia)</li>
+<li>对 NVIDIA/AMD GPU 用户无用</li>
+<li>大模型（70B+）仍需高内存 Mac</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>👥 适合谁使用</h2>
+<ul>
+<li><strong>Mac 开发者</strong> — 想用本地模型辅助编码（配合 Claude Code/Cursor）</li>
+<li><strong>隐私敏感用户</strong> — 金融、医疗、法律等行业需要数据不出本地的 AI 方案</li>
+<li><strong>AI 应用开发者</strong> — 需要本地 OpenAI 兼容 API 进行开发和测试</li>
+<li><strong>Mac Mini/Mac Studio 用户</strong> — 拥有大内存 Mac，希望充分利用硬件跑 AI</li>
+<li><strong>离线环境工作者</strong> — 在无网络环境下仍需 AI 能力的场景</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🚀 快速上手</h2>
+<h3>方式一：Homebrew 安装（推荐）</h3>
+<pre><code># 安装
+brew tap jundot/omlx https://github.com/jundot/omlx
+brew install omlx
+
+# 作为后台服务运行（崩溃自动重启）
+brew services start omlx
+
+# 任何 OpenAI 兼容客户端连接 http://localhost:8000/v1</code></pre>
+
+<h3>方式二：macOS App</h3>
+<pre><code># 从 GitHub Releases 下载 .dmg
+# 拖到 Applications 即可
+# 欢迎向导：设置模型目录 → 启动服务器 → 下载第一个模型</code></pre>
+
+<h3>方式三：从源码安装</h3>
+<pre><code>git clone https://github.com/jundot/omlx.git
+cd omlx
+pip install -e .          # 核心功能
+pip install -e ".[mcp]"   # 含 MCP 支持
+
+# 启动服务器
+omlx serve --model-dir ~/models</code></pre>
+
+<h3>配置示例</h3>
+<pre><code># 限制模型内存
+omlx serve --model-dir ~/models --max-model-memory 32GB
+
+# 启用 SSD 缓存
+omlx serve --model-dir ~/models --paged-ssd-cache-dir ~/.omlx/cache
+
+# 设置 API Key 认证
+omlx serve --model-dir ~/models --api-key your-secret-key</code></pre>
+</div>
+
+<div class="card">
+<h2>📊 API 端点</h2>
+<table>
+<tr><th>端点</th><th>说明</th></tr>
+<tr><td><code>POST /v1/chat/completions</code></td><td>对话补全（流式）</td></tr>
+<tr><td><code>POST /v1/completions</code></td><td>文本补全（流式）</td></tr>
+<tr><td><code>POST /v1/messages</code></td><td>Anthropic Messages API</td></tr>
+<tr><td><code>POST /v1/embeddings</code></td><td>文本 Embedding</td></tr>
+<tr><td><code>POST /v1/rerank</code></td><td>文档重排序</td></tr>
+<tr><td><code>GET /v1/models</code></td><td>列出可用模型</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>⭐ 综合评分</h2>
+<div class="score-grid">
+<div class="score-item">
+<div class="label">创新性</div>
+<div class="value" style="color:#58a6ff">8.0</div>
+</div>
+<div class="score-item">
+<div class="label">代码质量</div>
+<div class="value" style="color:#3fb950">8.0</div>
+</div>
+<div class="score-item">
+<div class="label">实用性</div>
+<div class="value" style="color:#ffa657">9.0</div>
+</div>
+<div class="score-item">
+<div class="label">文档完善度</div>
+<div class="value" style="color:#bc8cff">9.0</div>
+</div>
+<div class="score-item">
+<div class="label">社区活跃度</div>
+<div class="value" style="color:#f778ba">7.0</div>
+</div>
+</div>
+<div class="score-overall">
+<div class="value">8.2</div>
+<div class="label">综合评分 / 10</div>
+</div>
+<p style="margin-top:14px;text-align:center;color:#8b949e">
+oMLX 在 Apple Silicon 推理领域做出了独特创新，SSD 分层缓存是亮点。<br>
+极高的实用性和优秀的文档使其成为 Mac 本地 AI 部署的首选方案之一。<br>
+社区仍在快速增长中，随着更多用户贡献和反馈，有望进一步提升。
+</p>
+</div>
+
+<div class="card">
+<h2>🏷️ 信息标签</h2>
+<div style="margin-top:8px">
+<span class="tag tag-green">Apple Silicon</span>
+<span class="tag tag-blue">LLM 推理</span>
+<span class="tag tag-purple">SSD 缓存</span>
+<span class="tag tag-orange">连续批处理</span>
+<span class="tag tag-green">OpenAI 兼容</span>
+<span class="tag tag-blue">Claude Code</span>
+<span class="tag tag-purple">多模态</span>
+<span class="tag tag-orange">macOS 原生</span>
+<span class="tag tag-green">VLM</span>
+<span class="tag tag-blue">MCP 支持</span>
+<span class="tag tag-purple">Homebrew</span>
+<span class="tag tag-orange">离线可用</span>
+</div>
+</div>
+
+<div class="footer">
+<p>分析日期：2026-05-11 | 数据来源：GitHub、WebSearch | 生成工具：Claude Code</p>
+<p>jundot/omlx — <a href="https://github.com/jundot/omlx" style="color:#58a6ff">github.com/jundot/omlx</a></p>
+</div>
+
+</div>
+</body>
+</html>
