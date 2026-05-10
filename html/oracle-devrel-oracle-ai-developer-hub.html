@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle AI Developer Hub - GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1a1b2e 0%, #0d1117 50%, #1a2332 100%);
+            border-bottom: 1px solid #30363d;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .meta-tag {
+            display: inline-block;
+            padding: 5px 14px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #8b949e;
+        }
+        .meta-tag span { color: #f97316; font-weight: 600; }
+
+        /* Score Overview */
+        .score-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .total-score {
+            background: linear-gradient(135deg, #1a1b2e, #162032);
+            border: 1px solid #f97316;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .total-score .score-number {
+            font-size: 4em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f97316, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .total-score .score-label { color: #8b949e; margin-top: 5px; }
+        .score-breakdown {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .score-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .score-item:last-child { margin-bottom: 0; }
+        .score-item .label { color: #8b949e; font-size: 0.9em; min-width: 100px; }
+        .score-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            margin: 0 12px;
+            overflow: hidden;
+        }
+        .score-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        .score-item .value { font-weight: 600; min-width: 36px; text-align: right; }
+
+        /* Sections */
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            font-size: 1.3em;
+            color: #f97316;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+        }
+        .section p { color: #c9d1d9; margin-bottom: 12px; }
+        .section ul { padding-left: 20px; margin-bottom: 12px; }
+        .section li { color: #c9d1d9; margin-bottom: 6px; }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 18px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #f97316; }
+        .card h3 { color: #e6edf3; font-size: 1em; margin-bottom: 8px; }
+        .card p { color: #8b949e; font-size: 0.85em; margin-bottom: 0; }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        .comparison-table th {
+            background: #21262d;
+            color: #f97316;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+        }
+        .comparison-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        .comparison-table tr:hover td { background: #1a1b2e; }
+        .highlight-row td { background: #1a2332; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85em;
+            color: #e6edf3;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .badge-orange { background: #f97316; color: #fff; }
+        .badge-green { background: #238636; color: #fff; }
+        .badge-blue { background: #1f6feb; color: #fff; }
+        .badge-purple { background: #8b5cf6; color: #fff; }
+
+        /* Use Case Tags */
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            font-size: 0.8em;
+            color: #c9d1d9;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 640px) {
+            .score-overview { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.6em; }
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Oracle AI Developer Hub</h1>
+        <div class="subtitle">Oracle 官方 AI 开发者资源中心 — Oracle AI Database 26ai 应用、Notebook、指南与 Agent 记忆工具</div>
+        <div class="meta">
+            <span class="meta-tag">⭐ Stars: <span>904</span></span>
+            <span class="meta-tag">🔥 今日: <span>+90</span></span>
+            <span class="meta-tag">📝 语言: <span>Jupyter Notebook</span></span>
+            <span class="meta-tag">⚖️ 许可: <span>UPL</span></span>
+            <span class="meta-tag">🏢 作者: <span>oracle-devrel</span></span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Score Overview -->
+        <div class="score-overview">
+            <div class="total-score">
+                <div class="score-number">7.9</div>
+                <div class="score-label">综合评分 / 10</div>
+            </div>
+            <div class="score-breakdown">
+                <div class="score-item">
+                    <span class="label">🚀 创新性</span>
+                    <div class="score-bar-bg"><div class="score-bar" style="width:75%;background:linear-gradient(90deg,#f97316,#fbbf24)"></div></div>
+                    <span class="value" style="color:#fbbf24">7.5</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">💎 代码质量</span>
+                    <div class="score-bar-bg"><div class="score-bar" style="width:80%;background:linear-gradient(90deg,#3fb950,#56d364)"></div></div>
+                    <span class="value" style="color:#56d364">8.0</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">🔧 实用性</span>
+                    <div class="score-bar-bg"><div class="score-bar" style="width:85%;background:linear-gradient(90deg,#1f6feb,#58a6ff)"></div></div>
+                    <span class="value" style="color:#58a6ff">8.5</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">📖 文档完善度</span>
+                    <div class="score-bar-bg"><div class="score-bar" style="width:85%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+                    <span class="value" style="color:#a78bfa">8.5</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">👥 社区活跃度</span>
+                    <div class="score-bar-bg"><div class="score-bar" style="width:70%;background:linear-gradient(90deg,#f97316,#fb923c)"></div></div>
+                    <span class="value" style="color:#fb923c">7.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="section">
+            <h2>📋 项目概览</h2>
+            <p>Oracle AI Developer Hub 是 Oracle 官方推出的面向 AI 开发者的综合性技术资源库。该仓库围绕 <strong>Oracle AI Database 26ai</strong> 构建，提供了一系列可直接运行的应用、Jupyter Notebook、技术指南和交互式 Workshop，帮助开发者快速掌握 Oracle 的 AI 数据库能力。</p>
+            <p>项目最亮眼的特色是 <strong>oracleagentmemory (OAMP)</strong> — Oracle 的 AI Agent 记忆包，为 AI 智能体提供统一的记忆核心，利用 Oracle 26ai 的融合数据库能力（向量搜索、关系型数据、JSON、图数据库）实现企业级 Agent 记忆管理。</p>
+            <div class="tag-group">
+                <span class="tag">Oracle 26ai</span>
+                <span class="tag">AI Agent Memory</span>
+                <span class="tag">RAG</span>
+                <span class="tag">Vector Search</span>
+                <span class="tag">Graph Database</span>
+                <span class="tag">LangChain</span>
+                <span class="tag">OpenAI Agents SDK</span>
+                <span class="tag">Claude Agent SDK</span>
+                <span class="tag">Multi-Cloud</span>
+                <span class="tag">Jupyter Notebook</span>
+            </div>
+        </div>
+
+        <!-- Tech Architecture -->
+        <div class="section">
+            <h2>🏗️ 技术架构</h2>
+            <p>项目以 Oracle AI Database 26ai 为核心，构建了覆盖 AI 应用开发全生命周期的资源体系：</p>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>🗄️ Oracle AI Database 26ai</h3>
+                    <p>融合型数据库，集成向量搜索、图数据库、空间数据、关系型、JSON 等多模态能力，是整个技术栈的核心基础设施。</p>
+                </div>
+                <div class="card">
+                    <h3>🧠 OAMP (Agent Memory)</h3>
+                    <p>oracleagentmemory 包 — 基于 26ai 的多模态记忆系统，支持 LangChain、OpenAI Agents SDK、Claude Agent SDK、LangGraph 等主流框架。</p>
+                </div>
+                <div class="card">
+                    <h3>📓 Notebooks (10+)</h3>
+                    <p>涵盖 RAG、向量搜索、Agent 记忆、认知架构、F1 赛事策略分析等主题的可执行 Notebook，可直接在 OCI 或本地运行。</p>
+                </div>
+                <div class="card">
+                    <h3>🌐 Multi-Cloud 示例</h3>
+                    <p>提供 AWS、Azure、GCP、MongoDB 环境中运行 Oracle AI Database 的示例代码，打破云厂商锁定。</p>
+                </div>
+                <div class="card">
+                    <h3>📚 Workshop 系列</h3>
+                    <p>从 IR（信息检索）→ RAG → Agent → 记忆增强 Agent 的渐进式学习路径，包含完整的动手实验。</p>
+                </div>
+                <div class="card">
+                    <h3>🔗 Partner 集成</h3>
+                    <p>展示与第三方技术合作伙伴的集成方案，扩展 Oracle AI 生态。</p>
+                </div>
+            </div>
+            <div class="code-block">
+# OAMP 使用示例
+pip install oracleagentmemory
+
+from oracleagentmemory import Memory
+memory = Memory.connect(dsn="oracle26ai", user="agent", password="***")
+memory.store("user_123", "用户偏好深色模式", category="preference")
+results = memory.recall("用户界面偏好", top_k=5)
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="section">
+            <h2>✨ 核心亮点</h2>
+            <ul>
+                <li><strong>企业级 Agent 记忆</strong> — OAMP 提供基于 Oracle 26ai 的统一记忆核心，支持向量语义搜索、关系型查询、图遍历、JSON 文档存储四种记忆检索模式</li>
+                <li><strong>多框架支持</strong> — 同时适配 LangChain、OpenAI Agents SDK、Claude Agent SDK、LangGraph 四大主流 Agent 框架</li>
+                <li><strong>融合数据库能力</strong> — Oracle 26ai 在单一数据库中提供向量 + 关系 + JSON + 图 + 空间五合一能力，消除了传统方案中多个数据库拼接的复杂性</li>
+                <li><strong>多云部署</strong> — 示例代码覆盖 AWS、Azure、GCP 和 MongoDB 环境，Oracle AI Database 可运行在任何云上</li>
+                <li><strong>完整的 Workshop 路径</strong> — 从信息检索基础到记忆增强 Agent 的渐进式动手实验，适合不同水平的开发者</li>
+                <li><strong>F1 赛事策略分析</strong> — 用 Oracle 26ai 分析迈阿密 F1 大奖赛实时策略决策，展示了 AI 数据库在体育分析中的创新应用</li>
+                <li><strong>11 种认知架构</strong> — Notebook 展示了 11 种不同的 Agent 推理架构模式，覆盖 ReAct、Plan-and-Execute、Reflexion 等主流方案</li>
+            </ul>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="section">
+            <h2>🎯 应用场景</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>🤖 企业 AI Agent 开发</h3>
+                    <p>为客服、运维、分析等企业 Agent 提供持久化记忆能力，支持长期用户偏好追踪和上下文记忆。</p>
+                </div>
+                <div class="card">
+                    <h3>📚 RAG 应用构建</h3>
+                    <p>基于 Oracle 26ai 向量搜索构建检索增强生成系统，配合评估指标衡量 RAG 质量。</p>
+                </div>
+                <div class="card">
+                    <h3>🏢 多云 AI 部署</h3>
+                    <p>在 AWS/Azure/GCP 上运行 Oracle AI Database，构建跨云 AI 应用架构。</p>
+                </div>
+                <div class="card">
+                    <h3>📊 高级数据分析</h3>
+                    <p>利用融合数据库的向量+关系+图能力，进行复杂的多模态数据分析。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="section">
+            <h2>🔥 热门原因分析</h2>
+            <ul>
+                <li><strong>Agent Memory 是 2026 年最热门的 AI 话题</strong> — 随着各大厂商发布 Agent 框架，Agent 的记忆管理成为关键技术瓶颈，OAMP 刚好填补了这一空白</li>
+                <li><strong>Oracle 26ai 刚刚发布</strong> — 作为 Oracle 最新一代 AI 数据库，融合了向量+图+关系+JSON 的能力，吸引了大量开发者关注</li>
+                <li><strong>DevWeek SF 2026 大会推动</strong> — Oracle 团队在 DevWeek SF 2026 上做了 Enterprise Agents 和 Memory Engineering 的主题演讲，直接推动了关注度</li>
+                <li><strong>DeepLearning.AI 合作</strong> — 与 DeepLearning.AI 联合举办 AI Developer Conference，扩大了在 AI 开发者社区的影响力</li>
+                <li><strong>多云策略打破偏见</strong> — 提供 AWS/Azure/GCP 示例，表明 Oracle AI Database 可在任何云上运行，打破了"Oracle 只能在 OCI 上用"的固有印象</li>
+            </ul>
+        </div>
+
+        <!-- Competitor Comparison -->
+        <div class="section">
+            <h2>⚔️ 竞品对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>定位</th>
+                        <th>Agent Memory</th>
+                        <th>融合数据库</th>
+                        <th>多云支持</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight-row">
+                        <td><strong>oracle-devrel/oracle-ai-developer-hub</strong></td>
+                        <td>Oracle AI 开发者资源中心</td>
+                        <td><span class="badge badge-green">✅ OAMP</span></td>
+                        <td><span class="badge badge-green">✅ 26ai</span></td>
+                        <td><span class="badge badge-green">✅ AWS/Azure/GCP</span></td>
+                    </tr>
+                    <tr>
+                        <td>aws-samples</td>
+                        <td>AWS 技术示例库</td>
+                        <td><span class="badge badge-orange">部分</span></td>
+                        <td>❌</td>
+                        <td>AWS only</td>
+                    </tr>
+                    <tr>
+                        <td>Azure-Samples</td>
+                        <td>Azure 技术示例库</td>
+                        <td>❌</td>
+                        <td>❌</td>
+                        <td>Azure only</td>
+                    </tr>
+                    <tr>
+                        <td>langchain-ai/langchain</td>
+                        <td>LLM 应用框架</td>
+                        <td><span class="badge badge-orange">基础</span></td>
+                        <td>❌</td>
+                        <td>框架层面兼容</td>
+                    </tr>
+                    <tr>
+                        <td>mem0/mem0</td>
+                        <td>Agent Memory 层</td>
+                        <td><span class="badge badge-green">✅ 专注</span></td>
+                        <td>❌</td>
+                        <td>✅</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top:12px;color:#8b949e;font-size:0.9em;">Oracle 的差异化优势在于：将 Agent Memory 直接构建在融合数据库之上，提供向量+关系+JSON+图的一体化记忆检索，而非简单的向量存储。</p>
+        </div>
+
+        <!-- Target Users -->
+        <div class="section">
+            <h2>👥 目标用户</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>👨‍💻 AI 应用开发者</h3>
+                    <p>希望利用融合数据库构建 RAG、Agent 等企业级 AI 应用的开发者。</p>
+                </div>
+                <div class="card">
+                    <h3>🏗️ 企业架构师</h3>
+                    <p>评估多云 AI 架构方案，需要向量+关系+图融合能力的技术决策者。</p>
+                </div>
+                <div class="card">
+                    <h3>🎓 AI 学习者</h3>
+                    <p>通过 Workshop 和 Notebook 渐进式学习 RAG → Agent → Memory 的完整路径。</p>
+                </div>
+                <div class="card">
+                    <h3>🔬 数据科学家</h3>
+                    <p>需要多模态数据分析能力，特别是在向量搜索和图分析领域的研究人员。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="section">
+            <h2>🚀 快速开始</h2>
+            <p><strong>前置条件：</strong>Python 3.9+、Oracle AI Database 26ai 实例（OCI 免费套餐可用）</p>
+            <div class="code-block">
+# 1. 克隆仓库
+git clone https://github.com/oracle-devrel/oracle-ai-developer-hub.git
+cd oracle-ai-developer-hub
+
+# 2. 安装 OAMP (Oracle Agent Memory Package)
+pip install oracleagentmemory
+
+# 3. 运行 Workshop Notebook
+# 推荐 from Workshop 1 (IR) 开始，逐步进阶
+jupyter notebook workshops/
+
+# 4. 探索 Agent Memory Notebook
+jupyter notebook notebooks/agent-memory/
+
+# 5. 多云部署示例
+# 查看 multi-cloud/ 目录获取 AWS/Azure/GCP 配置示例
+            </div>
+            <p style="margin-top:10px;"><strong>OCI 免费套餐：</strong>Oracle Cloud 提供 Always Free 层级，可免费创建 Oracle AI Database 23ai 实例用于测试和学习。</p>
+        </div>
+
+        <!-- Summary -->
+        <div class="section">
+            <h2>💡 总结评价</h2>
+            <p>Oracle AI Developer Hub 代表了 Oracle 在 AI 开发者生态中的一次重要布局。项目最大的价值不在于代码本身（主要是 Notebook 和文档），而在于 <strong>oracleagentmemory (OAMP)</strong> 所展现的企业级 Agent 记忆架构思路。</p>
+            <p>在 2026 年 Agent Memory 成为 AI 领域最热门话题的背景下，Oracle 选择将记忆系统构建在融合数据库 26ai 之上，而非简单的向量数据库，这一技术路线具有明显的差异化优势。向量+关系+JSON+图的多模态记忆检索，为企业 Agent 提供了比纯向量方案更强大的上下文理解能力。</p>
+            <p><strong>适合人群：</strong>需要评估企业 AI 架构方案的技术决策者、希望学习 Agent Memory 实现的开发者、以及需要在生产环境部署 Agent 记忆系统的团队。</p>
+            <p><strong>注意事项：</strong>项目的核心价值深度绑定 Oracle AI Database 26ai，虽然有多云示例，但实际生产使用仍需要 Oracle 数据库实例。对 Oracle 技术栈没有需求的团队，可重点关注 OAMP 的架构设计思路作为参考。</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>📊 GitHub Trending 深度分析 | 由 AI 自动生成 | 2026-05-11</p>
+        <p>oracle-devrel/oracle-ai-developer-hub ⭐ 904 | 综合评分: 7.9/10</p>
+    </div>
+</body>
+</html>
