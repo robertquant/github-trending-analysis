@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dive into LLMs 动手学大模型 | 项目深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:960px;margin:0 auto;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f78166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.subtitle{color:#8b949e;font-size:1.1em;margin-bottom:30px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.3em;color:#58a6ff;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #21262d}
+.card h3{font-size:1.1em;color:#bc8cff;margin:14px 0 8px}
+.card p{margin-bottom:10px;color:#c9d1d9}
+.card ul{padding-left:20px;margin-bottom:10px}
+.card li{margin-bottom:6px;color:#8b949e}
+.card li strong{color:#c9d1d9}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.8em;margin-right:6px;margin-bottom:4px}
+.badge-lang{background:#da5b0b;color:#fff}
+.badge-license{background:#238636;color:#fff}
+.badge-stars{background:#e3b341;color:#000}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+.score-item{text-align:center;padding:16px 8px;background:#0d1117;border-radius:10px;border:1px solid #21262d}
+.score-item .label{font-size:0.8em;color:#8b949e;margin-bottom:6px}
+.score-item .value{font-size:1.8em;font-weight:bold;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overall-score{text-align:center;padding:20px;margin:16px 0;background:linear-gradient(135deg,rgba(88,166,255,0.1),rgba(188,140,255,0.1));border-radius:12px;border:1px solid #30363d}
+.overall-score .big{font-size:3em;font-weight:bold;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f78166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overall-score .desc{color:#8b949e;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;font-size:0.9em}
+td{color:#8b949e;font-size:0.9em}
+td strong{color:#c9d1d9}
+.highlight{color:#f78166;font-weight:600}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.75em;margin:2px;background:#21262d;color:#8b949e}
+.feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.feature-item{padding:12px;background:#0d1117;border-radius:8px;border:1px solid #21262d}
+.feature-item .icon{font-size:1.4em;margin-bottom:4px}
+.feature-item .title{color:#58a6ff;font-weight:600;font-size:0.95em}
+.feature-item .desc{color:#8b949e;font-size:0.85em;margin-top:2px}
+.footer{text-align:center;color:#484f58;font-size:0.85em;margin-top:30px;padding-top:20px;border-top:1px solid #21262d}
+@media(max-width:640px){.score-grid{grid-template-columns:repeat(3,1fr)}.feature-grid{grid-template-columns:1fr}h1{font-size:1.5em}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Dive into LLMs — 动手学大模型</h1>
+<p class="subtitle">上海交通大学出品 · 大模型全栈编程实践教程</p>
+
+<div style="margin-bottom:20px">
+<span class="badge badge-lang">Jupyter Notebook</span>
+<span class="badge badge-stars">⭐ 36,636</span>
+<span class="badge" style="background:#f78166;color:#fff">+160 today</span>
+<span class="badge" style="background:#238636;color:#fff">🎓 公益免费</span>
+</div>
+
+<!-- 项目概览 -->
+<div class="card">
+<h2>📌 项目概览</h2>
+<p><strong>《动手学大模型》</strong>是由<span class="highlight">上海交通大学张倬胜教授</span>团队开发的系列编程实践教程，源自交大研究生课程《自然语言处理前沿技术》（NIS8021）和《人工智能安全技术》（NIS3353）的讲义。教程以"动手实践"为核心理念，覆盖大模型从基础到前沿的完整技术栈。</p>
+<p>项目完全免费、公益性质，提供课件（PPT）、编程教程（Jupyter Notebook）、实验脚本和配套视频。最新版本还联合<span class="highlight">华为昇腾社区</span>推出了国产化《大模型开发全流程》系列课程，支持昇腾AI硬件平台。</p>
+
+<div class="feature-grid">
+<div class="feature-item">
+<div class="icon">🔧</div>
+<div class="title">微调与部署</div>
+<div class="desc">预训练模型选择、任务微调、模型部署 Demo</div>
+</div>
+<div class="feature-item">
+<div class="icon">🧠</div>
+<div class="title">提示学习与思维链</div>
+<div class="desc">API调用、Prompt Engineering、CoT推理</div>
+</div>
+<div class="feature-item">
+<div class="icon">✏️</div>
+<div class="title">知识编辑</div>
+<div class="desc">操控语言模型对指定知识的记忆与修改</div>
+</div>
+<div class="feature-item">
+<div class="icon">🔢</div>
+<div class="title">数学推理</div>
+<div class="desc">蒸馏迷你R1，让大模型学会数学推理</div>
+</div>
+<div class="feature-item">
+<div class="icon">💧</div>
+<div class="title">模型水印</div>
+<div class="desc">在生成文本中嵌入不可见水印</div>
+</div>
+<div class="feature-item">
+<div class="icon">🔓</div>
+<div class="title">越狱攻击</div>
+<div class="desc">了解如何攻击大模型安全防线</div>
+</div>
+<div class="feature-item">
+<div class="icon">🤐</div>
+<div class="title">大模型隐写</div>
+<div class="desc">在流畅回答中携带隐蔽信息</div>
+</div>
+<div class="feature-item">
+<div class="icon">🖼️</div>
+<div class="title">多模态模型</div>
+<div class="desc">多模态理解与生成能力实践</div>
+</div>
+<div class="feature-item">
+<div class="icon">🤖</div>
+<div class="title">GUI智能体</div>
+<div class="desc">让AI Agent替你操作电脑完成事务</div>
+</div>
+<div class="feature-item">
+<div class="icon">🛡️</div>
+<div class="title">RLHF安全对齐</div>
+<div class="desc">基于PPO的RLHF实验，模型对齐实践</div>
+</div>
+</div>
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+<h2>🏗️ 教程架构</h2>
+<h3>课程体系</h3>
+<table>
+<tr><th>模块</th><th>主题</th><th>难度</th><th>配套资源</th></tr>
+<tr><td>模块1</td><td><strong>微调与部署</strong></td><td>⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块2</td><td><strong>提示学习与思维链</strong></td><td>⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块3</td><td><strong>知识编辑</strong></td><td>⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块4</td><td><strong>数学推理</strong></td><td>⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块5</td><td><strong>模型水印</strong></td><td>⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块6</td><td><strong>越狱攻击</strong></td><td>⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块7</td><td><strong>大模型隐写</strong></td><td>⭐⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块8</td><td><strong>多模态模型</strong></td><td>⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块9</td><td><strong>GUI智能体</strong></td><td>⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块10</td><td><strong>智能体安全</strong></td><td>⭐⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+<tr><td>模块11</td><td><strong>RLHF安全对齐</strong></td><td>⭐⭐⭐⭐</td><td>PPT + Notebook + 脚本</td></tr>
+</table>
+
+<h3>资源形式</h3>
+<ul>
+<li><strong>课件（PPT）</strong>：理论讲解，适合课堂教学和自学</li>
+<li><strong>编程教程（Jupyter Notebook）</strong>：可交互代码，边学边练</li>
+<li><strong>实验脚本</strong>：独立可运行的 Python 脚本</li>
+<li><strong>配套视频</strong>：B站教学视频，跟随学习</li>
+<li><strong>GitBook在线文档</strong>：sjtullm.gitbook.io/dive-into-llms</li>
+</ul>
+
+<h3>团队背景</h3>
+<ul>
+<li><strong>张倬胜</strong> — 上海交通大学长聘教轨助理教授、博士生导师</li>
+<li>入选中国中文信息学会优博、ACM SIGAI优博、全球AI华人百强学术</li>
+<li>研究方向：多模态大模型、多智能体交互与认知安全</li>
+<li>团队包含交大和新国大多位研究者</li>
+</ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="card">
+<h2>🎯 应用场景</h2>
+<table>
+<tr><th>场景</th><th>描述</th><th>适用度</th></tr>
+<tr><td><strong>高校AI课程教材</strong></td><td>大模型、NLP、AI安全课程的实验教材</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>自学入门大模型</strong></td><td>有编程基础的开发者系统性学习LLM技术</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>课程设计参考</strong></td><td>研究生、本科生做课程项目的参考</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>学术研究入门</strong></td><td>快速了解LLM前沿方向并动手实验</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>企业内训</strong></td><td>AI团队技术培训和实践教材</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>模型安全审计</strong></td><td>学习越狱攻击、水印、隐写等安全技术</td><td>⭐⭐⭐</td></tr>
+</table>
+</div>
+
+<!-- 为什么火 -->
+<div class="card">
+<h2>🔥 为什么热门</h2>
+<ul>
+<li><strong>LLM教育需求爆发</strong>：2024-2026年大模型技术快速发展，市场对LLM人才的需求呈指数级增长，优质中文教程稀缺</li>
+<li><strong>顶级高校背书</strong>：上海交通大学是中国顶尖高校之一，教程源于正式研究生课程，质量有保证</li>
+<li><strong>独特的安全视角</strong>：不同于多数只讲"怎么用"的教程，本教程涵盖越狱攻击、模型水印、隐写术、RLHF对齐等安全方向，这在同类教程中独树一帜</li>
+<li><strong>前沿内容覆盖</strong>：包含"蒸馏迷你R1"、GUI Agent、大模型隐写术等2025年最新研究方向</li>
+<li><strong>完整的资源体系</strong>：PPT + Notebook + 脚本 + 视频 + 在线文档，满足不同学习偏好</li>
+<li><strong>华为昇腾合作</strong>：联合国产AI芯片平台推出教程，顺应国产化替代趋势</li>
+<li><strong>完全免费公益</strong>：无需付费，降低了学习门槛</li>
+</ul>
+</div>
+
+<!-- 竞品对比 -->
+<div class="card">
+<h2>⚔️ 同类项目对比</h2>
+<table>
+<tr><th>项目</th><th>语言</th><th>特色</th><th>安全内容</th><th>配套资源</th></tr>
+<tr><td><strong>Dive into LLMs</strong></td><td>中文</td><td>高校课程，安全视角突出</td><td>✅ 丰富</td><td>PPT+代码+视频</td></tr>
+<tr><td>mlabonne/llm-course</td><td>英文</td><td>三阶段结构化课程</td><td>❌ 较少</td><td>Notebook</td></tr>
+<tr><td>rasbt/LLMs-from-scratch</td><td>英文</td><td>从零构建LLM</td><td>❌ 无</td><td>书籍+代码</td></tr>
+<tr><td>Hands-On-LLMs</td><td>英文</td><td>配套O'Reilly书籍</td><td>❌ 较少</td><td>书籍+代码</td></tr>
+<tr><td>louisfb01/start-llms</td><td>英文</td><td>2026年最新指南</td><td>❌ 无</td><td>文章+代码</td></tr>
+<tr><td>datawhalechina/llm-cookbook</td><td>中文</td><td>中文社区驱动</td><td>❌ 较少</td><td>Notebook</td></tr>
+</table>
+<p>Dive into LLMs 的核心差异化优势在于：<strong>中文 + 高校级质量 + 安全方向独特 + 前沿内容更新快</strong>。</p>
+</div>
+
+<!-- 目标用户 -->
+<div class="card">
+<h2>👥 目标用户</h2>
+<ul>
+<li><strong>计算机/AI专业研究生</strong>：课程学习和论文研究的实践参考</li>
+<li><strong>高校教师</strong>：可作为大模型相关课程的教材和实验材料</li>
+<li><strong>有Python基础的开发者</strong>：希望系统性学习大模型技术栈</li>
+<li><strong>AI安全研究者</strong>：学习大模型安全攻防的动手实践入门</li>
+<li><strong>企业AI团队</strong>：团队培训和技术能力提升</li>
+<li><strong>国产AI生态开发者</strong>：华为昇腾平台的大模型开发实践</li>
+</ul>
+</div>
+
+<!-- 快速开始 -->
+<div class="card">
+<h2>🚀 快速开始</h2>
+<h3>在线阅读（推荐入门）</h3>
+<p>访问 GitBook 在线文档：<strong>https://sjtullm.gitbook.io/dive-into-llms</strong></p>
+
+<h3>克隆仓库</h3>
+<div style="background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;font-family:monospace;font-size:0.9em;overflow-x:auto;color:#79c0ff">
+git clone https://github.com/Lordog/dive-into-llms.git<br>
+cd dive-into-llms
+</div>
+
+<h3>学习建议</h3>
+<ul>
+<li><strong>按顺序学习</strong>：从模块1（微调与部署）开始，循序渐进</li>
+<li><strong>配合视频</strong>：B站搜索"张倬胜 动手学大模型"观看配套讲解</li>
+<li><strong>动手实践</strong>：每个模块的 Jupyter Notebook 都可以直接运行</li>
+<li><strong>推荐环境</strong>：Python 3.8+，GPU环境（Colab也可）</li>
+</ul>
+
+<h3>国产化路线</h3>
+<p>前往<strong>华为昇腾社区</strong>「大模型开发学习专区」获取基于昇腾平台的完整课程（PPT + 实验手册 + 视频），覆盖初/中/高级全流程。</p>
+</div>
+
+<!-- 评分 -->
+<div class="card">
+<h2>📊 综合评分</h2>
+<div class="overall-score">
+<div class="big">8.5</div>
+<div class="desc">/ 10 — 顶尖高校出品的大模型全栈实践教程</div>
+</div>
+<div class="score-grid">
+<div class="score-item">
+<div class="label">创新性</div>
+<div class="value">7.5</div>
+</div>
+<div class="score-item">
+<div class="label">代码质量</div>
+<div class="value">8.5</div>
+</div>
+<div class="score-item">
+<div class="label">实用性</div>
+<div class="value">9.0</div>
+</div>
+<div class="score-item">
+<div class="label">文档完善度</div>
+<div class="value">9.0</div>
+</div>
+<div class="score-item">
+<div class="label">社区活跃度</div>
+<div class="value">8.5</div>
+</div>
+</div>
+<h3>评分说明</h3>
+<table>
+<tr><th>维度</th><th>分数</th><th>评价</th></tr>
+<tr><td><strong>创新性 7.5</strong></td><td>███████▌░░</td><td>教育类项目本身创新有限，但安全方向（隐写、水印、越狱）和R1蒸馏等内容前沿</td></tr>
+<tr><td><strong>代码质量 8.5</strong></td><td>████████▌░</td><td>源自高校课程，Notebook结构清晰，脚本可直接运行，版本管理规范</td></tr>
+<tr><td><strong>实用性 9.0</strong></td><td>█████████░</td><td>覆盖11个核心主题，从入门到前沿，PPT+代码+视频三位一体，零基础可上手</td></tr>
+<tr><td><strong>文档完善度 9.0</strong></td><td>█████████░</td><td>PPT课件、GitBook在线文档、B站视频、实验手册，资源体系非常完善</td></tr>
+<tr><td><strong>社区活跃度 8.5</strong></td><td>████████▌░</td><td>36.6K Stars，交大团队持续维护，华为合作扩展生态，PR和Issue响应及时</td></tr>
+</table>
+</div>
+
+<!-- 总结 -->
+<div class="card">
+<h2>💡 总结</h2>
+<p>《动手学大模型》是目前中文大模型教育领域<strong>质量最高、体系最完整</strong>的公益教程之一。它不是简单的API调用指南，而是从高校研究生课程出发，系统性地覆盖了大模型技术的11个核心方向。</p>
+<p>其独特的价值在于<span class="highlight">安全视角</span>——越狱攻击、模型水印、大模型隐写、RLHF对齐等内容，是其他同类教程中几乎看不到的。这让学习者不仅能"用"大模型，还能理解和应对大模型的安全风险。</p>
+<p>联合华为昇腾推出的国产化教程路线，进一步降低了国内开发者的实践门槛。对于任何希望系统性学习大模型技术的中文用户来说，这都是一份<strong>不可多得的高质量学习资源</strong>。</p>
+</div>
+
+<div class="footer">
+<p>🤖 由 AI 深度分析生成 | 分析日期: 2026-05-11 | Powered by Claude Code</p>
+</div>
+
+</div>
+</body>
+</html>
