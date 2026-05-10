@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperSplat - 3D Gaussian Splat 编辑器 | 项目深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7}
+.container{max-width:960px;margin:0 auto;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f78166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.subtitle{color:#8b949e;font-size:1.1em;margin-bottom:30px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:1.3em;color:#58a6ff;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #21262d}
+.card h3{font-size:1.1em;color:#bc8cff;margin:14px 0 8px}
+.card p{margin-bottom:10px;color:#c9d1d9}
+.card ul{padding-left:20px;margin-bottom:10px}
+.card li{margin-bottom:6px;color:#8b949e}
+.card li strong{color:#c9d1d9}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.8em;margin-right:6px;margin-bottom:4px}
+.badge-lang{background:#3178c6;color:#fff}
+.badge-license{background:#238636;color:#fff}
+.badge-stars{background:#e3b341;color:#000}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+.score-item{text-align:center;padding:16px 8px;background:#0d1117;border-radius:10px;border:1px solid #21262d}
+.score-item .label{font-size:0.8em;color:#8b949e;margin-bottom:6px}
+.score-item .value{font-size:1.8em;font-weight:bold;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overall-score{text-align:center;padding:20px;margin:16px 0;background:linear-gradient(135deg,rgba(88,166,255,0.1),rgba(188,140,255,0.1));border-radius:12px;border:1px solid #30363d}
+.overall-score .big{font-size:3em;font-weight:bold;background:linear-gradient(135deg,#58a6ff,#bc8cff,#f78166);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overall-score .desc{color:#8b949e;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#58a6ff;font-weight:600;font-size:0.9em}
+td{color:#8b949e;font-size:0.9em}
+td strong{color:#c9d1d9}
+.highlight{color:#f78166;font-weight:600}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.75em;margin:2px;background:#21262d;color:#8b949e}
+.feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.feature-item{padding:12px;background:#0d1117;border-radius:8px;border:1px solid #21262d}
+.feature-item .icon{font-size:1.4em;margin-bottom:4px}
+.feature-item .title{color:#58a6ff;font-weight:600;font-size:0.95em}
+.feature-item .desc{color:#8b949e;font-size:0.85em;margin-top:2px}
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px;margin:12px 0;font-family:'Fira Code',monospace;font-size:0.9em;overflow-x:auto;color:#79c0ff}
+.footer{text-align:center;color:#484f58;font-size:0.85em;margin-top:30px;padding-top:20px;border-top:1px solid #21262d}
+@media(max-width:640px){.score-grid{grid-template-columns:repeat(3,1fr)}.feature-grid{grid-template-columns:1fr}h1{font-size:1.5em}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>SuperSplat - 3D Gaussian Splat 编辑器</h1>
+<p class="subtitle">浏览器内免费开源的 3D 高斯泼溅场景编辑与优化工具</p>
+
+<div style="margin-bottom:20px">
+<span class="badge badge-lang">TypeScript</span>
+<span class="badge badge-license">MIT License</span>
+<span class="badge badge-stars">⭐ 6,464</span>
+<span class="badge" style="background:#f78166;color:#fff">+514 today</span>
+</div>
+
+<!-- 项目概览 -->
+<div class="card">
+<h2>📌 项目概览</h2>
+<p><strong>SuperSplat</strong> 是由 <span class="highlight">PlayCanvas</span> 团队开发的一款免费、开源、完全运行在浏览器中的 3D Gaussian Splat 编辑器。它基于 WebGPU/WebGL 技术，用户无需安装任何桌面软件，即可在浏览器中对 3D 高斯泼溅场景进行查看、编辑、优化和发布。</p>
+<p>3D Gaussian Splatting（3DGS）是近年来计算机视觉领域的突破性技术，通过从照片或视频中重建 3D 场景，生成由数百万个高斯原语组成的点云表示。SuperSplat 的出现填补了这一新兴领域缺乏免费易用的编辑工具的空白。</p>
+
+<div class="feature-grid">
+<div class="feature-item">
+<div class="icon">🎨</div>
+<div class="title">可视化编辑</div>
+<div class="desc">选择、移动、删除高斯点，实时预览效果</div>
+</div>
+<div class="feature-item">
+<div class="icon">📁</div>
+<div class="title">多格式支持</div>
+<div class="desc">兼容 .ply 和 .splat 文件格式导入</div>
+</div>
+<div class="feature-item">
+<div class="icon">⚡</div>
+<div class="title">场景优化</div>
+<div class="desc">裁剪、压缩、LOD 处理，优化 Web 发布体验</div>
+</div>
+<div class="feature-item">
+<div class="icon">🌐</div>
+<div class="title">零安装部署</div>
+<div class="desc">完全基于浏览器运行，无需本地安装</div>
+</div>
+<div class="feature-item">
+<div class="icon">🚀</div>
+<div class="title">一键发布</div>
+<div class="desc">SuperSplat 2.0 支持在线发布和分享场景</div>
+</div>
+<div class="feature-item">
+<div class="icon">🌍</div>
+<div class="title">多语言支持</div>
+<div class="desc">内置国际化 i18n，支持多语言界面</div>
+</div>
+</div>
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+<h2>🏗️ 技术架构</h2>
+<h3>技术栈</h3>
+<table>
+<tr><th>层级</th><th>技术</th><th>用途</th></tr>
+<tr><td>语言</td><td><strong>TypeScript</strong></td><td>类型安全的核心开发语言</td></tr>
+<tr><td>渲染引擎</td><td><strong>PlayCanvas Engine</strong></td><td>WebGPU/WebGL 3D 渲染</td></tr>
+<tr><td>构建工具</td><td><strong>Vite</strong></td><td>极速热更新开发服务器</td></tr>
+<tr><td>UI 框架</td><td><strong>React + Lit</strong></td><td>交互界面与组件管理</td></tr>
+<tr><td>数据解析</td><td><strong>自定义 PLY/Splat Parser</strong></td><td>高斯泼溅数据解码</td></tr>
+<tr><td>状态管理</td><td><strong>PlayCanvas Editor Framework</strong></td><td>编辑器状态与历史记录</td></tr>
+</table>
+
+<h3>架构亮点</h3>
+<ul>
+<li><strong>WebGPU 优先渲染管线</strong>：利用最新的 WebGPU API 实现高性能高斯泼溅渲染，自动降级到 WebGL</li>
+<li><strong>基于 PlayCanvas 引擎</strong>：复用成熟的游戏引擎渲染基础设施，GPU 实例化渲染处理数百万高斯点</li>
+<li><strong>GPU 加速的选择算法</strong>：基于投影的高斯点选择，支持点选、框选、球形选等多种模式</li>
+<li><strong>流式加载</strong>：支持大场景分块加载，避免浏览器内存溢出</li>
+<li><strong>模块化架构</strong>：编辑器核心与渲染引擎解耦，便于扩展新的编辑操作和工具</li>
+</ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="card">
+<h2>🎯 应用场景</h2>
+<table>
+<tr><th>场景</th><th>描述</th><th>适用度</th></tr>
+<tr><td><strong>3D 场景后期处理</strong></td><td>清理 NeRF/3DGS 重建中的浮点和伪影</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>Web 3D 展示优化</strong></td><td>裁剪和压缩高斯场景以适配 Web 发布</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>电商产品 3D 展示</strong></td><td>从商品照片重建 3D 模型并在线展示</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>建筑/房地产可视化</strong></td><td>室内外空间的 3D 捕获与编辑展示</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>文化遗产数字化</strong></td><td>文物、遗址的 3D 采集与在线浏览</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>游戏开发资产</strong></td><td>将高斯场景作为游戏背景或环境资产</td><td>⭐⭐⭐</td></tr>
+<tr><td><strong>VR/AR 内容创作</strong></td><td>为沉浸式体验准备高斯场景素材</td><td>⭐⭐⭐</td></tr>
+</table>
+</div>
+
+<!-- 为什么火 -->
+<div class="card">
+<h2>🔥 为什么热门</h2>
+<ul>
+<li><strong>3DGS 技术爆发期</strong>：3D Gaussian Splatting 是 2023 年以来计算机视觉领域最热门的方向之一，每天都有新的捕获工具和应用出现，但缺少好用的编辑工具</li>
+<li><strong>唯一的免费开源浏览器编辑器</strong>：市场上 Polycam、Luma AI 等多为商业工具，SuperSplat 是唯一完全免费且开源的浏览器端编辑器</li>
+<li><strong>PlayCanvas 品牌背书</strong>：PlayCanvas 是知名的 WebGL 游戏引擎，被 Facebook、Mozilla 等公司使用，技术实力和社区信任度高</li>
+<li><strong>零门槛使用</strong>：无需安装，打开浏览器即可使用，大幅降低了 3DGS 编辑的入门门槛</li>
+<li><strong>活跃的开发节奏</strong>：SuperSplat 2.0 引入发布功能，SuperSplat Studio 预告 AR/VR 支持，产品迭代迅速</li>
+<li><strong>MIT 开源协议</strong>：完全开放的许可证，吸引了大量开发者和企业用户</li>
+</ul>
+</div>
+
+<!-- 竞品对比 -->
+<div class="card">
+<h2>⚔️ 竞品对比</h2>
+<table>
+<tr><th>工具</th><th>类型</th><th>价格</th><th>平台</th><th>开源</th><th>特色</th></tr>
+<tr><td><strong>SuperSplat</strong></td><td>浏览器编辑器</td><td>免费</td><td>Web</td><td>✅ MIT</td><td>零安装，WebGPU 渲染</td></tr>
+<tr><td>Polycam</td><td>移动端+Web</td><td>免费/付费</td><td>iOS/Web</td><td>❌</td><td>手机扫描，AI 优化</td></tr>
+<tr><td>Luma AI</td><td>云服务</td><td>免费/付费</td><td>Web</td><td>❌</td><td>NeRF+Gaussian，云端处理</td></tr>
+<tr><td>PostShot</td><td>桌面软件</td><td>付费</td><td>Windows</td><td>❌</td><td>高质量重建，GPU 加速</td></tr>
+<tr><td>Nerfstudio</td><td>Python 工具链</td><td>免费</td><td>Python</td><td>✅ Apache</td><td>学术级 NeRF 训练</td></tr>
+<tr><td>SplatForge</td><td>Web 平台</td><td>免费</td><td>Web</td><td>❌</td><td>社区分享平台</td></tr>
+<tr><td>GaussianEditor</td><td>学术工具</td><td>免费</td><td>Python</td><td>✅</td><td>点云语义编辑</td></tr>
+</table>
+<p>SuperSplat 的核心优势在于<strong>零安装 + 免费开源 + 浏览器原生运行</strong>的组合，这在当前 3DGS 编辑工具生态中是独一无二的。</p>
+</div>
+
+<!-- 目标用户 -->
+<div class="card">
+<h2>👥 目标用户</h2>
+<ul>
+<li><strong>3D 艺术家 / 技术美术</strong>：需要清理和优化高斯泼溅场景以用于生产环境</li>
+<li><strong>Web 3D 开发者</strong>：希望将高斯场景集成到 Web 应用中的前端工程师</li>
+<li><strong>计算机视觉研究者</strong>：研究和实验 3D Gaussian Splatting 技术的学者</li>
+<li><strong>电商 / 房地产行业</strong>：需要 3D 产品展示或虚拟看房解决方案的业务团队</li>
+<li><strong>游戏开发者</strong>：探索高斯泼溅作为新型游戏资产形式的开发者</li>
+<li><strong>文化遗产 / 博物馆</strong>：数字化保存和在线展示文物的机构</li>
+</ul>
+</div>
+
+<!-- 快速开始 -->
+<div class="card">
+<h2>🚀 快速开始</h2>
+<h3>在线使用（推荐）</h3>
+<p>直接访问 <strong>https://superspl.at/editor</strong> 即可开始使用，无需安装。</p>
+
+<h3>本地开发</h3>
+<div class="code-block">
+<span style="color:#8b949e"># 克隆仓库</span>
+git clone https://github.com/playcanvas/supersplat.git
+cd supersplat
+
+<span style="color:#8b949e"># 安装依赖（需要 Node.js 18+）</span>
+npm install
+
+<span style="color:#8b949e"># 启动开发服务器</span>
+npm start
+<span style="color:#8b949e"># 浏览器打开 http://localhost:3000</span>
+</div>
+
+<h3>基本操作</h3>
+<ul>
+<li><strong>导入场景</strong>：拖拽 .ply 或 .splat 文件到编辑器窗口</li>
+<li><strong>选择高斯点</strong>：使用点选、框选或球形选择工具</li>
+<li><strong>编辑操作</strong>：删除选中点、移动、缩放等变换操作</li>
+<li><strong>导出结果</strong>：将编辑后的场景导出为 .ply 或压缩的 .splat 格式</li>
+</ul>
+</div>
+
+<!-- 评分 -->
+<div class="card">
+<h2>📊 综合评分</h2>
+<div class="overall-score">
+<div class="big">8.1</div>
+<div class="desc">/ 10 — 优秀的 3DGS 浏览器编辑工具，填补市场空白</div>
+</div>
+<div class="score-grid">
+<div class="score-item">
+<div class="label">创新性</div>
+<div class="value">8.0</div>
+</div>
+<div class="score-item">
+<div class="label">代码质量</div>
+<div class="value">8.5</div>
+</div>
+<div class="score-item">
+<div class="label">实用性</div>
+<div class="value">8.5</div>
+</div>
+<div class="score-item">
+<div class="label">文档完善度</div>
+<div class="value">8.0</div>
+</div>
+<div class="score-item">
+<div class="label">社区活跃度</div>
+<div class="value">7.5</div>
+</div>
+</div>
+<h3>评分说明</h3>
+<table>
+<tr><th>维度</th><th>分数</th><th>评价</th></tr>
+<tr><td><strong>创新性 8.0</strong></td><td>████████░░</td><td>首个浏览器端开源 3DGS 编辑器，基于 WebGPU 的高性能渲染管线设计先进</td></tr>
+<tr><td><strong>代码质量 8.5</strong></td><td>████████▌░</td><td>TypeScript 全量类型覆盖，PlayCanvas 引擎成熟的架构实践，Vite 构建高效</td></tr>
+<tr><td><strong>实用性 8.5</strong></td><td>████████▌░</td><td>零安装使用，支持主流格式，编辑功能完整，2.0 版本新增发布功能</td></tr>
+<tr><td><strong>文档完善度 8.0</strong></td><td>████████░░</td><td>README 清晰，在线即可体验，有开发文档但缺少详细 API 文档</td></tr>
+<tr><td><strong>社区活跃度 7.5</strong></td><td>███████▌░░</td><td>6.4K Stars 增长迅速，PlayCanvas 团队维护，但贡献者相对集中</td></tr>
+</table>
+</div>
+
+<!-- 总结 -->
+<div class="card">
+<h2>💡 总结</h2>
+<p>SuperSplat 是 3D Gaussian Splatting 生态中一款<strong>定位精准、技术扎实</strong>的工具产品。它精准地抓住了 3DGS 技术爆发期中"编辑工具"这一空缺市场，通过浏览器端零安装的策略大幅降低了使用门槛。</p>
+<p>依托 PlayCanvas 团队在 WebGL/WebGPU 渲染领域的深厚积累，SuperSplat 在渲染性能和编辑体验上都达到了较高的水准。随着 2.0 版本引入发布功能和 Studio 版本的 AR/VR 规划，其产品边界正在从单纯的编辑器向<strong>完整的 3DGS 内容创作和发布平台</strong>扩展。</p>
+<p>对于任何涉足 3D Gaussian Splatting 领域的开发者和创作者来说，SuperSplat 都是目前最值得尝试的免费编辑工具。</p>
+</div>
+
+<div class="footer">
+<p>🤖 由 AI 深度分析生成 | 分析日期: 2026-05-10 | Powered by Claude Code</p>
+</div>
+
+</div>
+</body>
+</html>
