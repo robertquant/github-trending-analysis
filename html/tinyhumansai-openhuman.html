@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenHuman - GitHub Trending 深度分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--bg-card:#111827;--bg-card2:#1a2235;--accent:#10b981;--accent2:#f59e0b;--accent3:#ef4444;--accent4:#3b82f6;--accent5:#8b5cf6;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--border:#1e293b;--glow:rgba(16,185,129,.15)}
+body{font-family:'Noto Sans SC','Space Grotesk',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.hero{position:relative;padding:60px 40px;margin-bottom:40px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);border-radius:20px;border:1px solid var(--border);overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,rgba(139,92,246,.15) 0%,transparent 70%);border-radius:50%;animation:pulse 4s ease-in-out infinite}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:300px;height:300px;background:radial-gradient(circle,rgba(59,130,246,.1) 0%,transparent 70%);border-radius:50%;animation:pulse 5s ease-in-out infinite reverse}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:1}}
+.hero-tag{display:inline-block;background:linear-gradient(135deg,var(--accent5),#7c3aed);color:#fff;font-size:12px;font-weight:600;padding:4px 14px;border-radius:20px;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,#fff,var(--accent5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;z-index:1}
+.hero .subtitle{font-size:18px;color:var(--text2);margin-bottom:24px;position:relative;z-index:1}
+.hero-stats{display:flex;flex-wrap:wrap;gap:16px;position:relative;z-index:1}
+.stat-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.08);font-size:14px}
+.stat-badge .icon{font-size:18px}
+.stat-badge .value{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent5)}
+.stat-badge .label{color:var(--text3);font-size:12px}
+.section{margin-bottom:32px}
+.section-title{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--accent5)}
+.card{background:var(--bg-card);border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:16px;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.3)}
+.arch-flow{display:flex;flex-direction:column;gap:12px;align-items:center}
+.arch-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;width:100%}
+.arch-box{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:14px 20px;text-align:center;min-width:140px;flex:1;max-width:220px;position:relative;overflow:hidden}
+.arch-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.arch-box.green::before{background:var(--accent)}
+.arch-box.blue::before{background:var(--accent4)}
+.arch-box.amber::before{background:var(--accent2)}
+.arch-box.purple::before{background:var(--accent5)}
+.arch-box.red::before{background:var(--accent3)}
+.arch-box .role{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;margin-bottom:4px}
+.arch-box .desc{font-size:12px;color:var(--text3)}
+.arch-arrow{color:var(--text3);font-size:20px;padding:4px 0}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.feature-item{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:transform .2s,border-color .2s}
+.feature-item:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.3)}
+.feature-item .fi-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.feature-item .fi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.feature-item .fi-title{font-weight:600;font-size:15px}
+.feature-item .fi-desc{font-size:13px;color:var(--text2);line-height:1.6}
+.comparison{width:100%;border-collapse:separate;border-spacing:0;background:var(--bg-card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.comparison th{background:var(--bg-card2);padding:14px 18px;text-align:left;font-weight:600;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.comparison td{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.03);font-size:14px}
+.comparison tr:last-child td{border-bottom:none}
+.comparison .highlight{color:var(--accent5);font-weight:600}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0}
+.code-header{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)}
+.code-dots{display:flex;gap:6px}
+.code-dots span{width:10px;height:10px;border-radius:50%}
+.code-dots span:nth-child(1){background:#ef4444}
+.code-dots span:nth-child(2){background:#f59e0b}
+.code-dots span:nth-child(3){background:#10b981}
+.code-content{padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:#c9d1d9;overflow-x:auto}
+.code-content .kw{color:#ff7b72}
+.code-content .fn{color:#d2a8ff}
+.code-content .str{color:#a5d6ff}
+.code-content .cmt{color:#8b949e}
+.code-content .var{color:#79c0ff}
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent5),var(--accent4),var(--accent2))}
+.timeline-item{position:relative;margin-bottom:20px;padding-left:16px}
+.timeline-item::before{content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent5);background:var(--bg)}
+.timeline-item .t-date{font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--accent5);font-weight:600;margin-bottom:4px}
+.timeline-item .t-text{font-size:14px;color:var(--text2)}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid}
+.tag.green{color:var(--accent);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)}
+.tag.blue{color:var(--accent4);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)}
+.tag.amber{color:var(--accent2);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
+.tag.purple{color:var(--accent5);border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)}
+.tag.red{color:var(--accent3);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08)}
+.rating-bar{display:flex;align-items:center;gap:12px;margin:8px 0}
+.rating-bar .bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.rating-bar .bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.rating-bar .bar-label{min-width:80px;font-size:13px;color:var(--text2)}
+.rating-bar .bar-value{min-width:40px;text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px}
+.warning-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:16px 20px;margin:16px 0;font-size:14px;color:var(--accent2)}
+.warning-box strong{color:var(--accent2)}
+.footer{text-align:center;padding:32px 0;margin-top:40px;border-top:1px solid var(--border);color:var(--text3);font-size:13px}
+.footer a{color:var(--accent5);text-decoration:none}
+@media(max-width:768px){
+.hero{padding:32px 20px}
+.hero-stats{gap:10px}
+.stat-badge{padding:8px 12px;font-size:12px}
+.feature-grid{grid-template-columns:1fr}
+.arch-row{flex-direction:column;align-items:center}
+.arch-box{max-width:100%;min-width:auto}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+<div class="hero-tag">GitHub Trending · Today +366 Stars · Early Beta</div>
+<h1>OpenHuman</h1>
+<p class="subtitle">Your Personal AI Super Intelligence — 私有、简洁、极其强大的开源桌面 AI 助手</p>
+<div class="hero-stats">
+<div class="stat-badge"><span class="icon">⭐</span><span class="value">1,543</span><span class="label">Stars</span></div>
+<div class="stat-badge"><span class="icon">🦀</span><span class="value">Rust</span><span class="label">主语言</span></div>
+<div class="stat-badge"><span class="icon">📜</span><span class="value">GPL-3.0</span><span class="label">License</span></div>
+<div class="stat-badge"><span class="icon">🏢</span><span class="value">tinyhumansai</span><span class="label">AI Lab</span></div>
+<div class="stat-badge"><span class="icon">📦</span><span class="value">Early Beta</span><span class="label">状态</span></div>
+</div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>项目简介</div>
+<div class="card">
+<p style="font-size:15px;line-height:1.8;color:var(--text2)">
+<strong style="color:var(--accent5)">OpenHuman</strong> 是由 <strong style="color:var(--text)">TinyHumans AI Lab</strong>（创始人 Steven Enamakel）开发的开源桌面 AI 助手。其核心理念是打造一个<strong style="color:var(--text)">完全私有、运行在本地的个人 AI 超级智能</strong>。与其他需要终端配置的 Agent 不同，OpenHuman 提供简洁的桌面 UI，几分钟内即可从安装到使用。它通过 <strong style="color:var(--accent5)">Memory Tree</strong> 技术自动构建你的个人知识图谱，集成 <strong style="color:var(--accent4)">118+ 第三方服务</strong>（Gmail、Notion、GitHub、Slack 等），每 20 分钟自动同步数据到本地 Obsidian 知识库，让 AI Agent 在几分钟内就拥有你的完整上下文——而不是几周。
+</p>
+<div class="tag-row" style="margin-top:16px">
+<span class="tag purple">Rust 桌面应用</span>
+<span class="tag blue">118+ 集成</span>
+<span class="tag green">Memory Tree</span>
+<span class="tag amber">Obsidian 知识库</span>
+<span class="tag red">TokenJuice 压缩</span>
+<span class="tag purple">本地隐私优先</span>
+<span class="tag blue">语音 + Mascot</span>
+</div>
+</div>
+</div>
+
+<!-- 核心功能 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>六大核心能力</div>
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(139,92,246,.12)">🧠</div>
+<div class="fi-title">Memory Tree + Obsidian Wiki</div>
+</div>
+<div class="fi-desc">灵感来自 Karpathy 的 obsidian-wiki 工作流。所有连接的数据被规范化为 ≤3k token 的 Markdown 块，分层摘要存储在本地 SQLite 中，同时生成 Obsidian 兼容的 .md 知识库。几分钟内，Agent 就拥有你的完整上下文。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(59,130,246,.12)">🔌</div>
+<div class="fi-title">118+ 一键 OAuth 集成</div>
+</div>
+<div class="fi-desc">Gmail、Notion、GitHub、Slack、Stripe、Calendar、Drive、Linear、Jira 等 118+ 服务，一键 OAuth 连接。每个连接自动暴露为类型化工具给 Agent 使用，无需手动配置 API Key。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">🔄</div>
+<div class="fi-title">20 分钟自动同步 (Auto-fetch)</div>
+</div>
+<div class="fi-desc">每 20 分钟自动遍历所有活跃连接，拉取最新数据到 Memory Tree。无需手动触发、无需写轮询脚本——Agent 在你早上醒来前就已经有了今天的上下文。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(245,158,11,.12)">⚡</div>
+<div class="fi-title">TokenJuice 智能压缩</div>
+</div>
+<div class="fi-desc">每个工具调用、网页抓取、邮件内容都经过 token 压缩层处理。HTML→Markdown、URL 缩短、非 ASCII 字符清理……同样的信息，最高节省 80% 的 token 消耗和成本。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(239,68,68,.12)">🎙️</div>
+<div class="fi-title">原生语音 + 桌面吉祥物</div>
+</div>
+<div class="fi-desc">Agent 有一个桌面吉祥物，能说话、反应环境变化，甚至作为真实参与者加入你的 Google Meet。STT 语音输入 + ElevenLabs TTS 语音输出 + 唇形同步，后台持续思考。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">🛡️</div>
+<div class="fi-title">本地隐私 + 模型路由</div>
+</div>
+<div class="fi-desc">所有工作流数据保存在本地设备，本地加密。内置模型路由自动将推理任务、快速任务、视觉任务分发到合适的 LLM。可选 Ollama 本地模型完全离线运行。</div>
+</div>
+</div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>技术架构</div>
+<div class="card">
+<div class="arch-flow">
+<div class="arch-row">
+<div class="arch-box purple"><div class="role">桌面 UI + Mascot</div><div class="desc">Tauri (Rust) 桌面应用<br>跨平台 GUI</div></div>
+<div class="arch-box blue"><div class="role">语音引擎</div><div class="desc">STT 语音输入<br>ElevenLabs TTS + 唇形同步</div></div>
+<div class="arch-box green"><div class="role">Google Meet Agent</div><div class="desc">虚拟参与者<br>实时会议辅助</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box purple" style="max-width:320px"><div class="role">Agent Core + 模型路由</div><div class="desc">推理模型 / 快速模型 / 视觉模型<br>自动路由 · 内置工具集 · 搜索 · 代码</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box amber" style="max-width:320px"><div class="role">TokenJuice 压缩层</div><div class="desc">HTML→Markdown · URL缩短 · 字符清理<br>最高节省 80% Token 成本</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box green"><div class="role">Memory Tree</div><div class="desc">SQLite 本地存储<br>≤3k token Markdown 块</div></div>
+<div class="arch-box blue"><div class="role">Obsidian Vault</div><div class="desc">兼容 .md 知识库<br>可视化浏览与编辑</div></div>
+<div class="arch-box red"><div class="role">Auto-fetch 引擎</div><div class="desc">20 分钟同步周期<br>118+ 服务数据拉取</div></div>
+<div class="arch-box purple"><div class="role">Ollama (可选)</div><div class="desc">完全本地 LLM<br>离线运行</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>应用场景</div>
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(139,92,246,.12)">👨‍💻</div>
+<div class="fi-title">开发者个人助手</div>
+</div>
+<div class="fi-desc">连接 GitHub、Notion、Slack，自动同步代码仓库和文档。Agent 了解你的项目上下文，帮你写代码、Review PR、管理 Issue，甚至参与 Google Meet 会议做笔记。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(59,130,246,.12)">📊</div>
+<div class="fi-title">知识工作者</div>
+</div>
+<div class="fi-desc">Gmail + Calendar + Drive + Notion 一键连接，Memory Tree 自动构建个人知识库。Obsidian 可视化浏览所有邮件、文档、日程摘要，AI 随时调用你的完整上下文。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(245,158,11,.12)">🔒</div>
+<div class="fi-title">隐私敏感用户</div>
+</div>
+<div class="fi-desc">所有数据本地存储加密，可选 Ollama 完全离线运行。不信任云端 AI 处理敏感数据的用户——律师、医生、金融从业者——OpenHuman 让 AI 能力完全在本地运行。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">🎯</div>
+<div class="fi-title">团队协作</div>
+</div>
+<div class="fi-desc">集成 Jira、Linear、Slack、Stripe 等 118+ 工具，自动同步团队数据。Agent 跨服务理解上下文，帮你追踪项目进度、生成报告、安排日程。</div>
+</div>
+</div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>为什么 Trending？</div>
+<div class="card">
+<div class="timeline">
+<div class="timeline-item">
+<div class="t-date">痛点直击</div>
+<div class="t-text">现有 AI 助手（Claude Desktop、ChatGPT）<strong style="color:var(--accent5)">每次对话都从零开始</strong>，需要几周才能了解你的工作上下文。OpenHuman 通过 Memory Tree + 20 分钟自动同步，在<strong style="color:var(--accent5)">几分钟内</strong>就让 Agent 拥有你的完整知识图谱。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">隐私趋势</div>
+<div class="t-text">2026 年用户对云端 AI 处理个人数据的隐私担忧日益增长。OpenHuman 的<strong style="color:var(--accent5)">100% 本地运行 + 端侧加密</strong>直击这一趋势，获得隐私敏感用户的高度关注。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">Rust 性能优势</div>
+<div class="t-text">用 Rust 构建桌面 AI 应用在 GitHub 上相对罕见。Rust 的<strong style="color:var(--accent5)">内存安全 + 高性能</strong>为本地 Agent 提供了理想的运行时基础，吸引了大量 Rust 社区开发者关注。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">Karpathy 效应</div>
+<div class="t-text">灵感来自 Karpathy 的 obsidian-wiki 和 LLM Knowledgebase 思路，这种<strong style="color:var(--accent5)">"用 LLM 理解你自己"</strong>的理念在技术社区极具共鸣。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">产品体验突出</div>
+<div class="t-text">UI-first 设计，桌面吉祥物，Google Meet 参与者，语音交互……相比终端优先的 Agent 框架，<strong style="color:var(--accent5)">OpenHuman 的产品化程度远超同类</strong>。</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 同类对比 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>同类项目对比</div>
+<table class="comparison">
+<thead>
+<tr><th>维度</th><th class="highlight">OpenHuman</th><th>Claude Desktop</th><th>Hermes Agent</th><th>AnythingLLM</th></tr>
+</thead>
+<tbody>
+<tr><td>开源</td><td class="highlight">✅ GPL-3.0</td><td>❌ 闭源</td><td>✅ MIT</td><td>✅ MIT</td></tr>
+<tr><td>UI 体验</td><td class="highlight">✅ 桌面 UI + 吉祥物</td><td>✅ 桌面 App</td><td>⚠️ 终端优先</td><td>✅ Web UI</td></tr>
+<tr><td>持久记忆</td><td class="highlight">✅ Memory Tree + Obsidian</td><td>⚠️ 会话级</td><td>✅ 自学习</td><td>⚠️ 文档级</td></tr>
+<tr><td>第三方集成</td><td class="highlight">✅ 118+ 一键 OAuth</td><td>⚠️ 少量</td><td>⚠️ 需自建</td><td>⚠️ 文档为主</td></tr>
+<tr><td>自动同步</td><td class="highlight">✅ 20 分钟周期</td><td>❌</td><td>❌</td><td>❌</td></tr>
+<tr><td>本地运行</td><td class="highlight">✅ 完全本地 + Ollama</td><td>❌ 云端</td><td>⚠️ BYO 模型</td><td>✅ Docker</td></tr>
+<tr><td>Token 成本优化</td><td class="highlight">✅ TokenJuice 压缩 80%</td><td>❌</td><td>❌</td><td>❌</td></tr>
+<tr><td>语音能力</td><td class="highlight">✅ STT + TTS + Meet</td><td>⚠️ 基础语音</td><td>❌</td><td>❌</td></tr>
+<tr><td>模型路由</td><td class="highlight">✅ 自动分发</td><td>❌ 单模型</td><td>⚠️ 手动</td><td>⚠️ 手动</td></tr>
+<tr><td>成熟度</td><td class="highlight">⚠️ Early Beta</td><td>✅ 生产级</td><td>⚠️ 活跃开发</td><td>✅ 稳定</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 适合谁 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>适合谁使用？</div>
+<div class="card">
+<div class="feature-grid">
+<div style="padding:12px">
+<p style="font-size:15px;margin-bottom:8px">🎯 <strong style="color:var(--accent5)">核心用户</strong></p>
+<ul style="font-size:14px;color:var(--text2);padding-left:20px;line-height:2">
+<li><strong>注重隐私的知识工作者</strong> — 不愿将数据交给云端 AI</li>
+<li><strong>重度多工具用户</strong> — Gmail/Notion/GitHub/Slack 重度依赖者</li>
+<li><strong>开发者 & 技术从业者</strong> — 需要个人 AI 编程助手</li>
+<li><strong>Karpathy 工作流爱好者</strong> — 喜欢用 LLM 管理个人知识</li>
+</ul>
+</div>
+<div style="padding:12px">
+<p style="font-size:15px;margin-bottom:8px">⚠️ <strong style="color:var(--accent2)">注意事项</strong></p>
+<ul style="font-size:14px;color:var(--text2);padding-left:20px;line-height:2">
+<li><strong>项目处于 Early Beta</strong> — 预期有不完善之处</li>
+<li><strong>需要订阅 LLM 服务</strong> — 模型调用有费用（可选 Ollama 免费）</li>
+<li><strong>Rust 技术栈</strong> — 贡献代码需要 Rust 经验</li>
+<li><strong>桌面应用</strong> — 目前仅支持桌面端</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>快速上手指南</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent5)">macOS / Linux</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>Terminal</div>
+<div class="code-content">
+<span class="cmt"># 一键安装</span>
+curl -fsSL https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.sh | bash
+</div>
+</div>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent4)">Windows</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>PowerShell</div>
+<div class="code-content">
+<span class="cmt"># 一键安装</span>
+irm https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.ps1 | iex
+</div>
+</div>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent)">或者直接下载安装包</p>
+<p style="font-size:14px;color:var(--text2)">访问 <strong style="color:var(--text)">tinyhumans.ai/openhuman</strong> 下载 DMG（macOS）或 EXE（Windows）安装包。</p>
+</div>
+
+<div class="warning-box">
+<strong>⚠️ Early Beta 提示：</strong>项目处于早期测试阶段，可能存在不稳定功能。建议关注 GitHub Releases 获取更新，加入 Discord 社区反馈问题。
+</div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>综合评分</div>
+<div class="card">
+<div class="rating-bar">
+<span class="bar-label">创新性</span>
+<div class="bar-bg"><div class="bar-fill" style="width:91%;background:linear-gradient(90deg,var(--accent5),#7c3aed)"></div></div>
+<span class="bar-value" style="color:var(--accent5)">9.1</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">代码质量</span>
+<div class="bar-bg"><div class="bar-fill" style="width:75%;background:linear-gradient(90deg,var(--accent4),#2563eb)"></div></div>
+<span class="bar-value" style="color:var(--accent4)">7.5</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">实用性</span>
+<div class="bar-bg"><div class="bar-fill" style="width:82%;background:linear-gradient(90deg,var(--accent2),#d97706)"></div></div>
+<span class="bar-value" style="color:var(--accent2)">8.2</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">文档完善度</span>
+<div class="bar-bg"><div class="bar-fill" style="width:72%;background:linear-gradient(90deg,var(--accent),#059669)"></div></div>
+<span class="bar-value" style="color:var(--accent)">7.2</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">社区活跃度</span>
+<div class="bar-bg"><div class="bar-fill" style="width:78%;background:linear-gradient(90deg,var(--accent3),#dc2626)"></div></div>
+<span class="bar-value" style="color:var(--accent3)">7.8</span>
+</div>
+<div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+<span style="font-size:14px;color:var(--text3)">综合评分</span>
+<span style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;background:linear-gradient(135deg,var(--accent5),var(--accent4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 12px">8.0</span>
+<span style="font-size:14px;color:var(--text3)">/ 10</span>
+</div>
+</div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+<p>Generated by <a href="https://github.com/robertquant/github-trending-analysis">GitHub Trending Analysis</a> · 2026-05-12</p>
+<p style="margin-top:8px"><a href="https://github.com/tinyhumansai/openhuman">github.com/tinyhumansai/openhuman</a></p>
+</div>
+
+</div>
+</body>
+</html>
