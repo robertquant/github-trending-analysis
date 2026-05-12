@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AiToEarn - GitHub Trending 深度分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--bg-card:#111827;--bg-card2:#1a2235;--accent:#10b981;--accent2:#f59e0b;--accent3:#ef4444;--accent4:#3b82f6;--accent5:#8b5cf6;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--border:#1e293b;--glow:rgba(16,185,129,.15)}
+body{font-family:'Noto Sans SC','Space Grotesk',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.hero{position:relative;padding:60px 40px;margin-bottom:40px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);border-radius:20px;border:1px solid var(--border);overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,rgba(16,185,129,.12) 0%,transparent 70%);border-radius:50%;animation:pulse 4s ease-in-out infinite}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:300px;height:300px;background:radial-gradient(circle,rgba(245,158,11,.08) 0%,transparent 70%);border-radius:50%;animation:pulse 5s ease-in-out infinite reverse}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:1}}
+.hero-tag{display:inline-block;background:linear-gradient(135deg,var(--accent),#059669);color:#fff;font-size:12px;font-weight:600;padding:4px 14px;border-radius:20px;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;z-index:1}
+.hero .subtitle{font-size:18px;color:var(--text2);margin-bottom:24px;position:relative;z-index:1}
+.hero-stats{display:flex;flex-wrap:wrap;gap:16px;position:relative;z-index:1}
+.stat-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.08);font-size:14px}
+.stat-badge .icon{font-size:18px}
+.stat-badge .value{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent)}
+.stat-badge .label{color:var(--text3);font-size:12px}
+.section{margin-bottom:32px}
+.section-title{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.card{background:var(--bg-card);border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:16px;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-2px);border-color:rgba(16,185,129,.3)}
+.arch-flow{display:flex;flex-direction:column;gap:12px;align-items:center}
+.arch-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;width:100%}
+.arch-box{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:14px 20px;text-align:center;min-width:140px;flex:1;max-width:220px;position:relative;overflow:hidden}
+.arch-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.arch-box.green::before{background:var(--accent)}
+.arch-box.blue::before{background:var(--accent4)}
+.arch-box.amber::before{background:var(--accent2)}
+.arch-box.purple::before{background:var(--accent5)}
+.arch-box.red::before{background:var(--accent3)}
+.arch-box .role{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;margin-bottom:4px}
+.arch-box .desc{font-size:12px;color:var(--text3)}
+.arch-arrow{color:var(--text3);font-size:20px;padding:4px 0}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.feature-item{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:transform .2s,border-color .2s}
+.feature-item:hover{transform:translateY(-2px);border-color:rgba(16,185,129,.3)}
+.feature-item .fi-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.feature-item .fi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.feature-item .fi-title{font-weight:600;font-size:15px}
+.feature-item .fi-desc{font-size:13px;color:var(--text2);line-height:1.6}
+.comparison{width:100%;border-collapse:separate;border-spacing:0;background:var(--bg-card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.comparison th{background:var(--bg-card2);padding:14px 18px;text-align:left;font-weight:600;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.comparison td{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.03);font-size:14px}
+.comparison tr:last-child td{border-bottom:none}
+.comparison .highlight{color:var(--accent);font-weight:600}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0}
+.code-header{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)}
+.code-dots{display:flex;gap:6px}
+.code-dots span{width:10px;height:10px;border-radius:50%}
+.code-dots span:nth-child(1){background:#ef4444}
+.code-dots span:nth-child(2){background:#f59e0b}
+.code-dots span:nth-child(3){background:#10b981}
+.code-content{padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:#c9d1d9;overflow-x:auto}
+.code-content .kw{color:#ff7b72}
+.code-content .fn{color:#d2a8ff}
+.code-content .str{color:#a5d6ff}
+.code-content .cmt{color:#8b949e}
+.code-content .var{color:#79c0ff}
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent),var(--accent5),var(--accent2))}
+.timeline-item{position:relative;margin-bottom:20px;padding-left:16px}
+.timeline-item::before{content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+.timeline-item .t-date{font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.timeline-item .t-text{font-size:14px;color:var(--text2)}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid}
+.tag.green{color:var(--accent);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)}
+.tag.blue{color:var(--accent4);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)}
+.tag.amber{color:var(--accent2);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
+.tag.purple{color:var(--accent5);border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)}
+.tag.red{color:var(--accent3);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08)}
+.rating-bar{display:flex;align-items:center;gap:12px;margin:8px 0}
+.rating-bar .bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.rating-bar .bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.rating-bar .bar-label{min-width:80px;font-size:13px;color:var(--text2)}
+.rating-bar .bar-value{min-width:40px;text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px}
+.warning-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:16px 20px;margin:16px 0;font-size:14px;color:var(--accent2)}
+.warning-box strong{color:var(--accent2)}
+.footer{text-align:center;padding:32px 0;margin-top:40px;border-top:1px solid var(--border);color:var(--text3);font-size:13px}
+.footer a{color:var(--accent);text-decoration:none}
+@media(max-width:768px){
+.hero{padding:32px 20px}
+.hero-stats{gap:10px}
+.stat-badge{padding:8px 12px;font-size:12px}
+.feature-grid{grid-template-columns:1fr}
+.arch-row{flex-direction:column;align-items:center}
+.arch-box{max-width:100%;min-width:auto}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+<div class="hero-tag">GitHub Trending · Today +427 Stars</div>
+<h1>AiToEarn</h1>
+<p class="subtitle">Let's use AI to Earn! — AI 驱动的一站式内容创作、分发与变现平台</p>
+<div class="hero-stats">
+<div class="stat-badge"><span class="icon">⭐</span><span class="value">10,877</span><span class="label">Stars</span></div>
+<div class="stat-badge"><span class="icon">🔷</span><span class="value">TypeScript</span><span class="label">主语言</span></div>
+<div class="stat-badge"><span class="icon">📜</span><span class="value">MIT</span><span class="label">License</span></div>
+<div class="stat-badge"><span class="icon">🏢</span><span class="value">yikart</span><span class="label">开发者</span></div>
+<div class="stat-badge"><span class="icon">📦</span><span class="value">v2.1</span><span class="label">最新版</span></div>
+</div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>项目简介</div>
+<div class="card">
+<p style="font-size:15px;line-height:1.8;color:var(--text2)">
+<strong style="color:var(--accent)">AiToEarn</strong> 是一个开源的 AI 内容营销智能体平台，核心理念是<strong style="color:var(--text)">"用 AI 赚钱"</strong>。它为 OPC（一人公司）、创作者、品牌与企业提供从<strong style="color:var(--accent)">内容创作 → 多平台发布 → 自动互动 → 效果变现</strong>的全链路 AI 自动化能力。平台覆盖全球 <strong style="color:var(--text)">12 个主流社交媒体</strong>（抖音、小红书、快手、B站、TikTok、YouTube、Facebook、Instagram、Threads、X、Pinterest、LinkedIn），通过 AI Agent 自动化大幅降低内容运营成本，并通过内置的<strong style="color:var(--accent2)">内容交易市场</strong>帮助创作者直接变现。
+</p>
+<div class="tag-row" style="margin-top:16px">
+<span class="tag green">AI 内容自动化</span>
+<span class="tag blue">12+ 平台分发</span>
+<span class="tag amber">内容交易市场</span>
+<span class="tag purple">MCP 协议</span>
+<span class="tag red">Docker 部署</span>
+<span class="tag green">Electron 桌面端</span>
+<span class="tag blue">浏览器插件</span>
+</div>
+</div>
+</div>
+
+<!-- 核心功能 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>四大核心 Agent 能力</div>
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">💰</div>
+<div class="fi-title">Monetize · 内容变现</div>
+</div>
+<div class="fi-desc">平台最核心的能力——帮助创作者赚钱。内置内容交易市场，创作者可接商家的推广任务，按 CPS（按成交）、CPE（按互动）、CPM（按曝光）三种模式结算，结果导向，公平透明。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(59,130,246,.12)">📢</div>
+<div class="fi-title">Publish · 多平台发布</div>
+</div>
+<div class="fi-desc">一键将内容分发到全球 12+ 主流平台，告别逐个手动发布。支持日历排期功能，像排日程一样统一规划所有平台的内容发布时间，大幅提升运营效率。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(245,158,11,.12)">💬</div>
+<div class="fi-title">Engage · 智能互动</div>
+</div>
+<div class="fi-desc">通过浏览器插件实现全平台自动化互动运营：自动点赞、收藏、关注，AI 智能评论回复，评论中高转化信号挖掘（如"求链接""怎么买"），品牌舆情实时监测。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(139,92,246,.12)">🎨</div>
+<div class="fi-title">Create · AI 内容创作</div>
+</div>
+<div class="fi-desc">Agent 驱动的内容生产线：自动调用视频生成模型（Grok、Veo、Seedance）、图片模型（Nano Banana），支持视频翻译带口型匹配、批量内容生成，适合矩阵账号运营。</div>
+</div>
+</div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>技术架构</div>
+<div class="card">
+<div class="arch-flow">
+<div class="arch-row">
+<div class="arch-box green"><div class="role">Web 前端</div><div class="desc">Next.js / React<br>TypeScript</div></div>
+<div class="arch-box blue"><div class="role">Electron 桌面端</div><div class="desc">跨平台桌面客户端<br>SQLite 本地存储</div></div>
+<div class="arch-box amber"><div class="role">浏览器插件</div><div class="desc">全平台互动自动化<br>Engage Agent 载体</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box purple" style="max-width:280px"><div class="role">AI Agent 层</div><div class="desc">内容创作 Agent · 发布调度 Agent<br>互动运营 Agent · 变现匹配 Agent</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box green"><div class="role">Node.js 后端</div><div class="desc">Nx Monorepo 架构<br>pnpm 工作区</div></div>
+<div class="arch-box blue"><div class="role">MongoDB</div><div class="desc">数据存储<br>内容与用户管理</div></div>
+<div class="arch-box amber"><div class="role">Redis</div><div class="desc">缓存与队列<br>任务调度</div></div>
+<div class="arch-box red"><div class="role">MCP 协议</div><div class="desc">Claude / Cursor 集成<br>标准化 Agent 通信</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box purple" style="max-width:400px"><div class="role">社交媒体 API 对接层</div><div class="desc">抖音 · 小红书 · 快手 · B站 · TikTok · YouTube · Facebook · Instagram · Threads · X · Pinterest · LinkedIn</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>应用场景</div>
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">👤</div>
+<div class="fi-title">一人公司 / 自由职业者</div>
+</div>
+<div class="fi-desc">没有团队？AI Agent 就是你的内容团队。一个人即可完成内容创作、多平台分发、粉丝互动和商业变现，真正实现"一人即公司"。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(59,130,246,.12)">🏪</div>
+<div class="fi-title">线下商户推广</div>
+</div>
+<div class="fi-desc">v1.8 新增线下商户推广方案，支持餐厅、零售店、民宿、美容美发、健身房等业态，将线下推广转化为线上传播任务，获取线上曝光和到店流量。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(245,158,11,.12)">📱</div>
+<div class="fi-title">自媒体矩阵运营</div>
+</div>
+<div class="fi-desc">批量生成内容、一键分发 12+ 平台、自动互动，适合运营大量账号的 MCN 机构和矩阵运营者，大幅降低人力成本。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(139,92,246,.12)">🏢</div>
+<div class="fi-title">品牌企业营销</div>
+</div>
+<div class="fi-desc">企业级私有化部署方案，品牌监测与舆情管理，通过内容交易市场精准投放 KOC 营销任务，效果可量化。</div>
+</div>
+</div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>为什么 Trending？</div>
+<div class="card">
+<div class="timeline">
+<div class="timeline-item">
+<div class="t-date">痛点直击</div>
+<div class="t-text">AI 赚钱是 2025-2026 年最大的流量密码。AiToEarn 不是概念验证，而是<strong style="color:var(--accent)">真正可用的赚钱工具</strong>——从内容生产到变现的完整闭环，直接切中创作者经济核心需求。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">产品完整度极高</div>
+<div class="t-text">从 2025 年 2 月首版到 2026 年 3 月 v2.1，<strong style="color:var(--accent)">一年内完成了内容创作→发布→互动→变现的完整链路</strong>，加上内容交易市场和 MCP 协议支持，产品成熟度远超同类项目。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">覆盖面广</div>
+<div class="t-text">12+ 平台全球覆盖（国内 + 海外），5 种使用方式（网页、龙虾、AI 助手、Docker、源码），Docker 一键部署，<strong style="color:var(--accent)">极低的入门门槛</strong>。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">生态整合</div>
+<div class="t-text">MCP 协议打通 Claude/Cursor 等 AI 工具，OpenClaw（龙虾）集成实现去中心化任务分发，<strong style="color:var(--accent)">构建了完整的内容营销智能体生态</strong>。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">社区驱动力</div>
+<div class="t-text">知乎"40个搞钱GitHub仓库"推荐，9300+ 营销智能体生态，活跃的 Discussions 和 Issues，开发者持续快速迭代。</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 同类对比 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>同类项目对比</div>
+<table class="comparison">
+<thead>
+<tr><th>维度</th><th class="highlight">AiToEarn</th><th>Buffer / Hootsuite</th><th>MoneyPrinterTurbo</th></tr>
+</thead>
+<tbody>
+<tr><td>开源</td><td class="highlight">✅ 完全开源 MIT</td><td>❌ 闭源付费</td><td>✅ 开源</td></tr>
+<tr><td>覆盖平台</td><td class="highlight">12+ 国内外平台</td><td>6-8 海外平台</td><td>仅视频生成</td></tr>
+<tr><td>AI 内容创作</td><td class="highlight">✅ 视频翻译+图片+批量</td><td>⚠️ 基础 AI 辅助</td><td>✅ AI 视频生成</td></tr>
+<tr><td>自动互动</td><td class="highlight">✅ 浏览器插件全平台</td><td>❌ 无</td><td>❌ 无</td></tr>
+<tr><td>变现能力</td><td class="highlight">✅ 内置交易市场 CPS/CPE/CPM</td><td>❌ 无</td><td>❌ 无</td></tr>
+<tr><td>MCP 协议</td><td class="highlight">✅ 支持 Claude/Cursor</td><td>❌ 无</td><td>❌ 无</td></tr>
+<tr><td>私有化部署</td><td class="highlight">✅ Docker 一键部署</td><td>❌ 仅 SaaS</td><td>✅ 需手动配置</td></tr>
+<tr><td>国内平台</td><td class="highlight">✅ 抖音/小红书/快手/B站</td><td>❌ 不支持</td><td>⚠️ 有限支持</td></tr>
+<tr><td>价格</td><td class="highlight">免费 + 可选 API</td><td>$6-99/月</td><td>免费</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 适合谁 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>适合谁使用？</div>
+<div class="card">
+<div class="feature-grid">
+<div style="padding:12px">
+<p style="font-size:15px;margin-bottom:8px">🎯 <strong style="color:var(--accent)">核心用户</strong></p>
+<ul style="font-size:14px;color:var(--text2);padding-left:20px;line-height:2">
+<li><strong>一人公司 / 独立创作者</strong> — 需要一个人运营多个社交平台</li>
+<li><strong>MCN 机构</strong> — 管理大量账号需要自动化工具</li>
+<li><strong>线下商户</strong> — 需要通过线上内容获取到店流量</li>
+<li><strong>品牌营销团队</strong> — 需要多平台统一管理 + 数据追踪</li>
+</ul>
+</div>
+<div style="padding:12px">
+<p style="font-size:15px;margin-bottom:8px">🔧 <strong style="color:var(--accent4)">开发者</strong></p>
+<ul style="font-size:14px;color:var(--text2);padding-left:20px;line-height:2">
+<li><strong>TypeScript / Node.js 开发者</strong> — 可基于源码二次开发</li>
+<li><strong>AI 应用开发者</strong> — 通过 MCP 协议集成到自有工作流</li>
+<li><strong>DevOps 工程师</strong> — Docker 部署企业私有化实例</li>
+<li><strong>数据分析者</strong> — 研究内容营销自动化策略</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>快速上手指南</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent)">方式一：网页直接使用（零配置）</p>
+<p style="font-size:14px;color:var(--text2);margin-bottom:12px">直接打开 <strong style="color:var(--text)">aitoearn.cn</strong>（中国用户）或 <strong style="color:var(--text)">aitoearn.ai</strong>（国际用户），注册即可使用。</p>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent4)">方式二：Docker 私有化部署</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>Terminal</div>
+<div class="code-content">
+<span class="cmt"># 克隆仓库</span>
+git clone https://github.com/yikart/AiToEarn.git
+<span class="kw">cd</span> AiToEarn
+
+<span class="cmt"># 一键启动（含 MongoDB + Redis）</span>
+docker compose up -d
+
+<span class="cmt"># 访问 http://localhost:8080</span>
+</div>
+</div>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent5)">方式三：MCP 集成 Claude / Cursor</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>claude_desktop_config.json</div>
+<div class="code-content">
+{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"aitoearn"</span>: {
+      <span class="str">"type"</span>: <span class="str">"http"</span>,
+      <span class="str">"url"</span>: <span class="str">"https://aitoearn.ai/api/unified/mcp"</span>,
+      <span class="str">"headers"</span>: {
+        <span class="str">"x-api-key"</span>: <span class="str">"你的API-Key"</span>
+      }
+    }
+  }
+}
+</div>
+</div>
+</div>
+
+<div class="warning-box">
+<strong>⚠️ 注意：</strong>发布内容需要通过 OAuth 登录社交媒体账号。Docker 自部署用户建议配置 Relay（借用官方凭据），避免自行申请各平台开发者账号。
+</div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>综合评分</div>
+<div class="card">
+<div class="rating-bar">
+<span class="bar-label">创新性</span>
+<div class="bar-bg"><div class="bar-fill" style="width:88%;background:linear-gradient(90deg,var(--accent),#059669)"></div></div>
+<span class="bar-value" style="color:var(--accent)">8.8</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">代码质量</span>
+<div class="bar-bg"><div class="bar-fill" style="width:78%;background:linear-gradient(90deg,var(--accent4),#2563eb)"></div></div>
+<span class="bar-value" style="color:var(--accent4)">7.8</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">实用性</span>
+<div class="bar-bg"><div class="bar-fill" style="width:92%;background:linear-gradient(90deg,var(--accent2),#d97706)"></div></div>
+<span class="bar-value" style="color:var(--accent2)">9.2</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">文档完善度</span>
+<div class="bar-bg"><div class="bar-fill" style="width:82%;background:linear-gradient(90deg,var(--accent5),#7c3aed)"></div></div>
+<span class="bar-value" style="color:var(--accent5)">8.2</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">社区活跃度</span>
+<div class="bar-bg"><div class="bar-fill" style="width:80%;background:linear-gradient(90deg,var(--accent3),#dc2626)"></div></div>
+<span class="bar-value" style="color:var(--accent3)">8.0</span>
+</div>
+<div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+<span style="font-size:14px;color:var(--text3)">综合评分</span>
+<span style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 12px">8.4</span>
+<span style="font-size:14px;color:var(--text3)">/ 10</span>
+</div>
+</div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+<p>Generated by <a href="https://github.com/robertquant/github-trending-analysis">GitHub Trending Analysis</a> · 2026-05-12</p>
+<p style="margin-top:8px"><a href="https://github.com/yikart/AiToEarn">github.com/yikart/AiToEarn</a></p>
+</div>
+
+</div>
+</body>
+</html>
