@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent — GitHub Trending 深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e17;color:#e0e6ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.8;overflow-x:hidden}
+.container{max-width:960px;margin:0 auto;padding:40px 24px}
+.hero{text-align:center;padding:60px 20px 40px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;padding:6px 20px;border-radius:20px;background:rgba(99,102,241,0.15);color:#818cf8;font-size:13px;font-weight:600;letter-spacing:1px;margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)}
+.hero h1{font-size:2.8em;font-weight:800;background:linear-gradient(135deg,#818cf8,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;line-height:1.2}
+.hero .tagline{font-size:1.15em;color:#94a3b8;max-width:600px;margin:0 auto}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:40px 0}
+.stat-card{background:linear-gradient(135deg,rgba(30,35,55,0.8),rgba(20,24,40,0.9));border:1px solid rgba(99,102,241,0.15);border-radius:16px;padding:20px;text-align:center;transition:transform 0.3s,border-color 0.3s}
+.stat-card:hover{transform:translateY(-4px);border-color:rgba(99,102,241,0.4)}
+.stat-value{font-size:1.8em;font-weight:800;color:#818cf8}
+.stat-label{font-size:0.85em;color:#64748b;margin-top:4px}
+.section{margin:48px 0}
+.section-title{font-size:1.6em;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid #818cf8;color:#f1f5f9}
+.card{background:linear-gradient(135deg,rgba(30,35,55,0.6),rgba(20,24,40,0.8));border:1px solid rgba(99,102,241,0.12);border-radius:16px;padding:28px;margin-bottom:20px;transition:border-color 0.3s}
+.card:hover{border-color:rgba(99,102,241,0.3)}
+.card h3{font-size:1.2em;color:#c084fc;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card p{color:#94a3b8;line-height:1.8}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.feature-card{background:linear-gradient(135deg,rgba(30,35,55,0.6),rgba(20,24,40,0.8));border:1px solid rgba(99,102,241,0.1);border-radius:14px;padding:24px;transition:all 0.3s}
+.feature-card:hover{border-color:rgba(99,102,241,0.35);transform:translateY(-2px)}
+.feature-icon{font-size:2em;margin-bottom:12px}
+.feature-card h4{color:#818cf8;font-size:1.05em;margin-bottom:8px}
+.feature-card p{color:#8892a4;font-size:0.9em;line-height:1.7}
+.comparison-table{width:100%;border-collapse:separate;border-spacing:0;margin:20px 0;background:rgba(15,18,30,0.6);border-radius:16px;overflow:hidden;border:1px solid rgba(99,102,241,0.12)}
+.comparison-table th{background:rgba(99,102,241,0.15);color:#c084fc;padding:14px 16px;text-align:left;font-weight:600;font-size:0.9em}
+.comparison-table td{padding:12px 16px;border-top:1px solid rgba(99,102,241,0.08);font-size:0.9em;color:#94a3b8}
+.comparison-table tr:hover td{background:rgba(99,102,241,0.05)}
+.comparison-table td:first-child{color:#e2e8f0;font-weight:600}
+.badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:0.8em;font-weight:600}
+.badge-green{background:rgba(34,197,94,0.15);color:#4ade80}
+.badge-red{background:rgba(239,68,68,0.15);color:#f87171}
+.badge-yellow{background:rgba(234,179,8,0.15);color:#facc15}
+.score-section{text-align:center;padding:40px 0}
+.score-circle{display:inline-block;width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(192,132,252,0.2));border:3px solid #818cf8;line-height:140px;font-size:2.8em;font-weight:800;color:#818cf8;margin-bottom:16px}
+.score-bars{text-align:left;max-width:500px;margin:0 auto}
+.score-bar-item{margin:12px 0}
+.score-bar-label{display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:6px}
+.score-bar-label span:first-child{color:#cbd5e1}
+.score-bar-label span:last-child{color:#818cf8;font-weight:700}
+.score-bar-track{height:8px;background:rgba(99,102,241,0.1);border-radius:4px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.code-block{background:rgba(10,14,23,0.8);border:1px solid rgba(99,102,241,0.15);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;font-family:'Fira Code',monospace;font-size:0.88em;color:#a5b4fc;line-height:1.7}
+.code-block .comment{color:#64748b}
+.code-block .keyword{color:#c084fc}
+.code-block .string{color:#4ade80}
+.trending-reasons{counter-reset:reason}
+.trending-item{counter-increment:reason;padding:20px 20px 20px 60px;position:relative;margin-bottom:12px;background:linear-gradient(135deg,rgba(30,35,55,0.5),rgba(20,24,40,0.7));border:1px solid rgba(99,102,241,0.1);border-radius:14px;transition:border-color 0.3s}
+.trending-item:hover{border-color:rgba(99,102,241,0.3)}
+.trending-item::before{content:counter(reason);position:absolute;left:16px;top:18px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#818cf8,#c084fc);color:#fff;font-weight:800;font-size:0.9em;display:flex;align-items:center;justify-content:center}
+.trending-item h4{color:#e2e8f0;margin-bottom:6px}
+.trending-item p{color:#8892a4;font-size:0.9em}
+.architecture-flow{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin:20px 0}
+.arch-box{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(192,132,252,0.1));border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:14px 20px;text-align:center;color:#c084fc;font-weight:600;font-size:0.9em;min-width:120px}
+.arch-arrow{color:#64748b;font-size:1.5em}
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,#818cf8,#c084fc)}
+.timeline-item{position:relative;margin-bottom:24px;padding-left:20px}
+.timeline-item::before{content:'';position:absolute;left:-26px;top:8px;width:12px;height:12px;border-radius:50%;background:#818cf8;border:2px solid #0a0e17}
+.timeline-item h4{color:#e2e8f0;font-size:1em;margin-bottom:4px}
+.timeline-item p{color:#64748b;font-size:0.88em}
+.footer{text-align:center;padding:40px 0;color:#475569;font-size:0.85em;border-top:1px solid rgba(99,102,241,0.1);margin-top:60px}
+@media(max-width:640px){.hero h1{font-size:1.8em}.stats-grid{grid-template-columns:repeat(2,1fr)}.feature-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+<div class="hero-badge">🔥 GitHub #49 GLOBAL · +2,065 STARS TODAY</div>
+<h1>Hermes Agent</h1>
+<p class="tagline">The Agent That Grows With You — 自我进化的 AI Agent，从经验中学习，越用越强</p>
+</div>
+
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-value">144,981</div>
+<div class="stat-label">⭐ Total Stars</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">+2,065</div>
+<div class="stat-label">📈 Stars Today</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">Python</div>
+<div class="stat-label">🔤 主语言</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">MIT</div>
+<div class="stat-label">📜 License</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">v0.10</div>
+<div class="stat-label">📦 当前版本</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">Nous Research</div>
+<div class="stat-label">🏢 开发团队</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">项目简介</h2>
+<div class="card">
+<h3>🤖 全球增长最快的自进化 AI Agent</h3>
+<p><strong>Hermes Agent</strong> 是 Nous Research 于 2026 年 2 月 25 日发布的开源 AI Agent 框架。与传统 Agent 不同，它内置了<strong>学习循环（Learning Loop）</strong>——Agent 在使用过程中自动从经验中提取"技能"，形成可复用的知识库。使用越多，能力越强，任务完成时间可降低约 40%。</p>
+<p style="margin-top:12px">支持 200+ 模型、40+ 工具、7 种终端后端、6 大消息平台，可在 $5 VPS 上运行。10 周内斩获 14.4 万 Stars，位列 GitHub 全球第 49 名。零 CVE 安全记录，被社区视为 OpenClaw 的最强替代。</p>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">核心架构</h2>
+<div class="card">
+<h3>🔄 自进化闭环</h3>
+<div class="architecture-flow">
+<div class="arch-box">用户任务</div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">Agent 执行</div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">经验提取</div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">技能生成</div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">知识库</div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">下次更快</div>
+</div>
+</div>
+<div class="card">
+<h3>🧱 技术分层</h3>
+<div class="architecture-flow">
+<div class="arch-box">消息网关<br><small>Telegram/Discord/Slack<br>WhatsApp/Signal/CLI</small></div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">Agent 核心<br><small>学习循环 + 技能库<br>Subagent 调度</small></div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">模型路由<br><small>200+ 模型<br>OpenRouter/NIM/Nous</small></div>
+<span class="arch-arrow">→</span>
+<div class="arch-box">终端后端<br><small>Local/Docker/SSH<br>Modal/Daytona/Vercel</small></div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">六大核心能力</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">🧠</div>
+<h4>自进化学习循环</h4>
+<p>Agent 从每次任务中提取经验，自动生成可复用"技能"。使用越多，效率越高，约 40% 任务时间缩减。独创 Agent-curated Memory 机制。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">👤</div>
+<h4>Honcho 用户建模</h4>
+<p>基于辩证法（Dialectic）的深度用户理解系统。自动构建用户画像、偏好模型和工作流模式，实现真正的个性化 Agent 体验。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🔍</div>
+<h4>FTS5 会话搜索</h4>
+<p>基于 SQLite FTS5 的全文本搜索引擎，秒级检索历史会话和技能库。支持语义化查询，跨会话上下文无缝衔接。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">⚡</div>
+<h4>200+ 模型 / 7 终端</h4>
+<p>支持 OpenRouter、NVIDIA NIM、Nous Portal 等 200+ 模型。7 种终端后端（本地、Docker、SSH、Modal、Daytona、Vercel Sandbox、Singularity）。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🌐</div>
+<h4>6 大消息平台</h4>
+<p>Telegram、Discord、Slack、WhatsApp、Signal、CLI 全覆盖。消息网关统一架构，一次配置多平台部署。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🔬</div>
+<h4>研究就绪 + RL 环境</h4>
+<p>内置 Atropos 强化学习环境、轨迹压缩（Trajectory Compression）。面向 Agent 研究者的理想实验平台。零 CVE 安全记录。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">为什么 Trending？</h2>
+<div class="trending-reasons">
+<div class="trending-item">
+<h4>自进化范式突破</h4>
+<p>第一个将"Agent 学习循环"产品化的开源项目。不再是静态工具，而是会成长的 AI 伙伴。这代表了 Agent 范式从"工具"到"伙伴"的根本转变。</p>
+</div>
+<div class="trending-item">
+<h4>10 周 14.4 万 Stars 的增长奇迹</h4>
+<p>2026 年 2 月 25 日发布至今仅 10 周，GitHub 全球排名第 49。增长速度超过了同期所有 AI Agent 项目，社区势能惊人。</p>
+</div>
+<div class="trending-item">
+<h4>Nous Research 品牌效应</h4>
+<p>背后是 Nous Research——开源 AI 模型领域最活跃的实验室之一。Hermes 模型系列已有大量拥趸，Agent 是其生态的自然延伸。</p>
+</div>
+<div class="trending-item">
+<h4>OpenClaw 替代叙事</h4>
+<p>零 CVE vs OpenClaw 的 9 个 CVE。"Agent-first" vs "gateway-first"哲学之争。技术社区热衷于这种"挑战者 vs 在位者"的叙事。</p>
+</div>
+<div class="trending-item">
+<h4>$5 VPS 可运行的极低门槛</h4>
+<p>不依赖昂贵 GPU，$5/月的 VPS 即可运行完整 Agent。极低的硬件要求让个人开发者和小团队也能部署自己的 AI Agent。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">同类项目对比</h2>
+<table class="comparison-table">
+<thead>
+<tr><th>维度</th><th>Hermes Agent</th><th>OpenClaw</th><th>Claude Code</th><th>OpenHands</th></tr>
+</thead>
+<tbody>
+<tr><td>自学习/进化</td><td><span class="badge badge-green">✅ 学习循环</span></td><td><span class="badge badge-red">❌</span></td><td><span class="badge badge-red">❌</span></td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>用户建模</td><td><span class="badge badge-green">✅ Honcho</span></td><td><span class="badge badge-red">❌</span></td><td><span class="badge badge-yellow">⚠️ 有限</span></td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>模型支持</td><td><span class="badge badge-green">200+</span></td><td><span class="badge badge-yellow">50+</span></td><td><span class="badge badge-red">Claude only</span></td><td><span class="badge badge-yellow">20+</span></td></tr>
+<tr><td>终端后端</td><td><span class="badge badge-green">7 种</span></td><td><span class="badge badge-yellow">3 种</span></td><td><span class="badge badge-red">1 种</span></td><td><span class="badge badge-yellow">4 种</span></td></tr>
+<tr><td>消息平台</td><td><span class="badge badge-green">6 个</span></td><td><span class="badge badge-yellow">4 个</span></td><td><span class="badge badge-red">CLI only</span></td><td><span class="badge badge-red">CLI only</span></td></tr>
+<tr><td>开源协议</td><td><span class="badge badge-green">MIT</span></td><td><span class="badge badge-green">Apache 2.0</span></td><td><span class="badge badge-red">闭源</span></td><td><span class="badge badge-green">MIT</span></td></tr>
+<tr><td>安全 CVE</td><td><span class="badge badge-green">0</span></td><td><span class="badge badge-red">9</span></td><td><span class="badge badge-green">N/A</span></td><td><span class="badge badge-yellow">2</span></td></tr>
+<tr><td>最低成本</td><td><span class="badge badge-green">$5/mo VPS</span></td><td><span class="badge badge-yellow">$20/mo</span></td><td><span class="badge badge-red">$20/mo</span></td><td><span class="badge badge-yellow">$15/mo</span></td></tr>
+<tr><td>成熟度</td><td><span class="badge badge-yellow">v0.10 活跃开发</span></td><td><span class="badge badge-green">稳定</span></td><td><span class="badge badge-green">生产级</span></td><td><span class="badge badge-yellow">发展中</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2 class="section-title">发展时间线</h2>
+<div class="timeline">
+<div class="timeline-item">
+<h4>2026-02-25 · 项目发布</h4>
+<p>Nous Research 正式开源 Hermes Agent，主打"自进化 AI Agent"概念</p>
+</div>
+<div class="timeline-item">
+<h4>2026-03 · 快速迭代</h4>
+<p>v0.1-v0.5 密集发布，学习循环核心功能逐步完善，社区快速增长</p>
+</div>
+<div class="timeline-item">
+<h4>2026-04 · 生态扩展</h4>
+<p>新增 6 大消息平台支持、7 种终端后端、Honcho 用户建模系统上线</p>
+</div>
+<div class="timeline-item">
+<h4>2026-05 · GitHub #49</h4>
+<p>Stars 突破 14 万，位列 GitHub 全球第 49 名。v0.10 发布，Atropos RL 环境集成</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">适合谁使用？</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">👨‍💻</div>
+<h4>个人开发者</h4>
+<p>$5 VPS 即可部署，学习循环让 Agent 越来越懂你。适合日常编程、研究自动化。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🧪</div>
+<h4>AI 研究者</h4>
+<p>内置 Atropos RL 环境和轨迹压缩，Agent 学习循环的理想实验平台。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🏢</div>
+<h4>小团队 / 创业公司</h4>
+<p>200+ 模型灵活选择，6 大消息平台一键接入，Cron 定时任务自动化工作流。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🔒</div>
+<h4>安全敏感用户</h4>
+<p>零 CVE 安全记录，本地/SSH 部署，数据完全可控。OpenClaw 的安全替代方案。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">快速上手</h2>
+<div class="code-block">
+<span class="comment"># 安装 Hermes Agent</span><br>
+pip install hermes-agent<br><br>
+<span class="comment"># 初始化配置</span><br>
+hermes init<br><br>
+<span class="comment"># 连接到 Telegram（或其他平台）</span><br>
+hermes connect --platform telegram<br><br>
+<span class="comment"># 或直接 CLI 模式使用</span><br>
+hermes chat
+</div>
+<div class="code-block">
+<span class="comment"># Docker 部署</span><br>
+docker run -d \<br>
+&nbsp;&nbsp;-e OPENROUTER_API_KEY=<span class="string">your_key</span> \<br>
+&nbsp;&nbsp;-v hermes-data:/app/data \<br>
+&nbsp;&nbsp;ghcr.io/nousresearch/hermes-agent:latest
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">综合评分</h2>
+<div class="score-section">
+<div class="score-circle">8.7</div>
+<div class="score-bars">
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🚀 创新性</span><span>9.3/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:93%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>💎 代码质量</span><span>8.5/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🎯 实用性</span><span>8.8/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:88%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>📖 文档完善度</span><span>8.5/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🌐 社区活跃度</span><span>8.6/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:86%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="footer">
+<p>🔗 <a href="https://github.com/NousResearch/hermes-agent" style="color:#818cf8;text-decoration:none">github.com/NousResearch/hermes-agent</a></p>
+<p style="margin-top:8px">Generated by <a href="https://github.com/robertquant/github-trending-analysis" style="color:#64748b;text-decoration:none">GitHub Trending Analysis</a> · 2026-05-12</p>
+</div>
+
+</div>
+</body>
+</html>
