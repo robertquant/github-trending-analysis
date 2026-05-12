@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>React Doctor - GitHub Trending 深度分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--bg-card:#111827;--bg-card2:#1a2235;--accent:#10b981;--accent2:#f59e0b;--accent3:#ef4444;--accent4:#3b82f6;--accent5:#8b5cf6;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--border:#1e293b}
+body{font-family:'Noto Sans SC','Space Grotesk',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.hero{position:relative;padding:60px 40px;margin-bottom:40px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);border-radius:20px;border:1px solid var(--border);overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,rgba(16,185,129,.15) 0%,transparent 70%);border-radius:50%;animation:pulse 4s ease-in-out infinite}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:300px;height:300px;background:radial-gradient(circle,rgba(59,130,246,.1) 0%,transparent 70%);border-radius:50%;animation:pulse 5s ease-in-out infinite reverse}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:1}}
+.hero-tag{display:inline-block;background:linear-gradient(135deg,var(--accent),#059669);color:#fff;font-size:12px;font-weight:600;padding:4px 14px;border-radius:20px;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;z-index:1}
+.hero .subtitle{font-size:18px;color:var(--text2);margin-bottom:24px;position:relative;z-index:1}
+.hero-stats{display:flex;flex-wrap:wrap;gap:16px;position:relative;z-index:1}
+.stat-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.08);font-size:14px}
+.stat-badge .icon{font-size:18px}
+.stat-badge .value{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent)}
+.stat-badge .label{color:var(--text3);font-size:12px}
+.section{margin-bottom:32px}
+.section-title{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin-bottom:16px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.card{background:var(--bg-card);border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:16px;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-2px);border-color:rgba(16,185,129,.3)}
+.arch-flow{display:flex;flex-direction:column;gap:12px;align-items:center}
+.arch-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;width:100%}
+.arch-box{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:14px 20px;text-align:center;min-width:140px;flex:1;max-width:220px;position:relative;overflow:hidden}
+.arch-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.arch-box.green::before{background:var(--accent)}
+.arch-box.blue::before{background:var(--accent4)}
+.arch-box.amber::before{background:var(--accent2)}
+.arch-box.purple::before{background:var(--accent5)}
+.arch-box.red::before{background:var(--accent3)}
+.arch-box .role{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;margin-bottom:4px}
+.arch-box .desc{font-size:12px;color:var(--text3)}
+.arch-arrow{color:var(--text3);font-size:20px;padding:4px 0}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.feature-item{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:transform .2s,border-color .2s}
+.feature-item:hover{transform:translateY(-2px);border-color:rgba(16,185,129,.3)}
+.feature-item .fi-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.feature-item .fi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.feature-item .fi-title{font-weight:600;font-size:15px}
+.feature-item .fi-desc{font-size:13px;color:var(--text2);line-height:1.6}
+.comparison{width:100%;border-collapse:separate;border-spacing:0;background:var(--bg-card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.comparison th{background:var(--bg-card2);padding:14px 18px;text-align:left;font-weight:600;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.comparison td{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.03);font-size:14px}
+.comparison tr:last-child td{border-bottom:none}
+.comparison .highlight{color:var(--accent);font-weight:600}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0}
+.code-header{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)}
+.code-dots{display:flex;gap:6px}
+.code-dots span{width:10px;height:10px;border-radius:50%}
+.code-dots span:nth-child(1){background:#ef4444}
+.code-dots span:nth-child(2){background:#f59e0b}
+.code-dots span:nth-child(3){background:#10b981}
+.code-content{padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:#c9d1d9;overflow-x:auto}
+.code-content .kw{color:#ff7b72}
+.code-content .fn{color:#d2a8ff}
+.code-content .str{color:#a5d6ff}
+.code-content .cmt{color:#8b949e}
+.code-content .var{color:#79c0ff}
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent),var(--accent4),var(--accent2))}
+.timeline-item{position:relative;margin-bottom:20px;padding-left:16px}
+.timeline-item::before{content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+.timeline-item .t-date{font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.timeline-item .t-text{font-size:14px;color:var(--text2)}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid}
+.tag.green{color:var(--accent);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)}
+.tag.blue{color:var(--accent4);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)}
+.tag.amber{color:var(--accent2);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
+.tag.purple{color:var(--accent5);border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)}
+.tag.red{color:var(--accent3);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08)}
+.rating-bar{display:flex;align-items:center;gap:12px;margin:8px 0}
+.rating-bar .bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.rating-bar .bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.rating-bar .bar-label{min-width:80px;font-size:13px;color:var(--text2)}
+.rating-bar .bar-value{min-width:40px;text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px}
+.warning-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:16px 20px;margin:16px 0;font-size:14px;color:var(--accent2)}
+.warning-box strong{color:var(--accent2)}
+.footer{text-align:center;padding:32px 0;margin-top:40px;border-top:1px solid var(--border);color:var(--text3);font-size:13px}
+.footer a{color:var(--accent);text-decoration:none}
+@media(max-width:768px){
+.hero{padding:32px 20px}
+.hero-stats{gap:10px}
+.stat-badge{padding:8px 12px;font-size:12px}
+.feature-grid{grid-template-columns:1fr}
+.arch-row{flex-direction:column;align-items:center}
+.arch-box{max-width:100%;min-width:auto}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+<div class="hero-tag">GitHub Trending · Today +212 Stars</div>
+<h1>React Doctor</h1>
+<p class="subtitle">Your agent writes bad React. This catches it. — 一条命令为 React 项目生成 0-100 健康评分</p>
+<div class="hero-stats">
+<div class="stat-badge"><span class="icon">⭐</span><span class="value">8,108</span><span class="label">Stars</span></div>
+<div class="stat-badge"><span class="icon">🔷</span><span class="value">TypeScript</span><span class="label">主语言</span></div>
+<div class="stat-badge"><span class="icon">📜</span><span class="value">MIT</span><span class="label">License</span></div>
+<div class="stat-badge"><span class="icon">🏢</span><span class="value">MillionCo</span><span class="label">Million.js 团队</span></div>
+<div class="stat-badge"><span class="icon">👤</span><span class="value">Aiden Bai</span><span class="label">Creator</span></div>
+</div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>项目简介</div>
+<div class="card">
+<p style="font-size:15px;line-height:1.8;color:var(--text2)">
+<strong style="color:var(--accent)">React Doctor</strong> 是由 <strong style="color:var(--text)">Million.js</strong> 团队（创始人 Aiden Bai）开源的 React 代码质量诊断工具。一条命令扫描整个代码库，输出 <strong style="color:var(--accent)">0-100 健康评分</strong>和可操作的诊断报告。它特别针对<strong style="color:var(--text)"> AI 编程 Agent 生成的低质量 React 代码</strong>设计——在 AI 编程助手（Cursor、Claude Code、Copilot 等）遍地走的 2026 年，React Doctor 就是你的代码质量守门员。支持 <strong style="color:var(--accent4)">Next.js、Vite、React Native</strong>，内置 60+ 规则覆盖状态管理、性能、架构、安全、可访问性和死代码检测。
+</p>
+<div class="tag-row" style="margin-top:16px">
+<span class="tag green">0-100 健康评分</span>
+<span class="tag blue">60+ 规则</span>
+<span class="tag amber">AI Agent 集成</span>
+<span class="tag purple">GitHub Actions</span>
+<span class="tag red">ESLint + oxlint 插件</span>
+<span class="tag green">Next.js / Vite / RN</span>
+<span class="tag blue">Node.js API</span>
+</div>
+</div>
+</div>
+
+<!-- 核心功能 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>六大核心能力</div>
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">🏥</div>
+<div class="fi-title">0-100 健康评分</div>
+</div>
+<div class="fi-desc">一条命令输出直观的代码健康评分。75+ 为 Great，50-74 为 Needs Work，50 以下为 Critical。团队可追踪分数变化趋势，量化代码质量。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(59,130,246,.12)">🤖</div>
+<div class="fi-title">AI Agent 深度集成</div>
+</div>
+<div class="fi-desc">运行 install 命令即可教 Cursor、Claude Code、Codex 等 50+ AI Agent React 最佳实践。让 AI 从源头停止写坏代码，而不仅是事后检测。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(245,158,11,.12)">🔍</div>
+<div class="fi-title">60+ 专业规则</div>
+</div>
+<div class="fi-desc">覆盖状态与副作用、性能反模式、架构问题、安全漏洞、可访问性、死代码六大维度。规则根据框架和 React 版本自动切换。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(139,92,246,.12)">⚡</div>
+<div class="fi-title">CI/CD 集成</div>
+</div>
+<div class="fi-desc">官方 GitHub Action 支持 PR 自动评论、分数输出、diff 模式仅扫描变更文件。配合 --fail-on 参数可在 CI 中阻断低质量合并。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(239,68,68,.12)">🔌</div>
+<div class="fi-title">双引擎 Lint 插件</div>
+</div>
+<div class="fi-desc">同一套规则同时提供 oxlint 插件和 ESLint 插件，可接入项目已有的任何 Lint 引擎。自动合并现有 .oxlintrc.json / .eslintrc.json 配置。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">📊</div>
+<div class="fi-title">Node.js API + 排行榜</div>
+</div>
+<div class="fi-desc">提供 diagnose() 编程 API，可集成到自定义工具链。官方排行榜展示知名项目评分：nodejs.org 87 分、tldraw 76 分、excalidraw 69 分。</div>
+</div>
+</div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>技术架构</div>
+<div class="card">
+<div class="arch-flow">
+<div class="arch-row">
+<div class="arch-box green"><div class="role">CLI 入口</div><div class="desc">npx react-doctor<br>零配置一行命令</div></div>
+<div class="arch-box blue"><div class="role">AI Agent 模式</div><div class="desc">AGENTS.md 安装<br>50+ Agent 支持</div></div>
+<div class="arch-box amber"><div class="role">GitHub Action</div><div class="desc">PR 自动评论<br>CI/CD 分数门禁</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box green" style="max-width:180px"><div class="role">Lint Pass</div><div class="desc">60+ 规则扫描<br>状态·性能·架构·安全</div></div>
+<div class="arch-box red" style="max-width:180px"><div class="role">Dead Code Pass</div><div class="desc">未使用文件/导出/类型<br>并行执行</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box purple"><div class="role">oxlint 插件</div><div class="desc">Rust 速度<br>.oxlintrc.json</div></div>
+<div class="arch-box purple"><div class="role">ESLint 插件</div><div class="desc">Flat Config<br>广泛兼容</div></div>
+<div class="arch-box blue"><div class="role">Node.js API</div><div class="desc">diagnose() API<br>自定义集成</div></div>
+<div class="arch-box amber"><div class="role">JSON 输出</div><div class="desc">--json 标志<br>结构化报告</div></div>
+</div>
+<div class="arch-arrow">⬇</div>
+<div class="arch-row">
+<div class="arch-box green" style="max-width:400px"><div class="role">输出：健康评分 + 诊断报告</div>
+<div class="desc">0-100 Score · Top Issues · Per-File Details · Inline Suppressions · --explain 深度诊断</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>应用场景</div>
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(16,185,129,.12)">🤖</div>
+<div class="fi-title">AI 辅助开发团队</div>
+</div>
+<div class="fi-desc">Cursor/Copilot/Claude Code 生成的 React 代码质量参差不齐。React Doctor 在 CI 中自动检测 AI 生成的反模式，确保 AI 辅助代码质量可控。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(59,130,246,.12)">👥</div>
+<div class="fi-title">团队代码审查</div>
+</div>
+<div class="fi-desc">GitHub Action 在 PR 中自动评论诊断结果，用 0-100 分数量化代码质量。团队设定分数门槛（如 ≥70 才能合并），让 Code Review 更客观高效。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(245,158,11,.12)">🏗️</div>
+<div class="fi-title">大型项目重构</div>
+</div>
+<div class="fi-desc">对于百万行级别的 React 代码库（已有实际案例），React Doctor 的 --diff 模式只扫描变更文件，--json 输出结构化报告，方便追踪重构进度。</div>
+</div>
+<div class="feature-item">
+<div class="fi-header">
+<div class="fi-icon" style="background:rgba(139,92,246,.12)">📚</div>
+<div class="fi-title">教学与学习</div>
+</div>
+<div class="fi-desc">React 初学者和 AI 编程用户可通过诊断报告学习 React 最佳实践。--explain 参数详细解释每条规则触发原因，是最好的交互式学习工具。</div>
+</div>
+</div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>为什么 Trending？</div>
+<div class="card">
+<div class="timeline">
+<div class="timeline-item">
+<div class="t-date">AI 编程时代刚需</div>
+<div class="t-text">2026 年 AI Agent 写了海量代码，但质量堪忧。React Doctor 的标语<strong style="color:var(--accent)">"Your agent writes bad React. This catches it."</strong>精准击中痛点——它是<strong style="color:var(--accent)">第一个专门为 AI 生成代码设计的 React 质量工具</strong>。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">Million.js 团队背书</div>
+<div class="t-text">Aiden Bai 和 Million.js 团队在 React 性能优化领域有深厚积累和社区信任。React Doctor 从第一天就有<strong style="color:var(--accent)">高质量的规则设计和产品体验</strong>。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">零配置 + 一行命令</div>
+<div class="t-text"><code style="background:var(--bg-card2);padding:2px 8px;border-radius:4px;font-size:13px">npx react-doctor@latest .</code> 即可使用。<strong style="color:var(--accent)">不装包、不配文件、不改构建</strong>，这比 ESLint 的配置地狱友好太多。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">Agent 生态整合</div>
+<div class="t-text">不仅能事后检测，还能通过 AGENTS.md <strong style="color:var(--accent)">教 AI Agent 从源头不写坏代码</strong>。支持 Claude Code、Cursor、Codex 等 50+ Agent，构建了完整的 AI 编程质量闭环。</div>
+</div>
+<div class="timeline-item">
+<div class="t-date">社区验证</div>
+<div class="t-text">已有人用 Codex + react-doctor 15 小时全自动将低分项目拉到满分 100。nodejs.org 官网代码库得分 87。真实案例证明了工具的<strong style="color:var(--accent)">实际价值和影响力</strong>。</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 同类对比 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>同类项目对比</div>
+<table class="comparison">
+<thead>
+<tr><th>维度</th><th class="highlight">React Doctor</th><th>ESLint + react plugin</th><th>Biome</th><th>OxLint</th></tr>
+</thead>
+<tbody>
+<tr><td>React 专项</td><td class="highlight">✅ 60+ React 专项规则</td><td>⚠️ 需配多个插件</td><td>⚠️ 通用 Lint</td><td>⚠️ 通用 Lint</td></tr>
+<tr><td>健康评分</td><td class="highlight">✅ 0-100 直观评分</td><td>❌ 无</td><td>❌ 无</td><td>❌ 无</td></tr>
+<tr><td>AI Agent 集成</td><td class="highlight">✅ 50+ Agent 支持</td><td>❌ 无</td><td>❌ 无</td><td>❌ 无</td></tr>
+<tr><td>零配置使用</td><td class="highlight">✅ 一行命令</td><td>❌ 复杂配置</td><td>⚠️ 需安装配置</td><td>⚠️ 需安装配置</td></tr>
+<tr><td>死代码检测</td><td class="highlight">✅ 内置</td><td>⚠️ 需额外插件</td><td>⚠️ 有限</td><td>⚠️ 有限</td></tr>
+<tr><td>GitHub Action</td><td class="highlight">✅ 官方提供</td><td>⚠️ 需自行配置</td><td>⚠️ 需自行配置</td><td>⚠️ 需自行配置</td></tr>
+<tr><td>Lint 引擎兼容</td><td class="highlight">✅ oxlint + ESLint 双插件</td><td>✅ ESLint 原生</td><td>✅ 自有引擎</td><td>✅ 自有引擎</td></tr>
+<tr><td>速度</td><td class="highlight">✅ 并行双通道</td><td>⚠️ 较慢</td><td>✅ 很快 (Rust)</td><td>✅ 最快 (Rust)</td></tr>
+<tr><td>成熟度</td><td class="highlight">⚠️ 较新 (2026)</td><td>✅ 非常成熟</td><td>✅ 成熟</td><td>⚠️ 发展中</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 适合谁 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>适合谁使用？</div>
+<div class="card">
+<div class="feature-grid">
+<div style="padding:12px">
+<p style="font-size:15px;margin-bottom:8px">🎯 <strong style="color:var(--accent)">核心用户</strong></p>
+<ul style="font-size:14px;color:var(--text2);padding-left:20px;line-height:2">
+<li><strong>AI 辅助开发者</strong> — 使用 Cursor/Copilot/Claude Code 写 React</li>
+<li><strong>React 项目技术负责人</strong> — 需要量化团队代码质量</li>
+<li><strong>DevOps / CI 工程师</strong> — 在 PR 流程中集成质量门禁</li>
+<li><strong>React 初学者</strong> — 通过诊断报告学习最佳实践</li>
+</ul>
+</div>
+<div style="padding:12px">
+<p style="font-size:15px;margin-bottom:8px">🔧 <strong style="color:var(--accent4)">特别适合</strong></p>
+<ul style="font-size:14px;color:var(--text2);padding-left:20px;line-height:2">
+<li><strong>Next.js 项目</strong> — 首等公民支持</li>
+<li><strong>Vite + React 项目</strong> — 完整支持</li>
+<li><strong>React Native 项目</strong> — 专属规则</li>
+<li><strong>已有 ESLint/oxlint 的项目</strong> — 无缝集成，不冲突</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>快速上手指南</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent)">1. 一键扫描项目</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>Terminal</div>
+<div class="code-content">
+<span class="cmt"># 在项目根目录运行</span>
+npx -y react-doctor@latest .
+</div>
+</div>
+<p style="font-size:13px;color:var(--text3);margin-top:8px">即可获得 0-100 健康评分和详细诊断报告。</p>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent4)">2. 安装到 AI Agent</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>Terminal</div>
+<div class="code-content">
+<span class="cmt"># 教 AI Agent React 最佳实践</span>
+npx -y react-doctor@latest install
+
+<span class="cmt"># 跳过提示，自动安装到所有检测到的 Agent</span>
+npx -y react-doctor@latest install --yes
+</div>
+</div>
+<p style="font-size:13px;color:var(--text3);margin-top:8px">支持 Claude Code、Cursor、Codex、OpenCode 等 50+ Agent。</p>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+<p style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--accent5)">3. GitHub Actions CI 集成</p>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div>.github/workflows/react-doctor.yml</div>
+<div class="code-content">
+- uses: actions/checkout@v5
+  with:
+    fetch-depth: 0
+- uses: millionco/react-doctor@main
+  with:
+    diff: main
+    github-token: <span class="var">${{ secrets.GITHUB_TOKEN }}</span>
+</div>
+</div>
+<p style="font-size:13px;color:var(--text3);margin-top:8px">PR 自动评论诊断结果，输出 score 可用于后续步骤。</p>
+</div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+<div class="section-title"><span class="dot"></span>综合评分</div>
+<div class="card">
+<div class="rating-bar">
+<span class="bar-label">创新性</span>
+<div class="bar-bg"><div class="bar-fill" style="width:85%;background:linear-gradient(90deg,var(--accent),#059669)"></div></div>
+<span class="bar-value" style="color:var(--accent)">8.5</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">代码质量</span>
+<div class="bar-bg"><div class="bar-fill" style="width:88%;background:linear-gradient(90deg,var(--accent4),#2563eb)"></div></div>
+<span class="bar-value" style="color:var(--accent4)">8.8</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">实用性</span>
+<div class="bar-bg"><div class="bar-fill" style="width:95%;background:linear-gradient(90deg,var(--accent2),#d97706)"></div></div>
+<span class="bar-value" style="color:var(--accent2)">9.5</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">文档完善度</span>
+<div class="bar-bg"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,var(--accent5),#7c3aed)"></div></div>
+<span class="bar-value" style="color:var(--accent5)">9.0</span>
+</div>
+<div class="rating-bar">
+<span class="bar-label">社区活跃度</span>
+<div class="bar-bg"><div class="bar-fill" style="width:82%;background:linear-gradient(90deg,var(--accent3),#dc2626)"></div></div>
+<span class="bar-value" style="color:var(--accent3)">8.2</span>
+</div>
+<div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+<span style="font-size:14px;color:var(--text3)">综合评分</span>
+<span style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 12px">8.8</span>
+<span style="font-size:14px;color:var(--text3)">/ 10</span>
+</div>
+</div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+<p>Generated by <a href="https://github.com/robertquant/github-trending-analysis">GitHub Trending Analysis</a> · 2026-05-12</p>
+<p style="margin-top:8px"><a href="https://github.com/millionco/react-doctor">github.com/millionco/react-doctor</a></p>
+</div>
+
+</div>
+</body>
+</html>
