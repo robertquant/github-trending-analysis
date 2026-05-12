@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stable Diffusion WebUI — GitHub Trending 深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e0e6ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.8;overflow-x:hidden}
+.container{max-width:960px;margin:0 auto;padding:40px 24px}
+.hero{text-align:center;padding:60px 20px 40px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(168,85,247,0.1) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;padding:6px 20px;border-radius:20px;background:rgba(168,85,247,0.12);color:#a855f7;font-size:13px;font-weight:600;letter-spacing:1px;margin-bottom:20px;border:1px solid rgba(168,85,247,0.3)}
+.hero h1{font-size:2.4em;font-weight:800;background:linear-gradient(135deg,#a855f7,#ec4899,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;line-height:1.2}
+.hero .tagline{font-size:1.1em;color:#8b949e;max-width:640px;margin:0 auto}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:40px 0}
+.stat-card{background:linear-gradient(135deg,rgba(22,27,34,0.9),rgba(13,17,23,0.95));border:1px solid rgba(168,85,247,0.12);border-radius:16px;padding:20px;text-align:center;transition:transform 0.3s,border-color 0.3s}
+.stat-card:hover{transform:translateY(-4px);border-color:rgba(168,85,247,0.35)}
+.stat-value{font-size:1.7em;font-weight:800;color:#a855f7}
+.stat-label{font-size:0.82em;color:#6e7681;margin-top:4px}
+.section{margin:48px 0}
+.section-title{font-size:1.5em;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid #a855f7;color:#f0f6fc}
+.card{background:linear-gradient(135deg,rgba(22,27,34,0.7),rgba(13,17,23,0.9));border:1px solid rgba(168,85,247,0.1);border-radius:16px;padding:28px;margin-bottom:20px;transition:border-color 0.3s}
+.card:hover{border-color:rgba(168,85,247,0.3)}
+.card h3{font-size:1.15em;color:#ec4899;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card p{color:#8b949e;line-height:1.8}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.feature-card{background:linear-gradient(135deg,rgba(22,27,34,0.6),rgba(13,17,23,0.8));border:1px solid rgba(168,85,247,0.08);border-radius:14px;padding:24px;transition:all 0.3s}
+.feature-card:hover{border-color:rgba(168,85,247,0.3);transform:translateY(-2px)}
+.feature-icon{font-size:2em;margin-bottom:12px}
+.feature-card h4{color:#a855f7;font-size:1.05em;margin-bottom:8px}
+.feature-card p{color:#8b949e;font-size:0.9em;line-height:1.7}
+.comparison-table{width:100%;border-collapse:separate;border-spacing:0;margin:20px 0;background:rgba(13,17,23,0.6);border-radius:16px;overflow:hidden;border:1px solid rgba(168,85,247,0.1)}
+.comparison-table th{background:rgba(168,85,247,0.1);color:#ec4899;padding:14px 12px;text-align:left;font-weight:600;font-size:0.85em}
+.comparison-table td{padding:11px 12px;border-top:1px solid rgba(168,85,247,0.06);font-size:0.85em;color:#8b949e}
+.comparison-table tr:hover td{background:rgba(168,85,247,0.04)}
+.comparison-table td:first-child{color:#e0e6ed;font-weight:600}
+.badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:0.78em;font-weight:600}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.badge-red{background:rgba(239,68,68,0.12);color:#f87171}
+.badge-yellow{background:rgba(234,179,8,0.12);color:#facc15}
+.badge-purple{background:rgba(168,85,247,0.12);color:#a855f7}
+.score-section{text-align:center;padding:40px 0}
+.score-circle{display:inline-block;width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(236,72,153,0.15));border:3px solid #a855f7;line-height:140px;font-size:2.8em;font-weight:800;color:#a855f7;margin-bottom:16px}
+.score-bars{text-align:left;max-width:500px;margin:0 auto}
+.score-bar-item{margin:12px 0}
+.score-bar-label{display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:6px}
+.score-bar-label span:first-child{color:#c9d1d9}
+.score-bar-label span:last-child{color:#a855f7;font-weight:700}
+.score-bar-track{height:8px;background:rgba(168,85,247,0.08);border-radius:4px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.trending-reasons{counter-reset:reason}
+.trending-item{counter-increment:reason;padding:20px 20px 20px 60px;position:relative;margin-bottom:12px;background:linear-gradient(135deg,rgba(22,27,34,0.5),rgba(13,17,23,0.7));border:1px solid rgba(168,85,247,0.08);border-radius:14px;transition:border-color 0.3s}
+.trending-item:hover{border-color:rgba(168,85,247,0.25)}
+.trending-item::before{content:counter(reason);position:absolute;left:16px;top:18px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-weight:800;font-size:0.9em;display:flex;align-items:center;justify-content:center}
+.trending-item h4{color:#e0e6ed;margin-bottom:6px}
+.trending-item p{color:#6e7681;font-size:0.9em}
+.capability-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
+.capability-tag{padding:10px 14px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.1);border-radius:10px;color:#8b949e;font-size:0.88em;text-align:center}
+.capability-tag strong{color:#d4a5ff}
+.code-block{background:rgba(13,17,23,0.9);border:1px solid rgba(168,85,247,0.12);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;font-family:'Fira Code',monospace;font-size:0.88em;color:#d4a5ff;line-height:1.7}
+.code-block .comment{color:#6e7681}
+.code-block .cmd{color:#7ee787}
+.footer{text-align:center;padding:40px 0;color:#484f58;font-size:0.85em;border-top:1px solid rgba(168,85,247,0.08);margin-top:60px}
+@media(max-width:640px){.hero h1{font-size:1.7em}.stats-grid{grid-template-columns:repeat(2,1fr)}.feature-grid{grid-template-columns:1fr}.capability-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+<div class="hero-badge">🎨 AI 图像生成时代的奠基之作 · 162K+ STARS</div>
+<h1>Stable Diffusion WebUI</h1>
+<p class="tagline">AUTOMATIC1111 打造的最流行的 Stable Diffusion 本地 Web 界面，让 AI 绘画走进千家万户</p>
+</div>
+
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-value">162,911</div>
+<div class="stat-label">⭐ Total Stars</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">+39</div>
+<div class="stat-label">📈 Stars Today</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">Python</div>
+<div class="stat-label">🔤 主语言 (Gradio)</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">v1.10.1</div>
+<div class="stat-label">📦 最新版本</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">AUTOMATIC1111</div>
+<div class="stat-label">👤 开发者</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">4GB VRAM</div>
+<div class="stat-label">💾 最低显存</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">项目简介</h2>
+<div class="card">
+<h3>🎨 AI 图像生成民主化的起点</h3>
+<p><strong>Stable Diffusion WebUI (A1111)</strong> 是由匿名开发者 AUTOMATIC1111 创建的 Stable Diffusion 本地 Web 界面，基于 <strong>Gradio</strong> 库构建。自 2022 年发布以来，它成为了全球数百万用户接触 <strong>AI 图像生成</strong>的第一扇门。</p>
+<p style="margin-top:12px">支持 txt2img、img2img、Inpainting、Outpainting 等全套生成模式，集成 GFPGAN/CodeFormer 人脸修复、RealESRGAN 超分辨率、Textual Inversion、LoRA、Hypernetworks 等训练/微调能力。最低仅需 <strong>4GB VRAM</strong>（有用户报告 2GB 也可运行），一个 GPU 即可在本地生成高质量 AI 图像。</p>
+<p style="margin-top:12px">拥有庞大的<strong>扩展生态系统</strong>——ControlNet、ADetailer、Infinite Image Browsing 等数千个社区插件，让功能几乎无限扩展。支持 SD 1.5、SD 2.0、SDXL、SD3 全系列模型，是 AI 绘画领域当之无愧的<strong>传奇项目</strong>。</p>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">核心功能一览</h2>
+<div class="capability-grid">
+<div class="capability-tag"><strong>txt2img</strong><br>文本生成图像</div>
+<div class="capability-tag"><strong>img2img</strong><br>图像到图像</div>
+<div class="capability-tag"><strong>Inpainting</strong><br>局部重绘</div>
+<div class="capability-tag"><strong>Outpainting</strong><br>向外扩展</div>
+<div class="capability-tag"><strong>Color Sketch</strong><br>色彩草图</div>
+<div class="capability-tag"><strong>Prompt Matrix</strong><br>提示词矩阵</div>
+<div class="capability-tag"><strong>SD Upscale</strong><br>超分辨率放大</div>
+<div class="capability-tag"><strong>Attention</strong><br>注意力权重</div>
+<div class="capability-tag"><strong>Textual Inversion</strong><br>文本反转</div>
+<div class="capability-tag"><strong>LoRA / Hypernetworks</strong><br>轻量微调</div>
+<div class="capability-tag"><strong>Checkpoint Merger</strong><br>模型合并</div>
+<div class="capability-tag"><strong>GFPGAN / CodeFormer</strong><br>人脸修复</div>
+<div class="capability-tag"><strong>ESRGAN / SwinIR</strong><br>图像超分辨率</div>
+<div class="capability-tag"><strong>CLIP Interrogator</strong><br>反推提示词</div>
+<div class="capability-tag"><strong>X/Y/Z Plot</strong><br>参数对比图</div>
+<div class="capability-tag"><strong>API</strong><br>编程接口</div>
+<div class="capability-tag"><strong>Extension System</strong><br>扩展生态</div>
+<div class="capability-tag"><strong>Training Tab</strong><br>训练面板</div>
+<div class="capability-tag"><strong>Highres Fix</strong><br>高清修复</div>
+<div class="capability-tag"><strong>FP8 Support</strong><br>低精度加速</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">六大核心优势</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">🔌</div>
+<h4>一键安装 + 4GB 显存</h4>
+<p>一行命令安装运行，最低 4GB VRAM 即可生成图像。支持 NVIDIA、AMD、Intel GPU 和 Apple Silicon，覆盖几乎所有硬件。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🧩</div>
+<h4>庞大的扩展生态</h4>
+<p>数千个社区扩展——ControlNet、ADetailer、OpenPose、Infinite Image Browsing 等。功能几乎无限扩展，形成强大的生态壁垒。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🎯</div>
+<h4>精细提示词控制</h4>
+<p>注意力权重语法 ((word))、(word:1.21)，负向提示词，Prompt Editing 中途切换，Composable-Diffusion (AND 语法)。无 Token 数量限制。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">⚡</div>
+<h4>xformers + FP8 加速</h4>
+<p>xformers 显著提速，FP8 低精度支持减少显存占用。多种采样器可选 (Euler, DPM++, UniPC 等)，ETA 实时显示。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">📐</div>
+<h4>全模型支持</h4>
+<p>SD 1.5 / SD 2.0 / SDXL / SD3 / Alt-Diffusion 全系列。safetensors 安全格式，VAE 独立切换，Checkpoint 热加载。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🔗</div>
+<h4>API + 自动化</h4>
+<p>完整的 RESTful API，支持编程调用和批量处理。可集成到自动化工作流中，搭配 Google Colab 云端运行。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">为什么仍在 Trending？</h2>
+<div class="trending-reasons">
+<div class="trending-item">
+<h4>162K Stars — GitHub 史上最成功的 AI 艺术项目</h4>
+<p>累计 Stars 数在 GitHub 全站名列前茅。作为 AI 图像生成民主化的起点，每天都有新用户发现和 Star 这个项目。</p>
+</div>
+<div class="trending-item">
+<h4>庞大的扩展生态形成网络效应</h4>
+<p>数千个扩展插件构成强大的生态壁垒。即使用户尝试 ComfyUI 等新工具，仍会回来使用 A1111 的特定扩展。</p>
+</div>
+<div class="trending-item">
+<h4>持续迭代 — FP8、SDXL-Inpaint、Soft Inpainting</h4>
+<p>从 v1.7 到 v1.10.1 持续更新，社区对未来路线图的讨论热度不减。仍在 2026 年最佳 WebUI 榜单中。</p>
+</div>
+<div class="trending-item">
+<h4>AI 艺术社区的标准入门工具</h4>
+<p>几乎所有 AI 绘画教程都以 A1111 为起点。新用户涌入 Stable Diffusion 社区时，A1111 仍是第一个被推荐的工具。</p>
+</div>
+<div class="trending-item">
+<h4>从入门到专业的一条龙工具</h4>
+<p>从简单 txt2img 到 ControlNet 精确控制，从 LoRA 训练到 Checkpoint 合并，一个工具覆盖从初学者到专业创作者的全流程需求。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">同类项目对比</h2>
+<table class="comparison-table">
+<thead>
+<tr><th>维度</th><th>A1111</th><th>ComfyUI</th><th>WebUI Forge</th><th>Fooocus</th></tr>
+</thead>
+<tbody>
+<tr><td>界面类型</td><td>表单式 Web UI</td><td>节点式工作流</td><td>表单式 (A1111 Fork)</td><td>极简一键式</td></tr>
+<tr><td>上手难度</td><td><span class="badge badge-green">⭐⭐ 中等</span></td><td><span class="badge badge-yellow">⭐⭐⭐ 较高</span></td><td><span class="badge badge-green">⭐⭐ 中等</span></td><td><span class="badge badge-green">⭐ 极低</span></td></tr>
+<tr><td>功能丰富度</td><td><span class="badge badge-green">✅ 非常丰富</span></td><td><span class="badge badge-green">✅ 极其强大</span></td><td><span class="badge badge-green">✅ 丰富</span></td><td><span class="badge badge-yellow">⚠️ 精简</span></td></tr>
+<tr><td>扩展数量</td><td><span class="badge badge-green">数千个</span></td><td><span class="badge badge-green">数千个</span></td><td><span class="badge badge-yellow">兼容 A1111</span></td><td><span class="badge badge-red">少量</span></td></tr>
+<tr><td>性能/显存</td><td><span class="badge badge-yellow">⚠️ 一般</span></td><td><span class="badge badge-green">✅ 优秀</span></td><td><span class="badge badge-green">✅ 优秀</span></td><td><span class="badge badge-green">✅ 优秀</span></td></tr>
+<tr><td>模型支持</td><td><span class="badge badge-green">SD全系列</span></td><td><span class="badge badge-green">几乎所有</span></td><td><span class="badge badge-green">SD全系列</span></td><td><span class="badge badge-yellow">SDXL为主</span></td></tr>
+<tr><td>工作流复用</td><td><span class="badge badge-yellow">⚠️ 参数保存</span></td><td><span class="badge badge-green">✅ 节点导入导出</span></td><td><span class="badge badge-yellow">⚠️ 参数保存</span></td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>Stars</td><td><span class="badge badge-purple">162K+</span></td><td><span class="badge badge-purple">75K+</span></td><td><span class="badge badge-purple">10K+</span></td><td><span class="badge badge-purple">42K+</span></td></tr>
+<tr><td>适合人群</td><td>所有人</td><td>高级用户/工作流</td><td>A1111 用户升级</td><td>纯新手</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2 class="section-title">适合谁使用？</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">🎨</div>
+<h4>AI 艺术爱好者</h4>
+<p>入门 AI 绘画的首选工具。丰富的教程和社区支持，从零开始也能快速上手。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🖼️</div>
+<h4>数字艺术家 / 设计师</h4>
+<p>ControlNet 精确控制、Inpainting 局部修改、LoRA 风格定制，专业创作流程全覆盖。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">👨‍💻</div>
+<h4>开发者 / 研究者</h4>
+<p>完整 API 接口、可运行自定义 Python 代码、Training Tab 训练面板，适合深度定制和实验。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">💼</div>
+<h4>内容创作者</h4>
+<p>批量生成、Styles 快速切换、Highres Fix 高清输出，高效批量生产视觉内容。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">快速上手</h2>
+<div class="code-block">
+<span class="comment"># Windows (NVIDIA GPU) — 一键安装</span><br>
+git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git<br>
+cd stable-diffusion-webui<br>
+<span class="cmd">webui-user.bat</span><br><br>
+<span class="comment"># Linux</span><br>
+sudo apt install wget git python3 python3-venv libgl1 libglib2.0-0<br>
+git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git<br>
+cd stable-diffusion-webui<br>
+<span class="cmd">bash webui.sh</span>
+</div>
+<div class="code-block">
+<span class="comment"># 启动参数优化</span><br>
+<span class="cmd">webui-user.bat --xformers --medvram</span><br><br>
+<span class="comment"># 启用 API 模式</span><br>
+<span class="cmd">webui-user.bat --api --listen</span><br><br>
+<span class="comment"># 访问 Web 界面</span><br>
+打开浏览器访问 http://127.0.0.1:7860
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">综合评分</h2>
+<div class="score-section">
+<div class="score-circle">8.6</div>
+<div class="score-bars">
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🚀 创新性</span><span>8.5/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>💎 代码质量</span><span>8.2/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:82%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🎯 实用性</span><span>9.3/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:93%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>📖 文档完善度</span><span>8.8/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:88%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🌐 社区活跃度</span><span>8.5/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="footer">
+<p>🔗 <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui" style="color:#a855f7;text-decoration:none">github.com/AUTOMATIC1111/stable-diffusion-webui</a></p>
+<p style="margin-top:8px">Generated by <a href="https://github.com/robertquant/github-trending-analysis" style="color:#484f58;text-decoration:none">GitHub Trending Analysis</a> · 2026-05-12</p>
+</div>
+
+</div>
+</body>
+</html>
