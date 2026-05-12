@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build A Large Language Model (From Scratch) — GitHub Trending 深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e0e6ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.8;overflow-x:hidden}
+.container{max-width:960px;margin:0 auto;padding:40px 24px}
+.hero{text-align:center;padding:60px 20px 40px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(56,189,248,0.1) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;padding:6px 20px;border-radius:20px;background:rgba(56,189,248,0.12);color:#38bdf8;font-size:13px;font-weight:600;letter-spacing:1px;margin-bottom:20px;border:1px solid rgba(56,189,248,0.3)}
+.hero h1{font-size:2.5em;font-weight:800;background:linear-gradient(135deg,#38bdf8,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;line-height:1.2}
+.hero .tagline{font-size:1.1em;color:#8b949e;max-width:640px;margin:0 auto}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:40px 0}
+.stat-card{background:linear-gradient(135deg,rgba(22,27,34,0.9),rgba(13,17,23,0.95));border:1px solid rgba(56,189,248,0.12);border-radius:16px;padding:20px;text-align:center;transition:transform 0.3s,border-color 0.3s}
+.stat-card:hover{transform:translateY(-4px);border-color:rgba(56,189,248,0.35)}
+.stat-value{font-size:1.7em;font-weight:800;color:#38bdf8}
+.stat-label{font-size:0.82em;color:#6e7681;margin-top:4px}
+.section{margin:48px 0}
+.section-title{font-size:1.5em;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid #38bdf8;color:#f0f6fc}
+.card{background:linear-gradient(135deg,rgba(22,27,34,0.7),rgba(13,17,23,0.9));border:1px solid rgba(56,189,248,0.1);border-radius:16px;padding:28px;margin-bottom:20px;transition:border-color 0.3s}
+.card:hover{border-color:rgba(56,189,248,0.3)}
+.card h3{font-size:1.15em;color:#a78bfa;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card p{color:#8b949e;line-height:1.8}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.feature-card{background:linear-gradient(135deg,rgba(22,27,34,0.6),rgba(13,17,23,0.8));border:1px solid rgba(56,189,248,0.08);border-radius:14px;padding:24px;transition:all 0.3s}
+.feature-card:hover{border-color:rgba(56,189,248,0.3);transform:translateY(-2px)}
+.feature-icon{font-size:2em;margin-bottom:12px}
+.feature-card h4{color:#38bdf8;font-size:1.05em;margin-bottom:8px}
+.feature-card p{color:#8b949e;font-size:0.9em;line-height:1.7}
+.chapter-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.chapter-item{display:flex;align-items:flex-start;gap:14px;padding:16px;background:rgba(22,27,34,0.5);border:1px solid rgba(56,189,248,0.08);border-radius:12px;transition:border-color 0.3s}
+.chapter-item:hover{border-color:rgba(56,189,248,0.25)}
+.chapter-num{min-width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(56,189,248,0.15),rgba(167,139,250,0.15));color:#38bdf8;font-weight:800;font-size:0.9em;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chapter-info h5{color:#e0e6ed;font-size:0.95em;margin-bottom:2px}
+.chapter-info p{color:#6e7681;font-size:0.82em}
+.comparison-table{width:100%;border-collapse:separate;border-spacing:0;margin:20px 0;background:rgba(13,17,23,0.6);border-radius:16px;overflow:hidden;border:1px solid rgba(56,189,248,0.1)}
+.comparison-table th{background:rgba(56,189,248,0.1);color:#a78bfa;padding:14px 14px;text-align:left;font-weight:600;font-size:0.88em}
+.comparison-table td{padding:11px 14px;border-top:1px solid rgba(56,189,248,0.06);font-size:0.88em;color:#8b949e}
+.comparison-table tr:hover td{background:rgba(56,189,248,0.04)}
+.comparison-table td:first-child{color:#e0e6ed;font-weight:600}
+.badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:0.8em;font-weight:600}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.badge-red{background:rgba(239,68,68,0.12);color:#f87171}
+.badge-yellow{background:rgba(234,179,8,0.12);color:#facc15}
+.badge-blue{background:rgba(56,189,248,0.12);color:#38bdf8}
+.score-section{text-align:center;padding:40px 0}
+.score-circle{display:inline-block;width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,rgba(56,189,248,0.15),rgba(167,139,250,0.15));border:3px solid #38bdf8;line-height:140px;font-size:2.8em;font-weight:800;color:#38bdf8;margin-bottom:16px}
+.score-bars{text-align:left;max-width:500px;margin:0 auto}
+.score-bar-item{margin:12px 0}
+.score-bar-label{display:flex;justify-content:space-between;font-size:0.9em;margin-bottom:6px}
+.score-bar-label span:first-child{color:#c9d1d9}
+.score-bar-label span:last-child{color:#38bdf8;font-weight:700}
+.score-bar-track{height:8px;background:rgba(56,189,248,0.08);border-radius:4px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.trending-reasons{counter-reset:reason}
+.trending-item{counter-increment:reason;padding:20px 20px 20px 60px;position:relative;margin-bottom:12px;background:linear-gradient(135deg,rgba(22,27,34,0.5),rgba(13,17,23,0.7));border:1px solid rgba(56,189,248,0.08);border-radius:14px;transition:border-color 0.3s}
+.trending-item:hover{border-color:rgba(56,189,248,0.25)}
+.trending-item::before{content:counter(reason);position:absolute;left:16px;top:18px;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#a78bfa);color:#fff;font-weight:800;font-size:0.9em;display:flex;align-items:center;justify-content:center}
+.trending-item h4{color:#e0e6ed;margin-bottom:6px}
+.trending-item p{color:#6e7681;font-size:0.9em}
+.bonus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
+.bonus-tag{display:inline-block;padding:8px 14px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.1);border-radius:10px;color:#8b949e;font-size:0.85em;text-align:center}
+.code-block{background:rgba(13,17,23,0.9);border:1px solid rgba(56,189,248,0.12);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;font-family:'Fira Code',monospace;font-size:0.88em;color:#a5d6ff;line-height:1.7}
+.code-block .comment{color:#6e7681}
+.code-block .cmd{color:#7ee787}
+.footer{text-align:center;padding:40px 0;color:#484f58;font-size:0.85em;border-top:1px solid rgba(56,189,248,0.08);margin-top:60px}
+@media(max-width:640px){.hero h1{font-size:1.7em}.stats-grid{grid-template-columns:repeat(2,1fr)}.feature-grid{grid-template-columns:1fr}.chapter-list{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+<div class="hero-badge">📚 全球最受欢迎的 LLM 教学资源 · 93K+ STARS</div>
+<h1>Build A Large Language Model<br>(From Scratch)</h1>
+<p class="tagline">Sebastian Raschka 经典之作 — 用 PyTorch 从零实现一个类 ChatGPT 的 LLM，逐步理解大语言模型内部原理</p>
+</div>
+
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-value">93,054</div>
+<div class="stat-label">⭐ Total Stars</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">+337</div>
+<div class="stat-label">📈 Stars Today</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">Python</div>
+<div class="stat-label">🔤 主语言 (PyTorch)</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">Manning</div>
+<div class="stat-label">📖 出版社</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">Sebastian<br>Raschka</div>
+<div class="stat-label">👤 作者</div>
+</div>
+<div class="stat-card">
+<div class="stat-value">7 章 + 5 附录</div>
+<div class="stat-label">📐 内容结构</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">项目简介</h2>
+<div class="card">
+<h3>📖 从零构建大语言模型的终极教程</h3>
+<p>这是 <strong>Sebastian Raschka</strong>（ML 教育领域最有影响力的作者之一）的里程碑式作品。配套 Manning 出版的纸质书 <em>Build A Large Language Model (From Scratch)</em>，通过 <strong>7 个核心章节 + 5 个附录</strong>，手把手带你用 PyTorch 从零实现一个 <strong>GPT-2 级别的 LLM</strong>。</p>
+<p style="margin-top:12px">从文本数据处理、注意力机制、GPT 架构实现，到预训练、分类微调、指令微调，每个概念都以清晰文字 + 图示 + 可运行代码呈现。所有代码在<strong>普通笔记本电脑</strong>上即可运行，无需 GPU。</p>
+<p style="margin-top:12px">Bonus 材料更是极其丰富：Llama 3.2、Qwen3、Gemma 3、Olmo 3 从零实现、LoRA、DPO、GRPO 强化学习、17 小时配套视频课程、170 页练习 PDF。</p>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">章节路线图</h2>
+<div class="chapter-list">
+<div class="chapter-item">
+<div class="chapter-num">1</div>
+<div class="chapter-info">
+<h5>理解大语言模型</h5>
+<p>LLM 发展历史、Transformer 概述、训练流水线全景</p>
+</div>
+</div>
+<div class="chapter-item">
+<div class="chapter-num">2</div>
+<div class="chapter-info">
+<h5>处理文本数据</h5>
+<p>Tokenization (BPE)、滑动窗口、Embedding、数据加载器</p>
+</div>
+</div>
+<div class="chapter-item">
+<div class="chapter-num">3</div>
+<div class="chapter-info">
+<h5>编码注意力机制</h5>
+<p>自注意力、多头注意力、因果注意力、DropoutMask</p>
+</div>
+</div>
+<div class="chapter-item">
+<div class="chapter-num">4</div>
+<div class="chapter-info">
+<h5>从零实现 GPT 模型</h5>
+<p>Transformer Block、GPT-2 架构、LayerNorm、GELU、权重初始化</p>
+</div>
+</div>
+<div class="chapter-item">
+<div class="chapter-num">5</div>
+<div class="chapter-info">
+<h5>无标签数据预训练</h5>
+<p>训练循环、损失函数、学习率调度、文本生成、GPT-2 权重加载</p>
+</div>
+</div>
+<div class="chapter-item">
+<div class="chapter-num">6</div>
+<div class="chapter-info">
+<h5>文本分类微调</h5>
+<p>分类头、IMDb 情感分析、不同层微调策略、LoRA</p>
+</div>
+</div>
+<div class="chapter-item">
+<div class="chapter-num">7</div>
+<div class="chapter-info">
+<h5>指令跟随微调</h5>
+<p>Instruction 数据集、对话模板、Alpaca 格式、Ollama 评估、DPO</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">六大核心亮点</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">🧱</div>
+<h4>真正的 "From Scratch"</h4>
+<p>不依赖 Hugging Face Transformers 等高层库，每一行代码都亲手实现。注意力、Embedding、Transformer Block 全部从零编码，真正理解 LLM 内部机制。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">💻</div>
+<h4>普通笔记本可运行</h4>
+<p>所有主章节代码设计在普通 CPU 笔记本上运行。使用 GPT-2 (124M) 规模模型，公开权重可直接加载。无需 GPU 也能完成完整学习。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🎁</div>
+<h4>海量 Bonus 材料</h4>
+<p>Llama 3.2 / Qwen3 / Gemma 3 / Gemma 4 / Olmo 3 从零实现、KV Cache、MoE、LoRA、DPO、GRPO RL、Qwen3.5 — 内容远超主书，持续更新。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🎬</div>
+<h4>17 小时视频课程</h4>
+<p>配套视频课程完整覆盖每章内容，与书结构一一对应。可作为独立学习资源或配合书籍使用。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">📝</div>
+<h4>170 页练习 PDF</h4>
+<p>免费下载 170 页 <em>Test Yourself</em> PDF，每章约 30 道测验题 + 详细解答。加上每章代码练习和解决方案。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">📘</div>
+<h4>续作：推理模型从零实现</h4>
+<p>新书 <em>Build A Reasoning Model (From Scratch)</em> 已发布，覆盖推理时缩放、强化学习、知识蒸馏，与本书形成完整学习路径。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">Bonus 材料一览</h2>
+<div class="card">
+<h3>🔬 内容远超主书，持续扩展中</h3>
+<div class="bonus-grid">
+<div class="bonus-tag">Llama 3.2 From Scratch</div>
+<div class="bonus-tag">Qwen3 Dense & MoE</div>
+<div class="bonus-tag">Gemma 3 From Scratch</div>
+<div class="bonus-tag">Gemma 4 E2B/E4B</div>
+<div class="bonus-tag">Olmo 3 From Scratch</div>
+<div class="bonus-tag">Qwen3.5 From Scratch</div>
+<div class="bonus-tag">Tiny Aya From Scratch</div>
+<div class="bonus-tag">LoRA 微调</div>
+<div class="bonus-tag">DPO 对齐</div>
+<div class="bonus-tag">GRPO 强化学习</div>
+<div class="bonus-tag">KV Cache</div>
+<div class="bonus-tag">MoE 混合专家</div>
+<div class="bonus-tag">BPE Tokenizer 从零</div>
+<div class="bonus-tag">FLOPs 分析</div>
+<div class="bonus-tag">LLM-as-Judge</div>
+<div class="bonus-tag">MMLU 评估</div>
+<div class="bonus-tag">Self-Consistency</div>
+<div class="bonus-tag">Self-Refinement</div>
+<div class="bonus-tag">Converting GPT → Llama</div>
+<div class="bonus-tag">PyTorch DDP 多 GPU</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">为什么 Trending？</h2>
+<div class="trending-reasons">
+<div class="trending-item">
+<h4>Sebastian Raschka — ML 教育界的传奇</h4>
+<p>《Python Machine Learning》累计销量超百万册，GitHub 粉丝 30K+。他的每一部作品都被社区视为权威教材，自带巨大流量和信任背书。</p>
+</div>
+<div class="trending-item">
+<h4>LLM 时代最硬核的入门路径</h4>
+<p>当大多数人只会调用 OpenAI API 时，这个项目让你真正理解 LLM 内部发生了什么。"From Scratch" 方法论深得技术社区推崇。</p>
+</div>
+<div class="trending-item">
+<h4>93K+ Stars 的教育类项目天花板</h4>
+<p>GitHub 上教育类项目极少达到这个量级。持续更新的 Bonus 材料确保老用户持续回访，新用户源源不断。</p>
+</div>
+<div class="trending-item">
+<h4>学术 + 工业双线采纳</h4>
+<p>多所大学用作课程教材（如 MATF 的课程 Fork），同时企业从业者作为深度学习内功修炼的首选资源。</p>
+</div>
+<div class="trending-item">
+<h4>持续扩展的生态</h4>
+<p>从主书到推理模型续作，从 Llama 3.2 到 Qwen3 到 Gemma 4，Bonus 材料跟随行业最新发展持续扩展，永不过时。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">同类项目对比</h2>
+<table class="comparison-table">
+<thead>
+<tr><th>维度</th><th>LLMs-from-scratch</th><th>nanoGPT</th><th>Dive into Deep Learning</th><th>Hugging Face Course</th></tr>
+</thead>
+<tbody>
+<tr><td>作者</td><td>Sebastian Raschka</td><td>Andrej Karpathy</td><td>阿斯顿·张 / 李沐</td><td>Hugging Face 团队</td></tr>
+<tr><td>深度</td><td><span class="badge badge-green">✅ 每行从零实现</span></td><td><span class="badge badge-green">✅ 精简从零</span></td><td><span class="badge badge-yellow">⚠️ 全 DL 覆盖</span></td><td><span class="badge badge-yellow">⚠️ 框架层面</span></td></tr>
+<tr><td>LLM 专注度</td><td><span class="badge badge-green">✅ 100% LLM</span></td><td><span class="badge badge-green">✅ 100% LLM</span></td><td><span class="badge badge-red">❌ 通用 DL</span></td><td><span class="badge badge-green">✅ NLP/LLM</span></td></tr>
+<tr><td>配套书籍</td><td><span class="badge badge-green">✅ Manning 出版</span></td><td><span class="badge badge-red">❌ 仅视频</span></td><td><span class="badge badge-green">✅ 多版本</span></td><td><span class="badge badge-yellow">⚠️ 在线文档</span></td></tr>
+<tr><td>视频课程</td><td><span class="badge badge-green">✅ 17h+</span></td><td><span class="badge badge-green">✅ YouTube 系列</span></td><td><span class="badge badge-green">✅ 李沐讲解</span></td><td><span class="badge badge-yellow">⚠️ 部分视频</span></td></tr>
+<tr><td>练习题</td><td><span class="badge badge-green">✅ 170页 PDF + 代码</span></td><td><span class="badge badge-red">❌</span></td><td><span class="badge badge-green">✅ 每节练习</span></td><td><span class="badge badge-yellow">⚠️ 在线 Quiz</span></td></tr>
+<tr><td>最新模型</td><td><span class="badge badge-green">Qwen3/Gemma4/Llama3</span></td><td><span class="badge badge-red">GPT-2</span></td><td><span class="badge badge-yellow">⚠️ 部分更新</span></td><td><span class="badge badge-green">紧跟 HF 生态</span></td></tr>
+<tr><td>硬件要求</td><td><span class="badge badge-green">普通笔记本</span></td><td><span class="badge badge-green">普通笔记本</span></td><td><span class="badge badge-green">普通笔记本</span></td><td><span class="badge badge-yellow">⚠️ 部分需 GPU</span></td></tr>
+<tr><td>GitHub Stars</td><td><span class="badge badge-blue">93K+</span></td><td><span class="badge badge-blue">41K+</span></td><td><span class="badge badge-blue">66K+</span></td><td><span class="badge badge-yellow">N/A</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2 class="section-title">适合谁使用？</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="feature-icon">👨‍💻</div>
+<h4>AI/ML 工程师</h4>
+<p>从 API 调用者升级为真正理解 LLM 内部的工程师。面试、调优、Debug 都需要这些底层知识。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🎓</div>
+<h4>学生 / 研究者</h4>
+<p>多所大学已采用为课程教材。170 页练习 PDF + 代码练习，学术研究的理想起点。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🧑‍🏫</div>
+<h4>技术讲师</h4>
+<p>清晰的章节结构、完善的代码示例、配套视频，可直接用于教学工作。</p>
+</div>
+<div class="feature-card">
+<div class="feature-icon">🔄</div>
+<h4>转型开发者</h4>
+<p>有 Python 基础但没接触过深度学习？Appendix A 提供 PyTorch 入门，渐进式学习路径友好。</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">快速上手</h2>
+<div class="code-block">
+<span class="comment"># 克隆仓库</span><br>
+git clone --depth 1 https://github.com/rasbt/LLMs-from-scratch.git<br>
+cd LLMs-from-scratch<br><br>
+<span class="comment"># 安装依赖（推荐使用 uv）</span><br>
+<span class="cmd">pip install uv</span><br>
+uv pip install -r requirements.txt<br><br>
+<span class="comment"># 打开第 2 章开始学习</span><br>
+jupyter notebook ch02/01_main-chapter-code/ch02.ipynb
+</div>
+<div class="code-block">
+<span class="comment"># 或使用 Docker 环境</span><br>
+docker build -t llms-from-scratch -f setup/Dockerfile .<br>
+docker run -it -p 8888:8888 llms-from-scratch<br><br>
+<span class="comment"># 直接运行 GPT-2 文本生成</span><br>
+python ch05/01_main-chapter-code/gpt_generate.py
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">综合评分</h2>
+<div class="score-section">
+<div class="score-circle">9.2</div>
+<div class="score-bars">
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🚀 创新性</span><span>8.8/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:88%;background:linear-gradient(90deg,#38bdf8,#a78bfa)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>💎 代码质量</span><span>9.5/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:95%;background:linear-gradient(90deg,#38bdf8,#a78bfa)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🎯 实用性</span><span>9.5/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:95%;background:linear-gradient(90deg,#38bdf8,#a78bfa)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>📖 文档完善度</span><span>9.8/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:98%;background:linear-gradient(90deg,#38bdf8,#a78bfa)"></div></div>
+</div>
+<div class="score-bar-item">
+<div class="score-bar-label"><span>🌐 社区活跃度</span><span>9.0/10</span></div>
+<div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:linear-gradient(90deg,#38bdf8,#a78bfa)"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="footer">
+<p>🔗 <a href="https://github.com/rasbt/LLMs-from-scratch" style="color:#38bdf8;text-decoration:none">github.com/rasbt/LLMs-from-scratch</a></p>
+<p style="margin-top:8px">Generated by <a href="https://github.com/robertquant/github-trending-analysis" style="color:#484f58;text-decoration:none">GitHub Trending Analysis</a> · 2026-05-12</p>
+</div>
+
+</div>
+</body>
+</html>
