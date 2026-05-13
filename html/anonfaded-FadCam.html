@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FadCam 深度分析 | GitHub Trending</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; }
+        .header .meta {
+            display: flex; justify-content: center; gap: 20px;
+            margin-top: 20px; flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 20px;
+            font-size: 0.85em; font-weight: 500;
+        }
+        .badge-lang { background: #1f6feb22; border: 1px solid #1f6feb55; color: #58a6ff; }
+        .badge-stars { background: #e3b34122; border: 1px solid #e3b34155; color: #e3b341; }
+        .badge-today { background: #3fb95022; border: 1px solid #3fb95055; color: #3fb950; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card h3 {
+            color: #58a6ff;
+            margin: 16px 0 10px;
+            font-size: 1.1em;
+        }
+        .card p, .card li { color: #b1bac4; margin-bottom: 8px; }
+        .card ul { padding-left: 20px; }
+        .card ul li::marker { color: #58a6ff; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 18px;
+        }
+        .feature-item .icon { font-size: 1.8em; margin-bottom: 8px; }
+        .feature-item h4 { color: #c9d1d9; margin-bottom: 6px; }
+        .feature-item p { font-size: 0.9em; color: #8b949e; }
+
+        /* Score Table */
+        .score-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .score-table th {
+            text-align: left; padding: 10px 14px;
+            background: #0d1117; color: #58a6ff;
+            border-bottom: 2px solid #21262d;
+        }
+        .score-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+        }
+        .score-bar {
+            height: 8px; border-radius: 4px;
+            background: #21262d; overflow: hidden;
+        }
+        .score-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, #1f6feb, #58a6ff);
+        }
+
+        /* Comparison Table */
+        .compare-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .compare-table th {
+            padding: 10px 14px; background: #0d1117;
+            color: #bc8cff; border-bottom: 2px solid #21262d;
+            text-align: left;
+        }
+        .compare-table td {
+            padding: 10px 14px; border-bottom: 1px solid #21262d;
+        }
+        .compare-table tr:hover { background: #161b2288; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+        }
+        .code-block .prompt { color: #58a6ff; }
+        .code-block .cmd { color: #3fb950; }
+        .code-block .comment { color: #8b949e; }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 0.78em; margin: 2px;
+        }
+        .tag-blue { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; }
+        .tag-purple { background: #8957e522; color: #bc8cff; border: 1px solid #8957e544; }
+        .tag-green { background: #3fb95022; color: #3fb950; border: 1px solid #3fb95044; }
+        .tag-orange { background: #d2992222; color: #d29922; border: 1px solid #d2992244; }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, #1f6feb11, #8957e511);
+            border: 1px solid #58a6ff33;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 16px;
+        }
+        .summary-box h3 { color: #58a6ff; margin-bottom: 12px; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            border-top: 1px solid #21262d;
+            margin-top: 20px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FadCam</h1>
+        <p class="subtitle">开源、无广告的 Android 多媒体录制套件</p>
+        <div class="meta">
+            <span class="badge badge-lang">Java / Android</span>
+            <span class="badge badge-stars">2,237 Stars</span>
+            <span class="badge badge-today">+116 Today</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Project Overview -->
+        <div class="card">
+            <h2>项目简介与核心功能</h2>
+            <p>FadCam 是一款由 <strong>FadSec Lab</strong> 开发的开源、无广告 Android 多媒体录制套件。它集成了后台视频录制、行车记录仪、屏幕录制、局域网直播和远程摄像头控制等多种功能，主打<strong>隐私优先</strong>和<strong>无广告体验</strong>。</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="icon">🎬</div>
+                    <h4>FadRec 屏幕录制</h4>
+                    <p>全功能屏幕录制，支持标注工具（画笔、橡皮擦、文字、形状），多层编辑与版本控制，无限撤销/重做</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🏠</div>
+                    <h4>FadCam Remote</h4>
+                    <p>通过局域网实时直播摄像头画面，支持远程控制录制、调整设置、开关手电筒，实时监控电量与存储状态</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📸</div>
+                    <h4>行车记录仪 & 后台录制</h4>
+                    <p>支持息屏后台录制，使用 Fragmented MP4 格式零损风险，大文件自动分割，支持广角摄像头</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎥</div>
+                    <h4>视频 & 音频控制</h4>
+                    <p>多分辨率 + 60/90fps 支持，自定义水印文字叠加，地理标记嵌入，可自定义音频比特率和采样率</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📁</div>
+                    <h4>文件管理</h4>
+                    <p>增强缩略图显示，按日期/大小排序过滤，回收站支持恢复与自动清理，内置 ExoPlayer 播放器</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎨</div>
+                    <h4>精美界面</h4>
+                    <p>Material Design 设计，7+ 主题（含 AMOLED），15+ 自定义图标，独立 beta 安装不冲突</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Architecture -->
+        <div class="card">
+            <h2>技术架构与特点</h2>
+            <h3>技术栈</h3>
+            <div style="margin: 10px 0;">
+                <span class="tag tag-blue">Java</span>
+                <span class="tag tag-green">Android SDK</span>
+                <span class="tag tag-purple">ExoPlayer</span>
+                <span class="tag tag-orange">MediaCodec</span>
+                <span class="tag tag-blue">Material Design</span>
+                <span class="tag tag-green">Fragmented MP4</span>
+                <span class="tag tag-purple">Nominatim (OSM)</span>
+            </div>
+            <h3>核心架构特点</h3>
+            <ul>
+                <li><strong>Fragmented MP4 (fMP4) 格式</strong> — 采用分段式 MP4 封装，确保录制过程中即使意外中断也不会导致文件损坏，这是专业行车记录仪级别的可靠性</li>
+                <li><strong>前台 Service + 后台录制</strong> — 利用 Android Foreground Service 实现息屏后台持续录制，配合通知栏控制面板</li>
+                <li><strong>局域网直播架构</strong> — 设备端运行轻量 HTTP 服务器，通过 Web 界面实现实时画面预览和远程控制</li>
+                <li><strong>ExoPlayer 集成</strong> — 内置 Google ExoPlayer 播放器，支持多种格式流畅播放</li>
+                <li><strong>App Shortcuts</strong> — 支持三个快捷操作（开始录制、停止录制、切换手电筒），可映射到硬件按键</li>
+                <li><strong>零数据收集</strong> — 完全不收集用户数据，无追踪，无广告，真正的隐私优先</li>
+            </ul>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="card">
+            <h2>应用场景</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="icon">🚗</div>
+                    <h4>行车记录仪</h4>
+                    <p>替代专用行车记录仪设备，后台持续录制，fMP4 格式确保数据安全，自动分割大文件</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🏠</div>
+                    <h4>家庭安防 / CCTV</h4>
+                    <p>利用 FadCam Remote 功能，将旧手机变成安防摄像头，通过局域网实时监控</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📱</div>
+                    <h4>屏幕录制教程</h4>
+                    <p>FadRec 屏幕录制器配合标注工具，非常适合制作 App 演示和操作教程</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎙️</div>
+                    <h4>个人安全记录</h4>
+                    <p>在需要取证的场合进行 discreet 录制，后台运行不留痕迹，保护个人权益</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="card">
+            <h2>为什么火（Trending 原因分析）</h2>
+            <ul>
+                <li><strong>隐私意识觉醒</strong> — 在数据隐私日益受到关注的当下，完全无广告、无数据收集的应用正中用户痛点，被 PrivacyGuides、GrapheneOS 社区推荐</li>
+                <li><strong>多媒体 All-in-One</strong> — 一个 App 集成了行车记录仪 + 后台录制 + 屏幕录制 + 局域网直播 + 远程控制，替代多个专用 App</li>
+                <li><strong>KOL 强力推荐</strong> — 被 HowToMen、Sam Beckman 等知名 Android 科技 YouTuber 多次推荐，覆盖全球多语言观众</li>
+                <li><strong>多平台分发</strong> — 同时在 GitHub、F-Droid、IzzyOnDroid、Amazon Appstore 上架，降低了安装门槛</li>
+                <li><strong>活跃更新迭代</strong> — 当前已到 v3.1.0-beta，持续推出新功能（如蜂窝网络直播、俄语支持），社区活跃</li>
+                <li><strong>FadSec Lab 生态</strong> — 作为 FadSec Lab 套件的一部分，与 FadCrypt 等产品形成生态，增强品牌认知度</li>
+            </ul>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2>同类项目对比</h2>
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>FadCam</th>
+                        <th>Open Camera</th>
+                        <th>Background Video Recorder</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>开源</td>
+                        <td style="color:#3fb950;">完全开源</td>
+                        <td style="color:#3fb950;">完全开源</td>
+                        <td style="color:#f85149;">闭源</td>
+                    </tr>
+                    <tr>
+                        <td>广告</td>
+                        <td style="color:#3fb950;">无广告</td>
+                        <td style="color:#3fb950;">无广告</td>
+                        <td style="color:#f85149;">有广告</td>
+                    </tr>
+                    <tr>
+                        <td>后台录制</td>
+                        <td style="color:#3fb950;">支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                        <td style="color:#3fb950;">支持</td>
+                    </tr>
+                    <tr>
+                        <td>屏幕录制</td>
+                        <td style="color:#3fb950;">支持（含标注）</td>
+                        <td style="color:#f85149;">不支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                    </tr>
+                    <tr>
+                        <td>局域网直播</td>
+                        <td style="color:#3fb950;">支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                    </tr>
+                    <tr>
+                        <td>远程控制</td>
+                        <td style="color:#3fb950;">支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                    </tr>
+                    <tr>
+                        <td>行车记录模式</td>
+                        <td style="color:#3fb950;">支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                    </tr>
+                    <tr>
+                        <td>数据收集</td>
+                        <td style="color:#3fb950;">零收集</td>
+                        <td style="color:#3fb950;">零收集</td>
+                        <td style="color:#f85149;">未知</td>
+                    </tr>
+                    <tr>
+                        <td>fMP4 防损</td>
+                        <td style="color:#3fb950;">支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                        <td style="color:#f85149;">不支持</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 12px; color: #8b949e; font-size: 0.9em;">FadCam 在功能广度上远超同类应用，是唯一同时集成后台录制、屏幕录制、直播和远程控制的开源方案。</p>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="card">
+            <h2>适合谁使用</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="icon">🔒</div>
+                    <h4>隐私敏感用户</h4>
+                    <p>厌倦了无处不在的广告和数据收集，想要完全掌控自己录制内容的用户</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🚗</div>
+                    <h4>车主 / 司机</h4>
+                    <p>需要可靠的行车记录仪替代方案，不想额外购买专用设备</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📹</div>
+                    <h4>内容创作者</h4>
+                    <p>需要屏幕录制 + 标注工具制作教程和演示视频</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🔧</div>
+                    <h4>技术爱好者</h4>
+                    <p>喜欢折腾旧手机，将其改造为远程监控摄像头或安防设备</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2>快速上手指南</h2>
+            <h3>方式一：直接下载 APK</h3>
+            <div class="code-block">
+                <span class="comment"># 从 GitHub Releases 下载最新版本</span><br>
+                <span class="prompt">访问：</span><span class="cmd">https://github.com/anonfaded/FadCam/releases</span><br>
+                <span class="comment"># 下载 .apk 文件并安装到 Android 设备</span>
+            </div>
+            <h3>方式二：通过 F-Droid / IzzyOnDroid</h3>
+            <div class="code-block">
+                <span class="comment"># 在 F-Droid 中搜索 "FadCam" 或添加 IzzyOnDroid 仓库</span><br>
+                <span class="prompt">F-Droid：</span><span class="cmd">https://f-droid.org/packages/com.fadcam/</span><br>
+                <span class="comment"># 一键安装，自动获取更新</span>
+            </div>
+            <h3>方式三：从源码编译</h3>
+            <div class="code-block">
+                <span class="comment"># 克隆仓库</span><br>
+                <span class="cmd">git clone https://github.com/anonfaded/FadCam.git</span><br>
+                <span class="cmd">cd FadCam</span><br><br>
+                <span class="comment"># 使用 Android Studio 打开项目</span><br>
+                <span class="comment"># 同步 Gradle 并编译 APK</span><br>
+                <span class="cmd">./gradlew assembleDebug</span><br><br>
+                <span class="comment"># 安装到连接的设备</span><br>
+                <span class="cmd">adb install app/build/outputs/apk/debug/app-debug.apk</span>
+            </div>
+            <h3>基本使用</h3>
+            <ul>
+                <li><strong>后台录制</strong>：打开 App → 点击录制按钮 → 锁屏或切换 App → 录制继续进行</li>
+                <li><strong>远程监控</strong>：确保手机和电脑在同一局域网 → 启用 Remote → 在浏览器输入显示的地址</li>
+                <li><strong>屏幕录制</strong>：切换到 FadRec 模式 → 开始录制 → 使用浮动工具栏添加标注</li>
+            </ul>
+        </div>
+
+        <!-- Scoring -->
+        <div class="card">
+            <h2>综合评分</h2>
+            <table class="score-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>评分</th>
+                        <th>可视化</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>创新性</td>
+                        <td><strong>8.0 / 10</strong></td>
+                        <td><div class="score-bar"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#1f6feb,#58a6ff);"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td>代码质量</td>
+                        <td><strong>7.5 / 10</strong></td>
+                        <td><div class="score-bar"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#8957e5,#bc8cff);"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td>实用性</td>
+                        <td><strong>9.0 / 10</strong></td>
+                        <td><div class="score-bar"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#3fb950,#56d364);"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td>文档完善度</td>
+                        <td><strong>8.5 / 10</strong></td>
+                        <td><div class="score-bar"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#d29922,#e3b341);"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td>社区活跃度</td>
+                        <td><strong>8.0 / 10</strong></td>
+                        <td><div class="score-bar"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#f778ba,#ff9bce);"></div></div></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="summary-box" style="margin-top: 20px;">
+                <h3>综合评分：8.2 / 10</h3>
+                <p>FadCam 是一款在 Android 多媒体录制领域非常突出的开源项目。它将行车记录仪、后台录制、屏幕录制、局域网直播和远程控制集成到一个无广告、无数据收集的应用中，功能覆盖面在同类开源应用中几乎无出其右。特别推荐给注重隐私的 Android 用户、需要行车记录仪的车主以及喜欢 DIY 的技术爱好者。</p>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="card">
+            <h2>项目信息</h2>
+            <table class="score-table">
+                <tbody>
+                    <tr><td><strong>GitHub</strong></td><td><a href="https://github.com/anonfaded/FadCam" style="color:#58a6ff;">anonfaded/FadCam</a></td></tr>
+                    <tr><td><strong>官网</strong></td><td><a href="https://fadcam.fadseclab.com/" style="color:#58a6ff;">fadcam.fadseclab.com</a></td></tr>
+                    <tr><td><strong>开发团队</strong></td><td>FadSec Lab (anonfaded)</td></tr>
+                    <tr><td><strong>主要语言</strong></td><td>Java</td></tr>
+                    <tr><td><strong>许可证</strong></td><td>开源</td></tr>
+                    <tr><td><strong>当前版本</strong></td><td>v3.1.0-beta</td></tr>
+                    <tr><td><strong>分发渠道</strong></td><td>GitHub / F-Droid / IzzyOnDroid / Amazon Appstore</td></tr>
+                    <tr><td><strong>Discord</strong></td><td>活跃社区</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>GitHub Trending 深度分析 | 生成时间：2026-05-13</p>
+        <p><a href="https://github.com/anonfaded/FadCam">查看项目</a> | 数据来源：GitHub API + Web Research</p>
+    </div>
+</body>
+</html>
