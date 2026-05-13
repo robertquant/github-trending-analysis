@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析 | obra/superpowers - Agentic Skills Framework</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(88, 166, 255, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(63, 185, 80, 0.06) 0%, transparent 50%);
+            animation: heroGlow 8s ease-in-out infinite;
+        }
+        @keyframes heroGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-2%, 1%); }
+        }
+        .hero-content { position: relative; z-index: 1; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: #58a6ff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .hero h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #3fb950, #d2a8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: #8b949e;
+            margin-bottom: 24px;
+            max-width: 750px;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .stat-icon { font-size: 18px; }
+        .stat-value { font-weight: 700; color: #f0f6fc; }
+        .stat-label { color: #8b949e; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #484f58; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.1em;
+            color: #58a6ff;
+            margin: 18px 0 10px 0;
+        }
+        .card p, .card li { color: #c9d1d9; font-size: 0.95em; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 6px; }
+
+        /* Two column grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8em; }
+            .hero { padding: 32px 24px; }
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px 4px;
+        }
+        .tag-blue { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+        .tag-green { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+        .tag-purple { background: rgba(188, 140, 255, 0.15); color: #bc8cff; }
+        .tag-orange { background: rgba(227, 149, 48, 0.15); color: #e39530; }
+        .tag-red { background: rgba(255, 123, 114, 0.15); color: #ff7b72; }
+
+        /* Code blocks */
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+        .inline-code {
+            background: rgba(88, 166, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #79c0ff;
+            font-size: 0.88em;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+            font-size: 0.92em;
+        }
+        .comparison-table th {
+            background: #0d1117;
+            color: #58a6ff;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+        .comparison-table tr:hover { background: rgba(88, 166, 255, 0.04); }
+        .comparison-table td:first-child { color: #f0f6fc; font-weight: 600; }
+        .comparison-table .highlight { color: #3fb950; font-weight: 600; }
+
+        /* Score bars */
+        .score-item {
+            margin-bottom: 14px;
+        }
+        .score-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.92em;
+        }
+        .score-label span:first-child { color: #f0f6fc; font-weight: 600; }
+        .score-label span:last-child { color: #8b949e; }
+        .score-bar {
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+        }
+        .score-fill.s9 { width: 90%; background: linear-gradient(90deg, #3fb950, #58a6ff); }
+        .score-fill.s85 { width: 85%; background: linear-gradient(90deg, #3fb950, #d2a8ff); }
+        .score-fill.s8 { width: 80%; background: linear-gradient(90deg, #e39530, #3fb950); }
+        .score-fill.s75 { width: 75%; background: linear-gradient(90deg, #e39530, #f0f6fc); }
+
+        /* Workflow steps */
+        .workflow {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+        }
+        .workflow::before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 24px;
+            bottom: 24px;
+            width: 2px;
+            background: linear-gradient(to bottom, #58a6ff, #3fb950, #d2a8ff, #e39530);
+        }
+        .workflow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 12px 0;
+            position: relative;
+        }
+        .step-num {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            z-index: 1;
+        }
+        .step-num.blue { background: rgba(88, 166, 255, 0.2); color: #58a6ff; border: 2px solid #58a6ff; }
+        .step-num.green { background: rgba(63, 185, 80, 0.2); color: #3fb950; border: 2px solid #3fb950; }
+        .step-num.purple { background: rgba(188, 140, 255, 0.2); color: #bc8cff; border: 2px solid #bc8cff; }
+        .step-num.orange { background: rgba(227, 149, 48, 0.2); color: #e39530; border: 2px solid #e39530; }
+        .step-num.red { background: rgba(255, 123, 114, 0.2); color: #ff7b72; border: 2px solid #ff7b72; }
+        .step-content h4 { color: #f0f6fc; margin-bottom: 4px; font-size: 1em; }
+        .step-content p { color: #8b949e; font-size: 0.9em; }
+
+        /* Skills grid */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .skill-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 14px 16px;
+            transition: border-color 0.2s;
+        }
+        .skill-card:hover { border-color: #58a6ff; }
+        .skill-card h4 { color: #f0f6fc; font-size: 0.92em; margin-bottom: 4px; }
+        .skill-card p { color: #8b949e; font-size: 0.82em; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px 0;
+            color: #484f58;
+            font-size: 0.85em;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-content">
+                <div class="hero-badge">&#x1F680; GitHub Trending #3 &bull; Shell &bull; +1,419 stars today</div>
+                <h1>obra/superpowers</h1>
+                <p class="subtitle">An agentic skills framework & software development methodology that works &mdash; 为 AI 编程代理打造的完整软件开发方法论与可组合技能框架</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">&#x2B50;</span>
+                        <span class="stat-value">188,828</span>
+                        <span class="stat-label">Stars</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">&#x1F4C5;</span>
+                        <span class="stat-value">2025</span>
+                        <span class="stat-label">创建</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">&#x1F4E6;</span>
+                        <span class="stat-value">14</span>
+                        <span class="stat-label">核心技能</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">&#x1F517;</span>
+                        <span class="stat-value">8+</span>
+                        <span class="stat-label">支持平台</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">&#x1F4D0;</span>
+                        <span class="stat-value">MIT</span>
+                        <span class="stat-label">License</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目简介 -->
+        <div class="card">
+            <h2><span class="icon">&#x1F4D6;</span> 项目简介与核心功能</h2>
+            <p><strong>Superpowers</strong> 由 <strong>Jesse Vincent</strong>（Prime Radiant 团队）创建，是一个为 AI 编程代理设计的<strong>完整软件开发方法论</strong>。它不是简单的提示词模板，而是一套基于可组合技能（Composable Skills）构建的结构化工作流系统。</p>
+            <p style="margin-top:12px;">核心理念：AI 编程代理不应该直接跳入写代码，而应该先理解需求、设计方案、制定计划、再通过子代理驱动开发（Subagent-Driven Development）执行。</p>
+            <h3>核心功能</h3>
+            <ul>
+                <li><strong>头脑风暴（Brainstorming）</strong> &mdash; 不急于写代码，先通过苏格拉底式提问精炼需求，产出设计文档</li>
+                <li><strong>结构化规划（Writing Plans）</strong> &mdash; 将工作分解为 2-5 分钟的细粒度任务，每个任务有精确的文件路径、完整代码和验证步骤</li>
+                <li><strong>子代理驱动开发（Subagent-Driven Development）</strong> &mdash; 为每个任务分派独立子代理，包含两阶段审查（规格合规 + 代码质量）</li>
+                <li><strong>TDD 强制执行</strong> &mdash; 严格执行 RED-GREEN-REFACTOR 循环，先写失败测试，再写最小代码通过</li>
+                <li><strong>代码审查（Code Review）</strong> &mdash; 自动在任务之间触发审查，严重问题阻断进度</li>
+                <li><strong>Git Worktree 隔离</strong> &mdash; 自动在新分支上创建隔离工作区</li>
+                <li><strong>分支完成流程</strong> &mdash; 验证测试、提供合并/PR/保留/丢弃选项</li>
+            </ul>
+        </div>
+
+        <!-- 工作流程 -->
+        <div class="card">
+            <h2><span class="icon">&#x1F504;</span> 核心工作流程</h2>
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="step-num blue">1</div>
+                    <div class="step-content">
+                        <h4>Brainstorming &mdash; 头脑风暴</h4>
+                        <p>激活于写代码之前。通过提问精炼想法，探索替代方案，分段展示设计供验证，保存设计文档。</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-num green">2</div>
+                    <div class="step-content">
+                        <h4>Using Git Worktrees &mdash; 创建隔离工作区</h4>
+                        <p>设计批准后激活。在新分支上创建隔离工作区，运行项目设置，验证测试基线。</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-num purple">3</div>
+                    <div class="step-content">
+                        <h4>Writing Plans &mdash; 编写实施计划</h4>
+                        <p>将工作分解为 2-5 分钟的小任务。每个任务有精确的文件路径、完整代码和验证步骤。</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-num orange">4</div>
+                    <div class="step-content">
+                        <h4>Subagent-Driven Development &mdash; 子代理驱动开发</h4>
+                        <p>为每个任务分派独立子代理，包含两阶段审查（规格合规 + 代码质量），可连续自主工作数小时。</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-num red">5</div>
+                    <div class="step-content">
+                        <h4>TDD + Code Review + Finish &mdash; 测试驱动、审查、完成</h4>
+                        <p>强制 RED-GREEN-REFACTOR 循环。任务间自动审查，完成后验证测试并提供合并选项。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术架构 + 技能库 -->
+        <div class="grid-2">
+            <div class="card">
+                <h2><span class="icon">&#x1F528;</span> 技术架构与特点</h2>
+                <h3>架构设计</h3>
+                <ul>
+                    <li><strong>技能组合系统</strong> &mdash; 每个技能是独立的 Markdown 文件，自动触发而非手动调用</li>
+                    <li><strong>跨平台适配</strong> &mdash; 同一套技能可运行在 Claude Code、Codex、Cursor 等 8+ 平台</li>
+                    <li><strong>零配置工作</strong> &mdash; 安装后自动激活，代理在任何任务前自动检查相关技能</li>
+                    <li><strong>强制工作流</strong> &mdash; 不是建议而是强制性的工作流，确保每次都遵循最佳实践</li>
+                </ul>
+                <h3>技术特点</h3>
+                <ul>
+                    <li>基于 <span class="inline-code">SKILL.md</span> 的声明式技能定义</li>
+                    <li>支持插件市场分发（Plugin Marketplace）</li>
+                    <li>技能自动触发机制（Auto-trigger）</li>
+                    <li>子代理并发执行能力</li>
+                    <li>Git Worktree 隔离开发</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h2><span class="icon">&#x1F9E9;</span> 技能库一览</h2>
+                <div class="skills-grid">
+                    <div class="skill-card">
+                        <h4>&#x1F4A1; brainstorming</h4>
+                        <p>苏格拉底式设计精炼</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F4CB; writing-plans</h4>
+                        <p>详细实施计划制定</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F680; executing-plans</h4>
+                        <p>批量执行 + 人工检查点</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F310; subagent-driven-dev</h4>
+                        <p>子代理驱动 + 两阶段审查</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F9EA; test-driven-dev</h4>
+                        <p>RED-GREEN-REFACTOR 强制</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F50D; systematic-debugging</h4>
+                        <p>4 阶段根因分析</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F4C1; using-git-worktrees</h4>
+                        <p>并行开发分支管理</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F50E; requesting-code-review</h4>
+                        <p>预审查清单</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x2705; verification-before-completion</h4>
+                        <p>完成前验证修复</p>
+                    </div>
+                    <div class="skill-card">
+                        <h4>&#x1F4DD; writing-skills</h4>
+                        <p>创建新技能的最佳实践</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="card">
+            <h2><span class="icon">&#x1F3AF;</span> 应用场景</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>&#x1F4BB; 日常软件开发</h3>
+                    <p>使用 AI 编程代理进行功能开发时，Superpowers 确保代理遵循结构化流程而非随意生成代码。特别适合需要高质量代码的团队项目。</p>
+                </div>
+                <div>
+                    <h3>&#x1F527; Bug 修复与调试</h3>
+                    <p>系统化调试技能引导代理通过 4 阶段根因分析定位问题，而非随意尝试修复，减少"改了这里又坏了那里"的情况。</p>
+                </div>
+                <div>
+                    <h3>&#x1F680; 大型功能开发</h3>
+                    <p>子代理驱动开发让 AI 可以自主连续工作数小时，每个任务独立审查，适合需要大量代码变更的复杂功能。</p>
+                </div>
+                <div>
+                    <h3>&#x1F91D; 团队协作</h3>
+                    <p>标准化的工作流让团队成员的 AI 辅助开发产出一致质量的代码，降低代码审查负担。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="card">
+            <h2><span class="icon">&#x1F525;</span> 为什么火（Trending 原因分析）</h2>
+            <ul>
+                <li><strong>AI 编程代理的爆发</strong> &mdash; 2025-2026 年 AI 编程代理（Claude Code、Cursor、Codex）使用量暴增，Superpowers 恰好解决了"如何让代理产出高质量代码"这一核心痛点</li>
+                <li><strong>方法论而非工具</strong> &mdash; 不只是提示词模板，而是一套完整的软件开发方法论，包含设计、规划、实施、测试、审查全流程</li>
+                <li><strong>跨平台兼容</strong> &mdash; 支持 8+ 主流编程代理平台，覆盖几乎所有 AI 编程工具用户</li>
+                <li><strong>188K+ Stars 的社交证明</strong> &mdash; 庞大的社区认可度使其成为"必装"插件</li>
+                <li><strong>解决了 "Vibe Coding" 问题</strong> &mdash; 随意编码（Vibe Coding）带来的代码质量问题日益突出，Superpowers 通过强制 TDD 和结构化流程直接解决</li>
+                <li><strong>零配置自动激活</strong> &mdash; 安装后无需任何操作，技能自动触发，极低的使用门槛</li>
+                <li><strong>子代理驱动开发的新范式</strong> &mdash; 开创性地将子代理模式引入日常开发流程，大幅提升 AI 自主工作时间</li>
+            </ul>
+        </div>
+
+        <!-- 同类项目对比 -->
+        <div class="card">
+            <h2><span class="icon">&#x2696;&#xFE0F;</span> 同类项目对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>obra/superpowers</th>
+                        <th>mattpocock/skills</th>
+                        <th>addyosmani/agent-skills</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>定位</td>
+                        <td>完整开发方法论 + 技能框架</td>
+                        <td>单代理专注技能集</td>
+                        <td>通用代理技能集合</td>
+                    </tr>
+                    <tr>
+                        <td>Stars</td>
+                        <td class="highlight">188K+</td>
+                        <td>77K+</td>
+                        <td>较小社区</td>
+                    </tr>
+                    <tr>
+                        <td>跨平台</td>
+                        <td class="highlight">8+ 平台支持</td>
+                        <td>主要 Claude Code</td>
+                        <td>多平台</td>
+                    </tr>
+                    <tr>
+                        <td>核心理念</td>
+                        <td>将代理视为学徒，强制工艺系统</td>
+                        <td>工程师实战技能分享</td>
+                        <td>通用可复用技能模式</td>
+                    </tr>
+                    <tr>
+                        <td>TDD 强制</td>
+                        <td class="highlight">&#x2713; 强制执行</td>
+                        <td>&#x2713; 建议执行</td>
+                        <td>&#x2717; 不涉及</td>
+                    </tr>
+                    <tr>
+                        <td>子代理开发</td>
+                        <td class="highlight">&#x2713; 核心特性</td>
+                        <td>&#x2717; 不支持</td>
+                        <td>&#x2717; 不支持</td>
+                    </tr>
+                    <tr>
+                        <td>自动触发</td>
+                        <td class="highlight">&#x2713; 零配置</td>
+                        <td>&#x2713; 自动</td>
+                        <td>需手动调用</td>
+                    </tr>
+                    <tr>
+                        <td>适用人群</td>
+                        <td>所有 AI 编程用户</td>
+                        <td>Claude Code 用户</td>
+                        <td>代理开发者</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 适合谁 -->
+        <div class="card">
+            <h2><span class="icon">&#x1F464;</span> 适合谁使用</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>&#x2705; 强烈推荐</h3>
+                    <ul>
+                        <li><strong>AI 编程代理重度用户</strong> &mdash; 每天使用 Claude Code / Cursor / Codex 的开发者</li>
+                        <li><strong>追求代码质量的团队</strong> &mdash; 希望通过 AI 辅助但仍保持高标准的团队</li>
+                        <li><strong>大型项目维护者</strong> &mdash; 需要结构化流程管理复杂变更</li>
+                        <li><strong>Vibe Coding 受害者</strong> &mdash; 发现 AI 生成的代码质量不可控的开发者</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>&#x274C; 可能不适合</h3>
+                    <ul>
+                        <li><strong>纯手动编码者</strong> &mdash; 不使用 AI 编程代理的开发者</li>
+                        <li><strong>轻量级脚本编写</strong> &mdash; 简单脚本不需要如此重的方法论</li>
+                        <li><strong>需要自定义技能</strong> &mdash; 项目不一般接受新技能的社区贡献</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速上手 -->
+        <div class="card">
+            <h2><span class="icon">&#x26A1;</span> 快速上手指南</h2>
+            <h3>Claude Code 安装（一行命令）</h3>
+            <pre><code># 方式一：官方插件市场
+/plugin install superpowers@claude-plugins-official
+
+# 方式二：Superpowers 市场
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace</code></pre>
+            <h3>Cursor 安装</h3>
+            <pre><code># 在 Cursor Agent 聊天中，从插件市场搜索 "superpowers" 安装</code></pre>
+            <h3>Codex CLI / App 安装</h3>
+            <pre><code># 在插件搜索界面搜索 Superpowers，选择 Install Plugin</code></pre>
+            <h3>Gemini CLI 安装</h3>
+            <pre><code>gemini extensions install https://github.com/obra/superpowers</code></pre>
+            <h3>安装后</h3>
+            <p>无需任何配置！技能会自动激活。当你开始一个新任务时，代理会自动检查并应用相关技能。</p>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="card">
+            <h2><span class="icon">&#x1F4CA;</span> 综合评分</h2>
+            <div class="grid-2">
+                <div>
+                    <div class="score-item">
+                        <div class="score-label">
+                            <span>&#x1F4A1; 创新性</span>
+                            <span>9.0 / 10</span>
+                        </div>
+                        <div class="score-bar"><div class="score-fill s9"></div></div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">
+                            <span>&#x1F40B; 代码质量</span>
+                            <span>8.5 / 10</span>
+                        </div>
+                        <div class="score-bar"><div class="score-fill s85"></div></div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">
+                            <span>&#x1F6E0;&#xFE0F; 实用性</span>
+                            <span>9.0 / 10</span>
+                        </div>
+                        <div class="score-bar"><div class="score-fill s9"></div></div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">
+                            <span>&#x1F4D6; 文档完善度</span>
+                            <span>8.5 / 10</span>
+                        </div>
+                        <div class="score-bar"><div class="score-fill s85"></div></div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">
+                            <span>&#x1F310; 社区活跃度</span>
+                            <span>9.5 / 10</span>
+                        </div>
+                        <div class="score-bar"><div class="score-fill s9"></div></div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:center; flex-direction:column;">
+                    <div style="font-size: 3.5em; font-weight: 800; background: linear-gradient(135deg, #58a6ff, #3fb950); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">8.9</div>
+                    <div style="color: #8b949e; margin-top: 4px;">综合评分 / 10</div>
+                    <div style="margin-top: 16px;">
+                        <span class="tag tag-green">必装插件</span>
+                        <span class="tag tag-blue">方法论革新</span>
+                        <span class="tag tag-purple">跨平台</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Links -->
+        <div class="card">
+            <h2><span class="icon">&#x1F517;</span> 相关链接</h2>
+            <ul>
+                <li><strong>GitHub 仓库</strong>: <a href="https://github.com/obra/superpowers" style="color:#58a6ff;">github.com/obra/superpowers</a></li>
+                <li><strong>官方文档</strong>: <a href="https://obra-superpowers.mintlify.app/introduction" style="color:#58a6ff;">obra-superpowers.mintlify.app</a></li>
+                <li><strong>作者博客</strong>: <a href="https://blog.fsck.com/2025/10/09/superpowers/" style="color:#58a6ff;">blog.fsck.com - Superpowers 介绍</a></li>
+                <li><strong>社区 Discord</strong>: 仓库中提供加入链接</li>
+                <li><strong>SkillsHub 注册</strong>: <a href="https://skillshub.wtf/obra/superpowers" style="color:#58a6ff;">skillshub.wtf/obra/superpowers</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>分析日期: 2026-05-14 &bull; 数据来源: GitHub, Web Search &bull; <a href="https://github.com/obra/superpowers">obra/superpowers</a></p>
+        </div>
+    </div>
+</body>
+</html>
