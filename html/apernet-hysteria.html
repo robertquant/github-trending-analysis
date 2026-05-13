@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hysteria 2 - GitHub Trending 深度分析</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --purple: #bc8cff;
+    --red: #f85149;
+    --cyan: #39d2c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #162030 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #238636, #2ea043);
+    color: #fff;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 2.4em;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff, #39d2c0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero .subtitle {
+    font-size: 1.15em;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    max-width: 700px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .meta-item .icon { font-size: 16px; }
+  .meta-item .value { color: var(--text); font-weight: 600; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 1.35em;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card p, .card li { color: var(--text); font-size: 15px; line-height: 1.75; }
+  .card ul { padding-left: 20px; }
+  .card ul li { margin-bottom: 8px; }
+
+  /* Features Grid */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .feature-item {
+    background: rgba(88,166,255,0.05);
+    border: 1px solid rgba(88,166,255,0.15);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .feature-item:hover { border-color: var(--accent); }
+  .feature-item h3 {
+    font-size: 1em;
+    color: var(--cyan);
+    margin-bottom: 8px;
+  }
+  .feature-item p { font-size: 14px; color: var(--text-secondary); }
+
+  /* Score */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .score-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+  }
+  .score-item .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+  .score-item .bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #21262d;
+    border-radius: 4px;
+    margin: 10px 0;
+    overflow: hidden;
+  }
+  .score-item .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  .score-item .number { font-size: 1.8em; font-weight: 700; }
+
+  /* Table */
+  .styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 14px;
+  }
+  .styled-table th {
+    background: #21262d;
+    color: var(--accent);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+  .styled-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .styled-table tr:hover td { background: rgba(88,166,255,0.04); }
+
+  /* Code */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-family: 'Fira Code', Consolas, monospace;
+    font-size: 13.5px;
+    color: #e6edf3;
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+  .code-block .comment { color: #8b949e; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .cmd { color: #79c0ff; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px 4px 2px 0;
+  }
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag-purple { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .tag-orange { background: rgba(210,153,34,0.15); color: var(--orange); }
+  .tag-cyan { background: rgba(57,210,192,0.15); color: var(--cyan); }
+
+  /* Audience */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .audience-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .audience-card .emoji { font-size: 2em; margin-bottom: 8px; }
+  .audience-card h4 { color: var(--accent); margin-bottom: 6px; font-size: 0.95em; }
+  .audience-card p { font-size: 13px; color: var(--text-secondary); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 32px 0 16px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { padding: 32px 20px; }
+    .hero h1 { font-size: 1.6em; }
+    .card { padding: 20px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .score-grid { grid-template-columns: repeat(2, 1fr); }
+    .audience-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <span class="hero-badge">Trending #4 - Go</span>
+    <h1>apernet/hysteria</h1>
+    <p class="subtitle">基于定制 QUIC 协议的高性能、抗审查代理工具。专为不稳定网络环境设计，速度极快，协议伪装为标准 HTTP/3 流量。</p>
+    <div class="hero-meta">
+      <div class="meta-item"><span class="icon">&#9733;</span> <span class="value">20,264</span> Stars</div>
+      <div class="meta-item"><span class="icon">&#128640;</span> Today <span class="value">+51</span></div>
+      <div class="meta-item"><span class="icon">&#128196;</span> <span class="value">79</span> Releases</div>
+      <div class="meta-item"><span class="icon">&#128187;</span> Go 92.9%</div>
+      <div class="meta-item"><span class="icon">&#9878;</span> MIT License</div>
+      <div class="meta-item"><span class="icon">&#128101;</span> 2.1k Forks</div>
+    </div>
+    <div style="margin-top:16px;">
+      <span class="tag tag-blue">QUIC Protocol</span>
+      <span class="tag tag-green">Proxy</span>
+      <span class="tag tag-purple">VPN</span>
+      <span class="tag tag-orange">Censorship Resistance</span>
+      <span class="tag tag-cyan">Cross-platform</span>
+      <span class="tag tag-blue">SOCKS5</span>
+      <span class="tag tag-green">HTTP/3</span>
+      <span class="tag tag-purple">TUN</span>
+    </div>
+  </div>
+
+  <!-- Core Features -->
+  <div class="card">
+    <h2>&#9889; 项目简介与核心功能</h2>
+    <p>Hysteria 是一个功能丰富、速度极快的代理和转发工具，由 <strong>apernet</strong> 团队基于 Go 语言开发。其核心亮点在于使用了<strong>定制的 QUIC 协议</strong>，专门针对高丢包、不稳定的网络环境进行了优化。</p>
+    <div class="features-grid">
+      <div class="feature-item">
+        <h3>&#9889; 极致速度</h3>
+        <p>基于定制 QUIC 协议，在高丢包网络下性能远超传统 TCP 代理，连接建立速度快，传输效率高。</p>
+      </div>
+      <div class="feature-item">
+        <h3>&#128737; 抗审查能力</h3>
+        <p>协议伪装为标准 HTTP/3 流量，审查者很难在不造成大规模误伤的情况下检测和封锁。</p>
+      </div>
+      <div class="feature-item">
+        <h3>&#128296; 多种代理模式</h3>
+        <p>支持 SOCKS5、HTTP Proxy、TCP/UDP 转发、Linux TProxy、TUN 模式，覆盖几乎所有使用场景。</p>
+      </div>
+      <div class="feature-item">
+        <h3>&#127760; 跨平台</h3>
+        <p>支持所有主流平台和架构（Linux、Windows、macOS、ARM、MIPS 等），部署灵活。</p>
+      </div>
+      <div class="feature-item">
+        <h3>&#128274; Hysteria Realms (P2P)</h3>
+        <p>独特的 P2P 穿透功能，无需公网 IP 即可在家庭网络、移动热点等环境中托管代理服务器。</p>
+      </div>
+      <div class="feature-item">
+        <h3>&#128200; 可配置拥塞控制</h3>
+        <p>v2.8.0+ 支持 BBR 和 Reno 拥塞控制算法，提供三种 BBR 配置（标准/保守/激进）。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technical Architecture -->
+  <div class="card">
+    <h2>&#128296; 技术架构与特点</h2>
+    <ul>
+      <li><strong>语言构成：</strong>Go 92.9%、Python 3.6%、Shell 3.3% —— 核心用 Go 实现，性能卓越</li>
+      <li><strong>协议设计：</strong>基于 QUIC（RFC 9000）定制，利用 UDP 的多路复用和 0-RTT 特性，减少握手延迟</li>
+      <li><strong>模块化架构：</strong>仓库分为 <code>core</code>（核心协议库）和 <code>app</code>（客户端/服务端），方便二次开发</li>
+      <li><strong>内置认证系统：</strong>支持自定义认证、流量统计和访问控制，易于集成到现有基础设施</li>
+      <li><strong>配置简洁：</strong>使用 YAML 配置文件，支持 ACME 自动证书管理</li>
+      <li><strong>Docker 支持：</strong>提供官方 Dockerfile，一键部署</li>
+      <li><strong>持续迭代：</strong>1,307 次提交，79 个版本发布，最新版本 v2.8.2（2026-04-26）</li>
+    </ul>
+  </div>
+
+  <!-- Application Scenarios -->
+  <div class="card">
+    <h2>&#127919; 应用场景</h2>
+    <table class="styled-table">
+      <thead>
+        <tr><th>场景</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&#127760; 网络受限环境</td><td>在互联网审查严格的地区，访问全球信息资源</td></tr>
+        <tr><td>&#128225; 高丢包网络</td><td>卫星网络、移动网络等不稳定环境下的高效代理</td></tr>
+        <tr><td>&#128421; 内网穿透</td><td>通过 Hysteria Realms 的 P2P 穿透，无公网 IP 也能对外服务</td></tr>
+        <tr><td>&#128272; 安全远程访问</td><td>通过 TCP/UDP 转发安全访问内部服务</td></tr>
+        <tr><td>&#128640; 游戏加速</td><td>UDP 协议天然适合游戏流量，降低延迟</td></tr>
+        <tr><td>&#128187; 开发者工具</td><td>作为开发环境中的通用代理，支持 SOCKS5/HTTP/TUN</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Why Trending -->
+  <div class="card">
+    <h2>&#128293; 为什么火（Trending 原因）</h2>
+    <ul>
+      <li><strong>技术领先：</strong>QUIC 协议在丢包环境下的表现远超传统 TCP 方案，解决了真实痛点</li>
+      <li><strong>持续更新：</strong>v2.8.x 持续加入新功能（可配置拥塞控制、速度测试等），保持技术活力</li>
+      <li><strong>社区口碑：</strong>在中文技术社区中有广泛讨论和实际部署经验，口口相传</li>
+      <li><strong>生态丰富：</strong>大量第三方客户端支持（iOS/Android/Windows/macOS），降低使用门槛</li>
+      <li><strong>开源 MIT：</strong>完全开源，代码质量高，文档完善，降低了贡献和部署门槛</li>
+      <li><strong>Realms 创新：</strong>P2P 穿透功能是同类工具中独有的创新，让没有公网 IP 的用户也能自建服务</li>
+    </ul>
+  </div>
+
+  <!-- Comparison -->
+  <div class="card">
+    <h2>&#128200; 同类项目对比</h2>
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>特性</th>
+          <th style="color:var(--cyan)">Hysteria 2</th>
+          <th>V2Ray (VMess)</th>
+          <th>Clash (Meta)</th>
+          <th>TUIC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>底层协议</td><td><strong>定制 QUIC</strong></td><td>TCP/mKCP/WebSocket</td><td>多协议支持</td><td>QUIC</td></tr>
+        <tr><td>高丢包性能</td><td style="color:var(--green)">&#9733;&#9733;&#9733;&#9733;&#9733;</td><td>&#9733;&#9733;&#9733;</td><td>&#9733;&#9733;&#9733;</td><td>&#9733;&#9733;&#9733;&#9733;</td></tr>
+        <tr><td>抗检测能力</td><td style="color:var(--green)">伪装 HTTP/3</td><td>可配置 TLS</td><td>依赖配置</td><td>QUIC+TLS</td></tr>
+        <tr><td>代理模式</td><td>SOCKS5/HTTP/TUN/TProxy</td><td>SOCKS5/HTTP</td><td>SOCKS5/HTTP/TUN</td><td>SOCKS5</td></tr>
+        <tr><td>P2P 穿透</td><td style="color:var(--green)">&#10004; (Realms)</td><td>&#10008;</td><td>&#10008;</td><td>&#10008;</td></tr>
+        <tr><td>配置难度</td><td>简单</td><td>较复杂</td><td>简单</td><td>简单</td></tr>
+        <tr><td>生态成熟度</td><td>&#9733;&#9733;&#9733;&#9733;</td><td>&#9733;&#9733;&#9733;&#9733;&#9733;</td><td>&#9733;&#9733;&#9733;&#9733;&#9733;</td><td>&#9733;&#9733;&#9733;</td></tr>
+        <tr><td>活跃开发</td><td style="color:var(--green)">&#10004;</td><td>&#10004;</td><td>分支活跃</td><td>放缓</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px;color:var(--text-secondary);font-size:14px;">Hysteria 的核心优势在于<strong>高丢包网络的性能表现</strong>和独特的 <strong>P2P 穿透功能</strong>，适合网络质量较差或需要 NAT 穿透的场景。</p>
+  </div>
+
+  <!-- Who Should Use -->
+  <div class="card">
+    <h2>&#128100; 适合谁使用</h2>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <div class="emoji">&#128187;</div>
+        <h4>网络工程师 / 运维</h4>
+        <p>需要部署高性能代理基础设施的技术人员</p>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#128104;&#8205;&#128187;</div>
+        <h4>开发者</h4>
+        <p>需要访问全球开发资源、API 和文档的程序员</p>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#127968;</div>
+        <h4>家庭网络用户</h4>
+        <p>无公网 IP 但需要远程访问家庭设备（Realms 功能）</p>
+      </div>
+      <div class="audience-card">
+        <div class="emoji">&#127891;</div>
+        <h4>技术学习者</h4>
+        <p>想了解 QUIC 协议、网络代理原理的学生和研究者</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Start -->
+  <div class="card">
+    <h2>&#128640; 快速上手指南</h2>
+    <p style="margin-bottom:12px;"><strong>1. 安装（一键脚本）</strong></p>
+    <div class="code-block">
+      <span class="comment"># Linux 一键安装</span><br>
+      <span class="cmd">bash</span> &lt;(curl -fsSL https://get.hy2.sh/)
+    </div>
+    <p style="margin-bottom:12px;"><strong>2. 服务端配置</strong></p>
+    <div class="code-block">
+      <span class="comment"># /etc/hysteria/config.yaml</span><br>
+      <span class="keyword">listen:</span> <span class="string">:443</span><br><br>
+      <span class="keyword">tls:</span><br>
+      &nbsp;&nbsp;<span class="keyword">cert:</span> <span class="string">/path/to/cert.pem</span><br>
+      &nbsp;&nbsp;<span class="keyword">key:</span> <span class="string">/path/to/key.pem</span><br><br>
+      <span class="keyword">auth:</span><br>
+      &nbsp;&nbsp;<span class="keyword">type:</span> <span class="string">password</span><br>
+      &nbsp;&nbsp;<span class="keyword">password:</span> <span class="string">your-strong-password</span><br><br>
+      <span class="keyword">masquerade:</span><br>
+        &nbsp;&nbsp;<span class="keyword">type:</span> <span class="string">proxy</span><br>
+        &nbsp;&nbsp;<span class="keyword">proxy:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">url:</span> <span class="string">https://news.ycombinator.com</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">rewriteHost:</span> <span class="keyword">true</span>
+    </div>
+    <p style="margin-bottom:12px;"><strong>3. 客户端配置</strong></p>
+    <div class="code-block">
+      <span class="keyword">server:</span> <span class="string">your-server.com:443</span><br><br>
+      <span class="keyword">auth:</span> <span class="string">your-strong-password</span><br><br>
+      <span class="keyword">socks5:</span><br>
+        &nbsp;&nbsp;<span class="keyword">listen:</span> <span class="string">127.0.0.1:1080</span><br>
+      <span class="keyword">http:</span><br>
+        &nbsp;&nbsp;<span class="keyword">listen:</span> <span class="string">127.0.0.1:8080</span>
+    </div>
+    <p style="margin-top:12px;"><strong>4. 启动服务</strong></p>
+    <div class="code-block">
+      <span class="comment"># 服务端</span><br>
+      <span class="cmd">hysteria server</span> -c /etc/hysteria/config.yaml<br><br>
+      <span class="comment"># 客户端</span><br>
+      <span class="cmd">hysteria client</span> -c config.yaml
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div class="card">
+    <h2>&#11088; 综合评分</h2>
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="label">创新性</div>
+        <div class="number" style="color:var(--purple)">9.0</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,var(--purple),#a371f7);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">代码质量</div>
+        <div class="number" style="color:var(--green)">9.0</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,var(--green),#56d364);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">实用性</div>
+        <div class="number" style="color:var(--accent)">9.5</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:95%;background:linear-gradient(90deg,var(--accent),#79c0ff);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">文档完善度</div>
+        <div class="number" style="color:var(--orange)">8.5</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:85%;background:linear-gradient(90deg,var(--orange),#e3b341);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">社区活跃度</div>
+        <div class="number" style="color:var(--cyan)">8.5</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:85%;background:linear-gradient(90deg,var(--cyan),#56d4d0);"></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:24px;">
+      <span style="font-size:2.2em;font-weight:800;background:linear-gradient(90deg,#58a6ff,#bc8cff,#39d2c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">8.9 / 10</span>
+      <p style="color:var(--text-secondary);font-size:14px;margin-top:4px;">综合评分</p>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="card">
+    <h2>&#128203; 分析总结</h2>
+    <p>Hysteria 2 是目前 QUIC 代理领域的标杆项目，以<strong>极致的网络性能</strong>和<strong>创新的 P2P 穿透功能</strong>在同类工具中脱颖而出。其 Go 语言实现保证了跨平台兼容性和高并发性能，MIT 开源协议和完善的文档让部署和使用门槛很低。对于需要在网络质量不佳的环境中部署代理的用户来说，Hysteria 是目前最优选择之一。项目保持高频更新，社区活跃，长期前景看好。</p>
+  </div>
+
+  <div class="footer">
+    <p>&#129302; 由 AI 深度分析生成 | Powered by Claude Code | 2026-05-13</p>
+    <p style="margin-top:6px;"><a href="https://github.com/apernet/hysteria" style="color:var(--accent);text-decoration:none;">GitHub: apernet/hysteria</a></p>
+  </div>
+</div>
+</body>
+</html>
