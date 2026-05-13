@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析：mattpocock/skills - AI Agent 工程技能框架</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+.container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+/* Header */
+.header { text-align: center; padding: 48px 24px; background: linear-gradient(135deg, #161b22 0%, #0d1117 100%); border: 1px solid #21262d; border-radius: 16px; margin-bottom: 32px; position: relative; overflow: hidden; }
+.header::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 30% 50%, rgba(56,189,248,0.06) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(168,85,247,0.06) 0%, transparent 50%); }
+.header h1 { font-size: 2.4em; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; position: relative; }
+.header .subtitle { color: #8b949e; font-size: 1.1em; position: relative; }
+.header .meta { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; position: relative; }
+.header .meta span { display: inline-flex; align-items: center; gap: 6px; color: #8b949e; font-size: 0.9em; }
+.header .meta .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+.badge-lang { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+.badge-stars { background: rgba(250,204,21,0.12); color: #facc15; border: 1px solid rgba(250,204,21,0.3); }
+.badge-trending { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+
+/* Cards */
+.card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 28px; margin-bottom: 24px; transition: border-color 0.3s; }
+.card:hover { border-color: #388bfd55; }
+.card h2 { font-size: 1.4em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.card h2 .icon { font-size: 1.2em; }
+.card p { color: #b1bac4; margin-bottom: 12px; }
+.card ul { padding-left: 20px; color: #b1bac4; }
+.card li { margin-bottom: 8px; }
+.card li::marker { color: #388bfd; }
+
+/* Gradient headings */
+.section-title { font-size: 1.4em; background: linear-gradient(90deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
+
+/* Skills grid */
+.skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+.skill-card { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 18px; transition: all 0.3s; }
+.skill-card:hover { border-color: #58a6ff; transform: translateY(-2px); }
+.skill-card .skill-name { color: #58a6ff; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95em; margin-bottom: 6px; }
+.skill-card .skill-desc { color: #8b949e; font-size: 0.88em; }
+
+/* Score section */
+.score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-top: 16px; }
+.score-item { text-align: center; padding: 20px 12px; background: #0d1117; border: 1px solid #21262d; border-radius: 10px; }
+.score-label { color: #8b949e; font-size: 0.85em; margin-bottom: 8px; }
+.score-value { font-size: 2em; font-weight: 800; }
+.score-bar { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+.s9 { color: #34d399; } .s9 .score-bar-fill { background: linear-gradient(90deg, #34d399, #059669); width: 90%; }
+.s85 { color: #58a6ff; } .s85 .score-bar-fill { background: linear-gradient(90deg, #58a6ff, #388bfd); width: 85%; }
+.s8 { color: #a78bfa; } .s8 .score-bar-fill { background: linear-gradient(90deg, #a78bfa, #7c3aed); width: 80%; }
+.s75 { color: #facc15; } .s75 .score-bar-fill { background: linear-gradient(90deg, #facc15, #eab308); width: 75%; }
+
+/* Comparison table */
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th { background: #161b22; color: #58a6ff; padding: 12px 16px; text-align: left; border-bottom: 2px solid #21262d; font-size: 0.9em; }
+td { padding: 12px 16px; border-bottom: 1px solid #21262d; color: #b1bac4; font-size: 0.9em; }
+tr:hover td { background: rgba(56,139,253,0.05); }
+
+/* Code block */
+.code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em; color: #e6edf3; overflow-x: auto; }
+.code-block .comment { color: #8b949e; }
+.code-block .cmd { color: #79c0ff; }
+
+/* Tags */
+.tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tag { padding: 4px 12px; border-radius: 16px; font-size: 0.8em; }
+.tag-blue { background: rgba(56,139,253,0.15); color: #58a6ff; border: 1px solid rgba(56,139,253,0.3); }
+.tag-green { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+.tag-purple { background: rgba(168,85,247,0.12); color: #bc8cff; border: 1px solid rgba(168,85,247,0.3); }
+.tag-yellow { background: rgba(250,204,21,0.12); color: #facc15; border: 1px solid rgba(250,204,21,0.3); }
+
+/* Footer */
+.footer { text-align: center; padding: 32px; color: #484f58; font-size: 0.85em; border-top: 1px solid #21262d; margin-top: 40px; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .header h1 { font-size: 1.6em; }
+  .card { padding: 20px; }
+  .skills-grid { grid-template-columns: 1fr; }
+  .score-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>mattpocock/skills</h1>
+  <div class="subtitle">Skills for Real Engineers — AI Agent 工程技能框架</div>
+  <div class="meta">
+    <span class="badge badge-lang">Shell / Markdown</span>
+    <span class="badge badge-stars">&#9733; 76,298</span>
+    <span class="badge badge-trending">&#128293; +3,867 today</span>
+    <span>by Matt Pocock</span>
+    <span>2026-05-13 分析</span>
+  </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="card">
+  <h2><span class="icon">&#128218;</span> 项目简介与核心功能</h2>
+  <p><strong>mattpocock/skills</strong> 是由 TypeScript 社区知名专家 Matt Pocock（Total TypeScript 作者）开源的 AI 编码代理技能集合。项目口号直截了当：<em>"Skills for Real Engineers. Straight from my .claude directory."</em>——这些技能是作者日常做真实工程时使用的工具，而非花哨的"vibe coding"。</p>
+  <p>项目聚焦于解决 AI 编码代理（如 Claude Code、Codex 等）在实际开发中的<strong>四大痛点</strong>：</p>
+  <ul>
+    <li><strong>沟通失准</strong>：Agent 没有理解你真正想要什么 → <code>/grill-me</code>、<code>/grill-with-docs</code></li>
+    <li><strong>冗余输出</strong>：Agent 不知道项目术语，用 20 个词表达 1 个词能说清的事 → 共享语言（CONTEXT.md）</li>
+    <li><strong>代码不工作</strong>：Agent 缺乏反馈循环，盲目编码 → <code>/tdd</code>、<code>/diagnose</code></li>
+    <li><strong>屎山代码</strong>：Agent 加速编码的同时也加速了软件熵 → <code>/improve-codebase-architecture</code></li>
+  </ul>
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+  <h2><span class="icon">&#9881;</span> 技术架构与特点</h2>
+  <p>项目采用<strong>技能（Skills）架构</strong>——每个技能是一个独立的 Markdown/Shell 文件，可被 AI 编码代理直接加载为 slash command。架构特点如下：</p>
+  <ul>
+    <li><strong>极简设计</strong>：每个 Skill 是一个独立文件，小巧、可组合、易修改</li>
+    <li><strong>模型无关</strong>：支持 Claude Code、Codex 及任何支持 custom skills 的代理</li>
+    <li><strong>一键安装</strong>：通过 <code>npx skills@latest add mattpocock/skills</code> 安装</li>
+    <li><strong>渐进式披露</strong>：技能按功能分层，入门仅需 30 秒</li>
+    <li><strong>工程实践驱动</strong>：基于数十年软件工程经验提炼（TDD、DDD、ADR 等）</li>
+  </ul>
+  <div class="code-block">
+    <span class="comment"># 30 秒安装</span><br>
+    <span class="cmd">npx skills@latest add mattpocock/skills</span><br>
+    <span class="comment"># 在 Agent 中运行初始化</span><br>
+    <span class="cmd">/setup-matt-pocock-skills</span>
+  </div>
+</div>
+
+<!-- 技能清单 -->
+<div class="card">
+  <h2><span class="icon">&#128736;</span> 核心技能清单</h2>
+  <p>项目分为三大类，共 15+ 个技能：</p>
+
+  <h3 style="color: #58a6ff; margin: 16px 0 8px; font-size: 1em;">&#128187; 工程类（Engineering）</h3>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-name">/grill-with-docs</div>
+      <div class="skill-desc">深度需求对齐 + 构建共享语言（CONTEXT.md）+ ADR 决策记录。最强大的技能之一</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/tdd</div>
+      <div class="skill-desc">红-绿-重构循环，每次一个垂直切片，为 Agent 提供持续反馈</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/diagnose</div>
+      <div class="skill-desc">系统化调试循环：复现 → 最小化 → 假设 → 检测 → 修复 → 回归测试</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/improve-codebase-architecture</div>
+      <div class="skill-desc">发现代码库的"深化"机会，结合 CONTEXT.md 和 ADR 进行架构改进</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/to-prd</div>
+      <div class="skill-desc">将对话上下文自动合成为 PRD（产品需求文档），提交为 GitHub Issue</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/to-issues</div>
+      <div class="skill-desc">将计划/PRD 分解为可独立认领的 GitHub Issues（垂直切片）</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/triage</div>
+      <div class="skill-desc">通过状态机流程对 Issues 进行分类和标记</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/zoom-out</div>
+      <div class="skill-desc">让 Agent 跳出细节，从系统全局视角理解代码</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/prototype</div>
+      <div class="skill-desc">快速构建一次性原型，验证设计方案</div>
+    </div>
+  </div>
+
+  <h3 style="color: #bc8cff; margin: 20px 0 8px; font-size: 1em;">&#9889; 生产力类（Productivity）</h3>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-name">/grill-me</div>
+      <div class="skill-desc">无情面试模式——对计划/设计进行穷举式追问，直到所有决策分支被覆盖</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/caveman</div>
+      <div class="skill-desc">超压缩通信模式，削减约 75% token 用量，保留完整技术准确性</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/handoff</div>
+      <div class="skill-desc">将当前对话压缩为交接文档，方便另一个 Agent 继续工作</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">/write-a-skill</div>
+      <div class="skill-desc">用正确的结构创建新技能——渐进披露 + 绑定资源</div>
+    </div>
+  </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="card">
+  <h2><span class="icon">&#127919;</span> 应用场景</h2>
+  <table>
+    <thead>
+      <tr><th>场景</th><th>推荐技能组合</th><th>效果</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>新功能开发</td><td><code>/grill-with-docs</code> → <code>/to-prd</code> → <code>/tdd</code></td><td>需求对齐 → 规格文档 → 测试驱动实现</td></tr>
+      <tr><td>Bug 修复</td><td><code>/diagnose</code> → <code>/tdd</code></td><td>系统化定位 → 红绿修复</td></tr>
+      <tr><td>代码重构</td><td><code>/improve-codebase-architecture</code></td><td>发现深化机会，改善模块设计</td></tr>
+      <tr><td>多人协作交接</td><td><code>/handoff</code></td><td>压缩上下文，无缝切换 Agent</td></tr>
+      <tr><td>Token 节省</td><td><code>/caveman</code></td><td>减少 75% 通信开销</td></tr>
+      <tr><td>Issue 管理</td><td><code>/to-issues</code> → <code>/triage</code></td><td>自动拆分任务 → 分类标记</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 为什么火 -->
+<div class="card">
+  <h2><span class="icon">&#128293;</span> 为什么火（Trending 原因）</h2>
+  <ul>
+    <li><strong>KOL 效应 + 时机</strong>：Matt Pocock 是 TypeScript 社区顶级 KOL（6万+ Newsletter 订阅者），与 Karpathy 的 skills 项目同时引领了 2026 年 "Skills 生态"浪潮</li>
+    <li><strong>直击痛点</strong>：AI 编码代理已普及，但"Agent 写的代码不好用"是普遍痛点，本项目给出了系统化解决方案</li>
+    <li><strong>理念先进</strong>：不是"让 AI 替你写代码"，而是"用软件工程最佳实践指导 AI 写好代码"——TDD、DDD、ADR 等经典方法论与 AI 深度结合</li>
+    <li><strong>共享语言概念</strong>：CONTEXT.md 是项目中最具创新性的概念——让 Agent 和开发者用同一套术语沟通，减少冗余、提高准确性</li>
+    <li><strong>低门槛高回报</strong>：30 秒安装，立即可用，效果显著</li>
+    <li><strong>模型无关</strong>：不绑定特定 LLM 或代理框架，适用面广</li>
+  </ul>
+</div>
+
+<!-- 同类对比 -->
+<div class="card">
+  <h2><span class="icon">&#9878;</span> 同类项目对比</h2>
+  <table>
+    <thead>
+      <tr><th>维度</th><th>mattpocock/skills</th><th>karpathy/skills</th><th>GSD / BMAD</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>作者</td><td>Matt Pocock (TS专家)</td><td>Andrej Karpathy (AI大神)</td><td>社区项目</td></tr>
+      <tr><td>核心理念</td><td>工程实践 + Agent 协作</td><td>通用 AI 技能集</td><td>流程管控型</td></tr>
+      <tr><td>学习曲线</td><td>低（30s 安装）</td><td>中</td><td>高（需学习框架）</td></tr>
+      <tr><td>可定制性</td><td>极高（单个文件可改）</td><td>中</td><td>低（框架约束多）</td></tr>
+      <tr><td>模型支持</td><td>所有模型</td><td>主要 Claude</td><td>特定平台</td></tr>
+      <tr><td>Stars</td><td>76K+</td><td>100K+</td><td>5K-10K</td></tr>
+      <tr><td>特色</td><td>共享语言 / TDD / ADR</td><td>Karpathy 背书</td><td>端到端流程</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top: 12px; color: #8b949e;">Matt Pocock 的 skills 与 Karpathy 的 skills 代表了 2026 年 Skills 生态的两大流派：前者强调工程纪律，后者强调 AI 原生能力。两者互补而非竞争。</p>
+</div>
+
+<!-- 适合谁 -->
+<div class="card">
+  <h2><span class="icon">&#128100;</span> 适合谁使用</h2>
+  <div class="tag-container">
+    <span class="tag tag-blue">日常使用 AI 编码代理的开发者</span>
+    <span class="tag tag-green">对 Agent 输出质量不满意的团队</span>
+    <span class="tag tag-purple">追求工程最佳实践的资深工程师</span>
+    <span class="tag tag-yellow">希望提升 AI 协作效率的独立开发者</span>
+  </div>
+  <p style="margin-top: 12px;">特别适合已经使用 Claude Code、Codex 等 AI 编码工具，但苦于 Agent 产出不稳定的开发者。如果你觉得"AI 写的代码总差点意思"，这个项目就是为你准备的。</p>
+</div>
+
+<!-- 快速上手 -->
+<div class="card">
+  <h2><span class="icon">&#128640;</span> 快速上手指南</h2>
+  <div class="code-block">
+<span class="comment"># Step 1: 安装 skills（30秒）</span>
+<span class="cmd">npx skills@latest add mattpocock/skills</span>
+
+<span class="comment"># Step 2: 在交互界面中选择你需要的技能</span>
+<span class="comment">#        和目标 Agent（Claude Code / Codex 等）</span>
+<span class="comment">#        务必选择 /setup-matt-pocock-skills</span>
+
+<span class="comment"># Step 3: 在 Agent 中运行初始化</span>
+<span class="cmd">/setup-matt-pocock-skills</span>
+
+<span class="comment"># Step 4: 选择 Issue Tracker（GitHub / Linear / 本地文件）</span>
+<span class="comment">#        配置 triage 标签</span>
+<span class="comment">#        指定文档保存位置</span>
+
+<span class="comment"># Step 5: 开始使用！</span>
+<span class="cmd">/grill-with-docs</span>   <span class="comment"># 需求对齐（最推荐的起点）</span>
+<span class="cmd">/tdd</span>                <span class="comment"># 测试驱动开发</span>
+<span class="cmd">/caveman</span>            <span class="comment"># 省_token 模式</span>
+  </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="card">
+  <h2><span class="icon">&#11088;</span> 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item s9">
+      <div class="score-label">创新性</div>
+      <div class="score-value">9.0</div>
+      <div class="score-bar"><div class="score-bar-fill"></div></div>
+    </div>
+    <div class="score-item s85">
+      <div class="score-label">代码质量</div>
+      <div class="score-value">8.5</div>
+      <div class="score-bar"><div class="score-bar-fill"></div></div>
+    </div>
+    <div class="score-item s9">
+      <div class="score-label">实用性</div>
+      <div class="score-value">9.0</div>
+      <div class="score-bar"><div class="score-bar-fill"></div></div>
+    </div>
+    <div class="score-item s85">
+      <div class="score-label">文档完善度</div>
+      <div class="score-value">8.5</div>
+      <div class="score-bar"><div class="score-bar-fill"></div></div>
+    </div>
+    <div class="score-item s9">
+      <div class="score-label">社区活跃度</div>
+      <div class="score-value">9.5</div>
+      <div class="score-bar"><div class="score-bar-fill"></div></div>
+    </div>
+  </div>
+  <div style="text-align: center; margin-top: 20px; padding: 16px; background: #0d1117; border-radius: 10px; border: 1px solid #21262d;">
+    <span style="color: #8b949e; font-size: 0.9em;">综合评分</span>
+    <div style="font-size: 2.4em; font-weight: 800; background: linear-gradient(135deg, #34d399, #58a6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">8.9 / 10</div>
+    <span style="color: #34d399; font-size: 0.85em;">&#11088; 强烈推荐</span>
+  </div>
+</div>
+
+<!-- 分析总结 -->
+<div class="card">
+  <h2><span class="icon">&#128202;</span> 分析总结</h2>
+  <p><strong>mattpocock/skills</strong> 是 2026 年 AI 编码工具领域最具影响力的项目之一。它不是一个框架、不是一个库，而是一套<strong>将软件工程最佳实践与 AI Agent 协作深度结合的方法论和工具集</strong>。</p>
+  <p>项目最大的亮点是将 TDD、DDD、ADR 等经典工程概念提炼为可复用的 AI Skills，特别是"共享语言"（CONTEXT.md）的概念极具创新性——让开发者和 Agent 用同一套术语沟通，显著提升协作效率和代码质量。</p>
+  <p>在 Skills 生态大爆发的 2026 年，Matt Pocock 的这套技能集以其工程深度、实用主义和极低门槛脱颖而出，是每一位认真使用 AI 编码代理的开发者都应该尝试的项目。</p>
+</div>
+
+<div class="footer">
+  <p>GitHub Trending 深度分析 &middot; 2026-05-13 &middot; Powered by Claude AI</p>
+  <p><a href="https://github.com/mattpocock/skills" style="color: #58a6ff; text-decoration: none;">github.com/mattpocock/skills</a></p>
+</div>
+
+</div>
+</body>
+</html>
