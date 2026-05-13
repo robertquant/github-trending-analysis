@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Dense-AI/scientific-agent-skills - GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #bc8cff;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-tertiary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            border: 1px solid var(--border-color);
+        }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--accent-blue); }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .card h2 .icon { margin-right: 8px; }
+        .card p, .card li { color: var(--text-secondary); line-height: 1.8; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 6px; }
+        .gradient-title-1 { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-title-2 { background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-title-3 { background: var(--gradient-3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .score-item .label { color: var(--text-secondary); font-size: 0.85em; margin-bottom: 8px; }
+        .score-item .value { font-size: 1.8em; font-weight: 700; }
+        .score-item .bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bg-primary);
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill { height: 100%; border-radius: 2px; }
+        .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+        .tag-blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .tag-green { border-color: var(--accent-green); color: var(--accent-green); }
+        .tag-purple { border-color: var(--accent-purple); color: var(--accent-purple); }
+        .tag-orange { border-color: var(--accent-orange); color: var(--accent-orange); }
+        .tag-cyan { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        table th, table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+        table th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        table tr:hover td { background: var(--bg-tertiary); }
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: var(--accent-green);
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .comparison-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .comparison-card h4 { color: var(--accent-blue); margin-bottom: 10px; }
+        .comparison-card p { font-size: 0.9em; }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .highlight-box strong { color: var(--accent-purple); }
+        .workflow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .step-num {
+            background: var(--gradient-1);
+            color: var(--bg-primary);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+        .step-text { color: var(--text-secondary); font-size: 0.95em; padding-top: 3px; }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>K-Dense-AI/scientific-agent-skills</h1>
+        <p class="subtitle">Your AI Agent's Scientific Superpower &mdash; 135 Ready-to-Use Research Skills</p>
+        <div class="meta">
+            <span class="meta-tag">&#11088; 20,845 Stars</span>
+            <span class="meta-tag">&#128293; +83 Today</span>
+            <span class="meta-tag">&#128013; Python</span>
+            <span class="meta-tag">&#128274; MIT License</span>
+            <span class="meta-tag">&#127979; 2026-05-14</span>
+        </div>
+        <div class="tag-container" style="justify-content:center; margin-top:16px;">
+            <span class="tag tag-blue">AI Agent Skills</span>
+            <span class="tag tag-green">Scientific Computing</span>
+            <span class="tag tag-purple">Drug Discovery</span>
+            <span class="tag tag-orange">Bioinformatics</span>
+            <span class="tag tag-cyan">Multi-Omics</span>
+        </div>
+    </div>
+
+    <!-- 1. Project Overview -->
+    <div class="card">
+        <h2><span class="icon">&#128218;</span><span class="gradient-title-1">Project Overview</span></h2>
+        <p><strong>K-Dense-AI/scientific-agent-skills</strong> is a comprehensive collection of <strong>135 ready-to-use scientific and research skills</strong> for AI coding agents. It transforms any compatible AI agent (Cursor, Claude Code, Codex, Gemini CLI) into a powerful "AI Scientist" capable of executing complex multi-step scientific workflows across biology, chemistry, medicine, physics, engineering, and beyond.</p>
+        <div class="highlight-box" style="margin-top:16px;">
+            <p><strong>Core Value Proposition:</strong> Instead of spending days configuring environments and reading API docs, researchers can install these skills once and immediately ask their AI agent to execute end-to-end scientific pipelines&mdash;from drug discovery to genomics to clinical research&mdash;with a single natural language prompt.</p>
+        </div>
+    </div>
+
+    <!-- 2. Core Features -->
+    <div class="card">
+        <h2><span class="icon">&#9889;</span><span class="gradient-title-2">Core Features</span></h2>
+        <ul>
+            <li><strong>135 Scientific Skills</strong> &mdash; Covering bioinformatics, cheminformatics, drug discovery, proteomics, clinical research, ML/AI, materials science, physics, engineering, geospatial science, lab automation, and scientific communication</li>
+            <li><strong>100+ Database Access</strong> &mdash; Unified access to PubChem, ChEMBL, UniProt, COSMIC, ClinicalTrials.gov, FRED, USPTO, KEGG, Reactome, STRING, and 70+ more scientific databases</li>
+            <li><strong>70+ Optimized Python Package Skills</strong> &mdash; Curated documentation and examples for RDKit, Scanpy, PyTorch Lightning, scikit-learn, BioPython, PennyLane, Qiskit, OpenMM, TimesFM, and more</li>
+            <li><strong>Open Agent Skills Standard</strong> &mdash; Works with Cursor, Claude Code, Codex, Gemini CLI, and any agent supporting the standard</li>
+            <li><strong>Security-Scanned</strong> &mdash; Weekly scans via Cisco AI Defense Skill Scanner; includes behavioral analysis</li>
+            <li><strong>BYOK Desktop App</strong> &mdash; K-Dense BYOK: free, open-source AI co-scientist running locally with 40+ model support</li>
+        </ul>
+    </div>
+
+    <!-- 3. Technical Architecture -->
+    <div class="card">
+        <h2><span class="icon">&#127959;</span><span class="gradient-title-1">Technical Architecture</span></h2>
+        <p>The project follows the <strong>Agent Skills Standard</strong> specification, where each skill is a self-contained folder with a <code>SKILL.md</code> file defining metadata, documentation, code examples, and best practices.</p>
+        <table>
+            <thead>
+                <tr><th>Component</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Skill Format</td><td>SKILL.md with frontmatter (name, description, dependencies, license)</td></tr>
+                <tr><td>Installation</td><td><code>npx skills add</code>, <code>gh skill install</code>, or manual copy</td></tr>
+                <tr><td>Package Manager</td><td>uv (Python 3.11+, recommended 3.12+)</td></tr>
+                <tr><td>Agent Compatibility</td><td>Cursor, Claude Code, Codex, Gemini CLI, Claude Cowork</td></tr>
+                <tr><td>Security</td><td>Cisco AI Defense Skill Scanner, weekly automated scans</td></tr>
+                <tr><td>License</td><td>MIT (repo-level), per-skill licenses may vary</td></tr>
+                <tr><td>Architecture</td><td>Decentralized skill modules; auto-discovery by agent host</td></tr>
+            </tbody>
+        </table>
+        <div class="highlight-box">
+            <p><strong>Design Philosophy:</strong> "Good science in the age of AI is inherently interdisciplinary." All skills are bundled together so agents can seamlessly bridge genomics, cheminformatics, clinical data, and ML in one workflow without worrying about wiring individual skills together.</p>
+        </div>
+    </div>
+
+    <!-- 4. Domain Coverage -->
+    <div class="card">
+        <h2><span class="icon">&#127912;</span><span class="gradient-title-2">Domain Coverage (17 Scientific Domains)</span></h2>
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h4>&#129516; Bioinformatics & Genomics (21+)</h4>
+                <p>BioPython, Scanpy, pysam, scVelo, Arboreto, PyDESeq2, Cellxgene Census, deepTools, gget</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#129514; Cheminformatics & Drug Discovery (10+)</h4>
+                <p>RDKit, DeepChem, DiffDock, Datamol, Molfeat, OpenMM, MedChem, PyTDC</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#127973; Clinical Research (8+)</h4>
+                <p>DepMap, Imaging Data Commons, PyHealth, NeuroKit2, Clinical Decision Support</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#129504; ML & AI (16+)</h4>
+                <p>PyTorch Lightning, Transformers, scikit-learn, SHAP, PyMC, TimesFM, Torch Geometric</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#127756; Materials & Physics (7)</h4>
+                <p>Pymatgen, Astropy, Cirq, PennyLane, Qiskit, QuTiP, COBRApy</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#128200; Data Analysis (16+)</h4>
+                <p>Matplotlib, Seaborn, GeoPandas, Dask, Polars, NetworkX, UMAP</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#128218; Scientific Communication (20+)</h4>
+                <p>Literature Review, Paper Lookup, Open Notebook, Scientific Writing, LaTeX Posters</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#128300; Lab Automation (4)</h4>
+                <p>PyLabRobot, Ginkgo Cloud Lab, Protocols.io, Benchling</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Why Trending -->
+    <div class="card">
+        <h2><span class="icon">&#128293;</span><span class="gradient-title-3">Why It's Trending</span></h2>
+        <ul>
+            <li><strong>AI Agent Skills Standard Hype</strong> &mdash; The project rides the wave of the emerging "Agent Skills" ecosystem (similar to MCP), becoming the definitive scientific skills collection</li>
+            <li><strong>Interdisciplinary Appeal</strong> &mdash; Covers 17+ scientific domains with 135 skills and 100+ databases, making it a one-stop-shop for any researcher using AI agents</li>
+            <li><strong>Timing with Agent Revolution</strong> &mdash; As Cursor, Claude Code, and Codex gain massive adoption, pre-built skills that supercharge these tools for specialized domains become extremely valuable</li>
+            <li><strong>"AI Scientist" Narrative</strong> &mdash; The promise of transforming any AI agent into a research assistant resonates strongly with the scientific community's growing interest in AI-assisted research</li>
+            <li><strong>Active Maintenance</strong> &mdash; Backed by K-Dense Inc. with regular updates, security scanning, and community contributions</li>
+        </ul>
+    </div>
+
+    <!-- 6. Comparison -->
+    <div class="card">
+        <h2><span class="icon">&#9878;</span><span class="gradient-title-1">Comparison with Similar Projects</span></h2>
+        <table>
+            <thead>
+                <tr><th>Feature</th><th>scientific-agent-skills</th><th>obra/superpowers</th><th>mattpocock/skills</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Focus</td><td>Scientific Research</td><td>Agentic Dev Methodology</td><td>General Dev Skills</td></tr>
+                <tr><td>Skill Count</td><td>135</td><td>~50</td><td>~30</td></tr>
+                <tr><td>Database Coverage</td><td>100+ scientific DBs</td><td>None</td><td>None</td></tr>
+                <tr><td>Domain</td><td>Bio, Chem, Medical, Physics</td><td>Software Engineering</td><td>Software Engineering</td></tr>
+                <tr><td>Security Scanning</td><td>Cisco AI Defense (weekly)</td><td>Community review</td><td>Manual</td></tr>
+                <tr><td>Target Users</td><td>Researchers, Scientists</td><td>Developers</td><td>Developers</td></tr>
+                <tr><td>BYOK App</td><td>&#10003; K-Dense BYOK</td><td>&#10007;</td><td>&#10007;</td></tr>
+                <tr><td>Stars</td><td>20,845</td><td>188,828</td><td>77,833</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top:12px;"><strong>Verdict:</strong> While obra/superpowers and mattpocock/skills focus on general software development, scientific-agent-skills is uniquely positioned as the <strong>only comprehensive scientific skills collection</strong> in the Agent Skills ecosystem. It fills a critical niche that no other project covers at this depth.</p>
+    </div>
+
+    <!-- 7. Who Should Use -->
+    <div class="card">
+        <h2><span class="icon">&#127919;</span><span class="gradient-title-2">Who Should Use This</span></h2>
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h4>&#129516; Computational Biologists</h4>
+                <p>Run single-cell RNA-seq, variant annotation, phylogenetics, gene regulatory networks with AI assistance.</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#129514; Drug Discovery Researchers</h4>
+                <p>Virtual screening, ADMET prediction, lead optimization, molecular docking via a single prompt.</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#127973; Clinical Researchers</h4>
+                <p>Clinical trials search, variant interpretation, pharmacogenomics, clinical decision support.</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#128187; Data Scientists in Science</h4>
+                <p>Statistical analysis, ML pipelines, geospatial analysis, time series forecasting with pre-built skills.</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#127891; Graduate Students</h4>
+                <p>Accelerate thesis research with AI-powered literature review, data analysis, and figure generation.</p>
+            </div>
+            <div class="comparison-card">
+                <h4>&#128172; Science Communicators</h4>
+                <p>Generate posters, slides, infographics, literature reviews, and scientific writing with AI.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Quick Start -->
+    <div class="card">
+        <h2><span class="icon">&#128640;</span><span class="gradient-title-1">Quick Start Guide</span></h2>
+        <div class="workflow-steps">
+            <div class="step">
+                <span class="step-num">1</span>
+                <div class="step-text"><strong>Install Prerequisites</strong> &mdash; Python 3.11+ and <code>uv</code> package manager</div>
+            </div>
+            <div class="step">
+                <span class="step-num">2</span>
+                <div class="step-text"><strong>Install All Skills</strong></div>
+            </div>
+        </div>
+        <div class="code-block">npx skills add K-Dense-AI/scientific-agent-skills</div>
+        <p style="margin:8px 0;">Or install a specific skill:</p>
+        <div class="code-block">gh skill install K-Dense-AI/scientific-agent-skills scanpy</div>
+        <div class="workflow-steps" style="margin-top:16px;">
+            <div class="step">
+                <span class="step-num">3</span>
+                <div class="step-text"><strong>Start Using</strong> &mdash; Your AI agent auto-discovers installed skills. Example prompt:</div>
+            </div>
+        </div>
+        <div class="code-block">Use available skills. Query ChEMBL for EGFR inhibitors (IC50 &lt; 50nM),
+analyze SAR with RDKit, perform virtual screening with DiffDock,
+and create visualizations.</div>
+    </div>
+
+    <!-- 9. Scoring -->
+    <div class="card">
+        <h2><span class="icon">&#127942;</span><span class="gradient-title-3">Comprehensive Scoring</span></h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">Innovation</div>
+                <div class="value" style="color: var(--accent-purple);">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%; background: var(--gradient-1);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">Code Quality</div>
+                <div class="value" style="color: var(--accent-green);">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%; background: var(--gradient-2);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">Practicality</div>
+                <div class="value" style="color: var(--accent-blue);">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%; background: var(--gradient-1);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">Documentation</div>
+                <div class="value" style="color: var(--accent-orange);">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%; background: var(--gradient-3);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">Community</div>
+                <div class="value" style="color: var(--accent-cyan);">8.0</div>
+                <div class="bar"><div class="bar-fill" style="width:80%; background: var(--gradient-2);"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:24px; padding:16px; background:var(--bg-tertiary); border-radius:10px;">
+            <span style="color:var(--text-secondary); font-size:0.9em;">Overall Rating</span><br>
+            <span style="font-size:2.2em; font-weight:800; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">8.8 / 10</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Generated on 2026-05-14 &mdash; GitHub Trending Deep Analysis</p>
+        <p style="margin-top:6px;">
+            <a href="https://github.com/K-Dense-AI/scientific-agent-skills" style="color:var(--accent-blue); text-decoration:none;">GitHub Repository</a>
+            &bull;
+            <a href="https://k-dense.ai" style="color:var(--accent-purple); text-decoration:none;">K-Dense.ai</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
