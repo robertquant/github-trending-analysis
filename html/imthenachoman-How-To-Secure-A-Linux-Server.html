@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How-To-Secure-A-Linux-Server - Linux服务器安全加固指南 | 深度分析报告</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --bg-code: #0d1117;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .header-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: var(--accent-blue);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 2.6em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .header-meta {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .meta-tag .value { color: var(--accent-blue); font-weight: 600; }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+
+        .card:hover { border-color: rgba(88, 166, 255, 0.4); }
+
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 .icon { font-size: 1.2em; }
+
+        .card h3 {
+            font-size: 1.15em;
+            color: var(--accent-cyan);
+            margin: 18px 0 10px;
+        }
+
+        .card p, .card li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .card ul, .card ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .card li { margin-bottom: 6px; }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* Score Bars */
+        .score-section { margin-top: 10px; }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .score-label {
+            width: 100px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .score-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .score-value {
+            width: 36px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* Feature tags */
+        .feature-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            color: var(--accent-green);
+        }
+
+        .feature-tag.blue {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: rgba(88, 166, 255, 0.3);
+            color: var(--accent-blue);
+        }
+
+        .feature-tag.purple {
+            background: rgba(188, 140, 255, 0.1);
+            border-color: rgba(188, 140, 255, 0.3);
+            color: var(--accent-purple);
+        }
+
+        .feature-tag.orange {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: rgba(210, 153, 34, 0.3);
+            color: var(--accent-orange);
+        }
+
+        .feature-tag.red {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: rgba(248, 81, 73, 0.3);
+            color: var(--accent-red);
+        }
+
+        /* Code */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+        }
+
+        :not(pre) > code {
+            background: rgba(88, 166, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-blue);
+        }
+
+        /* Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 10px 14px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td { background: rgba(88, 166, 255, 0.04); }
+
+        /* Steps */
+        .step {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 16px;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-content { flex: 1; }
+        .step-content strong { color: var(--text-primary); }
+        .step-content p { font-size: 14px; }
+
+        /* Quote */
+        blockquote {
+            border-left: 3px solid var(--accent-purple);
+            padding: 12px 16px;
+            margin: 12px 0;
+            background: rgba(188, 140, 255, 0.05);
+            border-radius: 0 8px 8px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Overall score */
+        .overall-score {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .overall-score .big-number {
+            font-size: 4em;
+            font-weight: 800;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .overall-score .label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 18px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .header-meta { gap: 8px; }
+            .score-label { width: 80px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-badge">GitHub Trending 深度分析</div>
+        <h1>How-To-Secure-A-Linux-Server</h1>
+        <p class="subtitle">An evolving how-to guide for securing a Linux server - Linux 服务器安全加固全方位实战指南</p>
+        <div class="header-meta">
+            <span class="meta-tag">&#11088; Stars <span class="value">26,834</span></span>
+            <span class="meta-tag">&#128293; Today <span class="value">+233</span></span>
+            <span class="meta-tag">&#127760; Language <span class="value">Shell / Markdown</span></span>
+            <span class="meta-tag">&#128196; License <span class="value">CC-BY-SA-4.0</span></span>
+            <span class="meta-tag">&#128101; Forks <span class="value">1,700+</span></span>
+        </div>
+    </div>
+
+    <!-- Overall Score -->
+    <div class="overall-score">
+        <div class="big-number">8.6</div>
+        <div class="label">综合评分 / 10</div>
+    </div>
+
+    <!-- 1. Project Overview -->
+    <div class="card">
+        <h2><span class="icon">&#128218;</span> 项目简介与核心功能</h2>
+        <p><strong>How-To-Secure-A-Linux-Server</strong> 是由 Anchal Nigam (imthenachoman) 创建并维护的开源指南项目，旨在提供一个<strong>全面、循序渐进、可直接实操</strong>的 Linux 服务器安全加固教程。</p>
+        <blockquote>这是一份"一站式"指南——作者找不到任何一个涵盖所有内容的教程，于是自己写了一个。</blockquote>
+        <h3>核心亮点</h3>
+        <ul>
+            <li><strong>SSH 安全加固</strong> — Ed25519 密钥认证、禁用密码登录、2FA/MFA 双因素、AllowGroups 限制</li>
+            <li><strong>防火墙与入侵检测</strong> — UFW 默认拒绝策略、PSAD 网络层检测、Fail2Ban + CrowdSec 应用层防护</li>
+            <li><strong>系统审计</strong> — AIDE 文件完整性监控、ClamAV 杀毒、Rkhunter/chkrootkit Rootkit 检测、Lynis 安全审计</li>
+            <li><strong>基础加固</strong> — sudo/su 权限控制、密码策略、自动安全更新、/proc 隐藏进程、FireJail 沙箱</li>
+            <li><strong>高级/危险区</strong> — 内核 sysctl 硬化、GRUB 密码保护、禁用 Root 登录、umask 调整</li>
+            <li><strong>Ansible 自动化</strong> — 社区配套项目 <code>moltenbit/How-To-Secure-A-Linux-Server-With-Ansible</code> 提供完整的 Playbook</li>
+        </ul>
+        <div class="feature-tags">
+            <span class="feature-tag">SSH 加固</span>
+            <span class="feature-tag blue">UFW 防火墙</span>
+            <span class="feature-tag purple">Fail2Ban</span>
+            <span class="feature-tag orange">CrowdSec</span>
+            <span class="feature-tag">AIDE</span>
+            <span class="feature-tag blue">Lynis</span>
+            <span class="feature-tag purple">2FA/MFA</span>
+            <span class="feature-tag orange">Ansible</span>
+            <span class="feature-tag red">内核硬化</span>
+            <span class="feature-tag">PSAD</span>
+            <span class="feature-tag blue">ClamAV</span>
+            <span class="feature-tag purple">OSSEC</span>
+        </div>
+    </div>
+
+    <!-- 2. Tech Architecture -->
+    <div class="card">
+        <h2><span class="icon">&#128736;</span> 技术架构与特点</h2>
+        <div class="grid-2">
+            <div>
+                <h3>&#128936; 架构层次</h3>
+                <ul>
+                    <li><strong>SSH 层</strong> — 密钥认证 + 2FA + 端口变更 + 连接限制</li>
+                    <li><strong>网络层</strong> — UFW 出入站规则 + PSAD iptables 日志分析</li>
+                    <li><strong>应用层</strong> — Fail2Ban / CrowdSec 日志监控与自动封禁</li>
+                    <li><strong>审计层</strong> — AIDE 文件完整性 + ClamAV 杀毒 + Rootkit 检测</li>
+                    <li><strong>内核层</strong> — sysctl 参数调优 + GRUB 保护</li>
+                </ul>
+            </div>
+            <div>
+                <h3>&#127942; 设计特点</h3>
+                <ul>
+                    <li><strong>发行版无关</strong> — 以 Debian 为例但适用所有 Linux</li>
+                    <li><strong>可复制粘贴</strong> — 几乎每步都提供可执行的命令片段</li>
+                    <li><strong>安全第一</strong> — 先备份再修改，自动验证变更</li>
+                    <li><strong>邮件告警</strong> — 集成 Exim4 + Gmail 发送安全通知</li>
+                    <li><strong>"懒惰"友好</strong> — 提供 <code>sed</code>/<code>echo</code> 一行命令自动化配置</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Use Cases -->
+    <div class="card">
+        <h2><span class="icon">&#127919;</span> 应用场景</h2>
+        <div class="grid-2">
+            <div class="card" style="margin-bottom:0; border-color: rgba(88,166,255,0.3);">
+                <h3>&#127968; 家庭 / 个人服务器</h3>
+                <ul>
+                    <li>自建 NAS、HomeAssistant 等智能家居服务器</li>
+                    <li>个人博客、VPN、文件共享服务器</li>
+                    <li>家庭实验室 (Home Lab) 环境</li>
+                </ul>
+            </div>
+            <div class="card" style="margin-bottom:0; border-color: rgba(63,185,80,0.3);">
+                <h3>&#128187; 小型团队 / 创业公司</h3>
+                <ul>
+                    <li>初创公司的基础设施安全基线</li>
+                    <li>远程办公 VPN 服务器加固</li>
+                    <li>开发/测试服务器安全初始化</li>
+                </ul>
+            </div>
+            <div class="card" style="margin-bottom:0; border-color: rgba(188,140,255,0.3);">
+                <h3>&#127891; 学习 / 教育</h3>
+                <ul>
+                    <li>Linux 安全入门教学的优秀教材</li>
+                    <li>网络安全课程实操参考</li>
+                    <li>DevOps / SRE 安全意识培训</li>
+                </ul>
+            </div>
+            <div class="card" style="margin-bottom:0; border-color: rgba(210,153,34,0.3);">
+                <h3>&#128737;&#65039; 安全基线审计</h3>
+                <ul>
+                    <li>CIS Benchmark 的"前置阅读"材料</li>
+                    <li>服务器安全合规检查清单</li>
+                    <li>自动化 Ansible Playbook 的参考蓝图</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Why Trending -->
+    <div class="card">
+        <h2><span class="icon">&#128293;</span> 为什么火 (Trending 原因)</h2>
+        <ul>
+            <li><strong>安全事件频发</strong> — 近年大规模数据泄露事件不断，个人和小团队安全意识空前觉醒，本指南恰逢其时</li>
+            <li><strong>"一站式"稀缺性</strong> — 市面上安全教程碎片化严重，这份指南是少见的覆盖从 SSH 到内核硬化的完整方案</li>
+            <li><strong>实战导向</strong> — 不是枯燥的安全理论，而是可以直接复制粘贴执行的命令，零门槛上手</li>
+            <li><strong>持续演进</strong> — 269 次提交，社区持续贡献新内容（CrowdSec、Debian 13 支持、2FA 等），保持与时俱进</li>
+            <li><strong>CC-BY-SA 开源许可</strong> — 自由分享和修改，降低了安全知识的获取门槛</li>
+            <li><strong>Ansible 生态</strong> — 配套自动化项目让安全加固从"手工活"变成"一键部署"</li>
+        </ul>
+    </div>
+
+    <!-- 5. Comparison -->
+    <div class="card">
+        <h2><span class="icon">&#128200;</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>覆盖范围</th>
+                    <th>实操性</th>
+                    <th>自动化</th>
+                    <th>社区规模</th>
+                    <th>更新频率</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>本指南</strong></td>
+                    <td style="color:var(--accent-green);">全方位 (SSH/网络/审计/内核)</td>
+                    <td style="color:var(--accent-green);">极高 (可复制粘贴)</td>
+                    <td style="color:var(--accent-green);">有 Ansible 配套</td>
+                    <td>26.8K Stars</td>
+                    <td>活跃</td>
+                </tr>
+                <tr>
+                    <td>CIS Benchmarks</td>
+                    <td style="color:var(--accent-green);">全方位 (行业标准)</td>
+                    <td style="color:var(--accent-orange);">中等 (需自行解读)</td>
+                    <td>部分</td>
+                    <td>企业级</td>
+                    <td>定期更新</td>
+                </tr>
+                <tr>
+                    <td>Arch Wiki Security</td>
+                    <td style="color:var(--accent-orange);">中等 (Arch 偏向)</td>
+                    <td style="color:var(--accent-orange);">中等</td>
+                    <td>无</td>
+                    <td>社区 Wiki</td>
+                    <td>持续更新</td>
+                </tr>
+                <tr>
+                    <td>pratiktri/server_init_harden</td>
+                    <td style="color:var(--accent-orange);">基础</td>
+                    <td style="color:var(--accent-green);">高 (Bash 脚本)</td>
+                    <td style="color:var(--accent-green);">自带脚本</td>
+                    <td>较小</td>
+                    <td>一般</td>
+                </tr>
+                <tr>
+                    <td>os-hardening (Ansible Role)</td>
+                    <td style="color:var(--accent-orange);">中等</td>
+                    <td style="color:var(--accent-green);">高 (Ansible)</td>
+                    <td style="color:var(--accent-green);">原生 Ansible</td>
+                    <td>中等</td>
+                    <td>活跃</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 6. Who Should Use -->
+    <div class="card">
+        <h2><span class="icon">&#128100;</span> 适合谁使用</h2>
+        <div class="grid-2">
+            <div>
+                <h3>&#9989; 强烈推荐</h3>
+                <ul>
+                    <li><strong>自建服务器的个人用户</strong> — 家里有 NAS、家庭服务器的人</li>
+                    <li><strong>Linux 初学者</strong> — 想了解服务器安全的入门者</li>
+                    <li><strong>小型创业团队</strong> — 没有专职安全人员的团队</li>
+                    <li><strong>DevOps / SRE 工程师</strong> — 作为安全基线参考</li>
+                    <li><strong>网络安全学生</strong> — 系统学习 Linux 安全加固</li>
+                </ul>
+            </div>
+            <div>
+                <h3>&#9888;&#65039; 注意事项</h3>
+                <ul>
+                    <li><strong>企业级场景</strong> — 需要结合 CIS Benchmark 和专业安全团队</li>
+                    <li><strong>容器化环境</strong> — 本指南面向裸机/VM，容器安全需另寻方案</li>
+                    <li><strong>非 Debian 系统</strong> — 部分命令需适配 RHEL/SUSE 等</li>
+                    <li><strong>"危险区"操作</strong> — 内核硬化、禁用 Root 等操作需谨慎评估</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Quick Start -->
+    <div class="card">
+        <h2><span class="icon">&#128640;</span> 快速上手指南</h2>
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <strong>阅读全文，了解全貌</strong>
+                <p>在开始之前，完整阅读一遍指南，根据你的威胁模型（Threat Model）决定需要执行哪些步骤。</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <strong>SSH 安全加固</strong>
+                <p>创建 Ed25519 密钥对，配置 <code>sshd_config</code>，禁用密码认证，设置 AllowGroups。</p>
+                <pre><code>ssh-keygen -t ed25519
+sudo groupadd sshusers
+sudo usermod -a -G sshusers your_username</code></pre>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <strong>安装防火墙</strong>
+                <p>使用 UFW 设置默认拒绝策略，只放行必要端口。</p>
+                <pre><code>sudo apt install ufw
+sudo ufw default deny incoming
+sudo ufw default deny outgoing
+sudo ufw limit in ssh
+sudo ufw enable</code></pre>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <strong>部署入侵检测</strong>
+                <p>安装 Fail2Ban 或 CrowdSec 监控 SSH 暴力破解，自动封禁恶意 IP。</p>
+                <pre><code>sudo apt install fail2ban
+# 或使用 CrowdSec（推荐）
+curl -s https://install.crowdsec.net | sudo sh
+sudo apt install crowdsec crowdsec-firewall-bouncer-iptables</code></pre>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+                <strong>自动化方式（可选）</strong>
+                <p>使用 Ansible Playbook 自动化完成所有加固步骤。</p>
+                <pre><code>git clone https://github.com/moltenbit/How-To-Secure-A-Linux-Server-With-Ansible
+# 编辑 variables.yml 后运行
+ansible-playbook --inventory hosts.yml --ask-pass main-playbook.yml</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Scoring -->
+    <div class="card">
+        <h2><span class="icon">&#128202;</span> 综合评分</h2>
+        <div class="score-section">
+            <div class="score-item">
+                <span class="score-label">创新性</span>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: 70%; background: var(--gradient-3);"></div>
+                </div>
+                <span class="score-value" style="color: var(--accent-orange);">7.0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">代码质量</span>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: 88%; background: var(--gradient-2);"></div>
+                </div>
+                <span class="score-value" style="color: var(--accent-green);">8.8</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">实用性</span>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: 98%; background: var(--gradient-2);"></div>
+                </div>
+                <span class="score-value" style="color: var(--accent-green);">9.8</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">文档完善度</span>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: 95%; background: var(--gradient-2);"></div>
+                </div>
+                <span class="score-value" style="color: var(--accent-green);">9.5</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">社区活跃度</span>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: 90%; background: var(--gradient-2);"></div>
+                </div>
+                <span class="score-value" style="color: var(--accent-green);">9.0</span>
+            </div>
+        </div>
+        <h3>评分说明</h3>
+        <ul>
+            <li><strong>创新性 7.0</strong> — 非技术创新项目，但"一站式整合"的思路在安全领域极具价值</li>
+            <li><strong>代码质量 8.8</strong> — 命令示例经过社区验证，注释清晰，带备份机制</li>
+            <li><strong>实用性 9.8</strong> — 直接可用的实战指南，几乎零学习成本</li>
+            <li><strong>文档完善度 9.5</strong> — 每个步骤都有 Why/How/References，内容极其详尽</li>
+            <li><strong>社区活跃度 9.0</strong> — 26.8K Stars，269 次提交，持续接受社区贡献</li>
+        </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>分析日期：2026-05-14 | 数据来源：GitHub Trending + Web Research</p>
+        <p style="margin-top: 6px;">GitHub: <a href="https://github.com/imthenachoman/How-To-Secure-A-Linux-Server" style="color: var(--accent-blue); text-decoration: none;">imthenachoman/How-To-Secure-A-Linux-Server</a></p>
+    </div>
+
+</div>
+</body>
+</html>
