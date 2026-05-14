@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>roboflow/supervision - GitHub Trending 深度分析</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .header .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 24px;
+        }
+
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .header .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .header .meta-item .icon {
+            font-size: 16px;
+        }
+
+        .header .meta-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Score Cards */
+        .score-section {
+            margin-bottom: 40px;
+        }
+
+        .score-section h2 {
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .score-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-blue);
+        }
+
+        .score-card .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-card .score {
+            font-size: 2.4em;
+            font-weight: 700;
+        }
+
+        .score-card .bar-bg {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .score-card .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        .score-excellent { color: var(--accent-green); }
+        .score-good { color: var(--accent-blue); }
+        .score-moderate { color: var(--accent-orange); }
+
+        /* Content Sections */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2 .emoji {
+            font-size: 1.2em;
+        }
+
+        .section h3 {
+            font-size: 1.15em;
+            color: var(--accent-blue);
+            margin: 20px 0 10px;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .section ul, .section ol {
+            color: var(--text-secondary);
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+
+        .section li {
+            margin-bottom: 6px;
+        }
+
+        .section strong {
+            color: var(--text-primary);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .comment { color: #8b949e; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .number { color: #79c0ff; }
+        .code-block .import { color: #ff7b72; }
+        .code-block .from { color: #ff7b72; }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .comparison-table thead th {
+            background: var(--bg-tertiary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .comparison-table tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .comparison-table tbody td:first-child {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-green { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+        .tag-blue { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+        .tag-orange { background: rgba(210, 153, 34, 0.15); color: var(--accent-orange); }
+        .tag-red { background: rgba(248, 81, 73, 0.15); color: var(--accent-red); }
+
+        /* Quick Start Steps */
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 24px;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .step h4 {
+            font-size: 1.05em;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .step p {
+            font-size: 14px;
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .feature-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .feature-card .title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .feature-card .desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Trending Reasons */
+        .trend-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .trend-list li {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--accent-purple);
+            color: var(--text-secondary);
+        }
+
+        .trend-list li strong {
+            color: var(--accent-purple);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .section { padding: 20px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .feature-grid { grid-template-columns: 1fr; }
+            .comparison-table { font-size: 12px; }
+            .comparison-table thead th, .comparison-table tbody td { padding: 8px 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.4em; }
+            .score-grid { grid-template-columns: 1fr 1fr; }
+            .header .meta { gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="badge">GitHub Trending Analysis</div>
+    <h1>roboflow/supervision</h1>
+    <p class="subtitle">We write your reusable computer vision tools. 模型无关的开源计算机视觉工具库，让 CV 应用开发更简单。</p>
+    <div class="meta">
+        <div class="meta-item">
+            <span class="icon">&#9733;</span>
+            <span class="value">38,710</span> Stars
+        </div>
+        <div class="meta-item">
+            <span class="icon">&#9650;</span>
+            <span class="value">+59</span> Today
+        </div>
+        <div class="meta-item">
+            <span class="icon">&#128196;</span>
+            <span class="value">Python</span>
+        </div>
+        <div class="meta-item">
+            <span class="icon">&#128274;</span>
+            <span class="value">MIT</span>
+        </div>
+        <div class="meta-item">
+            <span class="icon">&#127760;</span>
+            <a href="https://github.com/roboflow/supervision" style="color: var(--accent-blue); text-decoration: none;">GitHub</a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Score Section -->
+    <div class="score-section">
+        <h2>&#127942; 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-card">
+                <div class="label">创新性</div>
+                <div class="score score-excellent">8.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:80%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">代码质量</div>
+                <div class="score score-excellent">9.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:90%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">实用性</div>
+                <div class="score score-excellent">9.5</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:95%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">文档完善度</div>
+                <div class="score score-excellent">9.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:90%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">社区活跃度</div>
+                <div class="score score-excellent">9.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width:90%; background: var(--accent-green);"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="section">
+        <h2><span class="emoji">&#128065;</span> 项目简介与核心功能</h2>
+        <p><strong>roboflow/supervision</strong> 是由 Roboflow 团队开发的开源 Python 计算机视觉工具库，旨在为开发者提供<strong>可复用的 CV 后处理工具</strong>。它不负责模型训练或推理，而是专注于模型输出之后的所有工作：标注、可视化、追踪、区域计数、数据集管理等。</p>
+
+        <h3>核心功能</h3>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="title">&#127912; 丰富的标注器 (Annotators)</div>
+                <div class="desc">20+ 种可高度自定义的标注器：边界框、标签、热力图、轨迹线、模糊遮罩等，可自由组合构建完美可视化。</div>
+            </div>
+            <div class="feature-card">
+                <div class="title">&#128640; 模型无关设计</div>
+                <div class="desc">支持 Ultralytics YOLO、Transformers、MMDetection、RF-DETR、Roboflow Inference 等主流检测/分割/分类模型的输出格式。</div>
+            </div>
+            <div class="feature-card">
+                <div class="title">&#128225; 视频追踪</div>
+                <div class="desc">内置 ByteTrack、BOT-SORT 等多目标追踪算法，支持跨帧目标跟踪、轨迹可视化、速度估算等高级功能。</div>
+            </div>
+            <div class="feature-card">
+                <div class="title">&#128202; 区域计数与分析</div>
+                <div class="desc">支持定义多边形区域进行进出计数、驻留时间分析、线段穿越检测，适用于零售、交通等场景。</div>
+            </div>
+            <div class="feature-card">
+                <div class="title">&#128451; 数据集管理</div>
+                <div class="desc">支持 COCO、YOLO、Pascal VOC 等主流格式的加载、拆分、合并、转换和保存，一站式数据集处理。</div>
+            </div>
+            <div class="feature-card">
+                <div class="title">&#128187; 低代码 API</div>
+                <div class="desc">简洁直观的 Python API 设计，几行代码即可完成复杂的视觉任务管道搭建。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tech Architecture -->
+    <div class="section">
+        <h2><span class="emoji">&#9881;</span> 技术架构与特点</h2>
+        <p>Supervision 的核心设计理念是<strong>模型无关性</strong>和<strong>可组合性</strong>，其架构可以概括为以下几个层次：</p>
+
+        <h3>1. 数据层 — sv.Detections / sv.Classifications</h3>
+        <p>统一的检测/分类结果数据结构，无论底层使用什么模型，输出都标准化为同一格式。支持 from_ultralytics()、from_inference()、from_detectron2() 等多种转换方法。</p>
+
+        <h3>2. 处理层 — Trackers / Filters / Utils</h3>
+        <p>内置目标追踪器（ByteTrack、BOT-SORT）、检测过滤器（按类别、置信度、区域过滤）、几何变换工具（透视变换、坐标映射）等。</p>
+
+        <h3>3. 可视化层 — Annotators</h3>
+        <p>20+ 种可组合的标注器，每种都支持颜色、厚度、圆角等细节定制，可通过链式调用组合多种标注效果。</p>
+
+        <h3>4. 数据集层 — DetectionDataset / ClassificationDataset</h3>
+        <p>统一的 Dataset 抽象，支持惰性加载图片、数据集拆分/合并/过滤，以及 COCO/YOLO/VOC 格式之间的无损转换。</p>
+
+        <div class="code-block">
+<span class="comment"># 示例：完整的检测 + 追踪 + 区域计数管道</span>
+<span class="keyword">import</span> supervision <span class="keyword">as</span> sv
+<span class="keyword">from</span> ultralytics <span class="keyword">import</span> YOLO
+
+<span class="comment"># 加载模型和视频</span>
+model = YOLO(<span class="string">"yolov8n.pt"</span>)
+tracker = sv.ByteTrack()
+zone = sv.PolygonZone(polygon=<span class="string">[[...]]</span>)
+annotator = sv.BoxAnnotator()
+zone_annotator = sv.PolygonZoneAnnotator(zone=zone)
+
+<span class="keyword">for</span> frame <span class="keyword">in</span> sv.get_video_frames_generator(<span class="string">"input.mp4"</span>):
+    result = model(frame)[<span class="number">0</span>]
+    detections = sv.Detections.from_ultralytics(result)
+    detections = tracker.update_with_detections(detections)
+    zone.trigger(detections=detections)
+    <span class="comment"># 可视化</span>
+    frame = annotator.annotate(frame, detections)
+    frame = zone_annotator.annotate(frame)
+        </div>
+    </div>
+
+    <!-- Application Scenarios -->
+    <div class="section">
+        <h2><span class="emoji">&#127760;</span> 应用场景</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>说明</th>
+                    <th>使用功能</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>&#128722; 零售分析</strong></td>
+                    <td>顾客流量统计、区域驻留时间、热力图分析</td>
+                    <td><span class="tag tag-green">Zone Counting</span> <span class="tag tag-blue">HeatMap</span></td>
+                </tr>
+                <tr>
+                    <td><strong>&#128663; 交通监控</strong></td>
+                    <td>车辆计数、速度估算、车道违规检测</td>
+                    <td><span class="tag tag-green">Line Zone</span> <span class="tag tag-blue">Speed Estimation</span></td>
+                </tr>
+                <tr>
+                    <td><strong>&#9917; 体育分析</strong></td>
+                    <td>球员追踪、战术分析、运动轨迹可视化</td>
+                    <td><span class="tag tag-green">ByteTrack</span> <span class="tag tag-blue">TraceAnnotator</span></td>
+                </tr>
+                <tr>
+                    <td><strong>&#127981; 安防监控</strong></td>
+                    <td>异常行为检测、入侵报警、人群密度监测</td>
+                    <td><span class="tag tag-green">Zone Monitoring</span> <span class="tag tag-blue">API Callbacks</span></td>
+                </tr>
+                <tr>
+                    <td><strong>&#128300; 工业质检</strong></td>
+                    <td>产品缺陷检测、产线计数、质量控制</td>
+                    <td><span class="tag tag-green">Detection</span> <span class="tag tag-blue">Dataset Utils</span></td>
+                </tr>
+                <tr>
+                    <td><strong>&#128218; CV 研究与教育</strong></td>
+                    <td>数据集处理、模型评测、结果可视化</td>
+                    <td><span class="tag tag-green">Dataset API</span> <span class="tag tag-blue">mAP Metrics</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Trending Reasons -->
+    <div class="section">
+        <h2><span class="emoji">&#128293;</span> 为什么火 (Trending 原因)</h2>
+        <ul class="trend-list">
+            <li><strong>填补空白：</strong>CV 生态中，模型训练框架（如 Ultralytics、Detectron2）已经很成熟，但后处理和可视化工具严重匮乏。Supervision 正好填补了这一空白，让开发者不用反复造轮子。</li>
+            <li><strong>模型无关的通用性：</strong>无论你用 YOLO、DETR、Transformers 还是 Roboflow Inference，Supervision 都能无缝对接，这种灵活性在 CV 工具中非常罕见。</li>
+            <li><strong>极低的上手门槛：</strong>几行代码就能完成专业级的检测标注和视频追踪，对初学者和专业人士都极具吸引力。</li>
+            <li><strong>Roboflow 品牌效应：</strong>作为 CV 领域最大的开发者平台之一，Roboflow 的背书让 Supervision 从诞生起就获得了大量关注。</li>
+            <li><strong>持续的版本迭代：</strong>已发布到 v0.26.0，支持 Python 3.13（包括 no-GIL 模式），持续添加新追踪器、标注器和功能。</li>
+            <li><strong>活跃的社区生态：</strong>38000+ Star、大量贡献者、丰富的教程和示例项目，形成了良性循环。</li>
+        </ul>
+    </div>
+
+    <!-- Comparison -->
+    <div class="section">
+        <h2><span class="emoji">&#9878;</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>roboflow/supervision</th>
+                    <th>Ultralytics</th>
+                    <th>OpenCV</th>
+                    <th>Detectron2</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>定位</strong></td>
+                    <td>CV 后处理工具库</td>
+                    <td>模型训练/推理框架</td>
+                    <td>通用图像处理库</td>
+                    <td>检测/分割训练框架</td>
+                </tr>
+                <tr>
+                    <td><strong>做推理?</strong></td>
+                    <td><span class="tag tag-red">&#10007;</span> 需要+模型</td>
+                    <td><span class="tag tag-green">&#10003;</span></td>
+                    <td><span class="tag tag-red">&#10007;</span></td>
+                    <td><span class="tag tag-green">&#10003;</span></td>
+                </tr>
+                <tr>
+                    <td><strong>模型无关</strong></td>
+                    <td><span class="tag tag-green">&#10003; 全支持</span></td>
+                    <td><span class="tag tag-red">&#10007; YOLO 系</span></td>
+                    <td>N/A</td>
+                    <td><span class="tag tag-red">&#10007; 自家模型</span></td>
+                </tr>
+                <tr>
+                    <td><strong>标注可视化</strong></td>
+                    <td><span class="tag tag-green">20+ 标注器</span></td>
+                    <td>基础</td>
+                    <td>基础绘图</td>
+                    <td>需自定义</td>
+                </tr>
+                <tr>
+                    <td><strong>目标追踪</strong></td>
+                    <td><span class="tag tag-green">ByteTrack+BOT-SORT</span></td>
+                    <td>内置基础追踪</td>
+                    <td>无</td>
+                    <td>无</td>
+                </tr>
+                <tr>
+                    <td><strong>区域计数</strong></td>
+                    <td><span class="tag tag-green">&#10003;</span></td>
+                    <td><span class="tag tag-red">&#10007;</span></td>
+                    <td><span class="tag tag-red">&#10007;</span></td>
+                    <td><span class="tag tag-red">&#10007;</span></td>
+                </tr>
+                <tr>
+                    <td><strong>数据集管理</strong></td>
+                    <td><span class="tag tag-green">COCO/YOLO/VOC</span></td>
+                    <td>YOLO 格式</td>
+                    <td>无</td>
+                    <td>COCO 格式</td>
+                </tr>
+                <tr>
+                    <td><strong>Stars</strong></td>
+                    <td>38.7K</td>
+                    <td>35K+</td>
+                    <td>82K+</td>
+                    <td>31K+</td>
+                </tr>
+                <tr>
+                    <td><strong>许可证</strong></td>
+                    <td>MIT</td>
+                    <td>AGPL-3.0</td>
+                    <td>Apache 2.0</td>
+                    <td>Apache 2.0</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 12px;"><strong>结论：</strong>Supervision 与上述项目是<strong>互补关系</strong>而非竞争关系。典型工作流：Ultralytics/Detectron2 做模型推理 &#8594; Supervision 做后处理/可视化 &#8594; OpenCV 做图像预处理。</p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="section">
+        <h2><span class="emoji">&#129302;</span> 适合谁使用</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>用户类型</th>
+                    <th>推荐度</th>
+                    <th>理由</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CV 工程师</strong></td>
+                    <td><span class="tag tag-green">强烈推荐</span></td>
+                    <td>日常检测可视化、追踪、数据集处理的核心工具</td>
+                </tr>
+                <tr>
+                    <td><strong>AI 初学者</strong></td>
+                    <td><span class="tag tag-green">强烈推荐</span></td>
+                    <td>低代码 API 让 CV 开发入门门槛大幅降低</td>
+                </tr>
+                <tr>
+                    <td><strong>数据科学家</strong></td>
+                    <td><span class="tag tag-blue">推荐</span></td>
+                    <td>数据集格式转换、标注可视化、模型评测辅助</td>
+                </tr>
+                <tr>
+                    <td><strong>产品经理/技术决策者</strong></td>
+                    <td><span class="tag tag-blue">推荐</span></td>
+                    <td>MIT 许可证，可安全用于商业项目</td>
+                </tr>
+                <tr>
+                    <td><strong>前端/全栈开发者</strong></td>
+                    <td><span class="tag tag-orange">可选</span></td>
+                    <td>如果有 CV 需求（如 WebRTC 视频处理），值得了解</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="section">
+        <h2><span class="emoji">&#128640;</span> 快速上手指南</h2>
+        <div class="steps">
+            <div class="step">
+                <h4>安装 Supervision</h4>
+                <div class="code-block">
+pip install supervision
+<span class="comment"># 或带可选依赖</span>
+pip install supervision[assets]</div>
+            </div>
+            <div class="step">
+                <h4>加载模型并获取检测结果</h4>
+                <div class="code-block">
+<span class="keyword">import</span> supervision <span class="keyword">as</span> sv
+<span class="keyword">from</span> PIL <span class="keyword">import</span> Image
+<span class="keyword">from</span> rfdetr <span class="keyword">import</span> RFDETRSmall
+
+image = Image.<span class="function">open</span>(<span class="string">"photo.jpg"</span>)
+model = RFDETRSmall()
+detections = model.<span class="function">predict</span>(image, threshold=<span class="number">0.5</span>)
+<span class="function">print</span>(<span class="function">len</span>(detections))  <span class="comment"># 输出检测到的目标数量</span></div>
+            </div>
+            <div class="step">
+                <h4>标注和可视化</h4>
+                <div class="code-block">
+<span class="keyword">import</span> cv2
+
+image = cv2.<span class="function">imread</span>(<span class="string">"photo.jpg"</span>)
+box_annotator = sv.<span class="function">BoxAnnotator</span>()
+label_annotator = sv.<span class="function">LabelAnnotator</span>()
+
+annotated = box_annotator.<span class="function">annotate</span>(
+    scene=image.<span class="function">copy</span>(),
+    detections=detections
+)
+annotated = label_annotator.<span class="function">annotate</span>(
+    scene=annotated,
+    detections=detections
+)
+cv2.<span class="function">imwrite</span>(<span class="string">"result.jpg"</span>, annotated)</div>
+            </div>
+            <div class="step">
+                <h4>视频处理与追踪（进阶）</h4>
+                <div class="code-block">
+tracker = sv.<span class="function">ByteTrack</span>()
+<span class="keyword">for</span> frame <span class="keyword">in</span> sv.<span class="function">get_video_frames_generator</span>(<span class="string">"video.mp4"</span>):
+    result = model.<span class="function">predict</span>(frame)
+    detections = tracker.<span class="function">update_with_detections</span>(detections)
+    <span class="comment"># 添加追踪 ID 标注</span>
+    labels = [<span class="string">f"#{tracker_id}"</span> <span class="keyword">for</span> tracker_id <span class="keyword">in</span> detections.tracker_id]
+    frame = label_annotator.<span class="function">annotate</span>(frame, detections, labels)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section">
+        <h2><span class="emoji">&#128221;</span> 分析总结</h2>
+        <p><strong>roboflow/supervision</strong> 是计算机视觉领域中一个定位精准、执行出色的工具库。它不试图做所有事，而是专注于<strong>模型输出之后的后处理、可视化和数据管理</strong>，并在这个细分领域做到了极致。</p>
+        <p>38000+ Stars 和活跃的社区证明了市场对这类工具的强烈需求。如果你在做任何涉及目标检测、实例分割或图像分类的项目，Supervision 几乎是一个<strong>必装</strong>的依赖库——它能帮你节省大量重复劳动，让代码更简洁、更专业。</p>
+        <p style="color: var(--accent-green);"><strong>一句话总结：CV 开发的"瑞士军刀"——无论你用什么模型，Supervision 都能让你的结果更好看、更实用。</strong></p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>Generated on 2026-05-15 | GitHub Trending Deep Analysis</p>
+    <p><a href="https://github.com/roboflow/supervision">github.com/roboflow/supervision</a> | <a href="https://supervision.roboflow.com">supervision.roboflow.com</a></p>
+</div>
+
+</body>
+</html>
