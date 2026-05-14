@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAI - Personal AI Infrastructure | GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+            animation: heroGlow 8s ease-in-out infinite alternate;
+        }
+        @keyframes heroGlow {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-5%, -5%); }
+        }
+        .hero * { position: relative; z-index: 1; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .hero h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: #8b949e;
+            margin-bottom: 20px;
+            max-width: 700px;
+        }
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .meta-tag .label { color: #8b949e; }
+        .meta-tag .value { color: #58a6ff; font-weight: 600; }
+
+        /* Card styles */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #484f58; }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .card h3 { color: #58a6ff; margin: 18px 0 10px; font-size: 1.15em; }
+        .card p { margin-bottom: 12px; color: #b1bac4; }
+        .card ul { padding-left: 20px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; color: #b1bac4; }
+        .card li::marker { color: #58a6ff; }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px 20px;
+            transition: border-color 0.3s, transform 0.2s;
+        }
+        .feature-item:hover {
+            border-color: #388bfd;
+            transform: translateY(-2px);
+        }
+        .feature-item .feat-title {
+            color: #e6edf3;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 1.05em;
+        }
+        .feature-item .feat-desc { color: #8b949e; font-size: 0.92em; line-height: 1.6; }
+
+        /* Score section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .score-label { color: #8b949e; font-size: 0.85em; margin-bottom: 8px; }
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-bar {
+            width: 100%;
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            transition: width 1s ease;
+        }
+
+        /* Code block */
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+        }
+        .inline-code {
+            background: #1c2128;
+            padding: 2px 7px;
+            border-radius: 4px;
+            color: #79c0ff;
+            font-size: 0.88em;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.95em;
+        }
+        th {
+            background: #21262d;
+            color: #e6edf3;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        tr:hover td { background: rgba(56, 139, 253, 0.04); }
+
+        /* Comparison section */
+        .compare-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 8px 0;
+        }
+        .compare-cell {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .compare-cell.highlight {
+            border-color: rgba(139, 92, 246, 0.4);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        /* Steps */
+        .step-list { counter-reset: step; }
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        .step-num {
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+        .step-content { flex: 1; }
+        .step-content strong { color: #e6edf3; }
+
+        /* Tags */
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .tag {
+            background: #21262d;
+            border: 1px solid #30363d;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #8b949e;
+        }
+        .tag.purple { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.3); color: #a78bfa; }
+        .tag.blue { background: rgba(56,139,253,0.12); border-color: rgba(56,139,253,0.3); color: #58a6ff; }
+        .tag.green { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.3); color: #34d399; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 32px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 32px 20px; }
+            .hero h1 { font-size: 1.8em; }
+            .container { padding: 12px; }
+            .card { padding: 20px; }
+            .compare-row { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-badge">🔥 GitHub Trending · 2026-05-14</div>
+            <h1>PAI — Personal AI Infrastructure</h1>
+            <p class="subtitle">Agentic AI Infrastructure for magnifying HUMAN capabilities — 一个将 AI 变成你「人生操作系统」的开源框架</p>
+            <div class="hero-meta">
+                <span class="meta-tag"><span class="label">Author:</span><span class="value">danielmiessler</span></span>
+                <span class="meta-tag"><span class="label">Stars:</span><span class="value">⭐ 13,063</span></span>
+                <span class="meta-tag"><span class="label">Today:</span><span class="value">+620</span></span>
+                <span class="meta-tag"><span class="label">Language:</span><span class="value">TypeScript</span></span>
+                <span class="meta-tag"><span class="label">Version:</span><span class="value">v5.0.0</span></span>
+                <span class="meta-tag"><span class="label">License:</span><span class="value">MIT</span></span>
+            </div>
+            <div class="tag-group" style="margin-top: 16px;">
+                <span class="tag purple">AI Agent</span>
+                <span class="tag blue">Claude Code</span>
+                <span class="tag green">Life OS</span>
+                <span class="tag">Personal AI</span>
+                <span class="tag">Digital Assistant</span>
+                <span class="tag">TypeScript</span>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(139,92,246,0.15);">📋</span> 项目简介</h2>
+            <p><strong>PAI (Personal AI Infrastructure)</strong> 是由知名安全研究员 <strong>Daniel Miessler</strong> 创建的开源项目，目前已发展到 <strong>v5.0.0</strong>，定位为<strong>「人生操作系统」(Life Operating System)</strong>。</p>
+            <p>PAI 的核心理念是：AI 应该为每个人赋能，而不仅仅是顶层的 1%。它不是一个简单的 AI 提示词集合，而是一套完整的个人 AI 基础设施——捕获你是谁、你在乎什么、你要去哪里，然后帮助你到达那里。</p>
+
+            <h3>三层架构</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feat-title">🧠 PAI — 操作系统本身</div>
+                    <div class="feat-desc">包含技能系统、记忆、Algorithm 算法、Telos（目标体系）、身份文件等核心组件。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">📡 Pulse — 人生仪表盘</div>
+                    <div class="feat-desc">运行在 <span class="inline-code">localhost:31337</span> 的统一守护进程，提供可视化面板、语音、Hook、定时任务等 22 个路由端点。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🤖 The DA — 数字助手</div>
+                    <div class="feat-desc">你的专属数字助手（Digital Assistant），拥有独立的身份、声音和人格，是你与 AI 交互的主要界面。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Core Features -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(56,139,253,0.15);">⚡</span> 核心功能与特点</h2>
+
+            <h3>🎯 理想状态驱动 (Ideal State Driven)</h3>
+            <p>PAI 的哲学核心：AI 最大的未解决问题是「什么是好的/完成的」。PAI 通过 <strong>ISA (Ideal State Artifact)</strong> 来精确定义「完成状态」——类似软件 PRD，但适用于任何创造性任务。系统将理想状态分解为 <strong>ISC (Ideal State Criteria)</strong>，作为验证清单来逐步逼近目标。</p>
+
+            <h3>🔄 Algorithm v6.3.0 — 七阶段循环</h3>
+            <p>每个非平凡任务都经过这个科学方法式的循环：</p>
+            <pre>OBSERVE → THINK → PLAN → BUILD → EXECUTE → VERIFY → LEARN</pre>
+            <p>Sonnet 支持的模式分类器会根据复杂度自动选择 <span class="inline-code">MINIMAL</span> / <span class="inline-code">NATIVE</span> / <span class="inline-code">ALGORITHM</span> 模式和 E1-E5 层级。</p>
+
+            <h3>📝 文本优先，无 RAG</h3>
+            <p>重度偏好纯文本和 Markdown。自 2025 年 6 月起完全弃用 RAG，用富文本 + <span class="inline-code">ripgrep</span> 实现同等效果——无嵌入复杂度、无检索不稳定、无精度损失。</p>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feat-title">🧩 45 个技能 + 171 个工作流</div>
+                    <div class="feat-desc">技能是自激活的可组合域单元。层级：代码 → CLI → 工作流 → SKILL.md。代码包裹提示词，而非提示词包裹代码。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">💾 记忆系统 v7.6</div>
+                    <div class="feat-desc">五层记忆：WORK（活跃任务）、KNOWLEDGE（知识图谱）、LEARNING（元模式）、RELATIONSHIP（DA-Principal 关系）、OBSERVABILITY（可观测性）。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🛡️ 结构化隐私</div>
+                    <div class="feat-desc">Containment Guard 在 PreToolUse 钩子中阻止跨区域泄露。12 道安全门在每次公开发布时运行。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🔊 37 个 Hook</div>
+                    <div class="feat-desc">覆盖 SessionStart、UserPromptSubmit、PreToolUse、PostToolUse、Stop、SubagentStop、PreCompact、SessionEnd 全生命周期。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🧠 思维技能库</div>
+                    <div class="feat-desc">第一性原理、委员会辩论、红队测试、根因分析、系统思维、迭代深化等高质量决策工具。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🔁 自我改进循环</div>
+                    <div class="feat-desc">捕获成功/失败信号（评分、情感、验证结果），持续优化系统表现——执行工作的系统也在变得更好。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(52,211,153,0.15);">🏗️</span> 技术架构</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>组件</th>
+                        <th>技术</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>核心语言</td>
+                        <td>TypeScript + Bash</td>
+                        <td>技能和工作流用 TS 编写，安装脚本用 Bash</td>
+                    </tr>
+                    <tr>
+                        <td>运行时</td>
+                        <td>Bun + Claude Code</td>
+                        <td>需要 Bun 运行时和 Claude Code CLI</td>
+                    </tr>
+                    <tr>
+                        <td>Pulse 守护进程</td>
+                        <td>Node.js 服务</td>
+                        <td>端口 31337，22 个路由，提供 Dashboard 和 API</td>
+                    </tr>
+                    <tr>
+                        <td>记忆存储</td>
+                        <td>纯文本文件系统</td>
+                        <td>Markdown 文件 + ripgrep 索引，无数据库依赖</td>
+                    </tr>
+                    <tr>
+                        <td>语音系统</td>
+                        <td>ElevenLabs API</td>
+                        <td>可选，支持 Google Cloud TTS</td>
+                    </tr>
+                    <tr>
+                        <td>Hook 系统</td>
+                        <td>Claude Code Hooks</td>
+                        <td>8 种事件类型的全生命周期钩子</td>
+                    </tr>
+                    <tr>
+                        <td>安装方式</td>
+                        <td>Shell 脚本</td>
+                        <td>一行命令安装，自动配置 launchd 服务</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>设计哲学</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feat-title">上下文脚手架 > 模型</div>
+                    <div class="feat-desc">AI 最常见的错误是不给模型全局上下文。PAI 是一个系统地为最强模型提供正确上下文的框架——模型不如它周围的上下文重要。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">Bitter-Pilled 工程</div>
+                    <div class="feat-desc">随着模型变强，需要的指令越少。PAI 持续审计并删除过度指令——系统随模型增长而缩小。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(251,191,36,0.15);">💡</span> 应用场景</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feat-title">👨‍💻 开发者效率倍增</div>
+                    <div class="feat-desc">PAI 记住你的项目上下文、编码风格、历史决策，让 Claude Code 从通用工具变成「最懂你的搭档」。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">📚 个人知识管理</div>
+                    <div class="feat-desc">五层记忆系统自动捕获你的工作、学习、人脉和洞察，形成持续增长的个人知识图谱。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🎯 目标追踪与执行</div>
+                    <div class="feat-desc">Telos 体系定义你的使命、目标、信念和挑战，DA 始终围绕你的理想状态优化。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🏢 团队/公司知识基础设施</div>
+                    <div class="feat-desc">虽然面向个人设计，但同样适用于团队或公司级别的 AI 基础设施。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🔬 研究与写作</div>
+                    <div class="feat-desc">思维技能库提供第一性原理、系统思维等高质量思考工具，显著提升研究分析能力。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🤖 AI Agent 开发参考</div>
+                    <div class="feat-desc">PAI 的技能架构、Hook 系统、ISA 理念都是构建个人 AI Agent 的优秀参考设计。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(239,68,68,0.15);">📈</span> 为什么火？(Trending 原因)</h2>
+            <div class="step-list">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <strong>精准踩中「Personal AI Agent」爆发期</strong><br>
+                        2026 年是个人 AI Agent 的元年，PAI 提供了完整的开源解决方案，而非碎片化的 prompt 片段。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <strong>v5.0.0 重大版本发布（2026-04-30）</strong><br>
+                        这是 PAI 历史上最大的更新——从「AI 脚手架」进化为「人生操作系统」，概念升级带来巨大关注。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <strong>Daniel Miessler 的个人影响力</strong><br>
+                        作为安全领域的知名人物，他的项目自带流量。此前 fabric 项目已有 50k+ stars，粉丝基础庞大。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <strong>Claude Code 生态的快速增长</strong><br>
+                        PAI 是 Claude Code 原生项目，随着 Claude Code 的普及，PAI 作为「上层操作系统」自然获得关注。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <strong>理念前卫且落地性强</strong><br>
+                        「一人一 DA」、「理想状态驱动」、「人生操作系统」等概念既有哲学深度，又有具体的 45 个技能和 171 个工作流支撑。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(168,85,247,0.15);">⚖️</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th style="color: #a78bfa;">PAI</th>
+                        <th>fabric</th>
+                        <th>Claude Code 原生</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>定位</td>
+                        <td>人生操作系统</td>
+                        <td>AI Prompt 集合</td>
+                        <td>AI 编码助手</td>
+                    </tr>
+                    <tr>
+                        <td>作者</td>
+                        <td>Daniel Miessler</td>
+                        <td>Daniel Miessler</td>
+                        <td>Anthropic</td>
+                    </tr>
+                    <tr>
+                        <td>记忆系统</td>
+                        <td>✅ 五层结构化记忆</td>
+                        <td>❌ 无持久记忆</td>
+                        <td>⚠️ 基础 CLAUDE.md</td>
+                    </tr>
+                    <tr>
+                        <td>技能/工作流</td>
+                        <td>✅ 45 技能 + 171 工作流</td>
+                        <td>⚠️ Patterns 集合</td>
+                        <td>⚠️ 需自行搭建</td>
+                    </tr>
+                    <tr>
+                        <td>自我改进</td>
+                        <td>✅ 自动优化循环</td>
+                        <td>❌ 无</td>
+                        <td>❌ 无</td>
+                    </tr>
+                    <tr>
+                        <td>可视化仪表盘</td>
+                        <td>✅ Pulse Dashboard</td>
+                        <td>❌ 无</td>
+                        <td>❌ 无</td>
+                    </tr>
+                    <tr>
+                        <td>声音/语音</td>
+                        <td>✅ ElevenLabs 集成</td>
+                        <td>❌ 无</td>
+                        <td>❌ 无</td>
+                    </tr>
+                    <tr>
+                        <td>隐私架构</td>
+                        <td>✅ Containment Zones</td>
+                        <td>⚠️ 无特殊设计</td>
+                        <td>⚠️ 基础沙箱</td>
+                    </tr>
+                    <tr>
+                        <td>学习曲线</td>
+                        <td>🔴 较陡</td>
+                        <td>🟢 平缓</td>
+                        <td>🟡 中等</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 12px; color: #8b949e; font-size: 0.9em;">💡 PAI 和 fabric 是互补关系——许多 PAI 用户会将 fabric 的 patterns 集成到自己的技能中。</p>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(52,211,153,0.15);">👥</span> 适合谁使用？</h2>
+            <div class="feature-grid">
+                <div class="feature-item" style="border-color: rgba(52,211,153,0.3);">
+                    <div class="feat-title" style="color: #34d399;">✅ 强烈推荐</div>
+                    <div class="feat-desc">
+                        • 重度 Claude Code 用户<br>
+                        • 想让 AI 真正「懂自己」的开发者<br>
+                        • 追求个人效率极限的知识工作者<br>
+                        • 对 AI Agent 架构感兴趣的研究者
+                    </div>
+                </div>
+                <div class="feature-item" style="border-color: rgba(251,191,36,0.3);">
+                    <div class="feat-title" style="color: #fbbf24;">⚠️ 需要考虑</div>
+                    <div class="feat-desc">
+                        • 不使用 Claude Code 的用户（PAI 暂时是 Claude Code 原生）<br>
+                        • 不熟悉命令行的非技术用户<br>
+                        • 需要企业级稳定性的团队（项目仍在快速迭代）
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(56,139,253,0.15);">🚀</span> 快速上手指南</h2>
+
+            <h3>前置要求</h3>
+            <ul>
+                <li><strong>Bun</strong> 运行时</li>
+                <li><strong>Git</strong></li>
+                <li><strong>Claude Code</strong> CLI</li>
+                <li>（可选）ElevenLabs API Key — 用于语音功能</li>
+            </ul>
+
+            <h3>一键安装</h3>
+            <pre>curl -sSL https://ourpai.ai/install.sh | bash</pre>
+            <p>安装器会自动完成：Bun/Git/Claude Code 验证 → ElevenLabs 密钥配置 → DA 身份向导（命名+声音+人格） → Pulse launchd 注册 → 验证。</p>
+
+            <h3>安装后配置</h3>
+            <pre># 打开人生仪表盘
+open http://localhost:31337
+
+# 在 Claude Code 中运行访谈（最关键的一步！）
+/interview</pre>
+
+            <h3>访谈四阶段</h3>
+            <div class="step-list">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content"><strong>TELOS</strong> — 使命、目标、信念、智慧、挑战、书籍、心智模型、叙事</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content"><strong>IDEAL_STATE</strong> — 对你来说成功是什么样子？</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content"><strong>Preferences</strong> — 工具、约定、工作风格</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content"><strong>Identity</strong> — DA 人格最终调优</div>
+                </div>
+            </div>
+            <p style="color: #fbbf24;">⚠️ 没有完成 TELOS，你的 DA 没有优化目标，这一步至关重要！</p>
+        </div>
+
+        <!-- Scores -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(139,92,246,0.15);">📊</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">🧪 创新性</div>
+                    <div class="score-value">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">💻 代码质量</div>
+                    <div class="score-value">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">🔧 实用性</div>
+                    <div class="score-value">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">📖 文档完善度</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">🌍 社区活跃度</div>
+                    <div class="score-value">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 24px; padding: 16px; background: rgba(139,92,246,0.08); border-radius: 10px;">
+                <div style="color: #8b949e; font-size: 0.9em; margin-bottom: 4px;">综合评分</div>
+                <div style="font-size: 2.8em; font-weight: 800; background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">8.7 / 10</div>
+                <div style="color: #8b949e; font-size: 0.85em; margin-top: 4px;">⭐ 强烈推荐 — 个人 AI 基础设施的标杆项目</div>
+            </div>
+        </div>
+
+        <!-- Version History -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(56,139,253,0.15);">📅</span> 版本演进</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>版本</th>
+                        <th>日期</th>
+                        <th>里程碑</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="inline-code">v5.0.0</span></td>
+                        <td>2026-04-30</td>
+                        <td>🎯 Life Operating System — Pulse、DA 身份、Algorithm v6.3、ISA、45 技能</td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline-code">v4.0.0</span></td>
+                        <td>2026-02-27</td>
+                        <td>Lean and Mean — 目录缩减 68%，63 技能 + 21 Hook</td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline-code">v3.0.0</span></td>
+                        <td>2026-02-15</td>
+                        <td>The Algorithm Matures — Algorithm v1.4，完整安装器，语音系统</td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline-code">v2.0.0</span></td>
+                        <td>2025-12-28</td>
+                        <td>PAI v2 Launch — 模块化架构，Claude Code 原生设计</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="card">
+            <h2><span class="icon" style="background: rgba(52,211,153,0.15);">🗺️</span> 路线图</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feat-title">🖥️ 本地模型支持</div>
+                    <div class="feat-desc">支持 Ollama、llama.cpp 等本地模型，实现隐私和成本控制。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🔀 细粒度模型路由</div>
+                    <div class="feat-desc">根据任务复杂度自动将不同任务路由到不同模型。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">📱 远程访问</div>
+                    <div class="feat-desc">从任何设备（手机、网页、其他设备）访问你的 PAI。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">📞 外呼电话</div>
+                    <div class="feat-desc">语音外呼能力，DA 可以主动联系你。</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-title">🔔 外部通知</div>
+                    <div class="feat-desc">Email、Discord、Telegram、Slack 的通知集成。</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📊 Generated by GitHub Trending Analyzer · 2026-05-14</p>
+            <p style="margin-top: 4px;">
+                <a href="https://github.com/danielmiessler/Personal_AI_Infrastructure" style="color: #58a6ff; text-decoration: none;">GitHub Repository</a>
+                &nbsp;·&nbsp;
+                <a href="https://ourpai.ai" style="color: #58a6ff; text-decoration: none;">ourpai.ai</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
