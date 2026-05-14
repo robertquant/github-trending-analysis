@@ -1,110 +1,126 @@
 {
-  "date": "2026-05-14",
+  "date": "2026-05-15",
+  "fetched_at": "2026-05-15",
   "projects": [
     {
+      "index": 0,
+      "name": "ruvnet/RuView",
+      "description": "RuView turns commodity WiFi signals into real-time spatial intelligence, vital sign monitoring, and presence detection — all without a single pixel of video.",
+      "language": "Rust",
+      "stars": 55037,
+      "today_stars": 1757
+    },
+    {
+      "index": 1,
       "name": "tinyhumansai/openhuman",
       "description": "Your Personal AI super intelligence. Private, Simple and extremely powerful.",
       "language": "Rust",
-      "stars": 3731,
-      "today_stars": 1595
+      "stars": 7133,
+      "today_stars": 3476
     },
     {
+      "index": 2,
       "name": "rohitg00/agentmemory",
       "description": "#1 Persistent memory for AI coding agents based on real-world benchmarks",
       "language": "TypeScript",
-      "stars": 6652,
-      "today_stars": 1335
+      "stars": 8577,
+      "today_stars": 1978
     },
     {
+      "index": 3,
       "name": "obra/superpowers",
       "description": "An agentic skills framework & software development methodology that works.",
       "language": "Shell",
-      "stars": 188828,
-      "today_stars": 1419
+      "stars": 190563,
+      "today_stars": 1801
     },
     {
-      "name": "yikart/AiToEarn",
-      "description": "Let's use AI to Earn!",
-      "language": "TypeScript",
-      "stars": 12486,
-      "today_stars": 987
-    },
-    {
-      "name": "millionco/react-doctor",
-      "description": "Your agent writes bad React. This catches it",
-      "language": "TypeScript",
-      "stars": 9031,
-      "today_stars": 620
-    },
-    {
+      "index": 4,
       "name": "K-Dense-AI/scientific-agent-skills",
       "description": "A set of ready to use Agent Skills for research, science, engineering, analysis, finance and writing.",
       "language": "Python",
-      "stars": 20845,
-      "today_stars": 83
+      "stars": 21478,
+      "today_stars": 637
     },
     {
-      "name": "danielmiessler/Personal_AI_Infrastructure",
-      "description": "Agentic AI Infrastructure for magnifying HUMAN capabilities.",
-      "language": "TypeScript",
-      "stars": 13063,
-      "today_stars": 620
-    },
-    {
-      "name": "CloakHQ/CloakBrowser",
-      "description": "Stealth Chromium that passes every bot detection test. Drop-in Playwright replacement with source-level fingerprint patches.",
+      "index": 5,
+      "name": "shiyu-coder/Kronos",
+      "description": "Kronos: A Foundation Model for the Language of Financial Markets",
       "language": "Python",
-      "stars": 8888,
-      "today_stars": 1829
+      "stars": 24587,
+      "today_stars": 359
     },
     {
-      "name": "Greedeks/GTweak",
-      "description": "Portable Tool for an Ideal Windows Setup",
-      "language": "C#",
-      "stars": 745,
-      "today_stars": 220
+      "index": 6,
+      "name": "roboflow/supervision",
+      "description": "We write your reusable computer vision tools.",
+      "language": "Python",
+      "stars": 38710,
+      "today_stars": 59
     },
     {
+      "index": 7,
+      "name": "influxdata/telegraf",
+      "description": "Agent for collecting, processing, aggregating, and writing metrics, logs, and other arbitrary data.",
+      "language": "Go",
+      "stars": 17099,
+      "today_stars": 211
+    },
+    {
+      "index": 8,
+      "name": "supertone-inc/supertonic",
+      "description": "Lightning-Fast, On-Device, Multilingual TTS — running natively via ONNX.",
+      "language": "Swift",
+      "stars": 4953,
+      "today_stars": 1163
+    },
+    {
+      "index": 9,
+      "name": "Genymobile/scrcpy",
+      "description": "Display and control your Android device",
+      "language": "C",
+      "stars": 141011,
+      "today_stars": 589
+    },
+    {
+      "index": 10,
+      "name": "NVIDIA-AI-Blueprints/video-search-and-summarization",
+      "description": "Suite of reference architectures for building GPU-accelerated vision agents and AI-powered video analytics applications.",
+      "language": "Python",
+      "stars": 688,
+      "today_stars": 28
+    },
+    {
+      "index": 11,
+      "name": "CloakHQ/CloakBrowser",
+      "description": "Stealth Chromium that passes every bot detection test. Drop-in Playwright replacement with source-level fingerprint patches. 30/30 tests passed.",
+      "language": "Python",
+      "stars": 10234,
+      "today_stars": 1369
+    },
+    {
+      "index": 12,
       "name": "mattpocock/skills",
       "description": "Skills for Real Engineers. Straight from my .claude directory.",
       "language": "Shell",
-      "stars": 77833,
-      "today_stars": 3372
+      "stars": 80762,
+      "today_stars": 2971
     },
     {
-      "name": "ArthurBrussee/brush",
-      "description": "3D Reconstruction for all",
-      "language": "Rust",
-      "stars": 4241,
-      "today_stars": 78
-    },
-    {
-      "name": "imthenachoman/How-To-Secure-A-Linux-Server",
-      "description": "An evolving how-to guide for securing a Linux server.",
-      "language": null,
-      "stars": 26834,
-      "today_stars": 233
-    },
-    {
-      "name": "apernet/hysteria",
-      "description": "Hysteria is a powerful, lightning fast and censorship resistant proxy.",
-      "language": "Go",
-      "stars": 20477,
-      "today_stars": 489
-    },
-    {
-      "name": "rasbt/LLMs-from-scratch",
-      "description": "Implement a ChatGPT-like LLM in PyTorch from scratch, step by step",
-      "language": "Jupyter Notebook",
-      "stars": 94185,
-      "today_stars": 824
-    },
-    {
+      "index": 13,
       "name": "github/spec-kit",
       "description": "Toolkit to help you get started with Spec-Driven Development",
       "language": "Python",
-      "stars": 97780,
-      "today_stars": 1299
+      "stars": 98974,
+      "today_stars": 1240
+    },
+    {
+      "index": 14,
+      "name": "garrytan/gstack",
+      "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
+      "language": "TypeScript",
+      "stars": 96190,
+      "today_stars": 1083
     }
   ]
 }
