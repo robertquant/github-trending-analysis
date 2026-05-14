@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析 | github/spec-kit - Spec-Driven Development 工具包</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Header */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 50px 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(56, 139, 253, 0.06) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .hero h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero .subtitle {
+            font-size: 1.2em;
+            color: #8b949e;
+            position: relative;
+            z-index: 1;
+        }
+        .hero .badges {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-python { background: #1a3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+        .badge-stars { background: #2a1f0a; color: #e3b341; border: 1px solid #bb8009; }
+        .badge-license { background: #0d2818; color: #3fb950; border: 1px solid #238636; }
+        .badge-trending { background: #3a0a2e; color: #f778ba; border: 1px solid #a371f7; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            border-color: #58a6ff;
+            box-shadow: 0 0 20px rgba(56, 139, 253, 0.1);
+        }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.15em;
+            color: #58a6ff;
+            margin: 18px 0 10px;
+        }
+        .card p { margin-bottom: 12px; color: #c9d1d9; }
+        .card ul { padding-left: 22px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; color: #c9d1d9; }
+        .card li::marker { color: #58a6ff; }
+
+        /* Workflow Steps */
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .step {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            position: relative;
+            padding-left: 60px;
+        }
+        .step-number {
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1f6feb, #a371f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            color: #fff;
+        }
+        .step strong { color: #e6edf3; }
+        .step code { color: #f0883e; font-size: 0.9em; }
+
+        /* Code Blocks */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .flag { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+        th {
+            background: #161b22;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+            font-weight: 600;
+        }
+        td {
+            padding: 11px 16px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        tr:hover td { background: rgba(56, 139, 253, 0.05); }
+
+        /* Score Section */
+        .scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 6px 0;
+        }
+        .score-label { color: #8b949e; font-size: 0.9em; }
+        .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+        .s9 { background: linear-gradient(90deg, #238636, #3fb950); }
+        .s8 { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+        .s7 { background: linear-gradient(90deg, #9e6a03, #e3b341); }
+
+        /* Highlight box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(56, 139, 253, 0.08), rgba(163, 113, 247, 0.08));
+            border: 1px solid rgba(56, 139, 253, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .highlight-box strong { color: #58a6ff; }
+
+        /* Tag pills */
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .tag {
+            background: #21262d;
+            color: #8b949e;
+            padding: 4px 12px;
+            border-radius: 14px;
+            font-size: 0.82em;
+            border: 1px solid #30363d;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 30px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 30px 20px; }
+            .hero h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .workflow { grid-template-columns: 1fr; }
+            .scores { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1>github/spec-kit</h1>
+        <p class="subtitle">Spec-Driven Development Toolkit — 先定义要构建什么，再让 AI 去构建</p>
+        <div class="badges">
+            <span class="badge badge-python">Python</span>
+            <span class="badge badge-stars">97,780 Stars</span>
+            <span class="badge badge-license">MIT License</span>
+            <span class="badge badge-trending">+1,299 Today</span>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="card">
+        <h2><span class="icon">📋</span> 项目简介与核心功能</h2>
+        <p><strong>GitHub Spec Kit</strong> 是 GitHub 官方推出的开源工具包，实现了 <strong>Spec-Driven Development（规格驱动开发，SDD）</strong>方法论。核心理念是：<strong>先写规格说明，再让 AI 编码代理自动生成实现</strong>。</p>
+        <p>传统的软件开发中，规格文档往往是"一次性脚手架"，写完就被丢弃。Spec Kit 彻底翻转了这个逻辑——规格说明变成了可执行的第一等公民，直接驱动 AI 代理生成高质量的工作代码。</p>
+
+        <h3>核心功能</h3>
+        <ul>
+            <li><strong>Specify CLI</strong> — 命令行工具，一键初始化 SDD 项目结构</li>
+            <li><strong>六步工作流</strong> — Constitution → Specify → Clarify → Plan → Tasks → Implement</li>
+            <li><strong>30+ AI 代理集成</strong> — 支持 Claude Code、GitHub Copilot、Gemini、Codex、Cursor 等</li>
+            <li><strong>丰富的扩展生态</strong> — 100+ 社区扩展（Jira 集成、安全审计、BDD 测试等）</li>
+            <li><strong>可定制预设</strong> — 通过 Presets 自定义工作流格式和术语</li>
+            <li><strong>Slash 命令系统</strong> — 在 AI 代理中直接使用 <code>/speckit.*</code> 系列命令</li>
+        </ul>
+
+        <div class="tags">
+            <span class="tag">AI Coding</span>
+            <span class="tag">Spec-Driven Development</span>
+            <span class="tag">CLI Tool</span>
+            <span class="tag">Multi-Agent</span>
+            <span class="tag">Extensions</span>
+            <span class="tag">Enterprise Ready</span>
+        </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+
+        <h3>技术栈</h3>
+        <ul>
+            <li><strong>语言</strong>: Python 3.11+（CLI 工具核心）</li>
+            <li><strong>包管理</strong>: 通过 <code>uv</code> 或 <code>pipx</code> 安装</li>
+            <li><strong>模板引擎</strong>: 基于 Markdown 模板的可定制 spec/plan/tasks 生成</li>
+            <li><strong>安装方式</strong>: <code>git+https://github.com/github/spec-kit.git</code></li>
+        </ul>
+
+        <h3>SDD 工作流（六步法）</h3>
+        <div class="workflow">
+            <div class="step">
+                <div class="step-number">1</div>
+                <strong>Constitution</strong><br>
+                建立项目治理原则<br>
+                <code>/speckit.constitution</code>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <strong>Specify</strong><br>
+                定义功能需求与用户故事<br>
+                <code>/speckit.specify</code>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <strong>Clarify</strong><br>
+                澄清模糊需求，减少返工<br>
+                <code>/speckit.clarify</code>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <strong>Plan</strong><br>
+                制定技术实现方案<br>
+                <code>/speckit.plan</code>
+            </div>
+            <div class="step">
+                <div class="step-number">5</div>
+                <strong>Tasks</strong><br>
+                生成可执行的任务清单<br>
+                <code>/speckit.tasks</code>
+            </div>
+            <div class="step">
+                <div class="step-number">6</div>
+                <strong>Implement</strong><br>
+                执行实现计划<br>
+                <code>/speckit.implement</code>
+            </div>
+        </div>
+
+        <h3>项目结构</h3>
+        <div class="code-block">
+<span class="comment">.specify/</span>
+├── memory/
+│   └── constitution.md      <span class="comment"># 项目治理原则</span>
+├── scripts/                 <span class="comment"># 辅助脚本</span>
+├── specs/
+│   └── 001-feature-name/
+│       ├── spec.md           <span class="comment"># 功能规格</span>
+│       ├── plan.md           <span class="comment"># 技术方案</span>
+│       ├── tasks.md          <span class="comment"># 任务清单</span>
+│       ├── data-model.md     <span class="comment"># 数据模型</span>
+│       └── research.md       <span class="comment"># 技术调研</span>
+└── templates/                <span class="comment"># 可定制模板</span></div>
+
+        <h3>扩展与预设系统</h3>
+        <p>Spec Kit 提供了灵活的 <strong>扩展 (Extensions)</strong> + <strong>预设 (Presets)</strong> 双层定制体系：</p>
+        <ul>
+            <li><strong>扩展</strong>：添加新功能（Jira 集成、安全审计、代码审查等）</li>
+            <li><strong>预设</strong>：自定义工作流格式（合规要求、术语定制、语言本地化等）</li>
+            <li><strong>项目级覆盖</strong>：单项目微调，无需创建完整预设</li>
+        </ul>
+        <p>模板解析遵循优先级：<code>项目覆盖 > 预设 > 扩展 > 核心默认</code></p>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>从零开始的新项目（Greenfield）</strong> — 从高层需求直接生成生产级应用</li>
+            <li><strong>现有系统的迭代增强（Brownfield）</strong> — 为遗留系统添加功能、逐步现代化</li>
+            <li><strong>创意探索</strong> — 并行探索多种技术方案和架构</li>
+            <li><strong>企业级合规开发</strong> — 通过扩展强制执行安全审查、代码规范等合规要求</li>
+            <li><strong>团队协作</strong> — 结构化的 spec 文档让团队成员对需求达成共识</li>
+            <li><strong>AI 编码代理的"脚手架"</strong> — 为 Vibe Coding 提供纪律和结构</li>
+        </ul>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+
+        <div class="highlight-box">
+            <strong>GitHub 官方出品</strong> + <strong>解决 AI 编码核心痛点</strong> + <strong>生态爆发</strong> = Trending 必然
+        </div>
+
+        <h3>1. GitHub 官方背书</h3>
+        <p>这是 GitHub 自家推出的工具，天然获得了巨大的信任背书和分发渠道。GitHub Blog 和 Microsoft Developer Blog 联合推广。</p>
+
+        <h3>2. 精准解决 AI 编码痛点</h3>
+        <p>当前 AI 编码代理（Claude Code、Copilot 等）最大的问题不是"不会写代码"，而是"不知道该写什么"。Vibe Coding 经常导致 AI 跑偏、生成不一致的代码。Spec Kit 通过结构化的规格说明，让 AI 始终在正确的轨道上运行。</p>
+
+        <h3>3. SDD 方法论的风口</h3>
+        <p>Spec-Driven Development 在 2025-2026 年成为 AI 开发领域最热门的方法论之一，大量开发者在 Reddit、YouTube、Medium 上分享使用经验。</p>
+
+        <h3>4. 社区生态爆发</h3>
+        <p>100+ 社区扩展、30+ AI 代理集成、大量社区预设和教程，形成了强大的网络效应。</p>
+
+        <h3>5. 97K+ Stars 的势能</h3>
+        <p>在极短时间内获得了近 10 万 Star，成为 GitHub 历史上增长最快的开发工具之一。</p>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>GitHub Spec Kit</th>
+                    <th>BMAD</th>
+                    <th>OpenSpec</th>
+                    <th>Intent (Augment)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>开源</td>
+                    <td style="color: #3fb950;">MIT 完全开源</td>
+                    <td style="color: #3fb950;">开源</td>
+                    <td style="color: #3fb950;">开源</td>
+                    <td style="color: #e3b341;">部分商业</td>
+                </tr>
+                <tr>
+                    <td>出品方</td>
+                    <td><strong>GitHub 官方</strong></td>
+                    <td>社区</td>
+                    <td>社区</td>
+                    <td>Augment Code</td>
+                </tr>
+                <tr>
+                    <td>AI 代理支持</td>
+                    <td><strong>30+</strong></td>
+                    <td>Claude 为主</td>
+                    <td>有限</td>
+                    <td>自有代理</td>
+                </tr>
+                <tr>
+                    <td>扩展生态</td>
+                    <td><strong>100+ 扩展</strong></td>
+                    <td>少量</td>
+                    <td>极少量</td>
+                    <td>企业插件</td>
+                </tr>
+                <tr>
+                    <td>CLI 工具</td>
+                    <td style="color: #3fb950;">specify CLI</td>
+                    <td style="color: #e3b341;">基础</td>
+                    <td style="color: #e3b341;">基础</td>
+                    <td style="color: #3fb950;">完善</td>
+                </tr>
+                <tr>
+                    <td>企业功能</td>
+                    <td>通过扩展实现</td>
+                    <td>有限</td>
+                    <td>有限</td>
+                    <td><strong>内置合规</strong></td>
+                </tr>
+                <tr>
+                    <td>学习曲线</td>
+                    <td>中等</td>
+                    <td>较低</td>
+                    <td>较低</td>
+                    <td>较高</td>
+                </tr>
+                <tr>
+                    <td>社区活跃度</td>
+                    <td style="color: #3fb950;">极高 (97K+ Stars)</td>
+                    <td>中等</td>
+                    <td>较低</td>
+                    <td>中等</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><strong>总结</strong>：Spec Kit 在生态广度、AI 代理兼容性和社区规模方面遥遥领先。BMAD 更轻量适合个人，Intent 更适合需要内置企业合规的大型组织。但对于大多数开发者和团队，Spec Kit 是目前最全面、最成熟的选择。</p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+
+        <h3>强烈推荐</h3>
+        <ul>
+            <li><strong>AI 编码代理的重度用户</strong> — 如果你每天都在用 Claude Code / Copilot / Cursor，Spec Kit 能让你的产出质量上一个台阶</li>
+            <li><strong>从 Vibe Coding 转向结构化开发的团队</strong> — 受够了 AI 生成代码质量不稳定的团队</li>
+            <li><strong>技术负责人 / 架构师</strong> — 需要通过规格说明来控制 AI 编码方向的人</li>
+            <li><strong>企业开发团队</strong> — 需要合规、审计、标准化 AI 辅助开发的组织</li>
+        </ul>
+
+        <h3>可以考虑</h3>
+        <ul>
+            <li><strong>独立开发者</strong> — 即使是小项目，SDD 也能帮你减少 AI 编码的返工率</li>
+            <li><strong>开源贡献者</strong> — 用 Spec Kit 来规划和管理你的开源项目</li>
+        </ul>
+
+        <h3>可能不太适合</h3>
+        <ul>
+            <li><strong>追求极速原型的人</strong> — 如果只需要快速 POC，完整的 SDD 流程可能略显冗长</li>
+            <li><strong>不使用 AI 编码代理的人</strong> — Spec Kit 的核心价值依赖于 AI 代理来执行实现</li>
+        </ul>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+
+        <h3>Step 1: 安装 Specify CLI</h3>
+        <div class="code-block">
+<span class="comment"># 推荐：通过 uv 安装（需先安装 uv）</span>
+<span class="cmd">uv</span> tool install specify-cli <span class="flag">--from</span> git+https://github.com/github/spec-kit.git
+
+<span class="comment"># 或者用 pipx</span>
+<span class="cmd">pipx</span> install git+https://github.com/github/spec-kit.git</div>
+
+        <h3>Step 2: 初始化项目</h3>
+        <div class="code-block">
+<span class="comment"># 创建新项目</span>
+<span class="cmd">specify</span> init my-project
+
+<span class="comment"># 或在现有项目中初始化（选择你的 AI 代理）</span>
+<span class="cmd">specify</span> init . <span class="flag">--integration</span> copilot
+<span class="cmd">specify</span> init . <span class="flag">--integration</span> claude</div>
+
+        <h3>Step 3: 在 AI 代理中执行 SDD 工作流</h3>
+        <div class="code-block">
+<span class="comment"># 1. 建立项目原则</span>
+/speckit.constitution Create principles focused on code quality and testing
+
+<span class="comment"># 2. 定义你要构建的功能</span>
+/speckit.specify Build a photo album app with drag-and-drop organization
+
+<span class="comment"># 3. 澄清需求</span>
+/speckit.clarify
+
+<span class="comment"># 4. 制定技术方案</span>
+/speckit.plan Use React + TypeScript + SQLite
+
+<span class="comment"># 5. 生成任务清单</span>
+/speckit.tasks
+
+<span class="comment"># 6. 执行实现</span>
+/speckit.implement</div>
+
+        <h3>Step 4: 安装扩展增强功能</h3>
+        <div class="code-block">
+<span class="comment"># 浏览可用扩展</span>
+<span class="cmd">specify</span> extension search
+
+<span class="comment"># 安装 Jira 集成扩展</span>
+<span class="cmd">specify</span> extension add spec-kit-jira
+
+<span class="comment"># 安全审查扩展</span>
+<span class="cmd">specify</span> extension add spec-kit-security-review</div>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+        <h2><span class="icon">⭐</span> 综合评分</h2>
+
+        <div class="scores">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value" style="color: #3fb950;">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill s9" style="width: 90%;"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value" style="color: #58a6ff;">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill s8" style="width: 85%;"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value" style="color: #3fb950;">9.5</div>
+                <div class="score-bar"><div class="score-bar-fill s9" style="width: 95%;"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value" style="color: #58a6ff;">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill s8" style="width: 85%;"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value" style="color: #3fb950;">9.5</div>
+                <div class="score-bar"><div class="score-bar-fill s9" style="width: 95%;"></div></div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong>综合评分: 9.0 / 10</strong> — GitHub 官方出品的 SDD 工具包，在 AI 编码时代具有里程碑意义。生态丰富、设计精良，是当前最成熟的 Spec-Driven Development 工具。
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>分析日期: 2026-05-14 | 数据来源: GitHub, Reddit, Medium, MarkTechPost</p>
+        <p>
+            <a href="https://github.com/github/spec-kit" target="_blank">GitHub 仓库</a> ·
+            <a href="https://github.github.com/spec-kit/" target="_blank">官方文档</a> ·
+            <a href="https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/" target="_blank">GitHub Blog</a>
+        </p>
+    </div>
+
+</div>
+</body>
+</html>
