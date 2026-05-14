@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTweak - Windows 理想配置便携工具 | 深度分析报告</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --bg-code: #0d1117;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .header-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: var(--accent-blue);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 2.6em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-item .value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-item .trend {
+            color: var(--accent-green);
+            font-size: 12px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px 30px;
+            margin-bottom: 24px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(88, 166, 255, 0.4);
+        }
+
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 .icon {
+            font-size: 1.1em;
+        }
+
+        .card h3 {
+            font-size: 1.1em;
+            margin: 18px 0 10px;
+            color: var(--accent-blue);
+        }
+
+        .card p, .card li {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .card ul, .card ol {
+            padding-left: 20px;
+        }
+
+        .card li {
+            margin-bottom: 6px;
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .feature-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 18px;
+        }
+
+        .feature-item .title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .feature-item .desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 3px;
+        }
+
+        .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+        .tag-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+        .tag-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .tag-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+        .tag-cyan { background: rgba(57,210,192,0.15); color: var(--accent-cyan); }
+
+        /* Code blocks */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin: 12px 0;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        :not(pre) > code {
+            background: rgba(88,166,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--accent-blue);
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: rgba(88,166,255,0.03);
+        }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .score-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .score-item .score-value {
+            font-size: 2.2em;
+            font-weight: 800;
+            margin: 6px 0;
+        }
+
+        .score-item .score-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        /* Comparison highlight */
+        .highlight-box {
+            background: rgba(63,185,80,0.08);
+            border: 1px solid rgba(63,185,80,0.25);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .highlight-box.warning {
+            background: rgba(210,153,34,0.08);
+            border-color: rgba(210,153,34,0.25);
+        }
+
+        .highlight-box.blue {
+            background: rgba(88,166,255,0.08);
+            border-color: rgba(88,166,255,0.25);
+        }
+
+        .highlight-box .label {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        /* Quick Start Steps */
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            font-weight: 700;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content .step-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .step-content .step-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 0 10px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .header-stats { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-badge">GitHub Trending #8 &middot; C# &middot; 2026-05-14</div>
+            <h1>GTweak</h1>
+            <p class="subtitle">Portable Tool for an Ideal Windows Setup &mdash; Windows 理想配置便携工具</p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span>&#9733;</span>
+                    <span class="value">745</span>
+                    <span class="trend">+220 today</span>
+                </div>
+                <div class="stat-item">
+                    <span>Language:</span>
+                    <span class="value">C#</span>
+                </div>
+                <div class="stat-item">
+                    <span>Framework:</span>
+                    <span class="value">.NET 4.8 / WPF</span>
+                </div>
+                <div class="stat-item">
+                    <span>License:</span>
+                    <span class="value">Open Source</span>
+                </div>
+                <div class="stat-item">
+                    <span>Latest:</span>
+                    <span class="value">v5.2.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="card">
+            <h2><span class="icon">&#128196;</span> 项目简介与核心功能</h2>
+            <p>GTweak 是一款<strong>便携式 Windows 系统优化配置工具</strong>，使用 C# / WPF 构建，基于 .NET Framework 4.8。它将 30+ 种系统调优操作整合到一个图形界面中，无需安装，即开即用，覆盖隐私保护、系统精简、界面定制、性能优化、服务管理等多个维度。</p>
+
+            <h3>核心功能模块</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="title">&#128274; 隐私保护（Confidentiality）</div>
+                    <div class="desc">禁用 Windows/NVIDIA/Intel 遥测与键击记录器，阻止微软影子域名数据收集，禁用任务计划中的用户数据收集任务</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128736;&#65039; 系统精简（System）</div>
+                    <div class="desc">禁用 Windows Defender / SmartScreen / VBS / UAC，暂停更新，卸载 OneDrive / Edge / WebView2，移除 Cortana / Copilot / Recall</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#127912; 界面定制（Interface）</div>
+                    <div class="desc">更换主题、调整窗口设置、自定义任务栏布局和图标，禁用个性化广告与系统通知</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#9889; 性能优化（Performance）</div>
+                    <div class="desc">应用极限性能电源方案，禁用不必要服务，清理 RAM/临时文件/图标缓存，NTFS 压缩节省空间</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128187; 服务管理（Services）</div>
+                    <div class="desc">禁用不必要的系统服务，禁用 IPv6/Teredo/ISATAP 协议，禁用磁盘碎片整理与诊断工具</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128295; 高级工具（Addons）</div>
+                    <div class="desc">以 TrustedInstaller 权限执行自定义脚本（.ps1/.cmd/.bat/.reg），查看硬件配置与系统监控</div>
+                </div>
+            </div>
+
+            <h3>独有亮点</h3>
+            <ul>
+                <li><strong>Windows 激活</strong> &mdash; 支持 HWID 和 KMS 两种激活方式（需注意合规性）</li>
+                <li><strong>TrustedInstaller 提权</strong> &mdash; 自定义脚本可以最高系统权限运行</li>
+                <li><strong>多语言支持</strong> &mdash; 社区驱动的国际化翻译（中文、韩语、法语等）</li>
+                <li><strong>便携零安装</strong> &mdash; 单文件可执行，适合 PE 环境或 U盘携带</li>
+            </ul>
+        </div>
+
+        <!-- Tech Architecture -->
+        <div class="card">
+            <h2><span class="icon">&#9881;&#65039;</span> 技术架构与特点</h2>
+
+            <h3>技术栈</h3>
+            <table>
+                <thead>
+                    <tr><th>层面</th><th>技术</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>编程语言</td><td>C#</td></tr>
+                    <tr><td>UI 框架</td><td>WPF + WPF-UI (Modern WPF 控件库)</td></tr>
+                    <tr><td>运行时</td><td>.NET Framework 4.8</td></tr>
+                    <tr><td>任务调度</td><td>TaskScheduler (NuGet)</td></tr>
+                    <tr><td>JSON 处理</td><td>Newtonsoft.Json</td></tr>
+                    <tr><td>对话框</td><td>Ookii.Dialogs.Wpf</td></tr>
+                    <tr><td>打包嵌入</td><td>Costura (单文件打包)</td></tr>
+                    <tr><td>防火墙</td><td>FirewallAPI (Windows 原生)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>架构特点</h3>
+            <ul>
+                <li><strong>WPF-UI 现代风格</strong> &mdash; 使用 WPF-UI 库实现 Fluent Design 风格界面，深色/浅色主题支持</li>
+                <li><strong>Costura 单文件打包</strong> &mdash; 所有依赖嵌入单个可执行文件，真正的便携体验</li>
+                <li><strong>XAML 国际化</strong> &mdash; 基于资源字典的多语言方案，社区可轻松贡献翻译</li>
+                <li><strong>系统 API 深度调用</strong> &mdash; 直接操作注册表、WMI、防火墙、组策略等 Windows 底层接口</li>
+                <li><strong>安全模式设计</strong> &mdash; 仅支持官方 Windows 镜像，防止在精简系统上造成不可逆损坏</li>
+            </ul>
+
+            <h3>系统要求</h3>
+            <pre><code>Windows 10+ (build 18362.116 及以上)
+.NET Framework 4.8 (通常已内置于 Windows 10 1903+)</code></pre>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="card">
+            <h2><span class="icon">&#127919;</span> 应用场景</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="title">&#127981; 新机初始化</div>
+                    <div class="desc">刚买的新电脑 / 重装系统后，一键去除所有预装垃圾、关闭遥测、优化性能配置</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#127918; 游戏性能调优</div>
+                    <div class="desc">禁用不必要服务、应用极限性能电源方案、关闭 VBS/HVCI，最大化游戏帧率</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128272; 隐私加固</div>
+                    <div class="desc">系统性地关闭 Windows 数据收集、广告追踪、键击记录器，保护个人隐私</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128187; IT 运维批量部署</div>
+                    <div class="desc">利用便携特性 + 自定义脚本执行功能，在企业环境中批量优化工作站配置</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128190; 系统清理维护</div>
+                    <div class="desc">定期清理临时文件、RAM、图标缓存，安全删除 Windows.old，保持系统流畅</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128187; PE / U盘工具箱</div>
+                    <div class="desc">便携单文件特性使其成为系统维护 U盘工具箱的理想组件</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="card">
+            <h2><span class="icon">&#128293;</span> 为什么火（Trending 原因分析）</h2>
+
+            <div class="highlight-box">
+                <div class="label">&#128200; 单日 +220 Stars，快速增长</div>
+                <p>GTweak 在 2026 年 5 月登上 GitHub Trending，主要由以下因素驱动：</p>
+            </div>
+
+            <ol>
+                <li><strong>用户痛点精准</strong> &mdash; Windows 隐私和臃肿问题长期困扰用户，GTweak 提供了一站式解决方案</li>
+                <li><strong>图形界面友好</strong> &mdash; 区别于 WinUtil 等需要 PowerShell 的工具，GTweak 的 WPF GUI 更直观</li>
+                <li><strong>功能集成度极高</strong> &mdash; 从激活到精简到优化到清理，一个工具覆盖全部需求</li>
+                <li><strong>便携零安装</strong> &mdash; 不像许多同类工具需要安装框架或运行环境，开箱即用</li>
+                <li><strong>v5.2.0 新版本发布</strong> &mdash; 持续迭代带来稳定性改进和新功能，吸引新用户关注</li>
+                <li><strong>反 AI / 反 Copilot 趋势</strong> &mdash; 提供移除 Copilot、Recall 等 AI 功能的选项，契合部分用户的反 AI 需求</li>
+                <li><strong>社区翻译驱动增长</strong> &mdash; 多语言支持打破了英语壁垒，全球用户都可使用</li>
+            </ol>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2><span class="icon">&#9878;&#65039;</span> 同类项目对比</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>工具</th>
+                            <th>Stars</th>
+                            <th>语言</th>
+                            <th>UI</th>
+                            <th>便携</th>
+                            <th>隐私</th>
+                            <th>性能</th>
+                            <th>激活</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background:rgba(88,166,255,0.08)">
+                            <td><strong>GTweak</strong></td>
+                            <td>745</td>
+                            <td>C#</td>
+                            <td>GUI (WPF)</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                        </tr>
+                        <tr>
+                            <td>ChrisTitusTech/winutil</td>
+                            <td>47k+</td>
+                            <td>PowerShell</td>
+                            <td>GUI (WPF)</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                        </tr>
+                        <tr>
+                            <td>O&O ShutUp10++</td>
+                            <td>-</td>
+                            <td>闭源</td>
+                            <td>GUI</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                        </tr>
+                        <tr>
+                            <td>WPD (Windows Privacy Dashboard)</td>
+                            <td>2k+</td>
+                            <td>C#</td>
+                            <td>GUI</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                        </tr>
+                        <tr>
+                            <td>Ultimate Windows Tweaker</td>
+                            <td>-</td>
+                            <td>闭源</td>
+                            <td>GUI</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                        </tr>
+                        <tr>
+                            <td>RyTuneX</td>
+                            <td>1.8k+</td>
+                            <td>C#</td>
+                            <td>GUI (WinUI)</td>
+                            <td style="color:var(--accent-green)">&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;</td>
+                            <td style="color:var(--accent-green)">&#10004;&#10004;&#10004;</td>
+                            <td style="color:var(--accent-red)">&#10008;</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="highlight-box blue">
+                <div class="label">&#128161; GTweak 的差异化优势</div>
+                <p>GTweak 是同类工具中<strong>功能覆盖最全面</strong>的之一 &mdash; 它同时提供隐私保护、性能优化、界面定制、服务管理、应用卸载、系统激活，以及自定义脚本执行。大多数竞品只专注其中一两个领域。此外，GTweak 的 TrustedInstaller 提权脚本执行在开源工具中非常罕见。</p>
+            </div>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="card">
+            <h2><span class="icon">&#128100;</span> 适合谁使用</h2>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="title">&#128104;&#8205;&#128187; Windows 高级用户</div>
+                    <div class="desc">希望对系统有完全控制权的用户，想关闭所有不必要的功能和服务</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#127918; 游戏玩家</div>
+                    <div class="desc">追求极致帧率和低延迟，需要禁用 VBS、优化电源方案、关闭后台服务</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128736;&#65039; IT 运维人员</div>
+                    <div class="desc">需要批量配置多台工作站，利用便携 + 自定义脚本功能实现标准化部署</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">&#128558; 隐私敏感用户</div>
+                    <div class="desc">不信任 Windows 默认的数据收集策略，希望系统性地关闭所有遥测和追踪</div>
+                </div>
+            </div>
+
+            <div class="highlight-box warning" style="margin-top:20px">
+                <div class="label">&#9888;&#65039; 注意事项</div>
+                <ul>
+                    <li>仅建议在<strong>官方原版 Windows 镜像</strong>上使用，精简版系统可能出现不可预期的问题</li>
+                    <li>使用前需要<strong>临时关闭杀毒软件</strong>或将 GTweak 加入白名单</li>
+                    <li>部分功能（如 Windows 激活）涉及法律合规问题，请在授权范围内使用</li>
+                    <li>建议<strong>创建系统还原点</strong>后再进行大幅修改</li>
+                    <li>不推荐 Windows 新手盲目使用所有功能</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2><span class="icon">&#128640;</span> 快速上手指南</h2>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-title">下载最新版本</div>
+                        <div class="step-desc">
+                            前往 <a href="https://github.com/Greedeks/GTweak/releases" style="color:var(--accent-blue)">GitHub Releases</a> 下载最新 v5.2.0 的 <code>.zip</code> 压缩包
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-title">解压并添加杀毒白名单</div>
+                        <div class="step-desc">
+                            解压到任意目录。如果 Windows Defender 拦截，请将 GTweak 添加到排除项：
+                            <pre><code>设置 &rarr; 隐私和安全性 &rarr; Windows 安全中心 &rarr; 病毒和威胁防护 &rarr; 排除项 &rarr; 添加文件夹</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-title">以管理员身份运行</div>
+                        <div class="step-desc">
+                            右键 <code>GTweak.exe</code> &rarr; 以管理员身份运行。所有系统级修改操作需要管理员权限。
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-title">创建系统还原点</div>
+                        <div class="step-desc">
+                            首次使用建议先创建还原点：<code>系统属性 &rarr; 系统保护 &rarr; 创建</code>，方便回滚。
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-title">按需选择优化项</div>
+                        <div class="step-desc">
+                            在左侧导航栏切换模块（隐私 / 系统 / 界面 / 服务 / 应用 / 工具），勾选需要优化的项目，点击应用即可。建议先从<strong>隐私保护</strong>模块开始。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scores -->
+        <div class="card">
+            <h2><span class="icon">&#127942;</span> 综合评分</h2>
+
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value" style="color:var(--accent-blue)">7.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:75%;background:var(--gradient-1)"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value" style="color:var(--accent-green)">7.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:70%;background:var(--gradient-2)"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value" style="color:var(--accent-cyan)">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:linear-gradient(135deg,#39d2c0,#58a6ff)"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value" style="color:var(--accent-purple)">7.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:70%;background:linear-gradient(135deg,#bc8cff,#58a6ff)"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value" style="color:var(--accent-orange)">6.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:65%;background:var(--gradient-3)"></div></div>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:24px">
+                <span style="font-size:14px;color:var(--text-secondary)">综合评分</span><br>
+                <span style="font-size:3em;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">7.4</span>
+                <span style="font-size:1.2em;color:var(--text-secondary)">/ 10</span>
+            </div>
+
+            <h3>评分说明</h3>
+            <table>
+                <thead>
+                    <tr><th>维度</th><th>分数</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>创新性</td><td>7.5/10</td><td>功能全面度高，TrustedInstaller 脚本执行有亮点，但整体思路在同类工具中非全新</td></tr>
+                    <tr><td>代码质量</td><td>7.0/10</td><td>WPF-UI 现代化界面设计，代码结构合理，NuGet 依赖管理规范，但缺少单元测试</td></tr>
+                    <tr><td>实用性</td><td>9.0/10</td><td>解决 Windows 用户的真实痛点，功能覆盖面极广，便携设计使用方便</td></tr>
+                    <tr><td>文档完善度</td><td>7.0/10</td><td>README 详细介绍了功能列表和截图，有翻译贡献指南，但缺少详细的 API 文档和 FAQ</td></tr>
+                    <tr><td>社区活跃度</td><td>6.5/10</td><td>社区规模尚小（745 Stars），但增长迅速，多语言翻译社区在积极贡献</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="card">
+            <h2><span class="icon">&#128202;</span> 总结</h2>
+            <p>GTweak 是一款功能全面、设计精良的 Windows 系统优化工具。它在隐私保护、系统精简和性能优化方面表现出色，图形界面友好，便携特性让它成为系统维护工具箱的有力补充。虽然社区规模仍在成长中，但其快速增长的 Star 数和活跃的翻译社区表明它正在被越来越多的用户认可。</p>
+
+            <div class="highlight-box" style="margin-top:16px">
+                <div class="label">&#127775; 一句话推荐</div>
+                <p>如果你想要一个<strong>图形化、便携、功能全面</strong>的 Windows 优化工具，GTweak 是 2026 年值得关注的后起之秀。</p>
+            </div>
+
+            <div style="margin-top:20px">
+                <span class="tag tag-blue">C#</span>
+                <span class="tag tag-purple">WPF</span>
+                <span class="tag tag-green">Windows</span>
+                <span class="tag tag-orange">系统优化</span>
+                <span class="tag tag-cyan">隐私保护</span>
+                <span class="tag tag-blue">便携工具</span>
+                <span class="tag tag-purple">.NET Framework</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <a href="https://github.com/Greedeks/GTweak" target="_blank">GitHub 仓库</a> &middot;
+                <a href="https://github.com/Greedeks/GTweak/releases" target="_blank">Releases</a> &middot;
+                Analysis generated on 2026-05-14
+            </p>
+            <p style="margin-top:8px">&#129302; AI 深度分析 by Claude Code</p>
+        </div>
+    </div>
+</body>
+</html>
