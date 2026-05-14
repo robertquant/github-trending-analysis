@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brush - 3D Reconstruction for all | 深度分析报告</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --bg-code: #0d1117;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .header-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: var(--accent-blue);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 2.6em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-item .value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .card h2 {
+            font-size: 1.4em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card h3 {
+            color: var(--accent-cyan);
+            font-size: 1.1em;
+            margin: 18px 0 10px;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .card ul {
+            padding-left: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .card ul li {
+            margin-bottom: 6px;
+        }
+
+        .card ul li strong {
+            color: var(--text-primary);
+        }
+
+        /* Tags */
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag-rust { background: rgba(222, 165, 55, 0.15); color: #dea737; border: 1px solid rgba(222, 165, 55, 0.3); }
+        .tag-webgpu { background: rgba(88, 166, 255, 0.15); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); }
+        .tag-3d { background: rgba(188, 140, 255, 0.15); color: #bc8cff; border: 1px solid rgba(188, 140, 255, 0.3); }
+        .tag-cross { background: rgba(63, 185, 80, 0.15); color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.3); }
+
+        /* Score Cards */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .score-card .score-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .score-card .score-value {
+            font-size: 2em;
+            font-weight: 800;
+        }
+
+        .score-card .score-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-primary);
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .score-card .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        .score-excellent .score-value { color: var(--accent-green); }
+        .score-excellent .score-bar-fill { background: var(--accent-green); }
+        .score-good .score-value { color: var(--accent-blue); }
+        .score-good .score-bar-fill { background: var(--accent-blue); }
+        .score-fair .score-value { color: var(--accent-orange); }
+        .score-fair .score-bar-fill { background: var(--accent-orange); }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .comparison-table .highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .code-block .comment { color: #8b949e; }
+        .code-block .command { color: var(--accent-green); }
+        .code-block .flag { color: var(--accent-orange); }
+        .code-block .string { color: var(--accent-cyan); }
+
+        /* Platform Grid */
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .platform-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .platform-item .platform-icon {
+            font-size: 1.5em;
+            margin-bottom: 6px;
+        }
+
+        .platform-item .platform-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 16px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-card);
+        }
+
+        .timeline-item .timeline-date {
+            font-size: 12px;
+            color: var(--accent-orange);
+            margin-bottom: 4px;
+        }
+
+        .timeline-item .timeline-content {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .header-stats { gap: 15px; }
+            .card { padding: 20px; }
+            .score-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .comparison-table { font-size: 12px; }
+            .comparison-table th, .comparison-table td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-badge">🔥 GitHub Trending · 3D Reconstruction</div>
+        <h1>Brush</h1>
+        <p class="subtitle">3D Reconstruction for all — 基于 Gaussian Splatting 的跨平台 3D 重建引擎</p>
+        <div class="header-stats">
+            <div class="stat-item">&#9733; Stars: <span class="value">4,241</span></div>
+            <div class="stat-item">&#8593; Today: <span class="value">+78</span></div>
+            <div class="stat-item">&#128196; Language: <span class="value">Rust</span></div>
+            <div class="stat-item">&#127968; Author: <span class="value">Arthur Brussee (Google DeepMind)</span></div>
+        </div>
+        <div class="tag-group" style="justify-content: center; margin-top: 18px;">
+            <span class="tag tag-rust">Rust</span>
+            <span class="tag tag-webgpu">WebGPU</span>
+            <span class="tag tag-3d">Gaussian Splatting</span>
+            <span class="tag tag-cross">Cross-Platform</span>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2>&#128065; 项目简介</h2>
+        <p><strong>Brush</strong> 是一款由 <strong>Google DeepMind</strong> 研究员 Arthur Brussee 开发的开源 3D 重建引擎，核心基于 <strong>3D Gaussian Splatting (3DGS)</strong> 技术。项目的愿景是让 3D 重建技术「人人可用」——无论你使用什么操作系统、什么 GPU 厂商，甚至只需要一个浏览器。</p>
+        <h3>&#127919; 核心功能</h3>
+        <ul>
+            <li><strong>3D 场景训练</strong>：接受 COLMAP 数据或 Nerfstudio 格式数据集，直接训练 Gaussian Splatting 模型</li>
+            <li><strong>实时训练可视化</strong>：训练过程中可交互查看场景，实时对比当前渲染与输入视角</li>
+            <li><strong>场景查看器</strong>：加载 .ply / .compressed.ply 文件，支持 URL 流式加载</li>
+            <li><strong>4D 动画支持</strong>：加载 .zip 包含的 splat 文件序列，展示动态动画（如 Cap4D）</li>
+            <li><strong>图像遮罩</strong>：支持透明度图像和区域遮罩，精确控制训练区域</li>
+            <li><strong>CLI 工具</strong>：完整的命令行界面，支持 <code>--with-viewer</code> 实时调试</li>
+            <li><strong>Rerun 集成</strong>：可使用 Rerun.io 进行额外的训练数据可视化</li>
+        </ul>
+    </div>
+
+    <!-- Tech Architecture -->
+    <div class="card">
+        <h2>&#9881; 技术架构与特点</h2>
+        <p>Brush 的技术选型在 3D 重建领域独树一帜，完全抛弃了 Python/CUDA 的传统路线。</p>
+
+        <h3>&#128640; 技术栈</h3>
+        <table class="comparison-table">
+            <tr><th>组件</th><th>技术</th><th>作用</th></tr>
+            <tr><td>核心语言</td><td><strong>Rust</strong></td><td>高性能、内存安全、跨平台编译</td></tr>
+            <tr><td>ML 框架</td><td><strong>Burn</strong></td><td>Rust 原生深度学习框架，支持多后端</td></tr>
+            <tr><td>GPU 计算</td><td><strong>wgpu / WebGPU</strong></td><td>跨 GPU 厂商（AMD/Nvidia/Intel）的统一接口</td></tr>
+            <tr><td>UI 框架</td><td><strong>egui</strong></td><td>即时模式 GUI，轻量级跨平台界面</td></tr>
+            <tr><td>可视化</td><td><strong>Rerun.io</strong></td><td>训练过程的额外数据可视化</td></tr>
+            <tr><td>Web 部署</td><td><strong>WASM + Next.js</strong></td><td>浏览器端运行 3D 重建</td></tr>
+        </table>
+
+        <h3>&#127758; 支持平台</h3>
+        <div class="platform-grid">
+            <div class="platform-item">
+                <div class="platform-icon">&#128187;</div>
+                <div class="platform-name">macOS</div>
+            </div>
+            <div class="platform-item">
+                <div class="platform-icon">&#128421;</div>
+                <div class="platform-name">Windows</div>
+            </div>
+            <div class="platform-item">
+                <div class="platform-icon">&#128039;</div>
+                <div class="platform-name">Linux</div>
+            </div>
+            <div class="platform-item">
+                <div class="platform-icon">&#129302;</div>
+                <div class="platform-name">Android</div>
+            </div>
+            <div class="platform-item">
+                <div class="platform-icon">&#127760;</div>
+                <div class="platform-name">Web (浏览器)</div>
+            </div>
+        </div>
+
+        <h3>&#128161; 关键技术亮点</h3>
+        <ul>
+            <li><strong>零 CUDA 依赖</strong>：通过 wgpu/WebGPU 统一接口，支持 AMD、Intel、Nvidia 全系列 GPU</li>
+            <li><strong>单二进制文件</strong>：编译产出无依赖的可执行文件，无需复杂环境配置</li>
+            <li><strong>浏览器训练</strong>：全球首个可在浏览器中直接进行 3DGS 训练的工具</li>
+            <li><strong>性能优于 gsplat</strong>：渲染和训练速度通常快于参考实现 gsplat</li>
+            <li><strong>GPU Radix Sort</strong>：采用 Raph Levien 的高性能 GPU 基数排序实现</li>
+        </ul>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2>&#127919; 应用场景</h2>
+        <ul>
+            <li><strong>摄影测量与 3D 扫描</strong>：将多角度照片重建为高保真 3D 场景</li>
+            <li><strong>VR/AR 内容创作</strong>：快速生成可交互的 3D 环境，适配移动端和 Web</li>
+            <li><strong>建筑与房地产</strong>：室内外空间的数字化建模与虚拟漫游</li>
+            <li><strong>文化遗产保护</strong>：文物和建筑的数字化存档</li>
+            <li><strong>游戏开发</strong>：快速将真实场景转化为游戏素材</li>
+            <li><strong>影视特效</strong>：场景重建与特效预览</li>
+            <li><strong>科研教育</strong>：3D 重建技术的教学与实验平台</li>
+            <li><strong>机器人视觉</strong>：环境感知与场景理解的前端可视化</li>
+        </ul>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2>&#128293; 为什么火？Trending 原因分析</h2>
+        <h3>1. 填补了 3DGS 领域的跨平台空白</h3>
+        <p>传统 3DGS 工具几乎全部依赖 CUDA，将 Mac 用户、AMD GPU 用户和移动端用户完全排除在外。Brush 是第一个真正实现「全平台可用」的 3DGS 引擎。</p>
+
+        <h3>2. Rust + WebGPU 的技术吸引力</h3>
+        <p>Rust 在系统编程领域的热度持续攀升，WebGPU 作为下一代 Web 图形标准备受关注。Brush 是这两个技术栈在 3D 重建领域的标杆级应用。</p>
+
+        <h3>3. 零门槛体验</h3>
+        <p>提供在线 Web Demo，用户无需安装任何软件即可在浏览器中体验 3D 重建和查看功能。Hacker News 社区评价：「50 MB 的 .ply 文件几乎瞬间加载，场景漫游流畅无闪烁」。</p>
+
+        <h3>4. Gaussian Splatting 的爆发期</h3>
+        <p>3DGS 是 2023-2025 年计算机视觉领域最热门的技术之一，SIGGRAPH 2025 上 NVIDIA 开源了 3DGUT，NAB 2026 大量产品采用 GS 技术。Brush 顺应了这一大趋势。</p>
+
+        <h3>5. Google DeepMind 背书</h3>
+        <p>作者 Arthur Brussee 来自 Google DeepMind，同时也是 Burn 框架的核心贡献者，项目有 Google Research 的基因。</p>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2>&#9878; 同类项目对比</h2>
+        <table class="comparison-table">
+            <tr>
+                <th>特性</th>
+                <th>Brush</th>
+                <th>gsplat</th>
+                <th>Splatfacto</th>
+                <th>PostShot</th>
+                <th>原版 Inria 3DGS</th>
+            </tr>
+            <tr>
+                <td>语言</td>
+                <td class="highlight">Rust</td>
+                <td>CUDA/Python</td>
+                <td>Python</td>
+                <td>桌面应用</td>
+                <td>CUDA/Python</td>
+            </tr>
+            <tr>
+                <td>CUDA 依赖</td>
+                <td class="highlight">&#10024; 无需</td>
+                <td>必需</td>
+                <td>必需</td>
+                <td>必需</td>
+                <td>必需</td>
+            </tr>
+            <tr>
+                <td>Mac 支持</td>
+                <td class="highlight">&#10004; 原生</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+            </tr>
+            <tr>
+                <td>浏览器运行</td>
+                <td class="highlight">&#10004; WebGPU</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+            </tr>
+            <tr>
+                <td>Android</td>
+                <td class="highlight">&#10004;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+                <td>&#10008;</td>
+            </tr>
+            <tr>
+                <td>训练速度</td>
+                <td>快（优于 gsplat）</td>
+                <td>快</td>
+                <td>中等</td>
+                <td>良好</td>
+                <td>基线</td>
+            </tr>
+            <tr>
+                <td>输出质量</td>
+                <td>高（0.3 版本改善）</td>
+                <td>高</td>
+                <td>中高</td>
+                <td>高</td>
+                <td>高</td>
+            </tr>
+            <tr>
+                <td>开源</td>
+                <td>&#10004; Apache 2.0</td>
+                <td>&#10004;</td>
+                <td>&#10004;</td>
+                <td>&#10008; 商业</td>
+                <td>&#10004;</td>
+            </tr>
+            <tr>
+                <td>上手难度</td>
+                <td>低（单二进制）</td>
+                <td>中</td>
+                <td>高</td>
+                <td>低</td>
+                <td>高</td>
+            </tr>
+        </table>
+        <p><strong>总结</strong>：Brush 的核心竞争力在于「全平台 + 零依赖 + 浏览器可用」，这是其他所有 3DGS 工具都不具备的。在输出质量和训练速度上已经接近甚至超过参考实现。</p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2>&#128100; 适合谁使用</h2>
+        <ul>
+            <li><strong>Mac / AMD GPU 用户</strong>：唯一能在非 Nvidia GPU 上原生训练 3DGS 的工具</li>
+            <li><strong>3D 艺术师</strong>：想要快速将照片转为 3D 场景，无需复杂环境搭建</li>
+            <li><strong>Web 开发者</strong>：想在网站中嵌入 3D 重建功能（通过 WebGPU）</li>
+            <li><strong>移动端开发者</strong>：需要在 Android 上进行 3D 重建</li>
+            <li><strong>Rust 社区开发者</strong>：对 Rust + ML/GPU 计算感兴趣的技术探索者</li>
+            <li><strong>教育工作者</strong>：想要在课堂上演示 3D 重建技术</li>
+            <li><strong>快速原型开发者</strong>：需要零配置快速验证 3D 重建想法</li>
+        </ul>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2>&#9889; 快速上手指南</h2>
+
+        <h3>安装</h3>
+        <div class="code-block">
+            <span class="comment"># 确保已安装 Rust 1.88+</span><br>
+            <span class="command">rustup</span> update stable<br><br>
+            <span class="comment"># 克隆仓库</span><br>
+            <span class="command">git</span> clone https://github.com/ArthurBrussee/brush.git<br>
+            <span class="command">cd</span> brush<br><br>
+            <span class="comment"># 构建并运行</span><br>
+            <span class="command">cargo</span> run <span class="flag">--release</span>
+        </div>
+
+        <h3>使用 COLMAP 数据训练</h3>
+        <div class="code-block">
+            <span class="comment"># 使用 CLI 训练</span><br>
+            <span class="command">brush</span> train <span class="flag">--data</span> <span class="string">/path/to/colmap/dataset</span><br><br>
+            <span class="comment"># 训练并打开查看器</span><br>
+            <span class="command">brush</span> train <span class="flag">--data</span> <span class="string">/path/to/dataset</span> <span class="flag">--with-viewer</span>
+        </div>
+
+        <h3>查看 .ply 文件</h3>
+        <div class="code-block">
+            <span class="comment"># 本地查看</span><br>
+            <span class="command">brush</span> view <span class="flag">--path</span> <span class="string">scene.ply</span><br><br>
+            <span class="comment"># Web 端查看（URL 参数加载）</span><br>
+            <span class="comment"># 在浏览器中访问: https://brush.demo?url=https://example.com/scene.ply</span>
+        </div>
+
+        <h3>Web 端开发</h3>
+        <div class="code-block">
+            <span class="comment"># 启动 Web Demo</span><br>
+            <span class="command">npm</span> run dev<br><br>
+            <span class="comment"># 构建 WASM</span><br>
+            <span class="command">wasm-pack</span> build
+        </div>
+
+        <h3>Android 构建</h3>
+        <div class="code-block">
+            <span class="comment"># 一次性设置</span><br>
+            <span class="command">rustup</span> target add aarch64-linux-android<br>
+            <span class="command">cargo</span> install cargo-ndk<br><br>
+            <span class="comment"># 构建 Rust 库</span><br>
+            <span class="command">cargo</span> ndk <span class="flag">-t arm64-v8a -o</span> app/src/main/jniLibs/ build <span class="flag">--release</span><br><br>
+            <span class="comment"># 安装到设备</span><br>
+            <span class="command">./gradlew</span> installDebug
+        </div>
+    </div>
+
+    <!-- Scoring -->
+    <div class="card">
+        <h2>&#127942; 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-card score-excellent">
+                <div class="score-label">创新性</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%;"></div></div>
+            </div>
+            <div class="score-card score-excellent">
+                <div class="score-label">代码质量</div>
+                <div class="score-value">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+            </div>
+            <div class="score-card score-excellent">
+                <div class="score-label">实用性</div>
+                <div class="score-value">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value">7.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 75%;"></div></div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value">7.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 70%;"></div></div>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 16px;">
+            <strong style="font-size: 1.3em; background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                综合评分：8.1 / 10
+            </strong>
+        </p>
+        <p style="text-align: center; color: var(--text-secondary);">
+            一个极具创新性的项目，在跨平台 3D 重建领域开辟了全新赛道
+        </p>
+    </div>
+
+    <!-- Development Timeline -->
+    <div class="card">
+        <h2>&#128197; 发展历程</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">2024 年</div>
+                <div class="timeline-content">项目启动，基于 Google Research 内部版本，公开为开源项目</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">2024-2025</div>
+                <div class="timeline-content">Brush 0.2 发布 — 从概念验证转向可处理真实数据的实用工具，训练速度与参考实现持平</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">2025 年</div>
+                <div class="timeline-content">Brush 0.3 发布 — 引入高质量 splat 训练、更快的训练速度、全面的平台支持</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">2025-2026</div>
+                <div class="timeline-content">持续迭代，Web Demo 上线，社区讨论活跃，成为 Rust 生态中 3D 重建领域的标杆项目</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&#128202; GitHub Trending 深度分析报告 · 2026-05-14</p>
+        <p style="margin-top: 8px;">
+            <a href="https://github.com/ArthurBrussee/brush" target="_blank">GitHub 仓库</a> ·
+            <a href="https://radiancefields.com/gaussian-splatting-in-browser-brush" target="_blank">Radiance Fields 评测</a> ·
+            <a href="https://news.ycombinator.com/item?id=41938831" target="_blank">Hacker News 讨论</a>
+        </p>
+    </div>
+
+</div>
+</body>
+</html>
