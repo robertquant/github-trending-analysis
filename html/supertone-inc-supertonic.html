@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supertonic - GitHub Trending 深度分析</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #bc8cff;
+    --accent3: #3fb950;
+    --accent4: #f78166;
+    --accent5: #d2a8ff;
+    --gradient1: linear-gradient(135deg, #58a6ff, #bc8cff);
+    --gradient2: linear-gradient(135deg, #f78166, #d2a8ff);
+    --gradient3: linear-gradient(135deg, #3fb950, #58a6ff);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    padding: 40px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+  }
+  .header h1 {
+    font-size: 2.4em;
+    background: var(--gradient1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .header .subtitle {
+    color: var(--text-dim);
+    font-size: 1.1em;
+  }
+  .header .meta {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+  .meta-tag {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+  .meta-tag.orange { color: var(--accent4); }
+  .meta-tag.green { color: var(--accent3); }
+  .meta-tag.purple { color: var(--accent2); }
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .section h2 {
+    font-size: 1.4em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--gradient1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .section h3 {
+    color: var(--accent);
+    font-size: 1.15em;
+    margin: 16px 0 8px;
+  }
+  .section p, .section li {
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .section ul { padding-left: 20px; }
+  .section li { margin-bottom: 6px; }
+  .highlight-box {
+    background: rgba(88, 166, 255, 0.08);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .feature-card {
+    background: rgba(22, 27, 34, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .feature-card .icon {
+    font-size: 1.8em;
+    margin-bottom: 8px;
+  }
+  .feature-card h4 {
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .score-card {
+    background: rgba(22, 27, 34, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+  }
+  .score-card .label {
+    font-size: 0.85em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .score-card .value {
+    font-size: 2.2em;
+    font-weight: bold;
+    background: var(--gradient1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .score-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--gradient1);
+  }
+  .total-score {
+    text-align: center;
+    margin-top: 24px;
+    padding: 24px;
+    background: rgba(88, 166, 255, 0.05);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+  }
+  .total-score .number {
+    font-size: 3.5em;
+    font-weight: bold;
+    background: var(--gradient2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .total-score .desc {
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-left: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--accent);
+    font-weight: 600;
+    background: rgba(88, 166, 255, 0.05);
+  }
+  td { color: var(--text); }
+  tr:hover td { background: rgba(88, 166, 255, 0.03); }
+  code {
+    background: rgba(188, 140, 255, 0.1);
+    color: var(--accent2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Fira Code', 'Consolas', monospace;
+  }
+  pre {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .badge-blue { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+  .badge-purple { background: rgba(188, 140, 255, 0.15); color: var(--accent2); }
+  .badge-green { background: rgba(63, 185, 80, 0.15); color: var(--accent3); }
+  .badge-orange { background: rgba(247, 129, 102, 0.15); color: var(--accent4); }
+  .why-trending {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .why-item {
+    background: rgba(63, 185, 80, 0.06);
+    border: 1px solid rgba(63, 185, 80, 0.2);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .why-item h4 {
+    color: var(--accent3);
+    margin-bottom: 6px;
+  }
+  .why-item p { color: var(--text-dim); font-size: 0.9em; }
+  .compare-table th:first-child { color: var(--accent3); }
+  .code-block {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    position: relative;
+  }
+  .code-block .lang-label {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.75em;
+    color: var(--text-dim);
+    background: var(--card);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .code-block pre { margin: 0; border: none; padding: 0; }
+  .step-list {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+  }
+  .step-list li {
+    counter-increment: step;
+    padding: 10px 0 10px 48px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 32px;
+    height: 32px;
+    background: var(--gradient1);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    margin-top: 30px;
+  }
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 1.8em; }
+    .section { padding: 18px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .score-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Supertonic</h1>
+  <p class="subtitle">Lightning-Fast, On-Device, Multilingual TTS - 基于 ONNX 的超快速端侧语音合成</p>
+  <div class="meta">
+    <span class="meta-tag">Swift</span>
+    <span class="meta-tag orange">4,953 Stars</span>
+    <span class="meta-tag green">+1,163 Today</span>
+    <span class="meta-tag purple">Supertone Inc.</span>
+    <span class="meta-tag">MIT License</span>
+  </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+  <h2>项目简介</h2>
+  <p><strong>Supertonic</strong> 是由韩国 AI 语音技术公司 <strong>Supertone Inc.</strong>（HYBE 旗下子公司）开源的超快速端侧文本转语音（TTS）系统。它基于 ONNX Runtime 实现本地推理，完全无需云端服务、API 调用或网络连接。</p>
+  <div class="highlight-box">
+    <p>核心亮点：仅 ~99M 参数，最高可达 <strong>167 倍实时速度</strong>，支持 <strong>31 种语言</strong>，完全离线运行于桌面、浏览器、移动端甚至树莓派。</p>
+  </div>
+  <p>Supertone 公司源自首尔大学语音 AI 研究团队，曾因"复活"已故韩国巨星嗓音而登上头条。该公司已被 HYBE（BTS 母公司）收购，客户包括 Netflix、Disney 等顶级娱乐公司。Supertonic 是他们将企业级语音技术推向开源社区的重要一步。</p>
+</div>
+
+<!-- 核心功能 -->
+<div class="section">
+  <h2>核心功能</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon">&#9889;</div>
+      <h4>极致速度</h4>
+      <p>在 CPU 上即可达到最高 167x 实时速度，无需 GPU 加速。树莓派上实测 RTF 0.3x，轻松实现实时语音合成。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#127760;</div>
+      <h4>31 种语言</h4>
+      <p>Supertonic 3 支持 31 种语言，包括中文（虽然当前列表未列 zh）、英语、日语、韩语、阿拉伯语、印地语等，覆盖全球主流语种。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#128274;</div>
+      <h4>完全离线</h4>
+      <p>基于 ONNX Runtime 的纯本地推理，零网络依赖。隐私无忧，不发送任何数据到云端。适合隐私敏感场景。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#128640;</div>
+      <h4>全平台部署</h4>
+      <p>支持 Python、Node.js、浏览器、Java、C++、C#、Go、Swift、iOS、Rust、Flutter 等 11 种运行时环境。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#127911;</div>
+      <h4>自然文本处理</h4>
+      <p>在金融数字、电话号码、技术单位等复杂文本的朗读准确率上，超越了 ElevenLabs、OpenAI TTS、Gemini 等主流服务。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#127908;</div>
+      <h4>Voice Builder</h4>
+      <p>内置语音构建器，可将自己的声音转化为可部署的端侧 TTS 模型，永久拥有语音所有权。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+  <h2>技术架构与特点</h2>
+  <h3>模型架构</h3>
+  <p>Supertonic 基于 <strong>Speech Autoencoder</strong> + <strong>Flow-Matching Text-to-Latent</strong> 架构，核心创新包括：</p>
+  <ul>
+    <li><strong>Length-Aware RoPE (LARoPE)</strong>：改进的旋转位置编码，优化文本-语音对齐的交叉注意力机制</li>
+    <li><strong>Self-Purifying Flow Matching</strong>：自净化流匹配训练，在存在噪声标签的情况下仍能稳健训练</li>
+    <li><strong>ONNX Runtime 推理</strong>：通过 ONNX 格式实现跨平台高性能推理，避免 PyTorch 部署依赖</li>
+    <li><strong>Int8 量化支持</strong>：社区已提供 INT8 量化模型，进一步降低资源占用</li>
+  </ul>
+  <h3>模型参数</h3>
+  <table>
+    <tr><th>指标</th><th>数值</th><th>对比</th></tr>
+    <tr><td>参数量</td><td>~99M（公开 ONNX 资产）</td><td>远小于 0.7B-2B 级开源 TTS</td></tr>
+    <tr><td>推理速度</td><td>最高 167x RTF（CPU）</td><td>比 A100 GPU 上的大型基线更快</td></tr>
+    <tr><td>内存占用</td><td>极低</td><td>大幅低于同类系统</td></tr>
+    <tr><td>输出格式</td><td>16-bit WAV</td><td>标准音频格式</td></tr>
+    <tr><td>语音风格</td><td>M1-M5, F1-F5 等</td><td>多种预设男女声风格</td></tr>
+  </table>
+  <h3>版本演进</h3>
+  <table>
+    <tr><th>版本</th><th>发布日期</th><th>语言数</th><th>关键特性</th></tr>
+    <tr><td>v1</td><td>2024</td><td>-</td><td>初始版本，基础 TTS 能力</td></tr>
+    <tr><td>v2</td><td>2026.01.06</td><td>5</td><td>多语言支持，显著性能提升</td></tr>
+    <tr><td>v3</td><td>2026.04.29</td><td>31</td><td>大幅扩展语言，改善阅读准确性，减少重复/跳过错误</td></tr>
+  </table>
+  <h3>学术支撑</h3>
+  <p>项目有 3 篇论文支撑核心技术：</p>
+  <ul>
+    <li><strong>SupertonicTTS</strong> (arXiv:2503.23108) - 整体架构设计</li>
+    <li><strong>LARoPE</strong> (arXiv:2509.11084) - 文本-语音对齐</li>
+    <li><strong>Self-Purifying Flow Matching</strong> (arXiv:2509.19091) - 噪声标签训练</li>
+  </ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+  <h2>应用场景</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>电子书阅读器</h4>
+      <p>已成功部署在 Onyx Boox Go 6 电子阅读器上，飞行模式下平均 RTF 0.3x，完全离线朗读电子书。</p>
+    </div>
+    <div class="feature-card">
+      <h4>浏览器扩展</h4>
+      <p>TLDRL 扩展可将任意网页在一秒内转为语音，完全设备端运行，免费、隐私、零网络依赖。</p>
+    </div>
+    <div class="feature-card">
+      <h4>IoT / 嵌入式设备</h4>
+      <p>在树莓派上实时运行，适合智能家居、机器人语音交互等资源受限场景。</p>
+    </div>
+    <div class="feature-card">
+      <h4>语音聊天机器人</h4>
+      <p>浏览器端 VoiceChat 项目实现设备端语音对话 LLM，无需云端 TTS 服务。</p>
+    </div>
+    <div class="feature-card">
+      <h4>移动应用</h4>
+      <p>PageEcho iOS 电子书应用、CopiloTTS Kotlin 多平台 SDK 等已基于 Supertonic 构建。</p>
+    </div>
+    <div class="feature-card">
+      <h4>数字人 / 头像</h4>
+      <p>OmniAvatar 项目将照片 + 语音生成会说话的头像视频，Supertonic 作为语音引擎。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+  <h2>为什么火（Trending 原因）</h2>
+  <div class="why-trending">
+    <div class="why-item">
+      <h4>v3 版本重大升级</h4>
+      <p>2026.04.29 刚发布 Supertonic 3，语言从 5 种暴增到 31 种，性能大幅提升，引发社区广泛关注。</p>
+    </div>
+    <div class="why-item">
+      <h4>完全本地化 TTS 填补空白</h4>
+      <p>在 AI 隐私和数据安全日益受关注的背景下，完全无需云端的 TTS 方案极其稀缺，Supertonic 填补了这一重要空白。</p>
+    </div>
+    <div class="why-item">
+      <h4>性能碾压云端竞品</h4>
+      <p>CPU 推理速度超过 A100 GPU 上运行的大型基线模型，复杂文本朗读准确率超过 ElevenLabs、OpenAI 等商业产品。</p>
+    </div>
+    <div class="why-item">
+      <h4>极致轻量</h4>
+      <p>仅 99M 参数，在模型大小、下载速度和启动时间上具有压倒性优势。树莓派、电子阅读器都能流畅运行。</p>
+    </div>
+    <div class="why-item">
+      <h4>全平台生态支持</h4>
+      <p>11 种编程语言/平台的示例，PyPI 一行安装，浏览器端 WebGPU 推理，覆盖几乎所有开发者群体。</p>
+    </div>
+    <div class="why-item">
+      <h4>业界背景背书</h4>
+      <p>Supertone 是 HYBE（BTS 母公司）旗下公司，技术被 Netflix、Disney 采用，学术根基扎实（首尔大学 + 3 篇论文）。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 同类项目对比 -->
+<div class="section">
+  <h2>同类项目对比</h2>
+  <table class="compare-table">
+    <tr>
+      <th>特性</th>
+      <th>Supertonic</th>
+      <th>ElevenLabs</th>
+      <th>OpenAI TTS</th>
+      <th>Edge-TTS</th>
+      <th>Piper</th>
+    </tr>
+    <tr>
+      <td>部署方式</td>
+      <td><span class="badge badge-green">完全本地</span></td>
+      <td><span class="badge badge-orange">云端 API</span></td>
+      <td><span class="badge badge-orange">云端 API</span></td>
+      <td><span class="badge badge-orange">需网络</span></td>
+      <td><span class="badge badge-green">完全本地</span></td>
+    </tr>
+    <tr>
+      <td>推理速度</td>
+      <td><strong>167x RTF (CPU)</strong></td>
+      <td>网络延迟</td>
+      <td>网络延迟</td>
+      <td>网络延迟</td>
+      <td>~10-30x RTF</td>
+    </tr>
+    <tr>
+      <td>语言数</td>
+      <td><strong>31</strong></td>
+      <td>32+</td>
+      <td>有限</td>
+      <td>40+</td>
+      <td>有限</td>
+    </tr>
+    <tr>
+      <td>参数量</td>
+      <td>~99M</td>
+      <td>未知（闭源）</td>
+      <td>未知（闭源）</td>
+      <td>N/A</td>
+      <td>~20-60M</td>
+    </tr>
+    <tr>
+      <td>隐私</td>
+      <td><strong>完全离线</strong></td>
+      <td>数据上传</td>
+      <td>数据上传</td>
+      <td>数据上传</td>
+      <td>完全离线</td>
+    </tr>
+    <tr>
+      <td>成本</td>
+      <td><strong>免费开源</strong></td>
+      <td>$5/月起</td>
+      <td>按字符计费</td>
+      <td>免费</td>
+      <td>免费开源</td>
+    </tr>
+    <tr>
+      <td>音色自然度</td>
+      <td>高</td>
+      <td>极高</td>
+      <td>高</td>
+      <td>中等</td>
+      <td>中等</td>
+    </tr>
+    <tr>
+      <td>文本规范化</td>
+      <td><strong>极佳</strong></td>
+      <td>一般</td>
+      <td>一般</td>
+      <td>一般</td>
+      <td>一般</td>
+    </tr>
+    <tr>
+      <td>自定义语音</td>
+      <td>Voice Builder</td>
+      <td>Voice Cloning</td>
+      <td>有限</td>
+      <td>不支持</td>
+      <td>需训练</td>
+    </tr>
+  </table>
+  <div class="highlight-box">
+    <p><strong>核心差异</strong>：Supertonic 是目前唯一能在完全离线、低资源设备上同时实现高速度、高准确性、多语言支持的开源 TTS 系统。它不追求与 ElevenLabs 比拼极致音色自然度，而是在"速度 + 离线 + 多语言"这个三角中找到了最佳平衡点。</p>
+  </div>
+</div>
+
+<!-- 适合谁使用 -->
+<div class="section">
+  <h2>适合谁使用</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon">&#128187;</div>
+      <h4>前端 / 全栈开发者</h4>
+      <p>需要为 Web 应用添加离线语音功能的开发者。浏览器端 WebGPU 推理示例开箱即用。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#128241;</div>
+      <h4>移动应用开发者</h4>
+      <p>iOS / Flutter 开发者需要在应用内嵌入 TTS，无需依赖网络，保护用户隐私。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#128300;</div>
+      <h4>IoT / 嵌入式工程师</h4>
+      <p>在树莓派、电子阅读器等资源受限设备上需要语音交互能力。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#129302;</div>
+      <h4>AI 应用构建者</h4>
+      <p>构建语音助手、聊天机器人、数字人等 AI 应用，需要本地 TTS 引擎。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#127891;</div>
+      <h4>研究人员</h4>
+      <p>语音合成、流匹配模型、跨语言 TTS 研究者，3 篇论文提供深入技术参考。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">&#128218;</div>
+      <h4>无障碍应用开发者</h4>
+      <p>构建屏幕阅读器、有声书、辅助沟通工具，离线能力对特殊用户群体至关重要。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+  <h2>快速上手指南</h2>
+  <h3>方式一：Python SDK（推荐）</h3>
+  <div class="code-block">
+    <span class="lang-label">Python</span>
+    <pre><code>pip install supertonic</code></pre>
+  </div>
+  <div class="code-block">
+    <span class="lang-label">Python</span>
+    <pre><code>from supertonic import TTS
+
+# 首次运行自动从 Hugging Face 下载模型
+tts = TTS(auto_download=True)
+
+# 选择语音风格
+style = tts.get_voice_style(voice_name="M1")
+
+# 合成语音
+text = "A gentle breeze moved through the open window."
+wav, duration = tts.synthesize(text, voice_style=style, lang="en")
+
+# 保存音频
+tts.save_audio(wav, "output.wav")
+print(f"Generated {duration:.2f}s of audio")</code></pre>
+  </div>
+
+  <h3>方式二：从源码构建</h3>
+  <div class="code-block">
+    <span class="lang-label">Bash</span>
+    <pre><code># 克隆仓库
+git clone https://github.com/supertone-inc/supertonic.git
+cd supertonic
+
+# 下载 ONNX 模型（需要 Git LFS）
+git lfs install
+git clone https://huggingface.co/Supertone/supertonic-3 assets
+
+# 运行 Python 示例
+cd py
+uv sync
+uv run example_onnx.py</code></pre>
+  </div>
+
+  <h3>方式三：浏览器端推理</h3>
+  <div class="code-block">
+    <span class="lang-label">Bash</span>
+    <pre><code>cd web
+npm install
+npm run dev</code></pre>
+  </div>
+
+  <h3>其他运行时</h3>
+  <table>
+    <tr><th>平台</th><th>路径</th><th>运行命令</th></tr>
+    <tr><td>Node.js</td><td><code>nodejs/</code></td><td><code>npm install && npm start</code></td></tr>
+    <tr><td>C++</td><td><code>cpp/</code></td><td><code>mkdir build && cd build && cmake .. && cmake --build .</code></td></tr>
+    <tr><td>Swift</td><td><code>swift/</code></td><td><code>swift build -c release</code></td></tr>
+    <tr><td>Rust</td><td><code>rust/</code></td><td><code>cargo build --release</code></td></tr>
+    <tr><td>Go</td><td><code>go/</code></td><td><code>go run example_onnx.go helper.go</code></td></tr>
+    <tr><td>iOS</td><td><code>ios/</code></td><td>Xcode 打开项目直接运行</td></tr>
+    <tr><td>Flutter</td><td><code>flutter/</code></td><td>跨平台移动应用支持</td></tr>
+  </table>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+  <h2>综合评分</h2>
+  <div class="score-grid">
+    <div class="score-card">
+      <div class="label">创新性</div>
+      <div class="value">9.0</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="label">代码质量</div>
+      <div class="value">8.5</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="label">实用性</div>
+      <div class="value">9.5</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width: 95%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="label">文档完善度</div>
+      <div class="value">9.0</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="label">社区活跃度</div>
+      <div class="value">8.5</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="number">8.9 / 10</div>
+    <div class="desc">综合评分 - 强烈推荐</div>
+  </div>
+  <div class="highlight-box" style="margin-top: 20px;">
+    <p><strong>评分理由</strong>：</p>
+    <ul style="margin-top: 8px;">
+      <li><strong>创新性 9.0</strong>：端侧 TTS 领域的标杆之作，LARoPE 和自净化流匹配均为原创技术贡献，99M 参数实现 31 语言支持极具突破性。</li>
+      <li><strong>代码质量 8.5</strong>：11 种运行时示例代码组织清晰，ONNX 资产模块化，Python SDK 封装完善。扣分项：部分平台示例较简单。</li>
+      <li><strong>实用性 9.5</strong>：解决真实痛点（隐私、离线、成本），从树莓派到浏览器全覆盖，已有多个成功应用案例。</li>
+      <li><strong>文档完善度 9.0</strong>：README 极其详尽，含性能基准、音频样本对比、各平台指南。3 篇学术论文提供深层技术参考。</li>
+      <li><strong>社区活跃度 8.5</strong>：v3 发布不到一个月即获近 5000 Star，Hugging Face 模型下载活跃，社区衍生项目丰富（sherpa-onnx 集成、MNN 版本等）。</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 链接 -->
+<div class="section">
+  <h2>相关链接</h2>
+  <table>
+    <tr><td>GitHub</td><td><a href="https://github.com/supertone-inc/supertonic" style="color: var(--accent)">supertone-inc/supertonic</a></td></tr>
+    <tr><td>官方站点</td><td><a href="https://supertonictts.com/" style="color: var(--accent)">supertonictts.com</a></td></tr>
+    <tr><td>Hugging Face</td><td><a href="https://huggingface.co/Supertone/supertonic-3" style="color: var(--accent)">Supertone/supertonic-3</a></td></tr>
+    <tr><td>PyPI</td><td><code>pip install supertonic</code></td></tr>
+    <tr><td>Supertone 官网</td><td><a href="https://www.supertone.ai/en" style="color: var(--accent)">supertone.ai</a></td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  <p>分析日期：2026-05-15 | GitHub Trending 深度分析 | Powered by Claude Code</p>
+</div>
+
+</body>
+</html>
