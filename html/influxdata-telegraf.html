@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析 | influxdata/telegraf</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-code: #0d1117;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #bc8cff;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #f0883e, #f85149);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+        .header .badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .badge-lang { background: rgba(0,172,215,0.15); color: #00ADD8; border: 1px solid rgba(0,172,215,0.3); }
+        .badge-date { background: rgba(88,166,255,0.15); color: var(--accent-blue); border: 1px solid rgba(88,166,255,0.3); }
+        .header h1 {
+            font-size: 2.4em;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle { color: var(--text-secondary); font-size: 1.1em; max-width: 700px; margin: 0 auto; }
+        .meta-row {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .meta-item .num { color: var(--text-primary); font-weight: 700; font-size: 16px; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: var(--accent-blue); }
+        .card h2 {
+            font-size: 1.35em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card h2 .icon { margin-right: 8px; }
+
+        /* Scoring */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .score-item .value { font-size: 2em; font-weight: 800; }
+        .score-item .bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bg-primary);
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill { height: 100%; border-radius: 2px; }
+        .score-total {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+        }
+        .score-total .big { font-size: 2.8em; font-weight: 900; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th { text-align: left; padding: 10px 14px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 10px 14px; border-top: 1px solid var(--border); font-size: 14px; }
+        tr:hover td { background: rgba(88,166,255,0.04); }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            background: rgba(88,166,255,0.1);
+            color: var(--accent-blue);
+            border: 1px solid rgba(88,166,255,0.2);
+        }
+        .tag.green { background: rgba(63,185,80,0.1); color: var(--accent-green); border-color: rgba(63,185,80,0.2); }
+        .tag.purple { background: rgba(188,140,255,0.1); color: var(--accent-purple); border-color: rgba(188,140,255,0.2); }
+        .tag.orange { background: rgba(240,136,62,0.1); color: var(--accent-orange); border-color: rgba(240,136,62,0.2); }
+
+        /* Code */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+        code { font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; }
+        .inline-code {
+            background: rgba(88,166,255,0.12);
+            color: var(--accent-blue);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* Lists */
+        ul, ol { padding-left: 20px; margin: 10px 0; }
+        li { margin: 6px 0; }
+        li::marker { color: var(--accent-blue); }
+
+        /* Highlight box */
+        .highlight-box {
+            background: rgba(88,166,255,0.08);
+            border-left: 3px solid var(--accent-blue);
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+            font-size: 14px;
+        }
+
+        /* Comparison bars */
+        .compare-bar { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+        .compare-bar .name { width: 80px; text-align: right; font-size: 13px; color: var(--text-secondary); }
+        .compare-bar .track { flex: 1; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
+        .compare-bar .fill { height: 100%; border-radius: 4px; }
+
+        /* Footer */
+        .footer { text-align: center; padding: 40px 0 20px; color: var(--text-secondary); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 20px 16px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 20px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .meta-row { gap: 14px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div style="display:flex;justify-content:center;gap:10px;margin-bottom:16px;">
+            <span class="badge badge-lang">Go</span>
+            <span class="badge badge-date">2026-05-15 分析</span>
+        </div>
+        <h1>Telegraf</h1>
+        <p class="subtitle">由 InfluxData 开发的开源数据采集代理，用于收集、处理、聚合和写入指标、日志及任意数据。300+ 插件生态，可观测性基础设施的瑞士军刀。</p>
+        <div class="meta-row">
+            <div class="meta-item">⭐ <span class="num">17,099</span> Stars</div>
+            <div class="meta-item">🔀 <span class="num">5,791</span> Forks</div>
+            <div class="meta-item">📦 <span class="num">300+</span> 插件</div>
+            <div class="meta-item">👥 <span class="num">1,200+</span> 贡献者</div>
+            <div class="meta-item">📈 +211 今日 Stars</div>
+        </div>
+        <div class="tags" style="justify-content:center;margin-top:20px;">
+            <span class="tag">Metrics Collection</span>
+            <span class="tag green">Observability</span>
+            <span class="tag purple">Go</span>
+            <span class="tag orange">InfluxDB</span>
+            <span class="tag">Plugin-Driven</span>
+            <span class="tag green">MIT License</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">📋</span>项目简介与核心功能</h2>
+        <p>Telegraf 是由 <strong>InfluxData</strong> 开发的开源数据采集代理（Agent），使用 <strong>Go 语言</strong>编写。它是一个<strong>插件驱动</strong>的服务器代理，能够从数据库、系统、进程、IoT 设备和各种 API 中收集指标和事件数据，并将其写入多种后端存储。</p>
+
+        <div class="highlight-box">
+            <strong>核心定位：</strong>可观测性基础设施中的"数据搬运工" — 负责从各种数据源采集指标、日志和事件，经处理后路由到目标存储系统。
+        </div>
+
+        <h3 style="margin-top:20px;font-size:1.1em;">核心功能</h3>
+        <ul>
+            <li><strong>300+ 插件生态</strong>：涵盖输入（Input）、输出（Output）、处理器（Processor）、聚合器（Aggregator）四大类</li>
+            <li><strong>零依赖部署</strong>：编译为独立静态二进制文件，无需任何外部依赖</li>
+            <li><strong>TOML 配置</strong>：简洁明了的声明式配置，无歧义易维护</li>
+            <li><strong>数据处理管线</strong>：内置聚合、过滤、转换等数据处理能力</li>
+            <li><strong>自定义插件</strong>：支持用户通过 <code class="inline-code">exec</code> 或 Go 插件扩展功能</li>
+        </ul>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span>技术架构与特点</h2>
+        <p>Telegraf 采用经典的 <strong>Input → Processor → Aggregator → Output</strong> 管线架构：</p>
+        <pre>
+┌──────────┐    ┌────────────┐    ┌─────────────┐    ┌──────────┐
+│  Inputs   │───▶│ Processors │───▶│ Aggregators │───▶│ Outputs  │
+│ (采集数据) │    │ (处理转换)  │    │  (聚合统计)  │    │ (输出目标)│
+└──────────┘    └────────────┘    └─────────────┘    └──────────┘
+  CPU/Memory      过滤/重命名        移动平均/最大值     InfluxDB
+  Docker          类型转换           直方图              Prometheus
+  Kafka           添加标签           采样率              Grafana
+  SQL             数据裁剪                               Elasticsearch
+        </pre>
+
+        <h3 style="margin-top:20px;font-size:1.1em;">技术亮点</h3>
+        <table>
+            <thead>
+                <tr><th>特性</th><th>详情</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code class="inline-code">语言</code></td><td>Go — 高性能、低资源占用、交叉编译</td></tr>
+                <tr><td><code class="inline-code">部署</code></td><td>单静态二进制，支持 Linux/macOS/Windows/Docker</td></tr>
+                <tr><td><code class="inline-code">配置</code></td><td>TOML 格式，声明式，支持环境变量插值</td></tr>
+                <tr><td><code class="inline-code">插件模型</code></td><td>四大类型：Input / Output / Processor / Aggregator</td></tr>
+                <tr><td><code class="inline-code">数据模型</code></td><td>基于 InfluxDB 的行协议（Line Protocol）</td></tr>
+                <tr><td><code class="inline-code">许可证</code></td><td>MIT — 完全开源，商用友好</td></tr>
+                <tr><td><code class="inline-code">插件数量</code></td><td>300+，覆盖系统监控、云服务、消息队列、网络设备等</td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:20px;font-size:1.1em;">插件覆盖领域</h3>
+        <div class="tags">
+            <span class="tag">系统监控 (CPU/Mem/Disk)</span>
+            <span class="tag green">Docker / Kubernetes</span>
+            <span class="tag purple">Kafka / MQTT / AMQP</span>
+            <span class="tag orange">OpenTelemetry</span>
+            <span class="tag">Prometheus</span>
+            <span class="tag green">SQL 数据库</span>
+            <span class="tag purple">OPC UA / Modbus</span>
+            <span class="tag orange">NVIDIA SMI</span>
+            <span class="tag">SNMP / Cisco MDT</span>
+            <span class="tag green">Windows 性能计数器</span>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span>应用场景</h2>
+        <table>
+            <thead>
+                <tr><th>场景</th><th>描述</th><th>典型插件组合</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>基础设施监控</strong></td>
+                    <td>采集服务器 CPU、内存、磁盘、网络等系统指标</td>
+                    <td>inputs.cpu/mem/disk/net → outputs.influxdb</td>
+                </tr>
+                <tr>
+                    <td><strong>容器监控</strong></td>
+                    <td>监控 Docker 容器资源使用和运行状态</td>
+                    <td>inputs.docker → outputs.prometheus_client</td>
+                </tr>
+                <tr>
+                    <td><strong>IoT 数据采集</strong></td>
+                    <td>从工业设备、传感器采集时序数据</td>
+                    <td>inputs.opcua/modbus/mqtt → outputs.influxdb</td>
+                </tr>
+                <tr>
+                    <td><strong>日志收集</strong></td>
+                    <td>采集、解析和转发应用日志</td>
+                    <td>inputs.tail/logparser → outputs.elasticsearch</td>
+                </tr>
+                <tr>
+                    <td><strong>数据库监控</strong></td>
+                    <td>监控 MySQL/PostgreSQL/Redis 等数据库性能</td>
+                    <td>inputs.mysql/postgresql/redis → outputs.influxdb</td>
+                </tr>
+                <tr>
+                    <td><strong>多后端路由</strong></td>
+                    <td>同一数据源同时输出到多个目标系统</td>
+                    <td>inputs.statsd → outputs.influxdb + outputs.prometheus</td>
+                </tr>
+                <tr>
+                    <td><strong>网络设备监控</strong></td>
+                    <td>通过 SNMP/gNMI 监控路由器、交换机等</td>
+                    <td>inputs.snmp/cisco_telemetry_mdt → outputs.influxdb</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="icon">🔥</span>为什么上 Trending</h2>
+        <ul>
+            <li><strong>最新版本活跃发布</strong>：2026-05-11 刚发布 v38.4，保持高频迭代节奏</li>
+            <li><strong>可观测性浪潮</strong>：云原生和 DevOps 运动持续推动监控基础设施需求激增</li>
+            <li><strong>插件生态持续扩张</strong>：300+ 插件几乎覆盖所有主流数据源和目标，形成网络效应</li>
+            <li><strong>超越 InfluxDB 的通用性</strong>：不再局限于 InfluxDB 生态，已支持 Prometheus、Grafana、Elasticsearch 等几乎所有主流后端</li>
+            <li><strong>社区驱动</strong>：1,200+ 贡献者，大量插件来自社区贡献，形成正向飞轮</li>
+            <li><strong>轻量高效</strong>：Go 单二进制部署，资源占用低，在边缘计算和 IoT 场景优势明显</li>
+            <li><strong>OpenTelemetry 趋势</strong>：集成 OTel 支持，顺应统一可观测性标准的大趋势</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span>同类项目对比</h2>
+        <table>
+            <thead>
+                <tr><th>维度</th><th>Telegraf</th><th>Prometheus</th><th>Fluentd</th><th>Vector</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>定位</strong></td>
+                    <td>数据采集代理</td>
+                    <td>完整监控系统</td>
+                    <td>日志聚合器</td>
+                    <td>可观测性数据管线</td>
+                </tr>
+                <tr>
+                    <td><strong>语言</strong></td>
+                    <td>Go</td>
+                    <td>Go</td>
+                    <td>Ruby</td>
+                    <td>Rust</td>
+                </tr>
+                <tr>
+                    <td><strong>模型</strong></td>
+                    <td>Push（推）</td>
+                    <td>Pull（拉）</td>
+                    <td>Push</td>
+                    <td>Push/Pull</td>
+                </tr>
+                <tr>
+                    <td><strong>插件/集成</strong></td>
+                    <td>300+</td>
+                    <td>1000+ Exporters</td>
+                    <td>800+</td>
+                    <td>~50</td>
+                </tr>
+                <tr>
+                    <td><strong>数据类型</strong></td>
+                    <td>指标 + 日志</td>
+                    <td>仅指标</td>
+                    <td>日志 + 指标</td>
+                    <td>日志 + 指标 + 追踪</td>
+                </tr>
+                <tr>
+                    <td><strong>查询语言</strong></td>
+                    <td>无（纯代理）</td>
+                    <td>PromQL</td>
+                    <td>无</td>
+                    <td>VRL</td>
+                </tr>
+                <tr>
+                    <td><strong>性能</strong></td>
+                    <td>★★★★☆</td>
+                    <td>★★★★☆</td>
+                    <td>★★★☆☆</td>
+                    <td>★★★★★</td>
+                </tr>
+                <tr>
+                    <td><strong>部署复杂度</strong></td>
+                    <td>极低</td>
+                    <td>中等</td>
+                    <td>中等</td>
+                    <td>低</td>
+                </tr>
+                <tr>
+                    <td><strong>Stars</strong></td>
+                    <td>~17K</td>
+                    <td>~57K</td>
+                    <td>~13K</td>
+                    <td>~19K</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box" style="margin-top:16px;">
+            <strong>核心差异：</strong>Telegraf 专注于"采集+路由"，不做存储和查询。与 Prometheus 互补而非竞争 — Telegraf 可以将数据推送到 Prometheus，也可以充当 StatsD 兼容的聚合器。Vector 在性能上更强（Rust），但 Telegraf 的插件生态远比 Vector 成熟。
+        </div>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">👥</span>适合谁使用</h2>
+        <table>
+            <thead>
+                <tr><th>角色</th><th>推荐理由</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>DevOps / SRE 工程师</strong></td><td>快速搭建基础设施监控，无需复杂配置</td></tr>
+                <tr><td><strong>后端开发者</strong></td><td>轻量级应用指标上报，支持 StatsD 协议</td></tr>
+                <tr><td><strong>IoT / 边缘计算工程师</strong></td><td>单二进制、低资源占用，适合嵌入式和边缘场景</td></tr>
+                <tr><td><strong>运维团队</strong></td><td>统一采集多种数据源，减少工具碎片化</td></tr>
+                <tr><td><strong>数据库管理员</strong></td><td>丰富的数据库监控插件（MySQL/PG/Redis/MongoDB）</td></tr>
+                <tr><td><strong>网络工程师</strong></td><td>SNMP、Cisco MDT、gNMI 等网络设备原生支持</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">🚀</span>快速上手指南</h2>
+
+        <h3 style="font-size:1.05em;margin-top:10px;">1. 安装</h3>
+        <pre><code># macOS
+brew install telegraf
+
+# Ubuntu / Debian
+sudo apt-get install telegraf
+
+# Docker
+docker pull telegraf
+
+# 直接下载二进制
+wget https://dl.influxdata.com/telegraf/releases/telegraf-38.4.0_linux_amd64.tar.gz
+</code></pre>
+
+        <h3 style="font-size:1.05em;margin-top:16px;">2. 创建配置文件</h3>
+        <pre><code># 生成默认配置
+telegraf config &gt; telegraf.conf
+
+# 仅生成 cpu + mem 输入 + influxdb 输出的精简配置
+telegraf config --input-filter cpu:mem --output-filter influxdb_v2
+</code></pre>
+
+        <h3 style="font-size:1.05em;margin-top:16px;">3. 配置示例（采集系统指标写入 InfluxDB）</h3>
+        <pre><code># telegraf.conf
+[agent]
+  interval = "10s"
+  flush_interval = "10s"
+
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+
+[[inputs.mem]]
+
+[[inputs.disk]]
+
+[[inputs.net]]
+
+[[outputs.influxdb_v2]]
+  urls = ["http://localhost:8086"]
+  token = "your-token"
+  organization = "my-org"
+  bucket = "metrics"
+</code></pre>
+
+        <h3 style="font-size:1.05em;margin-top:16px;">4. 启动</h3>
+        <pre><code># 前台运行（调试）
+telegraf --config telegraf.conf
+
+# 作为系统服务
+sudo systemctl start telegraf
+
+# Docker 运行
+docker run -d --name telegraf \
+  -v /path/to/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
+  telegraf
+</code></pre>
+
+        <h3 style="font-size:1.05em;margin-top:16px;">5. 验证</h3>
+        <pre><code># 查看采集到的指标（调试模式）
+telegraf --config telegraf.conf --test
+
+# 查看内部指标
+telegraf --config telegraf.conf --input-filter internal
+</code></pre>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">⭐</span>综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value" style="color:var(--accent-blue);">7.0</div>
+                <div class="bar"><div class="bar-fill" style="width:70%;background:var(--gradient-1);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value" style="color:var(--accent-green);">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%;background:var(--gradient-2);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value" style="color:var(--accent-purple);">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%;background:var(--gradient-1);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value" style="color:var(--accent-orange);">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%;background:var(--gradient-3);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value" style="color:var(--accent-cyan);">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%;background:var(--gradient-2);"></div></div>
+            </div>
+        </div>
+        <div class="score-total">
+            <div style="font-size:14px;color:var(--text-secondary);margin-bottom:4px;">综合得分</div>
+            <div class="big">8.5 / 10</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">极高实用价值的生产级基础设施工具</div>
+        </div>
+    </div>
+
+    <!-- 评分说明 -->
+    <div class="card">
+        <h2><span class="icon">📝</span>评分说明</h2>
+        <table>
+            <thead>
+                <tr><th>维度</th><th>分数</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>创新性 7.0</strong></td>
+                    <td>★★★☆☆</td>
+                    <td>Telegraf 并非开创性技术，但在插件生态的广度和统一采集模型上持续创新。支持 OpenTelemetry 是近年来的重要举措。</td>
+                </tr>
+                <tr>
+                    <td><strong>代码质量 8.5</strong></td>
+                    <td>★★★★☆</td>
+                    <td>Go 语言编写，代码结构清晰，测试覆盖充分。1,200+ 贡献者的协作质量管控良好，长期维护稳定。</td>
+                </tr>
+                <tr>
+                    <td><strong>实用性 9.5</strong></td>
+                    <td>★★★★★</td>
+                    <td>几乎覆盖所有监控场景，即装即用。300+ 插件使其成为"万能数据搬运工"，是可观测性栈的必备组件。</td>
+                </tr>
+                <tr>
+                    <td><strong>文档完善度 8.5</strong></td>
+                    <td>★★★★☆</td>
+                    <td>每个插件独立 README，官方文档齐全，InfluxDB University 提供免费课程。社区资源丰富。</td>
+                </tr>
+                <tr>
+                    <td><strong>社区活跃度 9.0</strong></td>
+                    <td>★★★★★</td>
+                    <td>17K+ Stars，1,200+ 贡献者，频繁发布（v38.4 于 2026-05-11 发布），Slack 和论坛活跃。企业级支持。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>📡 分析由 AI 自动生成 | Powered by Claude Code</p>
+        <p style="margin-top:6px;">
+            <a href="https://github.com/influxdata/telegraf" style="color:var(--accent-blue);text-decoration:none;">GitHub 仓库</a> ·
+            <a href="https://www.influxdata.com/time-series-platform/telegraf/" style="color:var(--accent-blue);text-decoration:none;">官方网站</a> ·
+            <a href="https://docs.influxdata.com/telegraf/" style="color:var(--accent-blue);text-decoration:none;">官方文档</a>
+        </p>
+    </div>
+
+</div>
+</body>
+</html>
