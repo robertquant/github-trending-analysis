@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: Genymobile/scrcpy - Android设备投屏控制利器</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --bg-code: #0d1117;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-green: #3fb950;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .badge-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .badge-lang { border-color: #555dcc; color: #555dcc; }
+        .badge-stars { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        .badge-license { border-color: var(--accent-green); color: var(--accent-green); }
+        .badge-today { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2 .icon {
+            font-size: 1.2em;
+        }
+
+        .section h3 {
+            font-size: 1.15em;
+            margin: 16px 0 10px;
+            color: var(--accent-blue);
+        }
+
+        .section p, .section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .section ul {
+            padding-left: 20px;
+        }
+
+        .section li {
+            margin-bottom: 6px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 18px;
+            transition: border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .feature-card .fc-title {
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 6px;
+        }
+
+        .feature-card .fc-desc {
+            color: var(--text-secondary);
+            font-size: 0.92em;
+        }
+
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .code-block .comment { color: #6a737d; }
+        .code-block .command { color: var(--accent-green); }
+        .code-block .flag { color: var(--accent-orange); }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .score-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .score-item .score-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .score-item .score-bar {
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        .score-s9 .score-value { color: var(--accent-green); }
+        .score-s9 .score-bar-fill { background: var(--accent-green); }
+        .score-s8 .score-value { color: var(--accent-blue); }
+        .score-s8 .score-bar-fill { background: var(--accent-blue); }
+        .score-s10 .score-value { color: var(--accent-yellow); }
+        .score-s10 .score-bar-fill { background: var(--accent-yellow); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.92em;
+        }
+
+        table th {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        table tr:hover td {
+            background: var(--bg-secondary);
+        }
+
+        .highlight { color: var(--accent-green); font-weight: 600; }
+        .warn { color: var(--accent-orange); font-weight: 600; }
+
+        .why-trending-list {
+            counter-reset: trending-counter;
+        }
+
+        .why-trending-list li {
+            list-style: none;
+            padding: 12px 16px 12px 50px;
+            position: relative;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .why-trending-list li::before {
+            counter-increment: trending-counter;
+            content: counter(trending-counter);
+            position: absolute;
+            left: 14px;
+            top: 12px;
+            background: var(--gradient-1);
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--text-muted);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border-color);
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .section { padding: 20px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Genymobile/scrcpy</h1>
+    <div class="subtitle">Display and control your Android device - Android设备投屏与控制终极利器</div>
+    <div class="badge-row">
+        <span class="badge badge-lang">C</span>
+        <span class="badge badge-stars">141,011 Stars</span>
+        <span class="badge badge-today">+589 Today</span>
+        <span class="badge badge-license">Apache-2.0</span>
+    </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+    <h2><span class="icon">📖</span> 项目简介与核心功能</h2>
+    <p><strong>scrcpy</strong>（发音 "screen copy"）是 Genymobile 开发的一款开源工具，通过 USB 或 TCP/IP 将 Android 设备的屏幕（包括视频和音频）实时镜像到电脑上，并允许使用电脑的键盘和鼠标直接控制手机。它是目前 GitHub 上最受欢迎的 Android 投屏工具，拥有超过 14 万 Star。</p>
+
+    <h3>核心特性</h3>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="fc-title">极致轻量</div>
+            <div class="fc-desc">原生实现，仅显示设备画面，无多余 UI。不需要在设备上安装任何应用，不留任何残留。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">超高性能</div>
+            <div class="fc-desc">30~120fps 自适应帧率，1920x1080 及以上分辨率，延迟仅 35~70ms，启动约 1 秒。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">音频转发</div>
+            <div class="fc-desc">Android 11+ 支持音频同步转发到电脑，实现音画一体。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">屏幕录制</div>
+            <div class="fc-desc">内置录屏功能，支持 H.264/H.265 编码，直接保存为 MP4。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">虚拟显示器</div>
+            <div class="fc-desc">可在电脑上创建独立的 Android 虚拟屏幕，不影响手机本体显示。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">摄像头镜像</div>
+            <div class="fc-desc">Android 12+ 支持直接镜像设备摄像头画面，Linux 下可作为 V4L2 虚拟摄像头。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">游戏手柄支持</div>
+            <div class="fc-desc">支持通过 HID 模拟物理键盘/鼠标和游戏手柄操控设备。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">跨平台</div>
+            <div class="fc-desc">完整支持 Linux、Windows、macOS 三大平台。</div>
+        </div>
+    </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+    <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+    <h3>技术栈</h3>
+    <table>
+        <tr><th>维度</th><th>技术选型</th></tr>
+        <tr><td>核心语言</td><td>C（高性能原生实现）</td></tr>
+        <tr><td>构建系统</td><td>Meson</td></tr>
+        <tr><td>视频编码</td><td>H.264 / H.265（通过 Android Codec）</td></tr>
+        <tr><td>音频编码</td><td>AAC / Opus / FLAC</td></tr>
+        <tr><td>通信协议</td><td>ADB (Android Debug Bridge)</td></tr>
+        <tr><td>渲染</td><td>SDL2（跨平台图形渲染）</td></tr>
+        <tr><td>连接方式</td><td>USB / TCP/IP（WiFi）</td></tr>
+        <tr><td>许可证</td><td>Apache License 2.0</td></tr>
+    </table>
+
+    <h3>架构亮点</h3>
+    <ul>
+        <li><strong>零安装设计：</strong>无需在 Android 设备端安装任何 APK，完全通过 ADB 协议与设备通信</li>
+        <li><strong>硬件编解码：</strong>利用设备端的硬件编码器（MediaCodec），将视频流高效推送到电脑</li>
+        <li><strong>USB 与无线双模：</strong>USB 模式提供最低延迟，TCP/IP 模式提供无线便利</li>
+        <li><strong>OTG 模式：</strong>无需 USB 调试即可通过 HID 协议控制设备</li>
+        <li><strong>单二进制文件：</strong>发布为单一可执行文件，无需安装，即开即用</li>
+    </ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+    <h2><span class="icon">🎯</span> 应用场景</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="fc-title">应用开发与调试</div>
+            <div class="fc-desc">在大屏上实时查看应用表现，方便截图录屏，快速调试 UI 问题。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">演示与教学</div>
+            <div class="fc-desc">将手机操作实时投影到大屏/投影仪，适合 App 演示和教学场景。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">自动化测试</div>
+            <div class="fc-desc">结合脚本实现自动化测试流程，录屏保存测试过程。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">远程办公</div>
+            <div class="fc-desc">通过无线连接远程操控手机，处理消息和通知，无需频繁拿起手机。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">游戏投屏</div>
+            <div class="fc-desc">使用键盘/鼠标/手柄在大屏上玩 Android 游戏，享受更好的操控体验。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">内容创作</div>
+            <div class="fc-desc">录制高质量 App 使用教程、游戏实况等内容。</div>
+        </div>
+    </div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+    <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+    <ul class="why-trending-list">
+        <li><strong>持续迭代，功能不断增强</strong> — 从最初简单的屏幕镜像，发展到如今支持音频转发、摄像头镜像、虚拟显示器、游戏手柄等高级功能，v4.0 更是带来全面提升。</li>
+        <li><strong>极致性能，碾压同类竞品</strong> — 35~70ms 延迟远低于任何商业投屏软件，完全免费开源，没有任何广告和水印，用户口碑极佳。</li>
+        <li><strong>生态繁荣，GUI 封装层出</strong> — 社区涌现了 guiscrcpy、QtScrcpy 等图形界面封装，降低了使用门槛，反过来又促进了核心项目的传播。</li>
+        <li><strong>Android 开发者刚需工具</strong> — 随着 Android 15 发布和开发环境变化，开发者对高效调试工具的需求持续增长。</li>
+        <li><strong>14万 Star 的口碑效应</strong> — 作为 GitHub 上 Star 数最高的 Android 工具之一，新用户不断被推荐而来。</li>
+    </ul>
+</div>
+
+<!-- 同类项目对比 -->
+<div class="section">
+    <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+    <table>
+        <tr>
+            <th>特性</th>
+            <th>scrcpy</th>
+            <th>Vysor</th>
+            <th>Samsung DeX</th>
+            <th>LetsView</th>
+            <th>Windows Phone Link</th>
+        </tr>
+        <tr>
+            <td>价格</td>
+            <td class="highlight">免费开源</td>
+            <td class="warn">免费+付费</td>
+            <td>免费(仅三星)</td>
+            <td>免费</td>
+            <td>免费</td>
+        </tr>
+        <tr>
+            <td>延迟</td>
+            <td class="highlight">35~70ms</td>
+            <td>中等</td>
+            <td>中等</td>
+            <td>较高</td>
+            <td>较高</td>
+        </tr>
+        <tr>
+            <td>帧率</td>
+            <td class="highlight">30~120fps</td>
+            <td>~30fps</td>
+            <td>~30fps</td>
+            <td>~30fps</td>
+            <td>~30fps</td>
+        </tr>
+        <tr>
+            <td>广告/水印</td>
+            <td class="highlight">无</td>
+            <td class="warn">有(免费版)</td>
+            <td>无</td>
+            <td class="warn">有</td>
+            <td>无</td>
+        </tr>
+        <tr>
+            <td>需要Root</td>
+            <td class="highlight">不需要</td>
+            <td>不需要</td>
+            <td>不需要</td>
+            <td>不需要</td>
+            <td>不需要</td>
+        </tr>
+        <tr>
+            <td>跨平台</td>
+            <td class="highlight">Win/Mac/Linux</td>
+            <td>Win/Mac/Linux</td>
+            <td>Win only</td>
+            <td>Win/Mac</td>
+            <td>Win only</td>
+        </tr>
+        <tr>
+            <td>无线连接</td>
+            <td class="highlight">USB + WiFi</td>
+            <td>USB + WiFi</td>
+            <td>USB + WiFi</td>
+            <td>WiFi</td>
+            <td>WiFi</td>
+        </tr>
+        <tr>
+            <td>屏幕录制</td>
+            <td class="highlight">内置</td>
+            <td>付费版</td>
+            <td>无</td>
+            <td>内置</td>
+            <td>有限</td>
+        </tr>
+        <tr>
+            <td>iOS支持</td>
+            <td>不支持</td>
+            <td>支持</td>
+            <td>不支持</td>
+            <td>支持</td>
+            <td>支持</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 适合谁使用 -->
+<div class="section">
+    <h2><span class="icon">👥</span> 适合谁使用</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="fc-title">Android 开发者</div>
+            <div class="fc-desc">日常调试必备，比 Android Studio 自带模拟器更流畅、更贴近真实设备。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">测试工程师</div>
+            <div class="fc-desc">多设备同时投屏测试，录屏保存缺陷复现过程，配合自动化脚本效率翻倍。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">技术博主/讲师</div>
+            <div class="fc-desc">高清录屏制作教程，实时投屏演示 App 操作，无需额外录屏软件。</div>
+        </div>
+        <div class="feature-card">
+            <div class="fc-title">Linux 用户</div>
+            <div class="fc-desc">对 Linux 支持最好，V4L2 虚拟摄像头等高级功能仅 Linux 可用。</div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+    <h2><span class="icon">🚀</span> 快速上手指南</h2>
+
+    <h3>1. 安装</h3>
+    <div class="code-block">
+<span class="comment"># Ubuntu/Debian</span>
+<span class="command">sudo</span> apt install scrcpy
+
+<span class="comment"># macOS (Homebrew)</span>
+<span class="command">brew</span> install scrcpy
+
+<span class="comment"># Windows (Scoop)</span>
+<span class="command">scoop</span> install scrcpy
+
+<span class="comment"># Windows (winget)</span>
+<span class="command">winget</span> install Genymobile.scrcpy
+
+<span class="comment"># Arch Linux</span>
+<span class="command">sudo</span> pacman -S scrcpy
+    </div>
+
+    <h3>2. 准备设备</h3>
+    <p>在 Android 设备上开启「开发者选项」→「USB 调试」，然后用 USB 线连接电脑。</p>
+
+    <h3>3. 基本使用</h3>
+    <div class="code-block">
+<span class="comment"># 基本投屏（USB 连接）</span>
+<span class="command">scrcpy</span>
+
+<span class="comment"># 无线连接（先 USB 配对一次）</span>
+<span class="command">scrcpy</span> <span class="flag">--tcpip</span>=&lt;设备IP&gt;
+
+<span class="comment"># 高清模式</span>
+<span class="command">scrcpy</span> <span class="flag">--video-codec=h265</span> <span class="flag">-m1920</span> <span class="flag">--max-fps=60</span>
+
+<span class="comment"># 录屏</span>
+<span class="command">scrcpy</span> <span class="flag">--record</span>=demo.mp4
+
+<span class="comment"># 关闭手机屏幕投屏（省电）</span>
+<span class="command">scrcpy</span> <span class="flag">--turn-screen-off</span>
+
+<span class="comment"># 虚拟显示器（独立屏幕）</span>
+<span class="command">scrcpy</span> <span class="flag">--new-display</span>=1920x1080
+
+<span class="comment"># 镜像摄像头</span>
+<span class="command">scrcpy</span> <span class="flag">--video-source=camera</span> <span class="flag">--camera-size=1920x1080</span>
+    </div>
+
+    <h3>4. 常用快捷键</h3>
+    <table>
+        <tr><th>快捷键</th><th>功能</th></tr>
+        <tr><td>右键点击</td><td>返回 (BACK)</td></tr>
+        <tr><td>中键点击</td><td>主页 (HOME)</td></tr>
+        <tr><td>Alt + F</td><td>全屏切换</td></tr>
+        <tr><td>Alt + O</td><td>关闭设备屏幕</td></tr>
+        <tr><td>Ctrl + C/V</td><td>复制粘贴（双向）</td></tr>
+        <tr><td>Ctrl + S</td><td>截图</td></tr>
+    </table>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+    <h2><span class="icon">⭐</span> 综合评分</h2>
+    <div class="score-grid">
+        <div class="score-item score-s10">
+            <div class="score-label">实用性</div>
+            <div class="score-value">10/10</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="score-item score-s9">
+            <div class="score-label">代码质量</div>
+            <div class="score-value">9.5/10</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+        </div>
+        <div class="score-item score-s10">
+            <div class="score-label">社区活跃度</div>
+            <div class="score-value">10/10</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="score-item score-s9">
+            <div class="score-label">文档完善度</div>
+            <div class="score-value">9/10</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-item score-s8">
+            <div class="score-label">创新性</div>
+            <div class="score-value">8/10</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:80%"></div></div>
+        </div>
+        <div class="score-item score-s10">
+            <div class="score-label">综合评价</div>
+            <div class="score-value">9.3/10</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:93%; background: var(--gradient-1);"></div></div>
+        </div>
+    </div>
+    <p style="margin-top:20px; color: var(--text-secondary); font-style: italic;">
+        scrcpy 是开源工具中的标杆之作 — 代码精炼、功能完备、性能卓越。作者 @rom1v 常年一人维护，却保持着极高的代码质量和发布节奏。它证明了一个人也能做出改变行业的软件。
+    </p>
+</div>
+
+<div class="footer">
+    <p>分析日期: 2026-05-15 | 数据来源: GitHub, WebSearch | 由 AI 深度分析生成</p>
+</div>
+
+</body>
+</html>
