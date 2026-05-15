@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>anthropics/skills - GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 50%, #161b22 100%);
+            border-radius: 16px;
+            border: 1px solid #21262d;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .badge-stars { background: #1f1205; color: #e3b341; border: 1px solid #433100; }
+        .badge-today { background: #0d2818; color: #3fb950; border: 1px solid #1b4332; }
+        .badge-lang { background: #0c2d6b; color: #58a6ff; border: 1px solid #1a3a6e; }
+        .badge-owner { background: #2a1530; color: #bc8cff; border: 1px solid #3d2048; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 1.1em;
+        }
+        .card p, .card li { color: #b1bac4; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 8px; }
+
+        /* Overview */
+        .overview-text { font-size: 1.05em; line-height: 1.8; }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .feature-item:hover {
+            transform: translateY(-2px);
+            border-color: #58a6ff;
+        }
+        .feature-item h3 {
+            color: #58a6ff;
+            font-size: 1.05em;
+            margin-bottom: 8px;
+        }
+        .feature-item p { font-size: 0.92em; color: #8b949e; }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-label { font-size: 0.85em; color: #8b949e; margin-bottom: 8px; }
+        .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+        }
+
+        /* Comparison table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.92em;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        th {
+            background: #0d1117;
+            color: #58a6ff;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover td { background: rgba(56, 139, 253, 0.05); }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.82em;
+            font-weight: 500;
+        }
+        .tag-green { background: #0d2818; color: #3fb950; }
+        .tag-blue { background: #0c2d6b; color: #58a6ff; }
+        .tag-yellow { background: #1f1205; color: #e3b341; }
+        .tag-purple { background: #2a1530; color: #bc8cff; }
+
+        /* Code block */
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+        }
+        .code-keyword { color: #ff7b72; }
+        .code-string { color: #a5d6ff; }
+        .code-comment { color: #8b949e; font-style: italic; }
+        .code-cmd { color: #79c0ff; }
+
+        /* Timeline */
+        .timeline { margin-top: 16px; position: relative; padding-left: 30px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #58a6ff, #bc8cff, #f778ba);
+            border-radius: 1px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #58a6ff;
+            border: 2px solid #0d1117;
+        }
+        .timeline-date { color: #8b949e; font-size: 0.85em; margin-bottom: 4px; }
+        .timeline-text { color: #c9d1d9; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            margin-top: 30px;
+            border-top: 1px solid #21262d;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Quick start steps */
+        .steps { counter-reset: step; margin-top: 16px; }
+        .step {
+            counter-increment: step;
+            position: relative;
+            padding: 16px 16px 16px 56px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+        .step h4 { color: #e6edf3; margin-bottom: 6px; }
+        .step p { font-size: 0.92em; color: #8b949e; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .feature-grid, .score-grid { grid-template-columns: 1fr; }
+            .header .meta { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>anthropics/skills</h1>
+            <div class="subtitle">Anthropic 官方 Agent Skills 公共仓库 — 定义 AI Agent 能力的开放标准</div>
+            <div class="meta">
+                <span class="badge badge-owner">🏛️ Anthropic 官方</span>
+                <span class="badge badge-stars">⭐ 134,849 Stars</span>
+                <span class="badge badge-today">📈 +625 Today</span>
+                <span class="badge badge-lang">🐍 Python</span>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1a3a6e;">📋</span> 项目简介与核心功能</h2>
+            <p class="overview-text">
+                <strong>anthropics/skills</strong> 是 Anthropic 发布的官方 Agent Skills 公共仓库，定义了一种全新的 AI Agent 能力封装标准。每个 Skill 是一个包含 <code>SKILL.md</code> 文件的文件夹，其中包含 YAML 前置元数据和指令，让 Claude 能够动态加载并执行专业化任务。Skills 覆盖创意设计（艺术、音乐、设计）、技术开发（Web 测试、MCP 服务器生成）和企业工作流（沟通、品牌）等广泛场景。
+            </p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>🧩 模块化架构</h3>
+                    <p>每个 Skill 自包含在独立文件夹中，通过 SKILL.md 定义元数据、指令和触发条件，支持动态加载和组合。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🏪 插件市场</h3>
+                    <p>Claude Code 支持 Plugin Marketplace，用户可通过 <code>/plugin marketplace add</code> 一键注册仓库并安装 Skills。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📄 文档处理能力</h3>
+                    <p>内置 docx、pdf、pptx、xlsx 文档技能，展示了在 AI 产品中实际使用的复杂 Skill 参考实现。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🔧 跨平台支持</h3>
+                    <p>Skills 可在 Claude Code、Claude.ai 和 Claude API 中使用，覆盖 16+ AI 工具的开放标准。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>📝 开放标准</h3>
+                    <p>Agent Skills 规范托管在仓库的 <code>./spec</code> 目录，社区可参与制定和改进标准。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🤝 合作伙伴生态</h3>
+                    <p>Notion 等合作伙伴已提供官方 Skills，生态正在快速扩张中。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Architecture -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1b4332;">🏗️</span> 技术架构与特点</h2>
+            <h3 style="color:#58a6ff; margin-bottom:12px; margin-top:8px;">SKILL.md 核心格式</h3>
+            <pre><code><span class="code-comment"># 每个 Skill 的标准结构</span>
+<span class="code-keyword">---</span>
+<span class="code-keyword">name:</span> <span class="code-string">my-skill-name</span>
+<span class="code-keyword">description:</span> <span class="code-string">对该 Skill 功能和使用场景的完整描述</span>
+<span class="code-keyword">---</span>
+
+<span class="code-comment"># My Skill Name</span>
+
+<span class="code-comment">[Claude 在 Skill 激活时将遵循的指令]</span>
+
+<span class="code-keyword">## Examples</span>
+- <span class="code-string">示例用法 1</span>
+- <span class="code-string">示例用法 2</span>
+
+<span class="code-keyword">## Guidelines</span>
+- <span class="code-string">指南 1</span>
+- <span class="code-string">指南 2</span></code></pre>
+
+            <h3 style="color:#58a6ff; margin-bottom:12px; margin-top:20px;">仓库结构</h3>
+            <pre><code>anthropics/skills/
+├── <span class="code-cmd">skills/</span>           <span class="code-comment"># Skill 示例集合</span>
+│   ├── <span class="code-cmd">docx/</span>           <span class="code-comment"># Word 文档技能 (source-available)</span>
+│   ├── <span class="code-cmd">pdf/</span>            <span class="code-comment"># PDF 技能 (source-available)</span>
+│   ├── <span class="code-cmd">pptx/</span>           <span class="code-comment"># PowerPoint 技能 (source-available)</span>
+│   ├── <span class="code-cmd">xlsx/</span>           <span class="code-comment"># Excel 技能 (source-available)</span>
+│   └── <span class="code-cmd">[更多技能]/</span>     <span class="code-comment"># 创意、技术、企业类技能</span>
+├── <span class="code-cmd">spec/</span>             <span class="code-comment"># Agent Skills 开放规范</span>
+└── <span class="code-cmd">template/</span>         <span class="code-comment"># Skill 模板（快速创建新 Skill）</span></code></pre>
+
+            <h3 style="color:#58a6ff; margin-bottom:12px; margin-top:20px;">关键技术特点</h3>
+            <ul>
+                <li><strong>极简创建</strong>：仅需一个 <code>SKILL.md</code> 文件即可创建 Skill，前置元数据只需 <code>name</code> 和 <code>description</code> 两个字段</li>
+                <li><strong>动态加载</strong>：Claude 根据上下文自动识别并加载匹配的 Skill，无需手动切换</li>
+                <li><strong>可组合性</strong>：多个 Skills 可以组合使用，构建复杂的工作流</li>
+                <li><strong>双许可证</strong>：示例 Skills 使用 Apache 2.0 开源，文档处理 Skills 为 source-available（可参考但不可商用）</li>
+                <li><strong>Plugin 架构</strong>：支持 Marketplace 分发，提供 <code>document-skills</code> 和 <code>example-skills</code> 两个插件包</li>
+            </ul>
+        </div>
+
+        <!-- Application Scenarios -->
+        <div class="card">
+            <h2><span class="icon" style="background:#433100;">🎯</span> 应用场景</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>场景</th>
+                        <th>说明</th>
+                        <th>示例 Skill</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="tag tag-blue">创意设计</span></td>
+                        <td>艺术生成、音乐创作、UI 设计等创意工作</td>
+                        <td>art, music, design skills</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-green">技术开发</span></td>
+                        <td>Web 应用测试、MCP 服务器生成、代码审查</td>
+                        <td>web-testing, mcp-generator</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-purple">企业工作流</span></td>
+                        <td>品牌沟通、文档处理、报告生成</td>
+                        <td>communications, branding</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-yellow">文档处理</span></td>
+                        <td>PDF 表单提取、Word 编辑、PPT 创建、Excel 处理</td>
+                        <td>docx, pdf, pptx, xlsx</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-blue">工具集成</span></td>
+                        <td>与 Notion 等第三方工具深度集成</td>
+                        <td>Notion Skills for Claude</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-green">个人自动化</span></td>
+                        <td>自动化日常个人任务，提升效率</td>
+                        <td>自定义 Skill 模板</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="card">
+            <h2><span class="icon" style="background:#3d2048;">🔥</span> 为什么火（Trending 原因）</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">2025年10月</div>
+                    <div class="timeline-text">Skills 概念首次随 Claude 更新推出，初步生态开始形成</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">2025年12月18日</div>
+                    <div class="timeline-text">Anthropic 正式发布 Agent Skills 作为开放标准，仓库公开</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">2026年Q1</div>
+                    <div class="timeline-text">Skills 生态爆发式增长，社区推出数千个第三方 Skills，开始取代 MCP 成为 AI Agent 开发新范式</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">2026年5月</div>
+                    <div class="timeline-text">仓库 Stars 突破 134K，合作伙伴（Notion 等）加入，Plugin Marketplace 生态成熟</div>
+                </div>
+            </div>
+            <ul style="margin-top:16px;">
+                <li><strong>范式转移</strong>：Skills 正在取代 MCP 成为 AI Agent 能力封装的新标准，引发了整个社区的关注</li>
+                <li><strong>官方背书</strong>：Anthropic 作为顶级 AI 公司，其官方仓库具有极强的示范效应和品牌效应</li>
+                <li><strong>低门槛高价值</strong>：仅需一个 Markdown 文件即可创建 Skill，极大地降低了 AI Agent 开发门槛</li>
+                <li><strong>生态网络效应</strong>：合作伙伴、社区、教程、Marketplace 形成了正反馈循环</li>
+                <li><strong>跨平台适用</strong>：支持 16+ AI 工具，不局限于 Claude，具有广泛适用性</li>
+            </ul>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1b4332;">⚔️</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>Stars</th>
+                        <th>定位</th>
+                        <th>特点</th>
+                        <th>许可证</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>anthropics/skills</strong></td>
+                        <td>134K</td>
+                        <td>官方 Skills 仓库</td>
+                        <td>开放标准、跨平台、Marketplace</td>
+                        <td><span class="tag tag-green">Apache 2.0</span></td>
+                    </tr>
+                    <tr>
+                        <td>mattpocock/skills</td>
+                        <td>84K</td>
+                        <td>个人 Skills 合集</td>
+                        <td>实战型、面向工程师、Claude Code 原生</td>
+                        <td><span class="tag tag-green">开源</span></td>
+                    </tr>
+                    <tr>
+                        <td>obra/superpowers</td>
+                        <td>192K</td>
+                        <td>Skills 框架+方法论</td>
+                        <td>完整的开发方法论、框架化</td>
+                        <td><span class="tag tag-green">开源</span></td>
+                    </tr>
+                    <tr>
+                        <td>browserbase/skills</td>
+                        <td>—</td>
+                        <td>浏览器自动化 Skills</td>
+                        <td>专注于浏览器操作自动化</td>
+                        <td><span class="tag tag-blue">开源</span></td>
+                    </tr>
+                    <tr>
+                        <td>modelcontextprotocol</td>
+                        <td>—</td>
+                        <td>MCP 协议</td>
+                        <td>工具调用协议（Skills 前一代标准）</td>
+                        <td><span class="tag tag-yellow">MIT</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top:12px; color:#8b949e;">
+                anthropics/skills 的核心优势在于它是 <strong>官方定义者</strong>，制定了 Skills 的开放标准，其他项目都是在这一标准上的实现或扩展。从 MCP 到 Skills 的范式转移是 2026 年 AI Agent 生态最重要的变化之一。
+            </p>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="card">
+            <h2><span class="icon" style="background:#2a1530;">👥</span> 适合谁使用</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>🧑‍💻 AI Agent 开发者</h3>
+                    <p>需要为 AI Agent 添加专业化能力的开发者，可以通过 Skills 标准快速构建可复用的能力模块。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🏢 企业开发团队</h3>
+                    <p>希望将团队知识和工作流封装成标准化 AI 能力的企业，实现从个人到团队的知识传承。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🎨 创意工作者</h3>
+                    <p>需要 AI 辅助进行设计、音乐、文档处理等创意工作的设计师和内容创作者。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>🔧 工具/平台开发者</h3>
+                    <p>希望将自家产品集成到 Claude 生态的第三方工具开发者，可以通过 Skills 标准快速接入。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1a3a6e;">🚀</span> 快速上手指南</h2>
+            <div class="steps">
+                <div class="step">
+                    <h4>注册 Marketplace（Claude Code）</h4>
+                    <p>在 Claude Code 中运行：</p>
+                    <pre><code><span class="code-cmd">/plugin marketplace add anthropics/skills</span></code></pre>
+                </div>
+                <div class="step">
+                    <h4>安装 Skills 插件</h4>
+                    <p>选择并安装所需的插件包：</p>
+                    <pre><code><span class="code-comment"># 安装文档处理技能</span>
+<span class="code-cmd">/plugin install document-skills@anthropic-agent-skills</span>
+
+<span class="code-comment"># 安装示例技能</span>
+<span class="code-cmd">/plugin install example-skills@anthropic-agent-skills</span></code></pre>
+                </div>
+                <div class="step">
+                    <h4>使用 Skill</h4>
+                    <p>安装后直接在对话中提及即可触发：</p>
+                    <pre><code><span class="code-string">"使用 PDF skill 提取 path/to/some-file.pdf 中的表单字段"</span></code></pre>
+                </div>
+                <div class="step">
+                    <h4>创建自定义 Skill</h4>
+                    <p>基于模板创建自己的 Skill：</p>
+                    <pre><code><span class="code-comment"># 复制模板目录</span>
+cp -r template/ my-skill/
+
+<span class="code-comment"># 编辑 SKILL.md</span>
+<span class="code-keyword">---</span>
+<span class="code-keyword">name:</span> <span class="code-string">my-custom-skill</span>
+<span class="code-keyword">description:</span> <span class="code-string">我的自定义技能描述</span>
+<span class="code-keyword">---</span>
+
+<span class="code-comment"># 添加指令内容...</span></code></pre>
+                </div>
+                <div class="step">
+                    <h4>通过 API 使用</h4>
+                    <p>也可以通过 Claude API 上传和使用 Skills：</p>
+                    <pre><code><span class="code-comment"># 参考 Anthropic 官方 Skills API Quickstart 文档</span>
+<span class="code-comment"># https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview</span></code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scoring -->
+        <div class="card">
+            <h2><span class="icon" style="background:#433100;">📊</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value">10</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:20px; padding:16px; background:#0d1117; border-radius:10px; border:1px solid #21262d;">
+                <div style="color:#8b949e; font-size:0.9em; margin-bottom:6px;">综合评分</div>
+                <div style="font-size:2.5em; font-weight:800; background:linear-gradient(135deg,#3fb950,#58a6ff,#bc8cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">9.4 / 10</div>
+                <div style="color:#e3b341; margin-top:4px;">⭐ 顶级项目 — AI Agent 生态的基石级仓库</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析日期：2026-05-16 | 数据来源：<a href="https://github.com/anthropics/skills" target="_blank">GitHub</a></p>
+            <p style="margin-top:8px;">Powered by GitHub Trending Deep Analyzer</p>
+        </div>
+    </div>
+</body>
+</html>
