@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析 | joeseesun/qiaomu-anything-to-notebooklm</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2333;
+    --bg-card-hover: #222d3f;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-purple: #bc8cff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-cyan: #39d2c0;
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    padding: 40px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+  }
+  .header h1 {
+    font-size: 2.2em;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .header .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+  }
+  .meta-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .meta-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 24px;
+    text-align: center;
+    min-width: 140px;
+  }
+  .meta-item .value {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+  .meta-item .label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+  }
+  .stars .value { color: var(--accent-orange); }
+  .lang .value { color: var(--accent-blue); }
+  .today .value { color: var(--accent-green); }
+  .license .value { color: var(--accent-purple); }
+
+  .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 24px;
+    transition: border-color 0.3s;
+  }
+  .section:hover { border-color: var(--accent-blue); }
+  .section h2 {
+    font-size: 1.5em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section h2 .icon { margin-right: 8px; }
+
+  .gradient-title-1 { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .gradient-title-2 { background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .gradient-title-3 { background: var(--gradient-3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .gradient-title-4 { background: var(--gradient-4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .gradient-title-5 { background: var(--gradient-5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .feature-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, border-color 0.3s;
+  }
+  .feature-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-cyan);
+  }
+  .feature-card h3 {
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+    font-size: 1.1em;
+  }
+  .feature-card p { color: var(--text-secondary); font-size: 0.95em; }
+
+  .arch-diagram {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+    overflow-x: auto;
+    color: var(--accent-green);
+    white-space: pre;
+  }
+
+  .score-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+  .score-table th, .score-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .score-table th {
+    background: var(--bg-secondary);
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+  .score-table tr:hover { background: var(--bg-card-hover); }
+  .score-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    overflow: hidden;
+    min-width: 120px;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 0.92em;
+  }
+  .comparison-table th, .comparison-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .comparison-table th {
+    background: var(--bg-secondary);
+    color: var(--accent-purple);
+    font-weight: 600;
+  }
+  .comparison-table tr:hover { background: var(--bg-card-hover); }
+  .highlight { color: var(--accent-green); font-weight: bold; }
+
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 12px 0;
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 0.88em;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
+  .code-block .comment { color: #6e7681; }
+  .code-block .cmd { color: var(--accent-cyan); }
+  .code-block .flag { color: var(--accent-orange); }
+  .code-block .url { color: var(--accent-blue); }
+  .code-block .string { color: var(--accent-green); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); border: 1px solid rgba(88,166,255,0.3); }
+  .badge-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); border: 1px solid rgba(188,140,255,0.3); }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--accent-green); border: 1px solid rgba(63,185,80,0.3); }
+  .badge-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); border: 1px solid rgba(210,153,34,0.3); }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--accent-red); border: 1px solid rgba(248,81,73,0.3); }
+
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .why-card {
+    background: var(--bg-secondary);
+    border-left: 3px solid var(--accent-orange);
+    border-radius: 0 10px 10px 0;
+    padding: 16px;
+  }
+  .why-card h4 { color: var(--accent-orange); margin-bottom: 6px; }
+  .why-card p { color: var(--text-secondary); font-size: 0.9em; }
+
+  .audience-list {
+    list-style: none;
+    margin-top: 16px;
+  }
+  .audience-list li {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .audience-list .emoji { font-size: 1.3em; flex-shrink: 0; }
+  .audience-list .content h4 { color: var(--accent-green); margin-bottom: 4px; }
+  .audience-list .content p { color: var(--text-secondary); font-size: 0.9em; }
+
+  .step-list {
+    counter-reset: steps;
+    list-style: none;
+    margin-top: 16px;
+  }
+  .step-list li {
+    counter-increment: steps;
+    position: relative;
+    padding: 14px 14px 14px 54px;
+    margin-bottom: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .step-list li::before {
+    content: counter(steps);
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    width: 28px;
+    height: 28px;
+    background: var(--gradient-1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+  .step-list li code {
+    background: rgba(88,166,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent-blue);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.88em;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+    margin-top: 30px;
+    font-size: 0.9em;
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 1.6em; }
+    .meta-bar { gap: 10px; }
+    .meta-item { min-width: 100px; padding: 8px 16px; }
+    .section { padding: 18px; }
+    .feature-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>qiaomu-anything-to-notebooklm</h1>
+  <div class="subtitle">多源内容智能处理器 — 任何内容 → 播客 / PPT / 思维导图 / Quiz</div>
+  <div style="margin-top:12px;">
+    <span class="badge badge-blue">Claude Code Skill</span>
+    <span class="badge badge-purple">Google NotebookLM</span>
+    <span class="badge badge-green">多源内容处理</span>
+    <span class="badge badge-orange">付费墙绕过</span>
+  </div>
+</div>
+
+<div class="meta-bar">
+  <div class="meta-item stars">
+    <div class="value">2,545</div>
+    <div class="label">Total Stars</div>
+  </div>
+  <div class="meta-item today">
+    <div class="value">+465</div>
+    <div class="label">Today Stars</div>
+  </div>
+  <div class="meta-item lang">
+    <div class="value">Python</div>
+    <div class="label">Language</div>
+  </div>
+  <div class="meta-item license">
+    <div class="value">MIT</div>
+    <div class="label">License</div>
+  </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+  <h2 class="gradient-title-1"><span class="icon">📋</span> 项目简介与核心功能</h2>
+  <p style="color:var(--text-secondary);font-size:1.05em;margin-bottom:16px;">
+    <strong>qiaomu-anything-to-notebooklm</strong> 是一个 <strong>Claude Code Skill</strong>，它能用自然语言把<strong>任何内容</strong>变成<strong>任何格式</strong>。用户只需一句话，AI 就会自动完成：内容获取 → 格式转换 → 上传 NotebookLM → AI 生成目标格式的全流程。
+  </p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h3>15+ 种内容源</h3>
+      <p>微信公众号、YouTube、X/Twitter、播客（小宇宙/喜马拉雅/B站）、PDF、EPUB、Word、Excel、PPT、图片、音频、网页、搜索查询</p>
+    </div>
+    <div class="feature-card">
+      <h3>6 层付费墙绕过</h3>
+      <p>代理服务 → Bot UA 伪装 → 通用绕过 → archive.today → Google Cache → 本地工具，支持 300+ 付费网站（NYT/WSJ/FT/Economist 等）</p>
+    </div>
+    <div class="feature-card">
+      <h3>8 种输出格式</h3>
+      <p>播客（MP3）、PPT（PDF）、思维导图、Quiz、视频、报告、信息图、闪卡 — 自然语言触发，全自动生成</p>
+    </div>
+    <div class="feature-card">
+      <h3>深度分析模式</h3>
+      <p>三轮递进式提问（概览→深度挖掘→综合反刍），利用 NotebookLM 会话上下文，生成 12 个深度问答</p>
+    </div>
+    <div class="feature-card">
+      <h3>中文生态深度整合</h3>
+      <p>微信公众号 MCP 浏览器模拟、小宇宙/喜马拉雅播客转写、飞书文档输出 — 专为中文用户打造</p>
+    </div>
+    <div class="feature-card">
+      <h3>极简安装</h3>
+      <p>只需 Python 3.9+ 和 Git，一键 install.sh 安装所有依赖，3 步即可开始使用</p>
+    </div>
+  </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+  <h2 class="gradient-title-2"><span class="icon">🏗️</span> 技术架构与特点</h2>
+  <div class="arch-diagram">
+┌──────────────────────────────────────────────────────┐
+│               用户自然语言输入                         │
+│   "把这个付费文章生成播客 https://..."                │
+└──────────────────────┬───────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│           Claude Code Skill (SKILL.md)                │
+│  • 智能识别内容源类型（URL / 文件 / 搜索词）           │
+│  • 自动调用对应获取工具                                │
+└──────────┬───────────────────────────────────────────┘
+           │
+   ┌───────┴───────┐
+   │               │
+   ▼               ▼               ▼               ▼
+┌──────────┐ ┌──────────────┐ ┌──────────┐ ┌──────────────┐
+│ 微信 MCP  │ │ 付费墙绕过   │ │ 播客转写  │ │ markitdown   │
+│ Playwright│ │ 6层级联策略  │ │ Get笔记API│ │ 文件转换     │
+└─────┬────┘ └──────┬───────┘ └─────┬────┘ └──────┬───────┘
+      │             │               │              │
+      └─────────────┴───────────────┴──────────────┘
+                          │
+                          ▼
+             ┌────────────────────────┐
+             │    NotebookLM API      │
+             │  notebooklm-py CLI     │
+             │  • 上传内容源           │
+             │  • AI 生成目标格式      │
+             └───────────┬────────────┘
+                         │
+                         ▼
+             ┌────────────────────────┐
+             │     生成的文件          │
+             │ .mp3 / .pdf / .json    │
+             └────────────────────────┘</div>
+  <div style="margin-top:20px;">
+    <h3 style="color:var(--accent-blue);margin-bottom:10px;">关键技术栈</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <span class="badge badge-blue">Python 3.9+</span>
+      <span class="badge badge-blue">Shell/Bash</span>
+      <span class="badge badge-purple">Playwright</span>
+      <span class="badge badge-purple">MCP Protocol</span>
+      <span class="badge badge-green">notebooklm-py</span>
+      <span class="badge badge-green">markitdown</span>
+      <span class="badge badge-orange">Get笔记 API</span>
+      <span class="badge badge-orange">Claude Skills</span>
+    </div>
+  </div>
+  <div style="margin-top:20px;">
+    <h3 style="color:var(--accent-cyan);margin-bottom:10px;">架构亮点</h3>
+    <ul style="color:var(--text-secondary);padding-left:20px;">
+      <li><strong style="color:var(--text-primary)">SKILL.md 驱动</strong>：通过 Claude Code 的 Skill 机制定义工具调用规则，AI 自动决策使用哪个工具</li>
+      <li><strong style="color:var(--text-primary)">6 层级联付费墙绕过</strong>：从代理服务到本地工具逐层降级，最大化内容获取成功率</li>
+      <li><strong style="color:var(--text-primary)">MCP 双服务器</strong>：微信 MCP（Playwright 浏览器模拟）+ 飞书 MCP（文档读写）</li>
+      <li><strong style="color:var(--text-primary)">智能类型识别</strong>：根据 URL 模式和文件扩展名自动选择处理流程，无需手动指定</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+  <h2 class="gradient-title-3"><span class="icon">🎯</span> 应用场景</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h3>通勤学习</h3>
+      <p>把付费文章、技术博客一键生成播客，通勤路上听。英文文章生成双 AI 主持人对话，中文文章生成单人叙述。</p>
+    </div>
+    <div class="feature-card">
+      <h3>团队知识分享</h3>
+      <p>将播客、YouTube 视频、电子书转为 PPT，快速制作团队分享材料。支持从多种来源综合生成。</p>
+    </div>
+    <div class="feature-card">
+      <h3>深度研究</h3>
+      <p>深度分析模式用三轮递进式提问，对论文/书籍/长文进行全面分析，输出结构化 JSON 格式的深度洞察。</p>
+    </div>
+    <div class="feature-card">
+      <h3>内容创作</h3>
+      <p>把微信文章、X/Twitter 线程、播客转成思维导图/报告/信息图，辅助二次创作和内容策划。</p>
+    </div>
+    <div class="feature-card">
+      <h3>学习自测</h3>
+      <p>将课程材料、文档自动生成 Quiz 和闪卡，利用间隔重复巩固记忆。</p>
+    </div>
+    <div class="feature-card">
+      <h3>信息聚合</h3>
+      <p>混合多种内容源（付费文章 + YouTube + EPUB + 播客），自动汇总生成综合报告。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+  <h2 class="gradient-title-5"><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+  <div class="why-grid">
+    <div class="why-card">
+      <h4>Claude Skills 生态爆发</h4>
+      <p>2026 年 Claude Code Skills 成为最热门的开发趋势之一，该项目是中文社区最完整的 Skill 实践之一。</p>
+    </div>
+    <div class="why-card">
+      <h4>NotebookLM 热度飙升</h4>
+      <p>Google NotebookLM 的 AI 播客功能在全球爆火，该项目将其与命令行完美结合，降低了使用门槛。</p>
+    </div>
+    <div class="why-card">
+      <h4>付费墙绕过刚需</h4>
+      <p>支持 300+ 付费网站的 6 层级联绕过策略，直击信息获取痛点，Bypass Paywalls Clean 技术的 Python 实践。</p>
+    </div>
+    <div class="why-card">
+      <h4>中文生态深度适配</h4>
+      <p>微信公众号 MCP、小宇宙/喜马拉雅播客转写、飞书文档输出，专为中文用户打造，填补了市场空白。</p>
+    </div>
+    <div class="why-card">
+      <h4>视频教程带动传播</h4>
+      <p>Bilibili 和 YouTube 上的视频教程（"2026年的NotebookLM也太强了！10分钟速通Claude Skills"）极大推动了传播。</p>
+    </div>
+    <div class="why-card">
+      <h4>极低使用门槛</h4>
+      <p>只需 Python 3.9+ 和 Git，一句话自然语言触发全流程，零配置即可开始使用。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 同类项目对比 -->
+<div class="section">
+  <h2 class="gradient-title-4"><span class="icon">⚖️</span> 同类项目对比</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>项目/工具</th>
+        <th>类型</th>
+        <th>输入源</th>
+        <th>输出格式</th>
+        <th>付费墙绕过</th>
+        <th>中文支持</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="highlight">qiaomu (本项目)</span></td>
+        <td>Claude Skill</td>
+        <td>15+ 种</td>
+        <td>8 种</td>
+        <td>300+ 网站</td>
+        <td>深度适配</td>
+      </tr>
+      <tr>
+        <td>notebooklm-py</td>
+        <td>Python CLI</td>
+        <td>文本/文件</td>
+        <td>播客/Audio</td>
+        <td>无</td>
+        <td>基础</td>
+      </tr>
+      <tr>
+        <td>Wondercraft</td>
+        <td>SaaS</td>
+        <td>URL/文件</td>
+        <td>播客</td>
+        <td>无</td>
+        <td>基础</td>
+      </tr>
+      <tr>
+        <td>Jellypod</td>
+        <td>SaaS</td>
+        <td>URL/文件</td>
+        <td>播客</td>
+        <td>无</td>
+        <td>有限</td>
+      </tr>
+      <tr>
+        <td>ElevenLabs GenFM</td>
+        <td>API</td>
+        <td>文本</td>
+        <td>播客/Audio</td>
+        <td>无</td>
+        <td>基础</td>
+      </tr>
+      <tr>
+        <td>SparkPod</td>
+        <td>SaaS</td>
+        <td>URL/文件</td>
+        <td>播客</td>
+        <td>无</td>
+        <td>基础</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="color:var(--text-secondary);margin-top:14px;font-size:0.92em;">
+    <strong>核心优势</strong>：本项目在内容源数量（15+种）、付费墙绕过能力（6层级联/300+网站）、中文生态适配（微信/小宇宙/飞书）和输出格式多样性（8种）方面均领先同类工具。唯一的"竞争者"是直接使用 NotebookLM 网页端，但缺少自动化和批量处理能力。
+  </p>
+</div>
+
+<!-- 适合谁 -->
+<div class="section">
+  <h2 class="gradient-title-3"><span class="icon">👥</span> 适合谁使用</h2>
+  <ul class="audience-list">
+    <li>
+      <span class="emoji">🎧</span>
+      <div class="content">
+        <h4>知识工作者 / 信息重度消费者</h4>
+        <p>每天阅读大量文章、报告，希望将碎片化内容转化为播客在通勤时收听，提高信息获取效率。</p>
+      </div>
+    </li>
+    <li>
+      <span class="emoji">🔬</span>
+      <div class="content">
+        <h4>研究人员 / 学生</h4>
+        <p>需要深度分析论文、书籍，利用深度分析模式生成结构化的洞察和 Quiz 辅助学习。</p>
+      </div>
+    </li>
+    <li>
+      <span class="emoji">📱</span>
+      <div class="content">
+        <h4>中文互联网用户</h4>
+        <p>需要处理微信公众号、小宇宙播客、飞书文档等中文生态特有内容格式的用户。</p>
+      </div>
+    </li>
+    <li>
+      <span class="emoji">💻</span>
+      <div class="content">
+        <h4>Claude Code 用户 / 开发者</h4>
+        <p>已经在使用 Claude Code 的开发者，想通过 Skill 机制扩展 AI 能力，体验 Agent 工作流。</p>
+      </div>
+    </li>
+    <li>
+      <span class="emoji">📝</span>
+      <div class="content">
+        <h4>内容创作者</h4>
+        <p>需要从多种来源聚合信息、生成思维导图、报告等二次创作素材的自媒体和博主。</p>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+  <h2 class="gradient-title-1"><span class="icon">🚀</span> 快速上手指南</h2>
+  <h3 style="color:var(--accent-cyan);margin-bottom:12px;">安装（3 步）</h3>
+  <div class="code-block">
+<span class="comment"># 1. 克隆到 Claude skills 目录</span>
+<span class="cmd">cd</span> ~/.claude/skills/
+<span class="cmd">git</span> clone https://github.com/joeseesun/qiaomu-anything-to-notebooklm
+<span class="cmd">cd</span> qiaomu-anything-to-notebooklm
+
+<span class="comment"># 2. 一键安装所有依赖</span>
+<span class="cmd">./install.sh</span>
+
+<span class="comment"># 3. 配置 MCP 并重启 Claude Code</span>
+<span class="comment"># 按 install.sh 提示操作</span>
+  </div>
+
+  <h3 style="color:var(--accent-cyan);margin:18px 0 12px;">首次使用</h3>
+  <div class="code-block">
+<span class="comment"># NotebookLM 认证（只需一次）</span>
+<span class="cmd">notebooklm</span> <span class="flag">login</span>
+<span class="cmd">notebooklm</span> <span class="flag">list</span>  <span class="comment"># 验证成功</span>
+
+<span class="comment"># 环境检查（可选）</span>
+<span class="cmd">./check_env.py</span>
+  </div>
+
+  <h3 style="color:var(--accent-cyan);margin:18px 0 12px;">使用示例</h3>
+  <div class="code-block">
+<span class="comment"># 付费文章 → 播客</span>
+<span class="string">"把这篇 The Information 文章生成播客 https://..."</span>
+
+<span class="comment"># 播客（小宇宙）→ PPT</span>
+<span class="string">"这期小宇宙播客做成 PPT https://xiaoyuzhoufm.com/..."</span>
+
+<span class="comment"># 电子书 → 深度分析</span>
+<span class="string">"深度分析这本书 /Users/joe/Books/sapiens.epub"</span>
+
+<span class="comment"># 推文线程 → 思维导图</span>
+<span class="string">"这个推文线程做成思维导图 https://x.com/..."</span>
+
+<span class="comment"># 微信文章 → 飞书文档</span>
+<span class="string">"深度分析这篇微信文章并写入飞书 https://mp.weixin.qq.com/..."</span>
+  </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+  <h2 class="gradient-title-2"><span class="icon">📊</span> 综合评分</h2>
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th>维度</th>
+        <th>评分</th>
+        <th>进度</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong style="color:var(--accent-blue)">创新性</strong></td>
+        <td><strong>8.5</strong>/10</td>
+        <td>
+          <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--gradient-1)"></div></div>
+        </td>
+        <td style="color:var(--text-secondary)">付费墙绕过 + NotebookLM + Claude Skills 的组合创新，6 层级联策略设计精巧</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent-green)">代码质量</strong></td>
+        <td><strong>7.5</strong>/10</td>
+        <td>
+          <div class="score-bar"><div class="score-bar-fill" style="width:75%;background:var(--gradient-4)"></div></div>
+        </td>
+        <td style="color:var(--text-secondary)">结构清晰，模块化合理，Shell 脚本和 Python 混合使用略复杂，部分错误处理可加强</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent-cyan)">实用性</strong></td>
+        <td><strong>9.0</strong>/10</td>
+        <td>
+          <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--gradient-3)"></div></div>
+        </td>
+        <td style="color:var(--text-secondary)">直击内容消费痛点，15+ 种输入源 + 8 种输出格式，自然语言交互零门槛</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent-purple)">文档完善度</strong></td>
+        <td><strong>9.0</strong>/10</td>
+        <td>
+          <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--gradient-2)"></div></div>
+        </td>
+        <td style="color:var(--text-secondary)">README 极其详尽，包含架构图、使用示例、FAQ、故障排查，视频教程辅助</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent-orange)">社区活跃度</strong></td>
+        <td><strong>7.0</strong>/10</td>
+        <td>
+          <div class="score-bar"><div class="score-bar-fill" style="width:70%;background:var(--gradient-5)"></div></div>
+        </td>
+        <td style="color:var(--text-secondary)">快速增长中（日增 465 星），中文社区反响热烈，但贡献者仍较少，国际知名度有限</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="text-align:center;margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:12px;">
+    <span style="font-size:0.9em;color:var(--text-secondary);">综合评分</span>
+    <div style="font-size:2.2em;font-weight:bold;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">8.2 / 10</div>
+    <span style="color:var(--accent-green);font-weight:bold;">推荐使用</span>
+  </div>
+</div>
+
+<div class="footer">
+  <p>分析日期：2026-05-16 | 数据来源：GitHub / WebSearch</p>
+  <p style="margin-top:6px;">
+    <a href="https://github.com/joeseesun/qiaomu-anything-to-notebooklm" style="color:var(--accent-blue);text-decoration:none;">GitHub 仓库</a>
+  </p>
+</div>
+
+</body>
+</html>
