@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA VSS - Video Search and Summarization | 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            border-bottom: 1px solid #21262d;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, #76b900 0%, #00d4ff 50%, #76b900 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+            margin-bottom: 0.8rem;
+        }
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% center; }
+            50% { background-position: 200% center; }
+        }
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: #8b949e;
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+        .meta-badges {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid #30363d;
+            background: #161b22;
+        }
+        .badge-lang { border-color: #3572A5; color: #79c0ff; }
+        .badge-stars { border-color: #e3b341; color: #e3b341; }
+        .badge-today { border-color: #76b900; color: #76b900; }
+        .badge-org { border-color: #8957e5; color: #d2a8ff; }
+        .badge a { color: inherit; text-decoration: none; }
+        .badge a:hover { text-decoration: underline; }
+
+        /* Score Overview */
+        .score-overview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border: 1px solid #21262d;
+            border-radius: 16px;
+            margin-bottom: 2.5rem;
+        }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#76b900 0% 80%, #21262d 80% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .score-circle::before {
+            content: '';
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: #0d1117;
+            position: absolute;
+        }
+        .score-circle .score-text {
+            position: relative;
+            z-index: 1;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #76b900;
+        }
+        .score-details { flex: 1; max-width: 500px; }
+        .score-bar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.6rem;
+        }
+        .score-bar-item .label { width: 100px; font-size: 0.85rem; color: #8b949e; }
+        .score-bar-item .bar {
+            flex: 1;
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .score-bar-item .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .score-bar-item .val { width: 36px; font-size: 0.85rem; color: #c9d1d9; text-align: right; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .card h2 {
+            font-size: 1.35rem;
+            color: #f0f6fc;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card h2 .icon { font-size: 1.2rem; }
+        .card h3 {
+            font-size: 1.1rem;
+            color: #f0f6fc;
+            margin: 1.2rem 0 0.6rem;
+        }
+        .card p { color: #c9d1d9; margin-bottom: 0.8rem; }
+        .card ul { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+        .card li { margin-bottom: 0.4rem; color: #c9d1d9; }
+
+        /* Architecture */
+        .arch-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            margin: 0.5rem 0;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #8b949e;
+            overflow-x: auto;
+        }
+        .arch-box .layer {
+            text-align: center;
+            padding: 0.6rem;
+            margin: 0.3rem 0;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .arch-box .layer-agent { background: rgba(118,185,0,0.15); color: #76b900; border: 1px solid rgba(118,185,0,0.3); }
+        .arch-box .layer-analytics { background: rgba(0,212,255,0.12); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
+        .arch-box .layer-rtvi { background: rgba(137,87,229,0.15); color: #d2a8ff; border: 1px solid rgba(137,87,229,0.3); }
+        .arch-box .layer-nim { background: rgba(227,179,65,0.12); color: #e3b341; border: 1px solid rgba(227,179,65,0.3); }
+        .arch-box .layer-infra { background: rgba(201,209,217,0.08); color: #8b949e; border: 1px solid rgba(201,209,217,0.2); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.8rem 0;
+            font-size: 0.9rem;
+        }
+        th {
+            background: #21262d;
+            color: #f0f6fc;
+            padding: 0.7rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        tr:hover td { background: rgba(118,185,0,0.04); }
+
+        /* Workflow Grid */
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .workflow-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 1.2rem;
+            transition: border-color 0.2s;
+        }
+        .workflow-card:hover { border-color: #76b900; }
+        .workflow-card h4 { color: #76b900; font-size: 0.95rem; margin-bottom: 0.4rem; }
+        .workflow-card p { font-size: 0.85rem; color: #8b949e; margin: 0; }
+
+        /* Trending Reasons */
+        .reason-list { list-style: none; padding: 0; counter-reset: reason; }
+        .reason-list li {
+            counter-increment: reason;
+            padding: 0.8rem 0 0.8rem 3rem;
+            position: relative;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        .reason-list li:last-child { border-bottom: none; }
+        .reason-list li::before {
+            content: counter(reason);
+            position: absolute;
+            left: 0;
+            top: 0.8rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #76b900, #00d4ff);
+            color: #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* Audience */
+        .audience-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 0.8rem;
+        }
+        .audience-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem 1rem;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+        }
+        .audience-item .role { font-size: 0.9rem; color: #c9d1d9; }
+        .audience-item .stars { color: #e3b341; font-size: 0.9rem; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            margin: 0.8rem 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .flag { color: #d2a8ff; }
+        .code-block .url { color: #76b900; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid #21262d;
+            margin-top: 3rem;
+            color: #484f58;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header h1 { font-size: 1.6rem; }
+            .score-overview { flex-direction: column; gap: 1.5rem; }
+            .score-details { max-width: 100%; }
+            .meta-badges { gap: 0.5rem; }
+            .workflow-grid { grid-template-columns: 1fr; }
+            .audience-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>NVIDIA VSS: Video Search & Summarization</h1>
+            <p class="subtitle">NVIDIA 官方提供的 GPU 加速视觉 Agent 参考架构 —— 将 VLM、LLM 与实时视频分析融为一体，构建企业级视频智能平台</p>
+            <div class="meta-badges">
+                <span class="badge badge-org">🏢 NVIDIA AI Blueprints</span>
+                <span class="badge badge-lang">🐍 Python</span>
+                <span class="badge badge-stars">⭐ 688 Stars</span>
+                <span class="badge badge-today">📈 +28 today</span>
+                <span class="badge"><a href="https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization" target="_blank">GitHub →</a></span>
+            </div>
+        </div>
+
+        <!-- Score Overview -->
+        <div class="score-overview">
+            <div class="score-circle">
+                <span class="score-text">8.0</span>
+            </div>
+            <div class="score-details">
+                <div class="score-bar-item">
+                    <span class="label">创新性</span>
+                    <div class="bar"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,#76b900,#00d4ff)"></div></div>
+                    <span class="val">9/10</span>
+                </div>
+                <div class="score-bar-item">
+                    <span class="label">代码质量</span>
+                    <div class="bar"><div class="bar-fill" style="width:80%;background:linear-gradient(90deg,#76b900,#00d4ff)"></div></div>
+                    <span class="val">8/10</span>
+                </div>
+                <div class="score-bar-item">
+                    <span class="label">实用性</span>
+                    <div class="bar"><div class="bar-fill" style="width:80%;background:linear-gradient(90deg,#76b900,#00d4ff)"></div></div>
+                    <span class="val">8/10</span>
+                </div>
+                <div class="score-bar-item">
+                    <span class="label">文档完善度</span>
+                    <div class="bar"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,#76b900,#00d4ff)"></div></div>
+                    <span class="val">9/10</span>
+                </div>
+                <div class="score-bar-item">
+                    <span class="label">社区活跃度</span>
+                    <div class="bar"><div class="bar-fill" style="width:60%;background:linear-gradient(90deg,#76b900,#00d4ff)"></div></div>
+                    <span class="val">6/10</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="card">
+            <h2><span class="icon">📋</span> 项目简介</h2>
+            <p>NVIDIA AI Blueprint for Video Search and Summarization (VSS) 是 NVIDIA 官方提供的一套<strong>参考架构集合</strong>，用于构建 GPU 加速的视觉 Agent 和 AI 驱动的视频分析应用。它将加速视觉微服务、视觉语言模型 (VLM) 和大语言模型 (LLM) 有机结合，让开发者能够以自然语言与海量视频数据进行交互——搜索、摘要、视觉问答，一切皆有可能。</p>
+            <p>这不是一个简单的 Demo 项目，而是 NVIDIA Metropolis 生态中面向<strong>生产级部署</strong>的企业级蓝图。</p>
+        </div>
+
+        <!-- Core Features -->
+        <div class="card">
+            <h2><span class="icon">🚀</span> 核心功能</h2>
+
+            <h3>1. 实时视频智能 (Real-Time Video Intelligence)</h3>
+            <ul>
+                <li>从视频流中实时提取视觉特征、语义嵌入和上下文理解</li>
+                <li>将结果发布到消息队列，供下游分析和 Agent 工作流消费</li>
+                <li>包含三个核心微服务处理视频流</li>
+            </ul>
+
+            <h3>2. 下游分析 (Downstream Analytics)</h3>
+            <ul>
+                <li>对实时视频智能层生成的元数据流进行加工和丰富</li>
+                <li>将原始检测转化为可执行的洞察和经过验证的告警</li>
+                <li>支持轨迹追踪、事件分类和误报过滤</li>
+            </ul>
+
+            <h3>3. Agent 与离线处理 (Agentic & Offline Processing)</h3>
+            <ul>
+                <li>基于 <strong>Model Context Protocol (MCP)</strong> 的统一工具接口</li>
+                <li>VLM 驱动的视频理解、语义搜索、长视频摘要</li>
+                <li>视频快照/片段检索</li>
+            </ul>
+        </div>
+
+        <!-- Agent Workflows -->
+        <div class="card">
+            <h2><span class="icon">⚡</span> Agent 工作流</h2>
+            <div class="workflow-grid">
+                <div class="workflow-card">
+                    <h4>Q&A 和报告生成</h4>
+                    <p>视频检索 + VLM 问答 + 报告生成，适用于快速分析短视频片段</p>
+                </div>
+                <div class="workflow-card">
+                    <h4>告警验证</h4>
+                    <p>实时感知 + 行为分析 + VLM 验证，显著降低误报率</p>
+                </div>
+                <div class="workflow-card">
+                    <h4>实时告警</h4>
+                    <p>通过 VLM 持续处理视频流，实时检测异常事件</p>
+                </div>
+                <div class="workflow-card">
+                    <h4>视频搜索 (Alpha)</h4>
+                    <p>自然语言搜索视频归档，基于视频嵌入的语义检索</p>
+                </div>
+                <div class="workflow-card">
+                    <h4>长视频摘要</h4>
+                    <p>分块分析 + 聚合密集描述，处理长时间视频录制</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture -->
+        <div class="card">
+            <h2><span class="icon">🏗️</span> 技术架构</h2>
+            <div class="arch-box">
+                <div class="layer layer-agent">Agent & Offline Processing — MCP Tools: VLM Q&A | Video Search | Summarize</div>
+                <div class="layer layer-analytics">Downstream Analytics — Trajectory | Incident Detection | Alert Verify</div>
+                <div class="layer layer-rtvi">Real-Time Video Intelligence — Feature Extraction | Embeddings | Stream Analysis</div>
+                <div class="layer layer-nim">NVIDIA NIM Microservices — Cosmos-Reason2-8B (VLM) | Nemotron-Nano-9B-v2 (LLM)</div>
+                <div class="layer layer-infra">Infrastructure — Docker Compose | Helm | Brev Launchable | NGC</div>
+            </div>
+
+            <h3>核心模型</h3>
+            <table>
+                <thead><tr><th>模型</th><th>类型</th><th>参数量</th><th>特点</th></tr></thead>
+                <tbody>
+                    <tr><td>Cosmos-Reason2</td><td>VLM</td><td>8B</td><td>物理世界推理，视频理解，结构化推理</td></tr>
+                    <tr><td>Nemotron-Nano-v2</td><td>LLM</td><td>9B</td><td>混合 Mamba-Transformer 架构，高效推理</td></tr>
+                </tbody>
+            </table>
+
+            <h3>技术亮点</h3>
+            <ul>
+                <li><strong>NIM 微服务化</strong>: 模型通过 NVIDIA NIM 以微服务形式部署，可独立扩展</li>
+                <li><strong>RAG 架构</strong>: 结合检索增强生成，实现精准的视频内容问答</li>
+                <li><strong>MCP 协议</strong>: 标准化工具接口，可与外部 Agent 框架集成</li>
+                <li><strong>多 GPU 拓扑</strong>: 支持 x86、DGX-SPARK、IGX-THOR、AGX-THOR 等</li>
+                <li><strong>灵活部署</strong>: Docker Compose + Helm，支持本地和云环境</li>
+            </ul>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="card">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+            <table>
+                <thead><tr><th>场景</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td>智慧城市</td><td>交通监控、车流分析、异常事件检测</td></tr>
+                    <tr><td>公共安全</td><td>实时告警、可疑行为识别、事后取证分析</td></tr>
+                    <tr><td>零售分析</td><td>顾客行为分析、热力图生成、运营优化</td></tr>
+                    <tr><td>机场安防</td><td>人员追踪、异常检测、安全合规</td></tr>
+                    <tr><td>仓储自动化</td><td>SOP 合规验证、异常操作检测</td></tr>
+                    <tr><td>工业质检</td><td>生产线监控、缺陷检测</td></tr>
+                    <tr><td>内容管理</td><td>视频归档检索、自动摘要、内容标签</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Trending Reasons -->
+        <div class="card">
+            <h2><span class="icon">🔥</span> 为什么火 (Trending 原因)</h2>
+            <ol class="reason-list">
+                <li><strong>NVIDIA 官方背书</strong>: 来自 NVIDIA AI Blueprints 组织，代表官方最佳实践和前沿方向</li>
+                <li><strong>VLM + Agent 热潮</strong>: 视觉语言模型 + Agent 是 2025-2026 年 AI 最热门方向之一</li>
+                <li><strong>生产级蓝图</strong>: 不是 Demo，而是可直接部署的企业级参考架构</li>
+                <li><strong>生态深度整合</strong>: 与 NVIDIA Metropolis、NIM、NGC 生态无缝衔接</li>
+                <li><strong>合作伙伴加持</strong>: Dell、VAST Data、Lumana、ArangoDB 等企业已集成</li>
+                <li><strong>v2.4 重大更新</strong>: 四项核心功能升级，持续快速迭代</li>
+                <li><strong>视频分析刚需</strong>: 视频数据爆炸式增长，智能分析工具需求旺盛</li>
+            </ol>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+            <table>
+                <thead><tr><th>项目/服务</th><th>优势</th><th>劣势</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>NVIDIA VSS (本项)</strong></td><td>GPU 加速、官方蓝图、多模型集成、生产就绪</td><td>硬件要求高、NVIDIA 生态绑定</td></tr>
+                    <tr><td>Google Vertex AI Vision</td><td>云原生、易于使用</td><td>供应商锁定、定制化受限</td></tr>
+                    <tr><td>AWS Rekognition + Bedrock</td><td>成熟服务、全球部署</td><td>成本高、视频理解深度不足</td></tr>
+                    <tr><td>Azure Computer Vision</td><td>微软生态整合好</td><td>部署复杂度高</td></tr>
+                    <tr><td>开源方案 (LLaVA + RAG)</td><td>完全免费、高度灵活</td><td>需自行整合、缺乏生产优化</td></tr>
+                    <tr><td>BriefCam / Verkada</td><td>专精视频分析</td><td>商业产品、封闭生态</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Target Audience -->
+        <div class="card">
+            <h2><span class="icon">👥</span> 适合谁使用</h2>
+            <div class="audience-grid">
+                <div class="audience-item">
+                    <span class="role">视频分析师 & IT 工程师</span>
+                    <span class="stars">★★★★★</span>
+                </div>
+                <div class="audience-item">
+                    <span class="role">GenAI / ML 工程师</span>
+                    <span class="stars">★★★★★</span>
+                </div>
+                <div class="audience-item">
+                    <span class="role">智慧城市建设者</span>
+                    <span class="stars">★★★★☆</span>
+                </div>
+                <div class="audience-item">
+                    <span class="role">安防行业从业者</span>
+                    <span class="stars">★★★★☆</span>
+                </div>
+                <div class="audience-item">
+                    <span class="role">AI 应用开发者</span>
+                    <span class="stars">★★★★☆</span>
+                </div>
+                <div class="audience-item">
+                    <span class="role">个人学习者</span>
+                    <span class="stars">★★☆☆☆</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2><span class="icon">🛠️</span> 快速上手指南</h2>
+
+            <h3>前置条件</h3>
+            <ul>
+                <li>NVIDIA GPU (推荐 RTX 6000+ 或数据中心级 GPU)</li>
+                <li>NVIDIA 驱动 580.105.08+</li>
+                <li>Docker 27.2.0+ & Docker Compose v2.29.0+</li>
+                <li>NVIDIA Container Toolkit 1.17.8+</li>
+                <li>NVIDIA AI Enterprise 许可证</li>
+            </ul>
+
+            <h3>方式一：Docker Compose 本地部署</h3>
+            <div class="code-block">
+<span class="comment"># 1. 克隆仓库</span>
+<span class="cmd">git clone</span> <span class="url">https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization.git</span>
+<span class="cmd">cd</span> video-search-and-summarization
+
+<span class="comment"># 2. 配置 API Key (从 NVIDIA API Catalog 或 NGC 获取)</span>
+<span class="cmd">export</span> NGC_API_KEY=<span class="flag">your_api_key</span>
+
+<span class="comment"># 3. 启动服务</span>
+<span class="cmd">docker compose</span> up <span class="flag">-d</span>
+
+<span class="comment"># 4. 访问 Web UI</span>
+<span class="comment"># 打开浏览器访问前端界面</span>
+            </div>
+
+            <h3>方式二：Brev Launchable（最快上手，AWS 云实例）</h3>
+            <div class="code-block">
+<span class="comment"># 使用 AWS 2xRTX PRO 6000 SE 实例</span>
+<span class="comment"># 按照 scripts/deploy_vss_launchable.ipynb 中的步骤操作</span>
+            </div>
+
+            <h3>方式三：Agent Skills 快速集成</h3>
+            <div class="code-block">
+<span class="comment"># 项目提供 agentskills.io 兼容的技能包</span>
+<span class="comment"># 详见 skills/ 目录下的各技能子目录</span>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="card">
+            <h2><span class="icon">📝</span> 总结</h2>
+            <p>NVIDIA VSS 是当前<strong>视频 AI Agent 领域最完整的企业级参考架构</strong>。它不是玩具项目，而是 NVIDIA 凭借其在 GPU 计算、VLM 模型和 AI 基础设施方面的深厚积累，为行业提供的生产就绪方案。</p>
+            <p>虽然硬件要求高、NVIDIA 生态绑定深，但对于需要大规模视频智能分析的企业和组织来说，这是目前最成熟的选择之一。随着 VLM 技术的快速发展和视频数据量的持续增长，VSS 有望成为视频 AI 基础设施的重要标准。</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析日期: 2025-05-15 | 分析工具: Claude Code | 数据来源: GitHub、NVIDIA Developer Blog</p>
+        </div>
+    </div>
+</body>
+</html>
