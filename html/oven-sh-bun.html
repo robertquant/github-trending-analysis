@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bun 深度分析 | oven-sh/bun</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #121620 100%);
+            border: 1px solid #21262d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fbbf24 0%, #fb923c 50%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .hero .subtitle {
+            font-size: 18px;
+            color: #8b949e;
+            margin-bottom: 20px;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 12px 20px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .stat .num {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+        .stat .label {
+            font-size: 12px;
+            color: #8b949e;
+            margin-top: 2px;
+        }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            color: #e6edf3;
+        }
+        .card h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 18px 0 10px;
+            color: #fbbf24;
+        }
+        .card p { margin-bottom: 12px; color: #c9d1d9; }
+        .card ul { padding-left: 20px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: rgba(251,191,36,0.04);
+            border: 1px solid rgba(251,191,36,0.15);
+            border-radius: 10px;
+            padding: 16px 18px;
+        }
+        .feature-item .icon { font-size: 22px; margin-bottom: 6px; }
+        .feature-item h4 {
+            color: #fbbf24;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .feature-item p { font-size: 13px; color: #8b949e; margin: 0; }
+
+        /* Code Block */
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+        }
+        .inline-code {
+            background: rgba(251,191,36,0.1);
+            color: #fbbf24;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        th {
+            background: linear-gradient(135deg, #1e2535, #161b22);
+            color: #fbbf24;
+            font-weight: 600;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #fbbf24;
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #21262d;
+        }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .highlight { color: #4ade80; font-weight: 600; }
+        .dim { color: #8b949e; }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .score-ring {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .score-item .score-label {
+            font-size: 13px;
+            color: #8b949e;
+        }
+        .s9 { background: conic-gradient(#4ade80 0% 90%, #21262d 90% 100%); }
+        .s8 { background: conic-gradient(#fbbf24 0% 80%, #21262d 80% 100%); }
+        .s85 { background: conic-gradient(#4ade80 0% 85%, #21262d 85% 100%); }
+
+        /* Quick Start */
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        .step-num {
+            background: linear-gradient(135deg, #fbbf24, #fb923c);
+            color: #000;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .step-content { flex: 1; }
+        .step-content h4 { color: #e6edf3; margin-bottom: 4px; }
+
+        /* Tags */
+        .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .tag {
+            background: rgba(251,191,36,0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(251,191,36,0.2);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Trending Reason */
+        .reason-box {
+            background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(251,146,60,0.05));
+            border-left: 4px solid #fbbf24;
+            border-radius: 0 10px 10px 0;
+            padding: 20px 24px;
+            margin: 12px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: #484f58;
+            font-size: 13px;
+            border-top: 1px solid #21262d;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 28px 20px; }
+            .hero h1 { font-size: 28px; }
+            .hero-stats { gap: 10px; }
+            .stat { min-width: 90px; padding: 10px 14px; }
+            .stat .num { font-size: 20px; }
+            .card { padding: 20px 18px; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <span class="hero-badge">TRENDING #8 · +289 stars/day</span>
+            <h1>Bun</h1>
+            <p class="subtitle">Incredibly fast JavaScript runtime, bundler, test runner, and package manager — all in one</p>
+            <div class="hero-stats">
+                <div class="stat"><div class="num">90.5k</div><div class="label">Stars</div></div>
+                <div class="stat"><div class="num">4.5k</div><div class="label">Forks</div></div>
+                <div class="stat"><div class="num">15.3k</div><div class="label">Commits</div></div>
+                <div class="stat"><div class="num">214</div><div class="label">Releases</div></div>
+                <div class="stat"><div class="num">v1.3.14</div><div class="label">Latest</div></div>
+            </div>
+            <div class="tags">
+                <span class="tag">Rust 46.6%</span>
+                <span class="tag">Zig 32.2%</span>
+                <span class="tag">C++ 13.2%</span>
+                <span class="tag">TypeScript 5.1%</span>
+                <span class="tag">JavaScript Runtime</span>
+                <span class="tag">Bundler</span>
+                <span class="tag">Package Manager</span>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="card">
+            <h2>📋 项目简介</h2>
+            <p>Bun 是一个 <strong>全功能 JavaScript/TypeScript 工具链</strong>，以单一可执行文件 <span class="inline-code">bun</span> 的形式发布。它的核心是一个高性能 JavaScript 运行时，设计目标是作为 <strong>Node.js 的直接替代品（drop-in replacement）</strong>。</p>
+            <p>与传统 Node.js 生态需要组合 node + npm/yarn + webpack/esbuild + jest/vitest 等多个工具不同，Bun 将<strong>运行时、打包器、测试运行器和包管理器</strong>融为一体，极大简化了 JavaScript 开发工具链。</p>
+
+            <h3>核心功能</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="icon">⚡</div>
+                    <h4>极速运行时</h4>
+                    <p>基于 JavaScriptCore 引擎 + Zig 编写，启动速度比 Node.js 快 4 倍，HTTP 吞吐量高 4 倍</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📦</div>
+                    <h4>内置包管理器</h4>
+                    <p>比 npm 快 35 倍的包安装速度，完全兼容 npm 生态，支持 workspaces 和 lockfile</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🧪</div>
+                    <h4>内置测试框架</h4>
+                    <p>开箱即用的 <span class="inline-code">bun test</span>，支持快照测试、Mock、覆盖率报告、DOM 测试</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🔨</div>
+                    <h4>内置打包器</h4>
+                    <p>原生支持打包为单文件可执行文件，支持 CSS、HTML 静态站点、字节码缓存</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🗄️</div>
+                    <h4>内置数据库驱动</h4>
+                    <p>原生支持 SQLite、PostgreSQL (<span class="inline-code">Bun.sql</span>)、Redis (<span class="inline-code">Bun.redis</span>)，无需第三方库</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🌐</div>
+                    <h4>内置 Web API</h4>
+                    <p>HTTP 服务器、WebSocket、S3 客户端、Cron 定时任务、WebView，全部开箱即用</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Architecture -->
+        <div class="card">
+            <h2>🏗️ 技术架构与特点</h2>
+            <p>Bun 的技术选型是其性能优势的根本原因：</p>
+            <table>
+                <tr><th>组件</th><th>技术选择</th><th>优势</th></tr>
+                <tr><td>运行时引擎</td><td class="highlight">JavaScriptCore (WebKit)</td><td>比 V8 更低的启动延迟和内存占用</td></tr>
+                <tr><td>核心语言</td><td class="highlight">Zig + Rust</td><td>无 GC 停顿，精确的内存控制，极致性能</td></tr>
+                <tr><td>包管理器</td><td>硬链接全局缓存</td><td>避免重复下载，安装速度比 npm 快 35 倍</td></tr>
+                <tr><td>转译器</td><td>自研转译器</td><td>TS/JSX 开箱即用，无需额外配置</td></tr>
+                <tr><td>HTTP 服务器</td><td><span class="inline-code">Bun.serve()</span></td><td>基于 uWebSockets.js，极高吞吐量</td></tr>
+                <tr><td>模块系统</td><td>Node.js 兼容</td><td>~92% npm 包兼容，渐进式迁移</td></tr>
+            </table>
+
+            <h3>Bun 独家 API 一览</h3>
+            <p>Bun 内置了大量通常需要第三方库的功能：</p>
+            <pre><code>Bun.serve()       // HTTP 服务器
+Bun.sql           // PostgreSQL 客户端
+Bun.redis         // Redis 客户端
+Bun.s3            // S3 存储
+Bun.sqlite        // SQLite 数据库
+Bun.file()        // 文件 I/O
+Bun.cron()        // 定时任务
+Bun.hash          // 哈希计算
+Bun.color         // 颜色处理
+Bun.YAML          // YAML 解析
+Bun.TOML          // TOML 解析
+Bun.Glob          // 文件匹配
+Bun.Transpiler    // 代码转译
+Bun.Cookie        // Cookie 处理
+Bun.secrets       // 安全密钥管理
+Bun.build()       // 代码打包</code></pre>
+        </div>
+
+        <!-- Application Scenarios -->
+        <div class="card">
+            <h2>🎯 应用场景</h2>
+            <table>
+                <tr><th>场景</th><th>说明</th></tr>
+                <tr><td class="highlight">API 服务器</td><td>使用 Bun.serve() 或 Hono/Elysia 框架构建高性能 HTTP API</td></tr>
+                <tr><td class="highlight">全栈 Web 应用</td><td>原生支持 Next.js、Nuxt、SvelteKit、Astro、Remix 等主流框架</td></tr>
+                <tr><td class="highlight">CLI 工具开发</td><td>极快的启动速度非常适合构建命令行工具，可打包为单文件可执行文件</td></tr>
+                <tr><td class="highlight">微服务 & Serverless</td><td>冷启动速度是 Node.js 的 4 倍，非常适合 Lambda/Cloud Run 等场景</td></tr>
+                <tr><td class="highlight">数据处理脚本</td><td>内置 SQLite/PostgreSQL/Redis 驱动 + 极快的文件 I/O，数据处理一站搞定</td></tr>
+                <tr><td class="highlight">测试运行</td><td>替代 Jest/Vitest，迁移成本极低，速度快数倍</td></tr>
+                <tr><td class="highlight">实时应用</td><td>内置 WebSocket + pub/sub，适合聊天、实时协作等场景</td></tr>
+            </table>
+        </div>
+
+        <!-- Trending Reason -->
+        <div class="card">
+            <h2>🔥 为什么火（Trending 原因）</h2>
+            <div class="reason-box">
+                <p><strong>1. Node.js 生态的"降维打击"</strong> — Bun 不只是另一个运行时，它将 Node.js 生态中需要 10+ 工具才能完成的功能整合到单一二进制文件中。开发者不再需要 node + npm + webpack + jest + tsx + dotenv... 一个 <span class="inline-code">bun</span> 就够了。</p>
+            </div>
+            <div class="reason-box">
+                <p><strong>2. v1.3 版本持续成熟</strong> — 2026 年 Bun 已经发布到 v1.3.14，累计 214 个版本迭代，15,360 次提交。Node.js 兼容率从早期的 70% 提升到 ~92%，生产可用性大幅提升。</p>
+            </div>
+            <div class="reason-box">
+                <p><strong>3. 内置数据库驱动的颠覆性设计</strong> — 最新版本内置了 PostgreSQL (<span class="inline-code">Bun.sql</span>)、Redis (<span class="inline-code">Bun.redis</span>)、S3 (<span class="inline-code">Bun.s3</span>) 原生驱动，这在 JS 运行时中是史无前例的。开发者无需安装任何第三方数据库驱动。</p>
+            </div>
+            <div class="reason-box">
+                <p><strong>4. 开发者体验（DX）的极致追求</strong> — TypeScript/JSX 开箱即用、原生支持 .env 文件、热更新、单文件可执行文件输出、内置 Cron 定时任务... 每一个特性都在消除开发中的"仪式感代码"。</p>
+            </div>
+            <div class="reason-box">
+                <p><strong>5. 社区与框架生态全面拥抱</strong> — Vercel、Railway、Render 等主流平台原生支持 Bun；Next.js、Nuxt、Astro、SvelteKit、Hono 等框架全面适配。Bun 正在从"替代品"走向"首选"。</p>
+            </div>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2>⚔️ 同类项目对比</h2>
+            <table>
+                <tr>
+                    <th>维度</th>
+                    <th class="highlight">Bun</th>
+                    <th>Node.js</th>
+                    <th>Deno</th>
+                </tr>
+                <tr>
+                    <td>HTTP 吞吐量</td>
+                    <td class="highlight">~4x (最快)</td>
+                    <td>基线 (1x)</td>
+                    <td>~2-3x</td>
+                </tr>
+                <tr>
+                    <td>包安装速度</td>
+                    <td class="highlight">~35x vs npm</td>
+                    <td>基线</td>
+                    <td>~10x</td>
+                </tr>
+                <tr>
+                    <td>冷启动时间</td>
+                    <td class="highlight">~4x 更快</td>
+                    <td>基线</td>
+                    <td>~2x 更快</td>
+                </tr>
+                <tr>
+                    <td>npm 兼容性</td>
+                    <td>~92%</td>
+                    <td class="highlight">100%</td>
+                    <td>~90%</td>
+                </tr>
+                <tr>
+                    <td>TypeScript 支持</td>
+                    <td class="highlight">原生支持</td>
+                    <td>需要转译 (tsx/tsc)</td>
+                    <td class="highlight">原生支持</td>
+                </tr>
+                <tr>
+                    <td>内置工具链</td>
+                    <td class="highlight">运行时+打包+测试+包管理</td>
+                    <td>仅运行时</td>
+                    <td>运行时+Linter+Fmt</td>
+                </tr>
+                <tr>
+                    <td>内置数据库</td>
+                    <td class="highlight">SQLite/PostgreSQL/Redis</td>
+                    <td>无</td>
+                    <td>SQLite (KV)</td>
+                </tr>
+                <tr>
+                    <td>安全模型</td>
+                    <td>无沙箱</td>
+                    <td>无沙箱</td>
+                    <td class="highlight">权限沙箱</td>
+                </tr>
+                <tr>
+                    <td>生态系统</td>
+                    <td>成长中</td>
+                    <td class="highlight">最成熟</td>
+                    <td>成长中</td>
+                </tr>
+                <tr>
+                    <td>基准测试胜出</td>
+                    <td class="highlight">14 项测试中赢 8 项</td>
+                    <td>赢 1 项</td>
+                    <td>赢 5 项</td>
+                </tr>
+            </table>
+            <p style="color:#8b949e; font-size:13px; margin-top:8px;">* 数据来源：2026 年多项独立基准测试（dev.to, JSManifest, Strapi, RepoFlow）</p>
+        </div>
+
+        <!-- Target Users -->
+        <div class="card">
+            <h2>👥 适合谁使用</h2>
+            <table>
+                <tr><th>用户类型</th><th>推荐程度</th><th>理由</th></tr>
+                <tr><td>新项目开发者</td><td class="highlight">强烈推荐</td><td>零配置开箱即用，一个工具解决所有需求</td></tr>
+                <tr><td>Serverless 开发者</td><td class="highlight">强烈推荐</td><td>冷启动速度快 4 倍，直接降低云函数成本</td></tr>
+                <tr><td>全栈独立开发者</td><td class="highlight">强烈推荐</td><td>内置数据库驱动，快速原型开发效率极高</td></tr>
+                <tr><td>Node.js 项目迁移</td><td>推荐尝试</td><td>~92% 兼容率，大部分项目可直接切换</td></tr>
+                <tr><td>CLI 工具开发者</td><td class="highlight">强烈推荐</td><td>可打包单文件可执行，启动快，分发方便</td></tr>
+                <tr><td>企业级稳定项目</td><td>谨慎评估</td><td>8% 不兼容部分可能影响关键依赖，建议充分测试</td></tr>
+            </table>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2>🚀 快速上手指南</h2>
+
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>安装 Bun</h4>
+                    <pre><code># macOS / Linux
+curl -fsSL https://bun.com/install | bash
+
+# Windows
+powershell -c "irm bun.sh/install.ps1 | iex"
+
+# 或使用 npm
+npm install -g bun</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>创建项目</h4>
+                    <pre><code>bun init my-app
+cd my-app</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>运行 TypeScript（无需配置）</h4>
+                    <pre><code># 直接运行 .ts 文件
+bun run index.tsx
+
+# 运行 package.json 中的脚本
+bun run start</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>安装依赖</h4>
+                    <pre><code>bun install              # 安装所有依赖
+bun add express          # 添加依赖
+bun add -d @types/node   # 添加开发依赖</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <h4>运行测试</h4>
+                    <pre><code>bun test                 # 运行所有测试
+bun test --watch         # 监听模式
+bun test --coverage      # 带覆盖率</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">6</div>
+                <div class="step-content">
+                    <h4>构建 HTTP 服务器（3 行代码）</h4>
+                    <pre><code>// server.ts
+Bun.serve({
+  port: 3000,
+  fetch(req) {
+    return new Response("Hello from Bun!");
+  },
+});
+console.log("Server running at http://localhost:3000");</code></pre>
+                    <p style="margin-top:8px;">运行：<span class="inline-code">bun run server.ts</span></p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">7</div>
+                <div class="step-content">
+                    <h4>打包为单文件可执行</h4>
+                    <pre><code>bun build ./index.ts --compile --outfile my-app
+./my-app  # 直接运行！</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scoring -->
+        <div class="card">
+            <h2>⭐ 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-ring s9">9</div>
+                    <div class="score-label">创新性</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-ring s85">8.5</div>
+                    <div class="score-label">代码质量</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-ring s9">9</div>
+                    <div class="score-label">实用性</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-ring s9">9</div>
+                    <div class="score-label">文档完善度</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-ring s85">8.5</div>
+                    <div class="score-label">社区活跃度</div>
+                </div>
+            </div>
+            <p style="margin-top:20px; text-align:center; font-size:20px; font-weight:700; color:#fbbf24;">
+                综合评分：8.8 / 10
+            </p>
+            <table style="margin-top:16px;">
+                <tr><th>维度</th><th>评分</th><th>评价</th></tr>
+                <tr><td>创新性</td><td class="highlight">9.0</td><td>JS 运行时领域真正的范式创新，将工具链一体化做到极致</td></tr>
+                <tr><td>代码质量</td><td class="highlight">8.5</td><td>Zig+Rust+C++ 混合架构组织清晰，15k+ commits 展现持续迭代能力</td></tr>
+                <tr><td>实用性</td><td class="highlight">9.0</td><td>直接替换 node+npm+webpack+jest，新项目几乎零配置即可启动</td></tr>
+                <tr><td>文档完善度</td><td class="highlight">9.0</td><td>官方文档覆盖所有 API 和场景指南，200+ 指导文章</td></tr>
+                <tr><td>社区活跃度</td><td class="highlight">8.5</td><td>90k+ Stars，5k+ Issues 活跃讨论，214 个版本持续发布</td></tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Analysis generated on 2026-05-16 | Powered by AI Deep Analysis</p>
+            <p style="margin-top:4px;">GitHub: <a href="https://github.com/oven-sh/bun" style="color:#fbbf24;">oven-sh/bun</a></p>
+        </div>
+    </div>
+</body>
+</html>
