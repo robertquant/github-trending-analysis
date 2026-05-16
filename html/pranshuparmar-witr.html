@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析: witr - Why Is This Running?</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #161b22 100%);
+    border: 1px solid #21262d;
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: #58a6ff;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 2.4em;
+    background: linear-gradient(135deg, #58a6ff, #38bdf8, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .hero .tagline {
+    font-size: 1.15em;
+    color: #8b949e;
+    max-width: 640px;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .meta-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #8b949e;
+  }
+  .meta-tag .val { color: #c9d1d9; font-weight: 600; }
+
+  /* Cards */
+  .card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #388bfd55; }
+  .card h2 {
+    font-size: 1.4em;
+    color: #58a6ff;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h3 {
+    font-size: 1.1em;
+    color: #79c0ff;
+    margin: 16px 0 8px;
+  }
+  .card p, .card li { color: #c9d1d9; font-size: 15px; }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+  .card li::marker { color: #38bdf8; }
+
+  /* Feature grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .feature-item {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .feature-item .fi-icon {
+    font-size: 1.5em;
+    margin-bottom: 8px;
+  }
+  .feature-item h4 {
+    color: #e6edf3;
+    margin-bottom: 6px;
+    font-size: 1em;
+  }
+  .feature-item p {
+    color: #8b949e;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* Code block */
+  pre {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+  }
+  .inline-code {
+    background: #1c2333;
+    border: 1px solid #30363d;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #79c0ff;
+    font-size: 13px;
+  }
+  .comment { color: #6a737d; }
+  .cmd { color: #79c0ff; }
+  .flag { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .output { color: #7ee787; }
+
+  /* Score section */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .score-item {
+    text-align: center;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 20px 12px;
+  }
+  .score-item .score-label {
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 8px;
+  }
+  .score-item .score-val {
+    font-size: 2em;
+    font-weight: 700;
+  }
+  .score-item .score-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: #21262d;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .score-item .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+  .s-blue .score-val { color: #58a6ff; }
+  .s-blue .score-bar-fill { background: linear-gradient(90deg, #58a6ff, #38bdf8); }
+  .s-green .score-val { color: #3fb950; }
+  .s-green .score-bar-fill { background: linear-gradient(90deg, #3fb950, #56d364); }
+  .s-purple .score-val { color: #bc8cff; }
+  .s-purple .score-bar-fill { background: linear-gradient(90deg, #bc8cff, #d2a8ff); }
+  .s-orange .score-val { color: #f0883e; }
+  .s-orange .score-bar-fill { background: linear-gradient(90deg, #f0883e, #f7c873); }
+  .s-pink .score-val { color: #f778ba; }
+  .s-pink .score-bar-fill { background: linear-gradient(90deg, #f778ba, #ff9bce); }
+
+  .overall-score {
+    text-align: center;
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(167,139,250,0.08));
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 12px;
+  }
+  .overall-score .big {
+    font-size: 3em;
+    font-weight: 800;
+    background: linear-gradient(135deg, #58a6ff, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overall-score .label { color: #8b949e; font-size: 14px; }
+
+  /* Comparison table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th {
+    background: #0d1117;
+    color: #58a6ff;
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 2px solid #21262d;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #21262d;
+    color: #c9d1d9;
+  }
+  tr:hover td { background: rgba(56,189,248,0.04); }
+  .check { color: #3fb950; }
+  .cross { color: #f85149; }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+    margin-top: 12px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: linear-gradient(to bottom, #58a6ff, #a78bfa);
+    border-radius: 2px;
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 7px;
+    width: 10px;
+    height: 10px;
+    background: #58a6ff;
+    border-radius: 50%;
+    border: 2px solid #0d1117;
+  }
+  .timeline-item .t-time {
+    font-size: 12px;
+    color: #8b949e;
+  }
+  .timeline-item .t-content {
+    color: #c9d1d9;
+    font-size: 14px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 32px;
+    color: #484f58;
+    font-size: 13px;
+    border-top: 1px solid #21262d;
+    margin-top: 40px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .container { padding: 12px; }
+    .hero { padding: 28px 20px; }
+    .hero h1 { font-size: 1.7em; }
+    .card { padding: 20px 18px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .score-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">&#9889; GitHub Trending #8 &middot; Go &middot; +484 stars/day</div>
+    <h1>witr - Why Is This Running?</h1>
+    <p class="tagline">一个跨平台 CLI 工具，追踪进程、服务或端口的起源和责任链，用人类可读的方式解释<strong style="color:#58a6ff;">为什么</strong>某个东西正在运行。不再需要手动组合 ps、lsof、ss、pstree。</p>
+    <div class="meta-row">
+      <span class="meta-tag">&#128196; <span class="val">Apache-2.0</span></span>
+      <span class="meta-tag">&#11088; <span class="val">16,536</span> stars</span>
+      <span class="meta-tag">&#128736;&#65039; <span class="val">Go</span></span>
+      <span class="meta-tag">&#127760; <span class="val">Linux / macOS / Windows / FreeBSD</span></span>
+      <span class="meta-tag">&#128101; <span class="val">pranshuparmar</span></span>
+    </div>
+  </div>
+
+  <!-- 核心功能 -->
+  <div class="card">
+    <h2>&#127919; 核心功能</h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi-icon">&#128269;</div>
+        <h4>进程溯源追踪</h4>
+        <p>展示进程的完整祖辈链（parent chain），从 init 系统到目标进程，说明"谁启动了谁"。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128187;</div>
+        <h4>交互式 TUI 模式</h4>
+        <p>实时终端仪表盘，支持搜索、过滤、导航，直观探索系统运行状态。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128268;</div>
+        <h4>容器感知</h4>
+        <p>自动检测 Docker、Podman、Kubernetes、Containerd 容器环境并标注。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128274;</div>
+        <h4>服务检测</h4>
+        <p>识别 systemd、launchd、Windows Services、rc.d 等服务管理器关联。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128680;</div>
+        <h4>健康警告</h4>
+        <p>自动标注：以 root 运行、公网端口绑定、高内存占用等潜在风险。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#127909;</div>
+        <h4>录制回放</h4>
+        <p>atop 风格的录制回放模式，可事后分析"那一瞬间发生了什么"。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128270;</div>
+        <h4>多维度查询</h4>
+        <p>按进程名、PID、端口号、打开的文件 — 多种入口快速定位目标。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128196;</div>
+        <h4>丰富输出格式</h4>
+        <p>标准、简洁、树形、JSON、环境变量、详细 — 六种格式适配不同场景。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="card">
+    <h2>&#9881;&#65039; 技术架构与特点</h2>
+    <h3>语言与构建</h3>
+    <ul>
+      <li><strong>Go 语言编写</strong> — 编译为单一二进制文件，零依赖，开箱即用</li>
+      <li><strong>跨平台支持</strong> — Linux、macOS、Windows、FreeBSD 全覆盖</li>
+      <li><strong>零配置</strong> — 无需任何配置文件或环境变量，安装即用</li>
+    </ul>
+    <h3>分发渠道</h3>
+    <ul>
+      <li>Homebrew (<code class="inline-code">brew install witr</code>)</li>
+      <li>Conda、AUR、Winget、NPM、Chocolatey、Scoop、Nix、FreeBSD Ports 等 15+ 包管理器</li>
+      <li>deb / rpm / apk 原生包</li>
+      <li>Go Install (<code class="inline-code">go install</code>) 和预编译二进制下载</li>
+    </ul>
+    <h3>设计哲学</h3>
+    <ul>
+      <li><strong>"一个问题，一个工具"</strong> — witr 成功的标准：用户能在几秒内回答"为什么这个在运行"</li>
+      <li><strong>有主见的第一眼</strong> — 给出快速、优先级排序的概览，而非原始数据堆砌</li>
+      <li><strong>压力下可读</strong> — 输出即使在紧急排障场景下也能被理解</li>
+    </ul>
+  </div>
+
+  <!-- 使用示例 -->
+  <div class="card">
+    <h2>&#128187; 使用示例</h2>
+    <h3>基本用法 — 查询进程</h3>
+    <pre><span class="comment"># 查询某个进程为什么在运行</span>
+<span class="cmd">witr</span> <span class="str">nginx</span>
+
+<span class="comment"># 通过 PID 查询</span>
+<span class="cmd">witr</span> <span class="flag">--pid</span> <span class="str">1234</span>
+
+<span class="comment"># 查询占用某个端口的进程</span>
+<span class="cmd">witr</span> <span class="flag">--port</span> <span class="str">8080</span>
+
+<span class="comment"># 查询打开了某个文件的进程</span>
+<span class="cmd">witr</span> <span class="flag">--file</span> <span class="str">/var/log/syslog</span>
+
+<span class="comment"># 以 JSON 格式输出（适合脚本集成）</span>
+<span class="cmd">witr</span> <span class="flag">--format</span> <span class="str">json</span> <span class="str">nginx</span>
+
+<span class="comment"># 启动交互式 TUI 模式</span>
+<span class="cmd">witr</span> <span class="flag">-i</span></pre>
+
+    <h3>典型输出解读</h3>
+    <pre><span class="output">  Process:     nginx (PID 1234, root)
+  Status:      Running since 2026-05-15 06:30:22
+  Parent:      systemd (PID 1)
+  Service:     nginx.service (enabled)
+  Container:   —
+  Ports:       0.0.0.0:80, 0.0.0.0:443
+  &#9888; Health:  Root process, Public port bindings
+  Ancestry:    systemd → nginx (master) → nginx (worker)
+  Started by:  systemctl enable --now nginx</span></pre>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="card">
+    <h2>&#127919; 应用场景</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="t-time">场景 1：SSH 登录陌生服务器</div>
+        <div class="t-content">快速理解"这个系统上到底在跑什么" — 不需要翻遍 /etc、crontab、systemd 配置。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="t-time">场景 2：排障与安全审计</div>
+        <div class="t-content">发现可疑进程时，一条命令追溯其来源、服务归属、网络监听、文件访问。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="t-time">场景 3：容器环境调试</div>
+        <div class="t-content">自动识别容器类型，展示宿主机与容器的映射关系。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="t-time">场景 4：新员工入职</div>
+        <div class="t-content">快速了解生产服务器上运行的服务拓扑，缩短上手时间。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="t-time">场景 5：CI/CD 调试</div>
+        <div class="t-content">在构建环境中排查端口冲突、进程残留等"为什么还挂着"的问题。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 为什么火 -->
+  <div class="card">
+    <h2>&#128293; 为什么火 (Trending 原因)</h2>
+    <ul>
+      <li><strong>填补真实痛点</strong> — 每个 Linux 用户都问过"为什么这个进程在运行"，但从来没有一个专门的工具来回答这个问题。</li>
+      <li><strong>"一个工具替代一串命令"</strong> — 不再需要 ps + lsof + ss + systemctl + pstree 的组合拳。</li>
+      <li><strong>极低上手门槛</strong> — 单一二进制、零配置、brew install 即用。</li>
+      <li><strong>社区热议</strong> — Hacker News、Reddit r/commandline、YouTube 等多平台讨论引爆传播。</li>
+      <li><strong>TUI 体验优秀</strong> — 交互式终端界面美观实用，符合现代 CLI 工具审美。</li>
+      <li><strong>命名即品牌</strong> — "Why Is This Running?" 这个名字本身就是最好的推广，任何人看到名字就知道它是干什么的。</li>
+      <li><strong>时机恰好</strong> — 在 DevOps/SRE 文化和"可观测性"热潮下，系统理解的工具需求正旺。</li>
+    </ul>
+  </div>
+
+  <!-- 同类对比 -->
+  <div class="card">
+    <h2>&#9878;&#65039; 同类项目对比</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>功能 / 工具</th>
+          <th>witr</th>
+          <th>ps + pstree</th>
+          <th>htop / btop</th>
+          <th>procs</th>
+          <th>lsof / ss</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>进程溯源（为什么在跑）</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+        </tr>
+        <tr>
+          <td>服务关联识别</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+        </tr>
+        <tr>
+          <td>容器感知</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+        </tr>
+        <tr>
+          <td>网络端口追踪</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="check">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>健康警告</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+        </tr>
+        <tr>
+          <td>交互式 TUI</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+        </tr>
+        <tr>
+          <td>JSON 输出</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="cross">&#10007;</span></td>
+        </tr>
+        <tr>
+          <td>单命令安装</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span> 预装</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span> 预装</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="color:#8b949e;font-size:13px;margin-top:8px;">
+      witr 的独特定位：<strong style="color:#58a6ff;">"因果关系解释器"</strong> — 不只是展示数据，而是解释因果链。这是传统工具组合无法实现的。
+    </p>
+  </div>
+
+  <!-- 适合谁 -->
+  <div class="card">
+    <h2>&#129321; 适合谁使用</h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi-icon">&#128119;</div>
+        <h4>SRE / DevOps 工程师</h4>
+        <p>日常排障、On-call 值班、生产环境调试的必备工具。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128187;</div>
+        <h4>系统管理员</h4>
+        <p>管理多台服务器时快速理解每台机器上运行的服务。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128737;&#65039;</div>
+        <h4>安全工程师</h4>
+        <p>安全审计时追溯可疑进程来源和权限链。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#127891;</div>
+        <h4>Linux 学习者</h4>
+        <p>通过可视化进程链理解 Linux 系统的启动和服务模型。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128051;</div>
+        <h4>容器开发者</h4>
+        <p>理解容器内外进程映射关系，调试容器网络。</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">&#128105;&#8205;&#128187;</div>
+        <h4>后端开发者</h4>
+        <p>调试本地开发环境的端口冲突、进程残留等问题。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="card">
+    <h2>&#128640; 快速上手指南</h2>
+    <h3>1. 安装</h3>
+    <pre><span class="comment"># macOS / Linux (Homebrew)</span>
+<span class="cmd">brew install witr</span>
+
+<span class="comment"># Go Install</span>
+<span class="cmd">go install github.com/pranshuparmar/witr@latest</span>
+
+<span class="comment"># 下载预编译二进制</span>
+<span class="cmd">curl -sL https://github.com/pranshuparmar/witr/releases/latest/download/witr-linux-amd64 -o witr</span>
+<span class="cmd">chmod +x witr && sudo mv witr /usr/local/bin/</span></pre>
+
+    <h3>2. 基本使用</h3>
+    <pre><span class="comment"># 查看某个进程为什么在运行</span>
+<span class="cmd">witr nginx</span>
+
+<span class="comment"># 交互式模式</span>
+<span class="cmd">witr -i</span>
+
+<span class="comment"># 查看占用 8080 端口的进程</span>
+<span class="cmd">witr --port 8080</span>
+
+<span class="comment"># JSON 输出（用于脚本）</span>
+<span class="cmd">witr --format json nginx | jq .</span></pre>
+
+    <h3>3. 进阶技巧</h3>
+    <pre><span class="comment"># 录制系统状态供事后分析</span>
+<span class="cmd">witr record -o session.witr</span>
+
+<span class="comment"># 回放录制</span>
+<span class="cmd">witr replay session.witr</span>
+
+<span class="comment"># 树形展示进程祖辈关系</span>
+<span class="cmd">witr --format tree nginx</span>
+
+<span class="comment"># 显示环境变量</span>
+<span class="cmd">witr --format env nginx</span></pre>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="card">
+    <h2>&#11088; 综合评分</h2>
+    <div class="score-grid">
+      <div class="score-item s-green">
+        <div class="score-label">创新性</div>
+        <div class="score-val">8.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+      </div>
+      <div class="score-item s-blue">
+        <div class="score-label">代码质量</div>
+        <div class="score-val">8.0</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width: 80%"></div></div>
+      </div>
+      <div class="score-item s-purple">
+        <div class="score-label">实用性</div>
+        <div class="score-val">9.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width: 95%"></div></div>
+      </div>
+      <div class="score-item s-orange">
+        <div class="score-label">文档完善度</div>
+        <div class="score-val">9.0</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+      </div>
+      <div class="score-item s-pink">
+        <div class="score-label">社区活跃度</div>
+        <div class="score-val">8.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+      </div>
+    </div>
+    <div class="overall-score">
+      <div class="big">8.7 / 10</div>
+      <div class="label">综合评分 &middot; 强烈推荐</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>分析日期: 2026-05-17 &middot; 数据来源: GitHub, Hacker News, Reddit</p>
+    <p>仓库地址: <a href="https://github.com/pranshuparmar/witr" style="color:#58a6ff;text-decoration:none;">github.com/pranshuparmar/witr</a></p>
+  </div>
+
+</div>
+</body>
+</html>
