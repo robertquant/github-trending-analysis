@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cal.diy - GitHub Trending 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid #21262d;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+        }
+        .meta-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .meta-badge {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .meta-badge .label { color: #8b949e; }
+        .meta-badge .value { color: #58a6ff; font-weight: 600; }
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 {
+            color: #79c0ff;
+            font-size: 1.1em;
+            margin: 16px 0 8px;
+        }
+        .card p, .card li {
+            color: #c9d1d9;
+            font-size: 0.95em;
+        }
+        .card ul {
+            padding-left: 20px;
+        }
+        .card ul li {
+            margin-bottom: 6px;
+        }
+        .card ul li::marker {
+            color: #58a6ff;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border: 1px solid rgba(88,166,255,0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        .highlight-box p {
+            color: #e6edf3;
+        }
+        .warning-box {
+            background: rgba(210,153,34,0.1);
+            border: 1px solid rgba(210,153,34,0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        .warning-box p { color: #d29922; }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .score-label {
+            color: #8b949e;
+            font-size: 0.85em;
+            margin-bottom: 6px;
+        }
+        .score-item .score-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .score-item .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .s9 { color: #3fb950; }
+        .s8 { color: #58a6ff; }
+        .s7 { color: #bc8cff; }
+        .s6 { color: #d29922; }
+        .bar-9 { background: linear-gradient(90deg, #3fb950, #2ea043); }
+        .bar-8 { background: linear-gradient(90deg, #58a6ff, #1f6feb); }
+        .bar-7 { background: linear-gradient(90deg, #bc8cff, #8b5cf6); }
+        .bar-6 { background: linear-gradient(90deg, #d29922, #bb8009); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        th {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+        }
+        tr:hover td { background: rgba(88,166,255,0.05); }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'SF Mono', Consolas, monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .tag {
+            display: inline-block;
+            background: rgba(88,166,255,0.15);
+            color: #58a6ff;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.82em;
+            margin: 2px;
+        }
+        .tag.green { background: rgba(63,185,80,0.15); color: #3fb950; }
+        .tag.purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+        .tag.orange { background: rgba(210,153,34,0.15); color: #d29922; }
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>Cal.diy</h1>
+        <p class="subtitle">Scheduling infrastructure for absolutely everyone.</p>
+        <div class="meta-bar">
+            <span class="meta-badge"><span class="label">Stars</span><span class="value">43,065</span></span>
+            <span class="meta-badge"><span class="label">Today</span><span class="value">+425</span></span>
+            <span class="meta-badge"><span class="label">Language</span><span class="value">TypeScript</span></span>
+            <span class="meta-badge"><span class="label">License</span><span class="value">MIT</span></span>
+            <span class="meta-badge"><span class="label">Forks</span><span class="value">13.4k</span></span>
+        </div>
+        <div style="margin-top:14px;">
+            <span class="tag green">open-source</span>
+            <span class="tag">scheduling</span>
+            <span class="tag purple">self-hosted</span>
+            <span class="tag">nextjs</span>
+            <span class="tag">trpc</span>
+            <span class="tag">postgresql</span>
+            <span class="tag">prisma</span>
+            <span class="tag purple">tailwindcss</span>
+            <span class="tag">turborepo</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2>📋 项目简介与核心功能</h2>
+        <p><strong>Cal.diy</strong> 是由 Cal.com 官方分拆出来的社区驱动、100% 开源的日程调度平台。在 Cal.com 宣布闭源后，Cal.diy 成为该项目唯一真正的开源分支。</p>
+        <div class="highlight-box">
+            <p><strong>核心定位：</strong>为所有人提供完全自主托管的调度基础设施，无需许可证密钥，无企业版功能锁定，所有代码均以 MIT 许可证发布。</p>
+        </div>
+        <h3>核心功能</h3>
+        <ul>
+            <li><strong>事件调度</strong> — 创建多种事件类型（一对一、团体、循环预约），灵活设置可用时间段</li>
+            <li><strong>日历集成</strong> — Google Calendar、Microsoft Outlook/365、Apple Calendar 等</li>
+            <li><strong>视频会议</strong> — Zoom、Daily.co、Webex 等无缝集成</li>
+            <li><strong>CRM 集成</strong> — HubSpot、ZohoCRM、Pipedrive、Basecamp 等</li>
+            <li><strong>App Store 框架</strong> — 可扩展的应用商店体系，支持自定义集成</li>
+            <li><strong>多语言支持</strong> — 内置 i18n 国际化框架</li>
+            <li><strong>API 支持</strong> — 完整的 REST API (v2) 和 tRPC 接口</li>
+        </ul>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2>🏗️ 技术架构与特点</h2>
+        <h3>技术栈</h3>
+        <table>
+            <tr><th>层级</th><th>技术</th></tr>
+            <tr><td>前端框架</td><td>Next.js + React.js</td></tr>
+            <tr><td>API 层</td><td>tRPC (端到端类型安全)</td></tr>
+            <tr><td>样式</td><td>Tailwind CSS</td></tr>
+            <tr><td>数据库</td><td>PostgreSQL (>= 13.x)</td></tr>
+            <tr><td>ORM</td><td>Prisma.io</td></tr>
+            <tr><td>认证</td><td>NextAuth.js</td></tr>
+            <tr><td>构建工具</td><td>Turborepo (Monorepo)</td></tr>
+            <tr><td>视频</td><td>Daily.co</td></tr>
+            <tr><td>校验</td><td>Zod</td></tr>
+            <tr><td>语言占比</td><td>TypeScript 95.8%, CSS 2.1%, HTML 0.7%</td></tr>
+        </table>
+        <h3>架构特点</h3>
+        <ul>
+            <li><strong>T3 Stack 变体</strong> — Next.js + tRPC + Prisma + Tailwind 的经典组合，端到端类型安全</li>
+            <li><strong>Turborepo Monorepo</strong> — 多包管理，apps/ + packages/ 分层，代码复用高效</li>
+            <li><strong>App Store 框架</strong> — 模块化集成体系，每个第三方服务都是独立 App，可热插拔</li>
+            <li><strong>Prisma 迁移系统</strong> — 完善的数据库版本管理，支持 dev/prod 不同迁移策略</li>
+            <li><strong>Docker 一键部署</strong> — 官方维护 Docker 镜像 (calcom/cal.diy)，支持 ARM 架构</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2>🎯 应用场景</h2>
+        <ul>
+            <li><strong>个人日程管理</strong> — 自由职业者分享预约链接，让客户自助预约会议时间</li>
+            <li><strong>咨询服务</strong> — 律师、顾问、教练等行业提供在线预约服务</li>
+            <li><strong>教育/辅导</strong> — 教师和学生对一对一辅导时间进行调度</li>
+            <li><strong>远程面试</strong> — HR 团队安排候选人面试时段，自动同步日历和视频会议</li>
+            <li><strong>医疗预约</strong> — 诊所/心理咨询等场景的自助预约系统</li>
+            <li><strong>SaaS 产品集成</strong> — 作为调度引擎嵌入到其他产品中</li>
+        </ul>
+        <div class="warning-box">
+            <p>⚠️ 官方声明：Cal.diy 推荐用于个人、非生产环境。商业/企业场景建议使用 Cal.com 商业版。</p>
+        </div>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2>🔥 为什么火 (Trending 原因)</h2>
+        <div class="highlight-box">
+            <p><strong>核心导火索：Cal.com 闭源事件</strong></p>
+        </div>
+        <ul>
+            <li><strong>Cal.com 宣布闭源</strong> — 2025年，Cal.com 联合创始人公开发表"Open source is dead"言论，宣布将核心代码转为闭源。社区哗然。</li>
+            <li><strong>社区反弹</strong> — Reddit r/selfhosted 和 r/opensourcealternative 上出现大量讨论帖（数百条评论），用户纷纷寻找替代方案。</li>
+            <li><strong>Cal.diy 应运而生</strong> — 作为唯一官方认可的开源分支，自然承接了所有对开源调度工具有需求的用户。</li>
+            <li><strong>"Do It Yourself" 理念共鸣</strong> — 在数据隐私和自主托管日益受到重视的当下，Cal.diy 的命名和定位精准击中了自托管社区的需求。</li>
+            <li><strong>MIT 许可证</strong> — 相比 Cal.com 之前的 AGPL/自定义许可，MIT 是最宽松的开源许可证，极大降低了使用和二次开发的门槛。</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2>⚔️ 同类项目对比</h2>
+        <table>
+            <tr>
+                <th>项目</th>
+                <th>开源</th>
+                <th>自托管</th>
+                <th>技术栈</th>
+                <th>许可证</th>
+                <th>特色</th>
+            </tr>
+            <tr>
+                <td><strong>Cal.diy</strong></td>
+                <td style="color:#3fb950">100%</td>
+                <td style="color:#3fb950">支持</td>
+                <td>Next.js + tRPC</td>
+                <td>MIT</td>
+                <td>功能最全面的开源方案</td>
+            </tr>
+            <tr>
+                <td>Cal.com</td>
+                <td style="color:#f85149">闭源</td>
+                <td style="color:#3fb950">支持</td>
+                <td>Next.js + tRPC</td>
+                <td>商业许可</td>
+                <td>企业功能、商业支持</td>
+            </tr>
+            <tr>
+                <td>Calendly</td>
+                <td style="color:#f85149">闭源</td>
+                <td style="color:#f85149">不支持</td>
+                <td>SaaS</td>
+                <td>商业</td>
+                <td>最流行，但不可自托管</td>
+            </tr>
+            <tr>
+                <td>Easy!Appointments</td>
+                <td style="color:#3fb950">开源</td>
+                <td style="color:#3fb950">支持</td>
+                <td>PHP + jQuery</td>
+                <td>GPL-3.0</td>
+                <td>轻量、经典，技术栈较旧</td>
+            </tr>
+            <tr>
+                <td>Rallly</td>
+                <td style="color:#3fb950">开源</td>
+                <td style="color:#3fb950">支持</td>
+                <td>Next.js</td>
+                <td>AGPL-3.0</td>
+                <td>侧重群体投票/日程协调</td>
+            </tr>
+        </table>
+        <p style="margin-top:10px;color:#8b949e;">Cal.diy 在开源调度领域中功能最为完整，集成了日历、视频会议、CRM 等数十种第三方服务，是目前最接近 Calendly 功能的开源自托管方案。</p>
+    </div>
+
+    <!-- 适合谁使用 -->
+    <div class="card">
+        <h2>👥 适合谁使用</h2>
+        <ul>
+            <li><strong>自托管爱好者</strong> — 希望在自有服务器上运行完整的调度系统，掌控所有数据</li>
+            <li><strong>隐私敏感用户</strong> — 不希望预约数据存储在第三方 SaaS 平台的个人和组织</li>
+            <li><strong>自由职业者/小型团队</strong> — 需要专业调度工具但不想支付 Calendly 高昂订阅费</li>
+            <li><strong>开发者/技术创业者</strong> — 想要在调度系统之上构建自己的产品或服务</li>
+            <li><strong>开源贡献者</strong> — 希望参与一个有实际用户基础的开源项目</li>
+        </ul>
+        <div class="warning-box">
+            <p>⚠️ 需要一定的服务器管理能力：Docker/Node.js 部署、PostgreSQL 数据库管理、SSL 证书配置等。</p>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2>🚀 快速上手指南</h2>
+        <h3>方式一：Docker Compose（推荐）</h3>
+        <div class="code-block">
+<span class="comment"># 1. 克隆仓库</span>
+<span class="cmd">git clone --recursive https://github.com/calcom/cal.diy.git</span>
+<span class="cmd">cd cal.diy</span>
+
+<span class="comment"># 2. 配置环境变量</span>
+<span class="cmd">cp .env.example .env</span>
+
+<span class="comment"># 3. 生成密钥并写入 .env</span>
+<span class="cmd">echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env</span>
+<span class="cmd">echo "CALENDSO_ENCRYPTION_KEY=$(openssl rand -base64 24)" >> .env</span>
+
+<span class="comment"># 4. 一键启动（含 PostgreSQL）</span>
+<span class="cmd">docker compose up -d</span>
+
+<span class="comment"># 5. 访问 http://localhost:3000 完成初始化向导</span>
+        </div>
+        <h3>方式二：本地开发</h3>
+        <div class="code-block">
+<span class="cmd">git clone https://github.com/calcom/cal.diy.git</span>
+<span class="cmd">cd cal.diy</span>
+<span class="cmd">yarn</span>                         <span class="comment"># 安装依赖</span>
+<span class="cmd">cp .env.example .env</span>         <span class="comment"># 配置环境变量</span>
+<span class="cmd">yarn dx</span>                       <span class="comment"># 一键启动（Docker + 本地 DB）</span>
+        </div>
+        <h3>默认测试账号</h3>
+        <table>
+            <tr><th>邮箱</th><th>密码</th><th>角色</th></tr>
+            <tr><td>pro@example.com</td><td>pro</td><td>Pro 用户</td></tr>
+            <tr><td>admin@example.com</td><td>ADMINadmin2022!</td><td>管理员</td></tr>
+        </table>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2>📊 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value s7">7/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-7" style="width:70%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value s8">8.5/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-8" style="width:85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value s9">9/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value s8">8/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-8" style="width:80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value s9">9/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width:90%"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+            <span style="font-size:2em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">8.3 / 10</span>
+            <span style="display:block;color:#8b949e;margin-top:4px;">综合评分</span>
+        </div>
+        <h3>评分理由</h3>
+        <ul>
+            <li><strong>创新性 7</strong> — 并非全新发明，而是 Cal.com 的开源分支。但"闭源后立即开源"的策略和 MIT 许可证的选择值得肯定。</li>
+            <li><strong>代码质量 8.5</strong> — 16,438 次提交，611 个 Release，TypeScript 覆盖率 95.8%，Turborepo Monorepo 架构成熟。</li>
+            <li><strong>实用性 9</strong> — 日程调度是刚需，Cal.diy 提供了从个人到小型团队的完整解决方案，集成生态丰富。</li>
+            <li><strong>文档 8</strong> — README 非常详尽，覆盖 Docker/手动/Gitpod 多种部署方式，各类集成指南完善。</li>
+            <li><strong>社区 9</strong> — 43k Stars，13.4k Forks，活跃的 GitHub Discussions，Contributor Covenant 行为准则。</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>Generated on 2026-05-18 | GitHub Trending Deep Analysis</p>
+        <p style="margin-top:6px;"><a href="https://github.com/calcom/cal.diy" style="color:#58a6ff;text-decoration:none;">github.com/calcom/cal.diy</a></p>
+    </div>
+
+</div>
+</body>
+</html>
