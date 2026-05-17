@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open-Generative-AI 深度分析 | GitHub Trending</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .hero h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #e0e7ff, #a5b4fc, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .hero .subtitle {
+            color: #8b949e;
+            font-size: 16px;
+            max-width: 680px;
+        }
+        .hero-meta {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .meta-item .value { color: #e0e7ff; font-weight: 600; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: #484f58; }
+        .card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e0e7ff;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+        }
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a5b4fc;
+            margin: 16px 0 10px;
+        }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .score-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-card .score-label {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-card .score-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-card .score-bar {
+            width: 100%;
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-card .score-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #8b5cf6, #6366f1);
+        }
+
+        /* Total Score */
+        .total-score {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+        .total-score .big-score {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #c4b5fd, #818cf8, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .total-score .score-desc { color: #8b949e; font-size: 14px; margin-top: 4px; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        th {
+            background: #21262d;
+            color: #a5b4fc;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        tr:hover td { background: rgba(139, 92, 246, 0.05); }
+
+        /* Code */
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e6edf3;
+            margin: 12px 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+        }
+        .inline-code {
+            background: #1c2333;
+            padding: 2px 7px;
+            border-radius: 4px;
+            color: #a5b4fc;
+            border: 1px solid #30363d;
+        }
+
+        /* Stars rating */
+        .stars { color: #fbbf24; letter-spacing: 2px; }
+
+        /* Lists */
+        .card ul { padding-left: 20px; margin: 8px 0; }
+        .card li { margin: 6px 0; color: #c9d1d9; }
+        .card li strong { color: #e0e7ff; }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            background: rgba(139, 92, 246, 0.15);
+            color: #a5b4fc;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 3px 4px 3px 0;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+
+        /* Grid layout for studio cards */
+        .studio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .studio-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+        .studio-item:hover { border-color: #6366f1; }
+        .studio-item .studio-name {
+            font-weight: 600;
+            color: #e0e7ff;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+        .studio-item .studio-desc { color: #8b949e; font-size: 13px; }
+        .studio-item .studio-count {
+            display: inline-block;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* User fit section */
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .user-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .user-item .user-type { color: #e0e7ff; font-weight: 600; font-size: 14px; }
+        .user-item .user-fit { margin-top: 6px; }
+        .user-item .user-reason { color: #8b949e; font-size: 12px; margin-top: 4px; }
+
+        /* Conclusion */
+        .conclusion {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(99, 102, 241, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-top: 16px;
+        }
+        .conclusion p { color: #c9d1d9; font-size: 15px; margin: 8px 0; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px 0 16px;
+            color: #484f58;
+            font-size: 13px;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 20px 16px; }
+            .hero { padding: 32px 24px; }
+            .hero h1 { font-size: 24px; }
+            .card { padding: 20px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .studio-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <span class="hero-badge">GITHUB TRENDING ANALYSIS</span>
+            <h1>Open-Generative-AI</h1>
+            <p class="subtitle">开源 AI 视频/图像平台的免费替代方案 — 集成 200+ SOTA 模型，无内容过滤，可自部署，MIT 许可</p>
+            <div class="hero-meta">
+                <div class="meta-item">👤 <span>Anil-matcha</span></div>
+                <div class="meta-item">⭐ <span class="value">14,073</span> Stars</div>
+                <div class="meta-item">📈 <span class="value">+356</span> today</span></div>
+                <div class="meta-item">💻 <span class="value">JavaScript</span></div>
+                <div class="meta-item">📜 <span class="value">MIT</span></div>
+            </div>
+            <div style="margin-top: 14px;">
+                <span class="tag">Next.js</span>
+                <span class="tag">React 18</span>
+                <span class="tag">Electron</span>
+                <span class="tag">Tailwind CSS</span>
+                <span class="tag">AI 图像生成</span>
+                <span class="tag">AI 视频生成</span>
+                <span class="tag">Lip Sync</span>
+                <span class="tag">200+ Models</span>
+            </div>
+        </div>
+
+        <!-- Six Studios -->
+        <div class="card">
+            <h2>🎨 六大工作室</h2>
+            <div class="studio-grid">
+                <div class="studio-item">
+                    <div class="studio-name">🖼️ Image Studio</div>
+                    <div class="studio-desc">文生图 / 图生图双模式自动切换</div>
+                    <span class="studio-count">105+ 模型</span>
+                </div>
+                <div class="studio-item">
+                    <div class="studio-name">🎬 Video Studio</div>
+                    <div class="studio-desc">文生视频 / 图生视频双模式</div>
+                    <span class="studio-count">100+ 模型</span>
+                </div>
+                <div class="studio-item">
+                    <div class="studio-name">🎙️ Lip Sync Studio</div>
+                    <div class="studio-desc">人像驱动 & 视频口型同步</div>
+                    <span class="studio-count">9 模型</span>
+                </div>
+                <div class="studio-item">
+                    <div class="studio-name">🎥 Cinema Studio</div>
+                    <div class="studio-desc">电影级虚拟摄影控制</div>
+                    <span class="studio-count">专业级</span>
+                </div>
+                <div class="studio-item">
+                    <div class="studio-name">🔀 Workflow Studio</div>
+                    <div class="studio-desc">可视化多步骤 AI 管道编排</div>
+                    <span class="studio-count">节点式</span>
+                </div>
+                <div class="studio-item">
+                    <div class="studio-name">⚡ Local Inference</div>
+                    <div class="studio-desc">sd.cpp + Wan2GP 双引擎</div>
+                    <span class="studio-count">11 模型</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Architecture -->
+        <div class="card">
+            <h2>🏗️ 技术架构</h2>
+            <pre><code>Next.js 14 (App Router) + React 18 + Tailwind CSS v3 + Electron
+├── npm workspaces monorepo
+├── packages/studio — 共享 React 组件库（模型定义、API 客户端）
+├── Vite proxy 处理 CORS
+└── Muapi.ai 作为 AI 模型 API 网关
+
+Open-Generative-AI/
+├── app/                    # Next.js App Router
+├── components/             # Shell、API Key 管理
+├── packages/studio/src/    # 核心 SDK
+│   ├── models.js           # 200+ 模型定义（单一数据源）
+│   ├── muapi.js            # API 客户端
+│   └── components/         # 各工作室 UI 组件
+└── electron/               # 桌面端封装</code></pre>
+            <h3>关键技术特点</h3>
+            <ul>
+                <li><strong>双模式自动切换</strong> — Image/Video Studio 根据是否上传参考图自动切换模型集</li>
+                <li><strong>统一模型管理</strong> — 所有模型定义集中在 <span class="inline-code">models.js</span>，一处更新全局生效</li>
+                <li><strong>两步异步 API</strong> — Submit → Poll 轮询模式，支持长时间生成任务</li>
+                <li><strong>本地推理双引擎</strong> — sd.cpp（打包集成，Metal GPU）+ Wan2GP（外部 Python 服务器）</li>
+                <li><strong>工作流编排</strong> — 基于 Vibe-Workflow 子模块的节点式可视化管道</li>
+            </ul>
+        </div>
+
+        <!-- Application Scenarios -->
+        <div class="card">
+            <h2>🎯 应用场景</h2>
+            <table>
+                <thead>
+                    <tr><th>场景</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>📱 内容创作者</td><td>快速生成社交媒体图片、短视频素材</td></tr>
+                    <tr><td>🎮 独立游戏开发</td><td>批量生成角色立绘、场景概念图</td></tr>
+                    <tr><td>🎬 影视前期</td><td>Cinema Studio 模拟虚拟摄影，快速出分镜</td></tr>
+                    <tr><td>🤖 AI 数字人</td><td>Lip Sync Studio 生成口型同步的虚拟主播视频</td></tr>
+                    <tr><td>🔄 自动化管道</td><td>Workflow Studio + Generative-Media-Skills 驱动 Agent 批量生产</td></tr>
+                    <tr><td>🔒 隐私创作</td><td>自部署 + 本地推理，敏感内容不出本地</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="card">
+            <h2>🔥 为什么火</h2>
+            <ul>
+                <li><strong>踩中 AI 视频爆发节点</strong> — 2025-2026 年 AI 视频生成技术井喷，用户迫切需要统一入口管理碎片化模型</li>
+                <li><strong>"零过滤"定位引爆传播</strong> — 在主流平台加强内容审查的背景下，"No content filters" 成为强烈卖点</li>
+                <li><strong>降低使用门槛</strong> — 200+ 模型通过一个 API Key 统一访问，不需分别注册各家平台</li>
+                <li><strong>桌面应用覆盖广</strong> — 一键安装包覆盖 macOS/Windows/Linux，非技术用户也能用</li>
+                <li><strong>MIT 开源许可</strong> — 商业友好，吸引开发者参与和二次开发</li>
+                <li><strong>社交媒体病毒传播</strong> — Instagram Reels、LinkedIn 上"整个十亿级 AI 视频栈免费了"广泛传播</li>
+            </ul>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2>⚔️ 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>Open-Generative-AI</th>
+                        <th>ComfyUI</th>
+                        <th>SD WebUI</th>
+                        <th>Runway</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>开源</td><td>MIT</td><td>GPL</td><td>AGPL</td><td>否</td></tr>
+                    <tr><td>模型数量</td><td>200+（聚合）</td><td>自定义节点</td><td>SD 系列</td><td>专有</td></tr>
+                    <tr><td>视频生成</td><td>100+ 模型</td><td>社区插件</td><td>有限</td><td>支持</td></tr>
+                    <tr><td>Lip Sync</td><td>9 模型</td><td>无</td><td>无</td><td>无</td></tr>
+                    <tr><td>本地推理</td><td>sd.cpp + Wan2GP</td><td>原生</td><td>原生</td><td>无</td></tr>
+                    <tr><td>桌面应用</td><td>Electron</td><td>无</td><td>无</td><td>无</td></tr>
+                    <tr><td>使用门槛</td><td>低</td><td>高</td><td>中</td><td>低</td></tr>
+                    <tr><td>费用</td><td>免费 + API 按量</td><td>免费</td><td>免费</td><td>订阅制</td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 12px; color: #8b949e; font-size: 13px;">
+                💡 <strong>核心差异</strong>：Open-Generative-AI 是<strong>聚合器</strong>而非推理框架 — 把 200+ 商业和开源模型统一到一个 UI，通过 Muapi.ai API 网关转发请求。
+            </p>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="card">
+            <h2>👥 适合谁使用</h2>
+            <div class="user-grid">
+                <div class="user-item">
+                    <div class="user-type">📱 内容创作者</div>
+                    <div class="user-fit stars">★★★★★</div>
+                    <div class="user-reason">一站式生成，无需多个平台</div>
+                </div>
+                <div class="user-item">
+                    <div class="user-type">🎨 AI 艺术探索者</div>
+                    <div class="user-fit stars">★★★★★</div>
+                    <div class="user-reason">200+ 模型自由切换，零过滤</div>
+                </div>
+                <div class="user-item">
+                    <div class="user-type">👨‍💻 独立开发者</div>
+                    <div class="user-fit stars">★★★★☆</div>
+                    <div class="user-reason">MIT 许可，可嵌入产品</div>
+                </div>
+                <div class="user-item">
+                    <div class="user-type">🤖 AI Agent 开发者</div>
+                    <div class="user-fit stars">★★★★☆</div>
+                    <div class="user-reason">Skills 支持 Claude Code 驱动</div>
+                </div>
+                <div class="user-item">
+                    <div class="user-type">🏢 企业用户</div>
+                    <div class="user-fit stars">★★★☆☆</div>
+                    <div class="user-reason">依赖第三方 API，需关注稳定性</div>
+                </div>
+                <div class="user-item">
+                    <div class="user-type">🖥️ 本地推理用户</div>
+                    <div class="user-fit stars">★★★☆☆</div>
+                    <div class="user-reason">本地引擎仍在早期</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2>🚀 快速上手</h2>
+            <h3>方式一：桌面应用（推荐新手）</h3>
+            <pre><code># 1. 前往 Releases 下载对应平台安装包
+#    https://github.com/Anil-matcha/Open-Generative-AI/releases
+
+# 2. macOS 需要解除 Gatekeeper 限制
+xattr -cr "/Applications/Open Generative AI.app"
+
+# 3. 启动后输入 Muapi.ai API Key（免费注册获取）
+# 4. 选择工作室 → 输入提示词 → 点击 Generate</code></pre>
+
+            <h3>方式二：从源码构建</h3>
+            <pre><code># 克隆（含子模块）
+git clone --recurse-submodules https://github.com/Anil-matcha/Open-Generative-AI.git
+cd Open-Generative-AI
+
+# 安装依赖并构建工作区包
+npm run setup
+
+# 启动桌面应用（Electron）
+npm run electron:dev
+
+# 或启动 Web 版（Next.js）
+npm run dev</code></pre>
+
+            <h3>方式三：在线体验</h3>
+            <p>访问 <span class="inline-code">https://dev.muapi.ai/open-generative-ai</span>，注册免费账号即可在浏览器中使用。</p>
+
+            <h3>本地模型推理（桌面端）</h3>
+            <pre><code># Settings → Local Models → 安装 sd.cpp 引擎
+# 下载模型（推荐 Dreamshaper 8，仅 2.1GB）
+# Image Studio 中点击 ⚡ Local 切换到本地推理模式</code></pre>
+        </div>
+
+        <!-- Scores -->
+        <div class="card">
+            <h2>📊 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-card">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value">8.0</div>
+                    <div class="score-bar"><div class="score-fill" style="width: 80%"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value">7.5</div>
+                    <div class="score-bar"><div class="score-fill" style="width: 75%"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value">8.0</div>
+                    <div class="score-bar"><div class="score-fill" style="width: 80%"></div></div>
+                </div>
+            </div>
+            <div class="total-score">
+                <div class="big-score">8.3</div>
+                <div class="score-desc">综合评分 / 10</div>
+            </div>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="conclusion">
+            <h2 style="color: #e0e7ff; font-size: 18px; margin-bottom: 12px; border: none; padding: 0;">📝 总结</h2>
+            <p>Open-Generative-AI 是当前最全面的<strong>开源 AI 创意媒体聚合平台</strong>。它不是推理引擎，而是一个精心设计的统一入口，让用户通过一个界面访问 200+ AI 图像/视频模型。</p>
+            <p>在 AI 视频生成技术井喷的 2025-2026 年，这种"一站式 + 零过滤 + 可自部署"的定位精准击中了创作者和开发者的需求，这也是它能快速获得 14K+ Stars 的核心原因。</p>
+            <p style="color: #8b949e; font-size: 13px; margin-top: 8px;">⚠️ 注意：云端生成依赖 Muapi.ai 第三方 API，重度用户需关注 API 成本和可用性。</p>
+        </div>
+
+        <div class="footer">
+            分析日期：2026-05-17 | 数据来源：GitHub、Web Search<br>
+            🤖 由 AI 自动分析生成 | Powered by Claude Code
+        </div>
+    </div>
+</body>
+</html>
