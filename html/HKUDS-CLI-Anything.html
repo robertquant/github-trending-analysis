@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: CLI-Anything — 让所有软件变为 Agent 原生</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-card-hover: #21293a;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2e0;
+            --gradient-1: linear-gradient(135deg, #58a6ff 0%, #bc8cff 50%, #f0883e 100%);
+            --gradient-2: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);
+            --gradient-3: linear-gradient(135deg, #bc8cff 0%, #f85149 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(188, 140, 255, 0.06) 0%, transparent 50%);
+            animation: headerPulse 8s ease-in-out infinite alternate;
+        }
+        @keyframes headerPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        .header h1 {
+            font-size: 2.8em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            position: relative;
+        }
+        .header .meta-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .badge-stars { border-color: #f0883e55; color: var(--accent-orange); }
+        .badge-lang { border-color: #58a6ff55; color: var(--accent-blue); }
+        .badge-today { border-color: #3fb95055; color: var(--accent-green); }
+        .badge-license { border-color: #bc8cff55; color: var(--accent-purple); }
+        .badge-org { border-color: #39d2e055; color: var(--accent-cyan); }
+
+        /* Section */
+        .section {
+            margin-top: 32px;
+        }
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid transparent;
+            border-image: var(--gradient-1) 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .icon {
+            font-size: 1.2em;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .card h3 {
+            font-size: 1.15em;
+            margin-bottom: 10px;
+            color: var(--accent-blue);
+        }
+        .card p, .card li {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+        .card ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+        .card li { margin-bottom: 6px; }
+        .card strong { color: var(--text-primary); }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8em; }
+        }
+
+        /* Table */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        thead th {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+        tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* Code */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: #c9d1d9;
+            position: relative;
+        }
+        .code-block .lang-tag {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-block .comment { color: #6a737d; }
+        .code-block .cmd { color: var(--accent-green); }
+        .code-block .flag { color: var(--accent-orange); }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .keyword { color: var(--accent-purple); }
+
+        /* Score */
+        .score-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .score-circle {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+        .score-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .score-bar-wrap {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            height: 6px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .s-green { background: var(--gradient-2); }
+        .s-blue { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+        .s-purple { background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue)); }
+        .s-orange { background: linear-gradient(90deg, var(--accent-orange), var(--accent-green)); }
+
+        .score-total {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .score-total .big-score {
+            font-size: 3em;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            border-left: 4px solid;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 16px;
+            background: var(--bg-card);
+        }
+        .hl-blue { border-color: var(--accent-blue); }
+        .hl-green { border-color: var(--accent-green); }
+        .hl-orange { border-color: var(--accent-orange); }
+        .hl-purple { border-color: var(--accent-purple); }
+
+        /* Comparison */
+        .vs-table td:first-child { font-weight: 600; color: var(--text-primary); }
+        .winner { color: var(--accent-green); font-weight: 600; }
+
+        /* Tags */
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .tag {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.82em;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .tag-t { color: var(--accent-blue); border-color: #58a6ff44; }
+        .tag-g { color: var(--accent-green); border-color: #3fb95044; }
+        .tag-o { color: var(--accent-orange); border-color: #f0883e44; }
+        .tag-p { color: var(--accent-purple); border-color: #bc8cff44; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>CLI-Anything</h1>
+        <div class="subtitle">Making ALL Software Agent-Native — 让所有软件变为 Agent 原生</div>
+        <div class="meta-badges">
+            <span class="badge badge-stars">&#9733; 35,338 Stars</span>
+            <span class="badge badge-today">&#128200; +333 Today</span>
+            <span class="badge badge-lang">Python (97.1%)</span>
+            <span class="badge badge-org">HKUDS / 香港大学</span>
+            <span class="badge badge-license">Apache 2.0</span>
+        </div>
+        <div class="tag-list" style="justify-content:center;margin-top:16px;">
+            <span class="tag tag-t">AI Agent</span>
+            <span class="tag tag-t">CLI Generator</span>
+            <span class="tag tag-g">Agent-Native</span>
+            <span class="tag tag-g">Tool Integration</span>
+            <span class="tag tag-o">Claude Code Plugin</span>
+            <span class="tag tag-p">37+ Software</span>
+        </div>
+    </div>
+
+    <!-- 核心简介 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#127919;</span> 项目简介与核心功能</h2>
+        <div class="highlight-box hl-blue">
+            <p><strong>一句话概括：</strong>CLI-Anything 是一个自动化 CLI 生成框架，能够将任何有源代码的软件转化为 AI Agent 可直接调用的命令行工具，无需 API、无需 GUI 自动化、无需重建软件。</p>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>&#129302; 核心理念</h3>
+                <p>今天的软件服务人类，明天的用户将是 AI Agent。CLI-Anything 填补了 AI Agent 与全球软件之间的鸿沟 — 将人类设计的软件通过一条命令转化为 Agent 原生工具。</p>
+            </div>
+            <div class="card">
+                <h3>&#9889; 七阶段自动化流水线</h3>
+                <ul>
+                    <li><strong>Analyze</strong> — 扫描源码，映射 GUI 操作到 API</li>
+                    <li><strong>Design</strong> — 设计命令组、状态模型、输出格式</li>
+                    <li><strong>Implement</strong> — 构建 Click CLI + REPL + JSON 输出</li>
+                    <li><strong>Plan Tests</strong> — 创建单元 + E2E 测试计划</li>
+                    <li><strong>Write Tests</strong> — 实现完整测试套件</li>
+                    <li><strong>Document</strong> — 更新文档和测试结果</li>
+                    <li><strong>Publish</strong> — 创建 setup.py，安装到 PATH</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#128736;</span> 技术架构与特点</h2>
+        <div class="grid-2">
+            <div class="card">
+                <h3>&#127912; 架构设计</h3>
+                <ul>
+                    <li><strong>真实软件集成</strong> — 直接调用真实应用后端（Blender bpy、LibreOffice headless、FFmpeg），零妥协</li>
+                    <li><strong>双模式交互</strong> — 状态 REPL 交互模式 + 子命令脚本模式</li>
+                    <li><strong>Agent 原生设计</strong> — --json 标志提供结构化数据，--help 提供自动发现</li>
+                    <li><strong>SKILL.md 生成</strong> — 每个 CLI 自动生成 Agent 可发现的技能定义文件</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>&#128640; CLI-Hub 生态</h3>
+                <ul>
+                    <li><strong>包管理器</strong> — <code style="color:var(--accent-green)">pip install cli-anything-hub</code> 一键管理所有 CLI</li>
+                    <li><strong>Meta-Skill</strong> — Agent 可自主发现、安装所需 CLI</li>
+                    <li><strong>公共注册表</strong> — 支持 pip、npm、brew 等多源安装</li>
+                    <li><strong>社区贡献</strong> — PR 即可添加新 CLI，Hub 即时更新</li>
+                </ul>
+            </div>
+        </div>
+        <div class="card" style="margin-top:16px;">
+            <h3>&#128187; 多平台支持</h3>
+            <div class="tag-list">
+                <span class="tag tag-t">Claude Code</span>
+                <span class="tag tag-t">Pi Coding Agent</span>
+                <span class="tag tag-t">OpenCode</span>
+                <span class="tag tag-g">Codex</span>
+                <span class="tag tag-g">Qodercli</span>
+                <span class="tag tag-g">OpenClaw</span>
+                <span class="tag tag-o">GitHub Copilot CLI</span>
+                <span class="tag tag-o">Goose</span>
+                <span class="tag tag-p">更多平台开发中...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已支持软件 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#128230;</span> 已覆盖的软件生态（37+）</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>类别</th><th>代表软件</th><th>测试数</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>&#127912; 创意与媒体</td><td>GIMP, Blender, Inkscape, Krita, Audacity, Kdenlive, Shotcut, OBS Studio</td><td>1,301</td></tr>
+                    <tr><td>&#128196; 办公与文档</td><td>LibreOffice, Draw.io, Mermaid, MuseScore</td><td>362</td></tr>
+                    <tr><td>&#129302; AI/ML 平台</td><td>ComfyUI, Ollama, AnyGen, NotebookLM</td><td>239</td></tr>
+                    <tr><td>&#128187; 开发工具</td><td>iTerm2, LLDB, RenderDoc, Nsight Graphics, Unreal Insights</td><td>326</td></tr>
+                    <tr><td>&#128276; 通讯协作</td><td>Zoom, Mailchimp, Exa</td><td>62</td></tr>
+                    <tr><td>&#127918; 游戏开发</td><td>Godot Engine, s&box, Slay the Spire II</td><td>268</td></tr>
+                    <tr><td>&#128300; 科学计算</td><td>FreeCAD, QGIS, CloudCompare, Uni-Mol Tools, CloudAnalyzer</td><td>203</td></tr>
+                    <tr><td>&#9889; 自动化/网络</td><td>n8n, Dify Workflow, AdGuard Home, WireMock, PM2</td><td>112+</td></tr>
+                    <tr style="font-weight:600;"><td style="color:var(--accent-green)">总计</td><td style="color:var(--accent-green)">37+ 应用</td><td style="color:var(--accent-green)">2,280+ (100% 通过)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#127760;</span> 应用场景</h2>
+        <div class="grid-3">
+            <div class="card">
+                <h3>&#128736;&#65039; Agent 驱动的自动化</h3>
+                <p>让 AI Agent 直接操作专业软件：3D 建模、视频剪辑、音频处理、文档生成 — 全部通过结构化 CLI 完成。</p>
+            </div>
+            <div class="card">
+                <h3>&#128200; 企业工具链集成</h3>
+                <p>将分散的 SaaS API 统一为一个 CLI：Mailchimp 营销、Zoom 会议、n8n 工作流 — 一个工具替代几十个 API 调用。</p>
+            </div>
+            <div class="card">
+                <h3>&#129514; 科研与工程</h3>
+                <p>Agent 自主完成 FreeCAD 建模、QGIS 地图分析、分子建模 — 从数据采集到可视化全自动化。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#128293;</span> 为什么火？Trending 原因分析</h2>
+        <div class="grid-2">
+            <div class="card">
+                <h3>1. 切中 2026 年最大风口</h3>
+                <p>Agent-Native 是 2026 年最热话题。CLI vs MCP 大辩论中，CLI-Anything 是 CLI 阵营的旗舰项目。业界共识：CLI 比 MCP 节省 <strong>4-32 倍 Token</strong>。</p>
+            </div>
+            <div class="card">
+                <h3>2. 学术背景 + 实战落地</h3>
+                <p>来自<strong>香港大学数据科学实验室 (HKUDS)</strong>，有 arXiv 论文支撑。不是纯理论 — 37 个真实软件、2,280+ 测试、100% 通过率。</p>
+            </div>
+            <div class="card">
+                <h3>3. 极低的入门门槛</h3>
+                <p>一条命令 <code style="color:var(--accent-green)">/cli-anything ./your-software</code> 即可生成完整 CLI。支持 Claude Code、Codex、Copilot 等主流 Agent 平台。</p>
+            </div>
+            <div class="card">
+                <h3>4. 活跃的社区生态</h3>
+                <p>150 Watchers、3.5k Forks、636 Commits。CLI-Hub 包管理器上线后社区贡献加速，每天有新 CLI 合并。LinkedIn 235+ 点赞，SkillTrust 评分 92。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#9878;</span> 同类项目对比</h2>
+        <div class="table-wrap">
+            <table class="vs-table">
+                <thead>
+                    <tr><th>维度</th><th>CLI-Anything</th><th>MCP (Model Context Protocol)</th><th>OpenAI Function Calling</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>核心理念</td>
+                        <td class="winner">自动生成 CLI 让 Agent 控制软件</td>
+                        <td>标准化 Agent 与工具通信协议</td>
+                        <td>模型内嵌函数调用</td>
+                    </tr>
+                    <tr>
+                        <td>Token 消耗</td>
+                        <td class="winner">最低（结构化 CLI）</td>
+                        <td>高（4-32x vs CLI）</td>
+                        <td>中等</td>
+                    </tr>
+                    <tr>
+                        <td>覆盖范围</td>
+                        <td class="winner">任何有源码的软件</td>
+                        <td>需要 MCP Server 适配</td>
+                        <td>仅限 OpenAI 生态</td>
+                    </tr>
+                    <tr>
+                        <td>行业支持</td>
+                        <td>新兴社区</td>
+                        <td class="winner">OpenAI / Google / Microsoft</td>
+                        <td>OpenAI 原生</td>
+                    </tr>
+                    <tr>
+                        <td>可靠性</td>
+                        <td class="winner">CLI 确定性执行</td>
+                        <td>依赖 Server 状态</td>
+                        <td>依赖 API 可用性</td>
+                    </tr>
+                    <tr>
+                        <td>学习成本</td>
+                        <td class="winner">极低（一条命令）</td>
+                        <td>需要理解协议</td>
+                        <td>需要定义 Schema</td>
+                    </tr>
+                    <tr>
+                        <td>测试覆盖</td>
+                        <td class="winner">2,280+ 测试 / 100% 通过</td>
+                        <td>无统一标准</td>
+                        <td>无统一标准</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="highlight-box hl-green" style="margin-top:16px;">
+            <p><strong>核心优势：</strong>CLI-Anything 不是要替代 MCP，而是提供了一种更轻量、更高效、更通用的 Agent-软件集成方式。两者可以互补 — CLI 处理确定性任务，MCP 处理需要状态管理的复杂交互。</p>
+        </div>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#129333;</span> 适合谁使用？</h2>
+        <div class="grid-2">
+            <div class="card">
+                <h3>&#127919; 核心用户</h3>
+                <ul>
+                    <li><strong>AI Agent 开发者</strong> — 需要让 Agent 控制专业软件</li>
+                    <li><strong>Claude Code / Copilot 用户</strong> — 扩展 Agent 工具能力</li>
+                    <li><strong>DevOps 工程师</strong> — 自动化复杂软件工作流</li>
+                    <li><strong>开源贡献者</strong> — 为喜欢的软件构建 Agent CLI</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>&#128101; 次要用户</h3>
+                <ul>
+                    <li><strong>研究人员</strong> — 用 Agent 自动化科研工具链</li>
+                    <li><strong>内容创作者</strong> — Agent 辅助 3D 建模、视频剪辑</li>
+                    <li><strong>企业开发者</strong> — 统一内部工具的 Agent 接口</li>
+                    <li><strong>AI 爱好者</strong> — 探索 Agent-Native 软件新范式</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#128640;</span> 快速上手指南</h2>
+        <div class="card">
+            <h3>Step 1: 安装插件（Claude Code）</h3>
+            <div class="code-block">
+                <span class="lang-tag">bash</span>
+<span class="comment"># 添加 CLI-Anything 市场</span>
+<span class="cmd">/plugin marketplace add HKUDS/CLI-Anything</span>
+
+<span class="comment"># 安装插件</span>
+<span class="cmd">/plugin install cli-anything</span>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Step 2: 一条命令生成 CLI</h3>
+            <div class="code-block">
+                <span class="lang-tag">bash</span>
+<span class="comment"># 为 GIMP 生成完整 CLI（全部 7 个阶段）</span>
+<span class="cmd">/cli-anything ./gimp</span>
+
+<span class="comment"># 从 GitHub 仓库生成</span>
+<span class="cmd">/cli-anything https://github.com/blender/blender</span>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Step 3: 使用生成的 CLI</h3>
+            <div class="code-block">
+                <span class="lang-tag">bash</span>
+<span class="comment"># 安装到 PATH</span>
+<span class="cmd">cd</span> gimp/agent-harness && <span class="cmd">pip install</span> <span class="flag">-e</span> .
+
+<span class="comment"># 查看帮助</span>
+<span class="cmd">cli-anything-gimp</span> <span class="flag">--help</span>
+
+<span class="comment"># JSON 输出（Agent 使用）</span>
+<span class="cmd">cli-anything-gimp</span> <span class="flag">--json</span> project new <span class="flag">--width</span> <span class="string">1920</span> <span class="flag">--height</span> <span class="string">1080</span>
+
+<span class="comment"># 进入 REPL 交互模式</span>
+<span class="cmd">cli-anything-blender</span>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Step 4: 迭代优化（可选）</h3>
+            <div class="code-block">
+                <span class="lang-tag">bash</span>
+<span class="comment"># 全面优化 — 分析所有功能缺口</span>
+<span class="cmd">/cli-anything:refine</span> ./gimp
+
+<span class="comment"># 定向优化 — 针对特定功能</span>
+<span class="cmd">/cli-anything:refine</span> ./gimp <span class="string">"image batch processing and filters"</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#11088;</span> 综合评分</h2>
+        <div class="grid-5" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;">
+            <div class="card score-card">
+                <div class="score-circle" style="border:3px solid var(--accent-orange);color:var(--accent-orange);">9.0</div>
+                <div class="score-label">创新性</div>
+                <div class="score-bar-wrap"><div class="score-bar s-orange" style="width:90%"></div></div>
+            </div>
+            <div class="card score-card">
+                <div class="score-circle" style="border:3px solid var(--accent-green);color:var(--accent-green);">9.5</div>
+                <div class="score-label">代码质量</div>
+                <div class="score-bar-wrap"><div class="score-bar s-green" style="width:95%"></div></div>
+            </div>
+            <div class="card score-card">
+                <div class="score-circle" style="border:3px solid var(--accent-blue);color:var(--accent-blue);">9.2</div>
+                <div class="score-label">实用性</div>
+                <div class="score-bar-wrap"><div class="score-bar s-blue" style="width:92%"></div></div>
+            </div>
+            <div class="card score-card">
+                <div class="score-circle" style="border:3px solid var(--accent-purple);color:var(--accent-purple);">8.8</div>
+                <div class="score-label">文档完善度</div>
+                <div class="score-bar-wrap"><div class="score-bar s-purple" style="width:88%"></div></div>
+            </div>
+            <div class="card score-card">
+                <div class="score-circle" style="border:3px solid var(--accent-green);color:var(--accent-green);">9.3</div>
+                <div class="score-label">社区活跃度</div>
+                <div class="score-bar-wrap"><div class="score-bar s-green" style="width:93%"></div></div>
+            </div>
+        </div>
+        <div class="score-total">
+            <div class="big-score">9.2 / 10</div>
+            <p style="color:var(--text-secondary);margin-top:8px;font-size:1.1em;">综合评价：<strong style="color:var(--accent-green)">S 级项目</strong> — Agent-Native 时代的基石工具</p>
+        </div>
+    </div>
+
+    <!-- 评分理由 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#128220;</span> 评分理由</h2>
+        <div class="highlight-box hl-blue">
+            <p><strong>创新性 9.0：</strong>开创性地提出"Agent-Native Software"概念，7 阶段自动 CLI 生成流水线是独创方法论。SKILL.md 元技能发现机制设计巧妙。扣分点：依赖强大的前沿模型。</p>
+        </div>
+        <div class="highlight-box hl-green">
+            <p><strong>代码质量 9.5：</strong>2,280+ 测试、100% 通过率令人印象深刻。多层测试（Unit + E2E + Subprocess）覆盖全面。统一 REPL 接口 (ReplSkin) 和 cli_anything 命名空间设计规范。</p>
+        </div>
+        <div class="highlight-box hl-orange">
+            <p><strong>实用性 9.2：</strong>已覆盖 37+ 真实软件，跨创意、办公、科学、开发等多领域。一条命令生成 CLI 极其便捷。扣分点：部分软件仍需迭代 refine 才能达到生产质量。</p>
+        </div>
+        <div class="highlight-box hl-purple">
+            <p><strong>文档 8.8：</strong>README 极其详尽（多语言），包含架构图、Demo GIF、完整 API 文档。HARNESS.md 方法论文档专业。扣分点：API 参考文档分散在各个 harness 中。</p>
+        </div>
+        <div class="highlight-box hl-blue">
+            <p><strong>社区 9.3：</strong>35k+ Stars，150 Watchers，636 Commits，社区贡献活跃。CLI-Hub 注册表和 meta-skill 生态设计出色。SkillTrust 评分 92，LinkedIn 热度 235+ 反应。</p>
+        </div>
+    </div>
+
+    <!-- Links -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">&#128279;</span> 相关链接</h2>
+        <div class="card">
+            <ul>
+                <li><strong>GitHub:</strong> <a href="https://github.com/HKUDS/CLI-Anything" style="color:var(--accent-blue)">HKUDS/CLI-Anything</a></li>
+                <li><strong>CLI-Hub:</strong> <a href="https://clianything.cc" style="color:var(--accent-blue)">clianything.cc</a></li>
+                <li><strong>arXiv 论文:</strong> <a href="https://arxiv.org/html/2603.25723v1" style="color:var(--accent-blue)">Natural-Language Agent Harnesses</a></li>
+                <li><strong>SkillTrust:</strong> <a href="https://skilltrust.ai/author/hkuds" style="color:var(--accent-blue)">评分 92</a></li>
+                <li><strong>CLI vs MCP 讨论:</strong> <a href="https://www.reddit.com/r/AI_Agents/comments/1rjtp3q/the_truth_about_mcp_vs_cli/" style="color:var(--accent-blue)">Reddit: The Truth About MCP vs CLI</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>GitHub Trending 深度分析 | 2026-05-18 | 由 AI 自动生成</p>
+    </div>
+</div>
+</body>
+</html>
