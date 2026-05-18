@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowBroker - GitHub Trending 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid #21262d;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+        }
+        .meta-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .meta-badge {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .meta-badge .label { color: #8b949e; }
+        .meta-badge .value { color: #58a6ff; font-weight: 600; }
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 {
+            color: #79c0ff;
+            font-size: 1.1em;
+            margin: 16px 0 8px;
+        }
+        .card p, .card li {
+            color: #c9d1d9;
+            font-size: 0.95em;
+        }
+        .card ul {
+            padding-left: 20px;
+        }
+        .card ul li {
+            margin-bottom: 6px;
+        }
+        .card ul li::marker {
+            color: #58a6ff;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border: 1px solid rgba(88,166,255,0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        .highlight-box p {
+            color: #e6edf3;
+        }
+        .warning-box {
+            background: rgba(210,153,34,0.1);
+            border: 1px solid rgba(210,153,34,0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        .warning-box p { color: #d29922; }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .score-label {
+            color: #8b949e;
+            font-size: 0.85em;
+            margin-bottom: 6px;
+        }
+        .score-item .score-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .score-item .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .s9 { color: #3fb950; }
+        .s8 { color: #58a6ff; }
+        .s7 { color: #bc8cff; }
+        .s6 { color: #d29922; }
+        .bar-9 { background: linear-gradient(90deg, #3fb950, #2ea043); }
+        .bar-8 { background: linear-gradient(90deg, #58a6ff, #1f6feb); }
+        .bar-7 { background: linear-gradient(90deg, #bc8cff, #8b5cf6); }
+        .bar-6 { background: linear-gradient(90deg, #d29922, #bb8009); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        th {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+        }
+        tr:hover td { background: rgba(88,166,255,0.05); }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'SF Mono', Consolas, monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .tag {
+            display: inline-block;
+            background: rgba(88,166,255,0.15);
+            color: #58a6ff;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.82em;
+            margin: 2px;
+        }
+        .tag.green { background: rgba(63,185,80,0.15); color: #3fb950; }
+        .tag.purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+        .tag.orange { background: rgba(210,153,34,0.15); color: #d29922; }
+        .tag.red { background: rgba(248,81,73,0.15); color: #f85149; }
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>ShadowBroker</h1>
+        <p class="subtitle">Open-source intelligence for the global theater — 全球实时地缘空间情报平台</p>
+        <div class="meta-bar">
+            <span class="meta-badge"><span class="label">Stars</span><span class="value">6,794</span></span>
+            <span class="meta-badge"><span class="label">Today</span><span class="value">+165</span></span>
+            <span class="meta-badge"><span class="label">Language</span><span class="value">Python / TypeScript</span></span>
+            <span class="meta-badge"><span class="label">License</span><span class="value">AGPL-3.0</span></span>
+            <span class="meta-badge"><span class="label">Forks</span><span class="value">1.1k</span></span>
+        </div>
+        <div style="margin-top:14px;">
+            <span class="tag green">OSINT</span>
+            <span class="tag">geospatial</span>
+            <span class="tag purple">real-time</span>
+            <span class="tag">maplibre</span>
+            <span class="tag">fastapi</span>
+            <span class="tag purple">next.js</span>
+            <span class="tag">decentralized</span>
+            <span class="tag orange">AI-agent</span>
+            <span class="tag">self-hosted</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2>项目简介与核心功能</h2>
+        <p><strong>ShadowBroker</strong> 是一个开源的去中心化实时情报聚合平台，将来自 <strong>60+ 个公开情报数据源</strong>的全球实时遥测数据汇聚到统一的暗黑风格地图界面中。从私人飞机、间谍卫星到地震事件、CCTV 网络，所有数据实时更新在一个屏幕上。</p>
+        <div class="highlight-box">
+            <p><strong>核心定位：</strong>将散落在数十个工具和 API 中的全球公开遥测数据（ADS-B 航空广播、AIS 海事信号、卫星轨道数据、地震传感器等）聚合到一个可自托管的统一界面中，让分析师、研究人员和普通用户都能在同一张地图上看到所有公开信号。</p>
+        </div>
+        <h3>核心功能亮点</h3>
+        <ul>
+            <li><strong>航空追踪</strong> — 商用/私人/军用飞机实时位置，包括空军一号和亿万富翁私人飞机；支持盘旋检测、地面检测</li>
+            <li><strong>海事追踪</strong> — 25,000+ AIS 船只实时位置，包含航母打击群追踪（GDELT 新闻抓取估算定位）</li>
+            <li><strong>卫星追踪</strong> — 2,000+ 颗活跃卫星实时轨道位置，按军事侦察、SAR、SIGINT 等任务类型彩色编码</li>
+            <li><strong>SAR 地面变化检测</strong> — 穿透云层、全天候检测毫米级地面变形、洪水范围、植被干扰和破坏评估</li>
+            <li><strong>37 个可切换数据图层</strong> — 涵盖地震、火灾、火山、天气预警、空气质量、军事基地、数据中心等</li>
+            <li><strong>11,000+ CCTV 摄像头</strong> — 伦敦、纽约、加州、西班牙、新加坡等 6 国实时摄像头流</li>
+            <li><strong>5 种视觉模式</strong> — DEFAULT / SATELLITE / FLIR（热成像）/ NVG（夜视）/ CRT（复古终端）</li>
+            <li><strong>右键情报报告</strong> — 点击地球上任意位置获取国家简报、元首信息、最新 Sentinel-2 卫星照片</li>
+            <li><strong>AI 代理命令通道</strong> — HMAC 签名的双向代理桥，让 AI 代理（OpenClaw/Claude/GPT 等）完全操控地图</li>
+            <li><strong>InfoNet 去中心化通信</strong> — 首个内置于 OSINT 工具中的去中心化情报通信和治理层</li>
+            <li><strong>时间机器</strong> — 快照回放功能，可暂停、回放、快进整个遥测数据流</li>
+        </ul>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2>技术架构与特点</h2>
+        <h3>技术栈</h3>
+        <table>
+            <tr><th>层级</th><th>技术</th></tr>
+            <tr><td>前端框架</td><td>Next.js + React</td></tr>
+            <tr><td>地图引擎</td><td>MapLibre GL (WebGL 渲染)</td></tr>
+            <tr><td>后端框架</td><td>FastAPI (Python)</td></tr>
+            <tr><td>调度系统</td><td>APScheduler (fast/slow 双层调度)</td></tr>
+            <tr><td>密码学核心</td><td>Rust crate (privacy-core)</td></tr>
+            <tr><td>容器化</td><td>Docker / Podman / Helm (K8s)</td></tr>
+            <tr><td>数据缓存</td><td>ETag + Gzip (92% 压缩率)</td></tr>
+            <tr><td>语言占比</td><td>Python 61%, TypeScript 34.6%, Rust 2.4%</td></tr>
+        </table>
+        <h3>三层架构</h3>
+        <ul>
+            <li><strong>Operator UI（操作员界面层）</strong> — Next.js + MapLibre GL WebGL 渲染，包含地图、新闻情报、Sovereign Shell 治理面板、Mesh Chat</li>
+            <li><strong>Backend Service Plane（后端服务层）</strong> — FastAPI 驱动的数据采集引擎，APScheduler 管理 fast/slow 双层刷新，覆盖 60+ API 数据源</li>
+            <li><strong>Decentralized Layer（去中心化层）</strong> — InfoNet 实验性测试网，包含 Mesh Hashchain、Sovereign Shell 治理经济、Wormhole 中继</li>
+        </ul>
+        <h3>架构亮点</h3>
+        <ul>
+            <li><strong>视口裁剪</strong> — 仅渲染可见地图范围 (+20% 缓冲) 内的数据点，大幅降低渲染负载</li>
+            <li><strong>命令式地图更新</strong> — 高频数据层（航班、卫星、火灾）绕过 React 调和，直接调用 setData()</li>
+            <li><strong>集群渲染</strong> — 船只、CCTV、地震等使用 MapLibre 聚类，低缩放级别下显示计数标签</li>
+            <li><strong>位置插值</strong> — 10 秒 tick 动画平滑连接两次数据刷新之间的位置</li>
+            <li><strong>多架构支持</strong> — linux/amd64 + linux/arm64（支持树莓派 5）</li>
+            <li><strong>HMAC-SHA256 代理通道</strong> — 时间戳+随机数防重放，批量并发执行（最多 20 个命令）</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2>应用场景</h2>
+        <ul>
+            <li><strong>地缘政治分析</strong> — 实时追踪全球冲突事件（GDELT）、乌克兰前线动态、空袭警报</li>
+            <li><strong>航空/海事监控</strong> — 追踪高价值目标（空军一号、航母打击群、亿万富翁私人飞机/游艇）</li>
+            <li><strong>灾害响应</strong> — 地震、火山、野火、GPS 干扰区的实时可视化，SAR 穿透云层检测地面变化</li>
+            <li><strong>网络安全研究</strong> — Shodan 集成搜索联网设备，互联网中断监控，数据中心映射</li>
+            <li><strong>软件定义无线电</strong> — 500+ KiwiSDR 接收器全球分布，点击即可收听短波电台；警察/消防扫描器</li>
+            <li><strong>AI 辅助情报分析</strong> — 连接 AI 代理作为共同分析师，自动解析多层数据发现隐藏关联</li>
+            <li><strong>环境监测</strong> — 空气质量、天气预警、VIIRS 夜光变化检测</li>
+            <li><strong>教育与科普</strong> — 直观展示全球公开数据的力量，提高情报素养和公开数据意识</li>
+        </ul>
+        <div class="warning-box">
+            <p>⚠️ 该项目仅聚合公开可用的 OSINT 数据，不引入新的监控能力。所有数据均来自公开 API 和广播信号。项目完全开源，任何人都可以审计。</p>
+        </div>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2>为什么火 (Trending 原因)</h2>
+        <div class="highlight-box">
+            <p><strong>核心驱动力：将"不可能"的情报聚合能力平民化</strong></p>
+        </div>
+        <ul>
+            <li><strong>"上帝之眼"概念引爆</strong> — 在 Reddit r/osinttools 上以 "I made an open source God's Eye OSINT Dashboard" 为题发布，获 446+ 点赞。将好莱坞电影中的全球监控界面变成任何人都能运行的现实。</li>
+            <li><strong>零门槛部署</strong> — Docker 三行命令启动，预构建镜像无需编译。没有账户系统、没有遥测、没有分析，完全本地运行。</li>
+            <li><strong>数据源的广度前所未有</strong> — 60+ 数据源、37 个可切换图层，从飞机到卫星到地震到 CCTV，这种规模的公开数据聚合在开源世界中几乎没有先例。</li>
+            <li><strong>AI 代理集成</strong> — v0.9.7 引入的双向代理命令通道，让 ShadowBroker 从"人看的仪表板"变成"AI 可以操作的情报平台"，紧跟 AI Agent 热潮。</li>
+            <li><strong>极客美学</strong> — FLIR 热成像、NVG 夜视、CRT 复古终端等视觉模式，加上暗黑军事风格 UI，极具视觉冲击力和社交媒体传播性。</li>
+            <li><strong>地缘政治热点催化</strong> — 乌克兰前线实时地图、GPS 干扰区检测、GDELT 冲突事件聚合等功能，在当前国际局势下具有极强的现实意义和关注度。</li>
+            <li><strong>去中心化叙事</strong> — InfoNet 去中心化情报通信层 + Sovereign Shell 治理经济，符合 Web3/去中心化的技术叙事趋势。</li>
+            <li><strong>多平台媒体报道</strong> — Hackers Arise、Hacker News、Gigazine、daily.dev、LinkedIn 等多个技术媒体和社区均有报道讨论。</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2>同类项目对比</h2>
+        <table>
+            <tr>
+                <th>项目</th>
+                <th>开源</th>
+                <th>自托管</th>
+                <th>数据源</th>
+                <th>实时地图</th>
+                <th>AI 集成</th>
+                <th>许可证</th>
+            </tr>
+            <tr>
+                <td><strong>ShadowBroker</strong></td>
+                <td style="color:#3fb950">100%</td>
+                <td style="color:#3fb950">支持</td>
+                <td>60+</td>
+                <td style="color:#3fb950">MapLibre</td>
+                <td style="color:#3fb950">双向通道</td>
+                <td>AGPL-3.0</td>
+            </tr>
+            <tr>
+                <td>Maltego</td>
+                <td style="color:#f85149">商业</td>
+                <td style="color:#f85149">不支持</td>
+                <td>Transform Hub</td>
+                <td style="color:#f85149">关系图</td>
+                <td style="color:#d29922">有限</td>
+                <td>商业许可</td>
+            </tr>
+            <tr>
+                <td>Shodan</td>
+                <td style="color:#f85149">闭源</td>
+                <td style="color:#f85149">不支持</td>
+                <td>联网设备</td>
+                <td style="color:#3fb950">有</td>
+                <td style="color:#d29922">API</td>
+                <td>商业</td>
+            </tr>
+            <tr>
+                <td>SpiderFoot</td>
+                <td style="color:#3fb950">开源</td>
+                <td style="color:#3fb950">支持</td>
+                <td>200+ 模块</td>
+                <td style="color:#f85149">无地图</td>
+                <td style="color:#f85149">无</td>
+                <td>MIT</td>
+            </tr>
+            <tr>
+                <td>OpenStreetMap</td>
+                <td style="color:#3fb950">开源</td>
+                <td style="color:#3fb950">支持</td>
+                <td>地理数据</td>
+                <td style="color:#3fb950">核心功能</td>
+                <td style="color:#f85149">无</td>
+                <td>ODbL</td>
+            </tr>
+            <tr>
+                <td>ADS-B Exchange</td>
+                <td style="color:#d29922">部分</td>
+                <td style="color:#f85149">不支持</td>
+                <td>航空数据</td>
+                <td style="color:#3fb950">有</td>
+                <td style="color:#f85149">无</td>
+                <td>商业</td>
+            </tr>
+        </table>
+        <p style="margin-top:10px;color:#8b949e;">ShadowBroker 的独特价值在于将原本分散在 Maltego（关系分析）、Shodan（设备搜索）、ADS-B Exchange（航空追踪）、MarineTraffic（船舶追踪）等数十个专业工具中的能力，聚合到一个免费、开源、自托管的实时地图界面中。其 AI 代理集成能力和去中心化通信层更是同类项目中独有的。</p>
+    </div>
+
+    <!-- 适合谁使用 -->
+    <div class="card">
+        <h2>适合谁使用</h2>
+        <ul>
+            <li><strong>OSINT 分析师/研究人员</strong> — 需要一站式情报聚合平台，替代在多个工具间来回切换的工作流</li>
+            <li><strong>安全研究员/渗透测试人员</strong> — 利用 Shodan 集成、GPS 干扰检测等数据进行安全评估</li>
+            <li><strong>航空/海事爱好者</strong> — 实时追踪全球飞机和船只，满足爱好和好奇心</li>
+            <li><strong>新闻记者/调查记者</strong> — 地缘政治事件实时监控，高价值目标追踪（私人飞机等）</li>
+            <li><strong>业余无线电操作员</strong> — KiwiSDR、Meshtastic、APRS 集成，无线电与地图联动</li>
+            <li><strong>AI/LLM 开发者</strong> — 探索 AI 代理与实时情报平台的集成可能性</li>
+            <li><strong>应急响应/灾害管理人员</strong> — 地震、火灾、洪水、天气预警的实时可视化</li>
+            <li><strong>极客/技术爱好者</strong> — 纯粹被"上帝之眼"界面的酷炫程度吸引</li>
+        </ul>
+        <div class="warning-box">
+            <p>⚠️ InfoNet 去中心化通信目前为实验性测试网，不提供隐私保证。所有通道应视为公开。不适合传输任何敏感信息。</p>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2>快速上手指南</h2>
+        <h3>方式一：Docker 一键启动（推荐）</h3>
+        <div class="code-block">
+<span class="comment"># 1. 克隆仓库</span>
+<span class="cmd">git clone https://github.com/BigBodyCobain/Shadowbroker.git</span>
+<span class="cmd">cd Shadowbroker</span>
+
+<span class="comment"># 2. 拉取预构建镜像（无需本地编译）</span>
+<span class="cmd">docker compose pull</span>
+
+<span class="comment"># 3. 启动服务</span>
+<span class="cmd">docker compose up -d</span>
+
+<span class="comment"># 4. 打开浏览器访问 http://localhost:3000</span>
+        </div>
+        <h3>方式二：零代码安装（Release 下载）</h3>
+        <div class="code-block">
+<span class="comment"># 1. 从 GitHub Releases 页面下载最新 .zip</span>
+<span class="comment"># 2. 解压到本地</span>
+<span class="comment"># 3. Windows: 双击 start.bat</span>
+<span class="comment">#    Mac/Linux: chmod +x start.sh && ./start.sh</span>
+        </div>
+        <h3>方式三：Kubernetes / Helm 部署</h3>
+        <div class="code-block">
+<span class="cmd">helm repo add bjw-s-labs https://bjw-s-labs.github.io/helm-charts/</span>
+<span class="cmd">helm install shadowbroker ./helm/chart --create-namespace --namespace shadowbroker</span>
+        </div>
+        <h3>可选 API 密钥配置</h3>
+        <table>
+            <tr><th>密钥</th><th>用途</th><th>必需？</th></tr>
+            <tr><td>AIS_API_KEY</td><td>海事船只追踪 (aisstream.io)</td><td style="color:#d29922">推荐</td></tr>
+            <tr><td>OPENSKY_CLIENT_ID/SECRET</td><td>全球航班覆盖 (OAuth2)</td><td style="color:#d29922">推荐</td></tr>
+            <tr><td>SHODAN_API_KEY</td><td>联网设备搜索</td><td style="color:#8b949e">可选</td></tr>
+            <tr><td>SH_CLIENT_ID/SECRET</td><td>Sentinel Hub 卫星图像</td><td style="color:#8b949e">可选</td></tr>
+            <tr><td>NASA Earthdata</td><td>SAR 地面变化检测</td><td style="color:#8b949e">可选</td></tr>
+        </table>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2>综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value s9">9.5/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width:95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value s8">8/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-8" style="width:80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value s9">9/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value s9">9/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value s8">8/10</div>
+                <div class="score-bar"><div class="score-bar-fill bar-8" style="width:80%"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+            <span style="font-size:2em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">8.7 / 10</span>
+            <span style="display:block;color:#8b949e;margin-top:4px;">综合评分</span>
+        </div>
+        <h3>评分理由</h3>
+        <ul>
+            <li><strong>创新性 9.5</strong> — 在开源世界中几乎没有同类产品。将 60+ 公开情报源聚合到统一实时地图、内置 AI 代理命令通道、去中心化情报通信层——每一项都是开创性的。SAR 穿透云层地面变化检测在开源工具中更是罕见。</li>
+            <li><strong>代码质量 8</strong> — 310 次提交、14 个 Release，Python 61% + TypeScript 34.6% + Rust 2.4% 的多语言架构合理。三层架构设计清晰，性能优化到位（Gzip 92% 压缩、ETag 缓存、视口裁剪、命令式更新）。但 InfoNet 去中心化层的隐私原语尚未完全接线。</li>
+            <li><strong>实用性 9</strong> — Docker 三行命令即可运行，零门槛部署。覆盖航空、海事、太空、地缘政治、环境、基础设施等多个领域，实际应用场景广泛。</li>
+            <li><strong>文档 9</strong> — README 极其详尽（可能是 GitHub 上最长的 README 之一），包含完整的架构图、60+ 数据源表格、环境变量说明、部署指南（Docker/Podman/K8s/本地开发/零代码安装）、性能优化策略、项目结构说明。</li>
+            <li><strong>社区 8</strong> — 7k Stars、1.1k Forks、67 Watchers、46 个 Issues。贡献者来自多个国家，已有社区贡献的 ARM64 支持、CCTV 修复、Helm 架构等 PR。Reddit 和 Hacker News 上有大量讨论，但项目仍主要由单人驱动。</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>Generated on 2026-05-18 | GitHub Trending Deep Analysis</p>
+        <p style="margin-top:6px;"><a href="https://github.com/BigBodyCobain/Shadowbroker" style="color:#58a6ff;text-decoration:none;">github.com/BigBodyCobain/Shadowbroker</a></p>
+    </div>
+
+</div>
+</body>
+</html>
