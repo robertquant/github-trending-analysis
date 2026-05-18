@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: tech-leads-club/agent-skills</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56,139,253,0.06) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+            position: relative;
+        }
+        .header .meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-lang { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+        .badge-stars { background: #e3b34133; color: #e3b341; border: 1px solid #e3b34155; }
+        .badge-today { background: #3fb95033; color: #3fb950; border: 1px solid #3fb95055; }
+        .badge-license { background: #8b949e33; color: #8b949e; border: 1px solid #8b949e55; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #388bfd55; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card p, .card li { color: #c9d1d9; margin-bottom: 8px; }
+        .card ul { padding-left: 20px; }
+        .card ul li::marker { color: #58a6ff; }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .label { font-size: 0.8em; color: #8b949e; margin-bottom: 6px; }
+        .score-item .value { font-size: 1.8em; font-weight: 700; }
+        .score-item .bar-bg {
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+        .s1 .value { color: #58a6ff; }
+        .s1 .bar-fill { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+        .s2 .value { color: #3fb950; }
+        .s2 .bar-fill { background: linear-gradient(90deg, #238636, #3fb950); }
+        .s3 .value { color: #f0883e; }
+        .s3 .bar-fill { background: linear-gradient(90deg, #d29922, #f0883e); }
+        .s4 .value { color: #bc8cff; }
+        .s4 .bar-fill { background: linear-gradient(90deg, #8957e5, #bc8cff); }
+        .s5 .value { color: #f778ba; }
+        .s5 .bar-fill { background: linear-gradient(90deg, #db61a2, #f778ba); }
+
+        /* Comparison table */
+        .card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .card table th {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.9em;
+            border-bottom: 2px solid #21262d;
+        }
+        .card table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            font-size: 0.9em;
+        }
+        .card table tr:hover td { background: #161b2280; }
+
+        /* Code block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .flag { color: #d2a8ff; }
+        .code-block .string { color: #a5d6ff; }
+
+        /* Highlight box */
+        .highlight {
+            background: linear-gradient(135deg, #1f6feb15, #8957e515);
+            border-left: 4px solid #58a6ff;
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 14px 0;
+        }
+        .highlight strong { color: #58a6ff; }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: 600;
+            margin: 2px;
+        }
+        .tag-blue { background: #1f6feb33; color: #58a6ff; }
+        .tag-green { background: #23863633; color: #3fb950; }
+        .tag-purple { background: #8957e533; color: #bc8cff; }
+        .tag-orange { background: #d2992233; color: #f0883e; }
+        .tag-pink { background: #db61a233; color: #f778ba; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .card table { font-size: 0.8em; }
+            .card table th, .card table td { padding: 8px 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>tech-leads-club/agent-skills</h1>
+        <p class="subtitle">面向专业 AI 编码代理的安全、验证技能注册表</p>
+        <div class="meta">
+            <span class="badge badge-lang">TypeScript</span>
+            <span class="badge badge-stars">3,245 Stars</span>
+            <span class="badge badge-today">+44 Today</span>
+            <span class="badge badge-license">MIT / CC-BY-4.0</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 项目简介 -->
+        <div class="card">
+            <h2><span class="icon">📋</span> 项目简介</h2>
+            <p><strong>agent-skills</strong> 是由 Tech Leads Club 社区打造的 AI 编码代理技能注册表。它提供了一个<strong>经过安全验证的、标准化的技能分发平台</strong>，让你可以为 Claude Code、Cursor、Copilot、Antigravity 等主流 AI 编码代理安装"技能包"——类似于 VS Code 插件市场的概念，但专为 AI Agent 设计。</p>
+            <div class="highlight">
+                <strong>核心痛点：</strong>在 AI Agent 技能生态中，超过 <strong>13.4%</strong> 的开源技能包含严重安全漏洞。agent-skills 通过深度防御策略、静态分析、Snyk 扫描和人工审核，确保每个技能的安全性。
+            </div>
+            <p style="margin-top:12px;">
+                <span class="tag tag-blue">技能注册表</span>
+                <span class="tag tag-green">安全验证</span>
+                <span class="tag tag-purple">MCP Server</span>
+                <span class="tag tag-orange">CLI 工具</span>
+                <span class="tag tag-pink">跨代理兼容</span>
+            </p>
+        </div>
+
+        <!-- 核心功能 -->
+        <div class="card">
+            <h2><span class="icon">⚡</span> 核心功能</h2>
+            <ul>
+                <li><strong>技能安装器</strong> — 交互式 CLI 向导，一键浏览、选择并安装技能到多个 AI Agent</li>
+                <li><strong>安全沙箱</strong> — 深度防御：内容消毒、路径隔离、符号链接保护、原子锁文件、审计日志</li>
+                <li><strong>MCP Server</strong> — 通过 MCP 协议将技能目录直接暴露给 AI Agent，支持渐进式加载</li>
+                <li><strong>技能目录</strong> — 涵盖开发、云服务、自动化、设计、安全等多领域技能</li>
+                <li><strong>缓存与离线</strong> — CDN 按需下载，本地缓存支持离线使用</li>
+                <li><strong>全局/项目级安装</strong> — 支持 .claude、.cursor 等多级配置目录</li>
+            </ul>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="card">
+            <h2><span class="icon">🏗️</span> 技术架构</h2>
+            <ul>
+                <li><strong>语言与运行时：</strong>TypeScript + Node.js (≥22)</li>
+                <li><strong>构建系统：</strong>Nx Monorepo + Nx Cloud</li>
+                <li><strong>发布策略：</strong>Semantic Release 自动化版本管理</li>
+                <li><strong>安全扫描：</strong>Snyk Agent Scan（CI/CD 集成）</li>
+                <li><strong>完整性保障：</strong>Lockfile + Content Hashing 确保不可变</li>
+                <li><strong>分发方式：</strong>npm 包（@tech-leads-club/agent-skills）+ MCP Server</li>
+            </ul>
+            <div class="code-block">
+<span class="comment"># 技能目录结构</span>
+packages/skills-catalog/skills/
+  (category-name)/
+    skill/
+      SKILL.md          <span class="comment">← 主指令文件</span>
+      templates/        <span class="comment">← 文件模板</span>
+      references/       <span class="comment">← 按需加载的参考文档</span>
+            </div>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="card">
+            <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+            <ul>
+                <li><strong>AI Agent 爆发期：</strong>2026 年 AI 编码代理（Cursor、Claude Code、Copilot）使用量激增，技能生态是自然的延伸需求</li>
+                <li><strong>安全差异化：</strong>"13.4% 的技能有漏洞"这一数据极具冲击力，安全验证成为核心竞争力</li>
+                <li><strong>跨代理统一：</strong>一次安装，多代理生效，降低了碎片化管理的负担</li>
+                <li><strong>npm 生态集成：</strong>借助 npx 一键使用，零配置门槛极低</li>
+                <li><strong>MCP 标准：</strong>紧跟 Model Context Protocol 标准，具备长期生态兼容性</li>
+            </ul>
+        </div>
+
+        <!-- 同类项目对比 -->
+        <div class="card">
+            <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>安全验证</th>
+                        <th>跨代理</th>
+                        <th>MCP 支持</th>
+                        <th>特色</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>tech-leads-club/agent-skills</strong></td>
+                        <td style="color:#3fb950">深度验证</td>
+                        <td style="color:#3fb950">5+</td>
+                        <td style="color:#3fb950">完整</td>
+                        <td>安全为核心</td>
+                    </tr>
+                    <tr>
+                        <td>addyosmani/agent-skills</td>
+                        <td style="color:#f0883e">基础</td>
+                        <td style="color:#3fb950">多代理</td>
+                        <td style="color:#f0883e">部分</td>
+                        <td>轻量技能集</td>
+                    </tr>
+                    <tr>
+                        <td>anthropics/skills</td>
+                        <td style="color:#3fb950">官方</td>
+                        <td style="color:#f0883e">Claude 专属</td>
+                        <td style="color:#3fb950">原生</td>
+                        <td>Anthropic 官方</td>
+                    </tr>
+                    <tr>
+                        <td>microsoft/skills</td>
+                        <td style="color:#3fb950">官方</td>
+                        <td style="color:#f0883e">MS 生态</td>
+                        <td style="color:#3fb950">原生</td>
+                        <td>Azure 集成</td>
+                    </tr>
+                    <tr>
+                        <td>mattpocock/skills</td>
+                        <td style="color:#f0883e">社区</td>
+                        <td style="color:#f0883e">部分</td>
+                        <td style="color:#f0883e">无</td>
+                        <td>TypeScript 聚焦</td>
+                    </tr>
+                    <tr>
+                        <td>github/spec-kit</td>
+                        <td style="color:#3fb950">官方</td>
+                        <td style="color:#3fb950">Copilot</td>
+                        <td style="color:#3fb950">原生</td>
+                        <td>GitHub 官方标准</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight">
+                <strong>竞争优势：</strong>agent-skills 是目前唯一将"安全验证"作为核心差异化能力的技能注册表，并通过 CLI + MCP 双通道提供服务。其跨代理兼容性也是社区项目中覆盖面最广的。
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="card">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+            <ul>
+                <li><strong>个人开发者</strong> — 为 AI 编码助手安装安全审查、AWS 架构建议等专业技能</li>
+                <li><strong>技术团队</strong> — 统一团队的 AI Agent 技能配置，确保开发规范一致</li>
+                <li><strong>企业安全团队</strong> — 验证并部署经过安全审查的 AI 技能，降低供应链风险</li>
+                <li><strong>MCP 集成开发者</strong> — 通过 MCP Server 将技能目录接入自定义工作流</li>
+            </ul>
+            <p style="margin-top:12px;"><strong>精选技能示例：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>技能</th><th>类别</th><th>功能</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>tlc-spec-driven</td><td>开发</td><td>四阶段项目规划：规格→设计→任务→实现</td></tr>
+                    <tr><td>aws-advisor</td><td>云服务</td><td>AWS 架构设计、安全审查和实施指导</td></tr>
+                    <tr><td>playwright-skill</td><td>自动化</td><td>完整的浏览器自动化和测试</td></tr>
+                    <tr><td>figma</td><td>设计</td><td>Figma 设计稿转生产级代码</td></tr>
+                    <tr><td>security-best-practices</td><td>安全</td><td>语言/框架特定的安全审查</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 适合谁 -->
+        <div class="card">
+            <h2><span class="icon">👥</span> 适合谁使用</h2>
+            <ul>
+                <li><strong>Tech Leads / 技术负责人</strong> — 需要为团队标准化 AI 辅助开发流程的管理者</li>
+                <li><strong>AI 工具重度用户</strong> — 日常使用 Cursor、Claude Code、Copilot 等 AI 编码代理的开发者</li>
+                <li><strong>DevSecOps 工程师</strong> — 关注 AI 工具链安全的企业安全团队</li>
+                <li><strong>MCP 生态开发者</strong> — 构建兼容 MCP 协议的 AI 工具链的开发者</li>
+            </ul>
+        </div>
+
+        <!-- 快速上手 -->
+        <div class="card">
+            <h2><span class="icon">🚀</span> 快速上手指南</h2>
+            <div class="code-block">
+<span class="comment"># 方式一：npx 一键启动（推荐）</span>
+<span class="cmd">npx</span> @tech-leads-club/agent-skills
+
+<span class="comment"># 方式二：全局安装</span>
+<span class="cmd">npm</span> install <span class="flag">-g</span> @tech-leads-club/agent-skills
+<span class="cmd">agent-skills</span>
+
+<span class="comment"># 安装特定技能</span>
+<span class="cmd">agent-skills</span> install <span class="flag">-s</span> tlc-spec-driven
+<span class="cmd">agent-skills</span> install <span class="flag">-s</span> aws-advisor coding-guidelines
+
+<span class="comment"># 安装到指定代理</span>
+<span class="cmd">agent-skills</span> install <span class="flag">-s</span> my-skill <span class="flag">-a</span> cursor claude-code
+
+<span class="comment"># 全局安装（~/.claude, ~/.cursor 等）</span>
+<span class="cmd">agent-skills</span> install <span class="flag">-s</span> my-skill <span class="flag">-g</span>
+            </div>
+            <p style="margin-top:12px;"><strong>MCP Server 配置：</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"agent-skills"</span>: {
+      <span class="string">"command"</span>: <span class="string">"npx"</span>,
+      <span class="string">"args"</span>: [<span class="string">"-y"</span>, <span class="string">"@tech-leads-club/agent-skills-mcp"</span>]
+    }
+  }
+}
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="card">
+            <h2><span class="icon">📊</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item s1">
+                    <div class="label">创新性</div>
+                    <div class="value">7.0</div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 70%"></div></div>
+                </div>
+                <div class="score-item s2">
+                    <div class="label">代码质量</div>
+                    <div class="value">8.5</div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 85%"></div></div>
+                </div>
+                <div class="score-item s3">
+                    <div class="label">实用性</div>
+                    <div class="value">9.0</div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="score-item s4">
+                    <div class="label">文档完善度</div>
+                    <div class="value">9.0</div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="score-item s5">
+                    <div class="label">社区活跃度</div>
+                    <div class="value">7.0</div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 70%"></div></div>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <span style="font-size:2em; font-weight:700; background: linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">8.1 / 10</span>
+                <div style="color:#8b949e; font-size:0.9em;">综合评分</div>
+            </div>
+        </div>
+
+        <!-- 评分说明 -->
+        <div class="card">
+            <h2><span class="icon">💡</span> 评分说明</h2>
+            <ul>
+                <li><strong>创新性 (7.0)：</strong>技能注册表概念并非首创，但"安全验证为核心差异化"的定位有独特价值。深度防御安全架构设计出色。</li>
+                <li><strong>代码质量 (8.5)：</strong>TypeScript + Nx Monorepo + Semantic Release + CI/CD 集成 Snyk，工程化程度高，代码组织规范。</li>
+                <li><strong>实用性 (9.0)：</strong>直击 AI Agent 生态的核心痛点——安全性和标准化。CLI + MCP 双通道设计覆盖多种使用场景。</li>
+                <li><strong>文档完善度 (9.0)：</strong>README 详尽，包含完整的 CLI 参考和 MCP 配置指南。安全文档（SECURITY.md）和贡献指南齐全。</li>
+                <li><strong>社区活跃度 (7.0)：</strong>3,245 Stars，项目处于快速成长期。作为新兴项目，社区贡献者和生态还在建设中。</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>分析日期：2026-05-18 | 数据来源：GitHub Trending</p>
+            <p>🤖 由 AI 深度分析生成 | Powered by Claude Code</p>
+        </div>
+    </div>
+</body>
+</html>
