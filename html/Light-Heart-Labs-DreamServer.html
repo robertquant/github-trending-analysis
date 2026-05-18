@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamServer 深度分析 | GitHub Trending</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-card-hover: #222d3f;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.8em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        .meta-badge .icon { font-size: 1.1em; }
+        .meta-badge .highlight { color: var(--accent-orange); font-weight: 600; }
+        .section {
+            margin-bottom: 36px;
+        }
+        .section-title {
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid transparent;
+            border-image: var(--gradient-1) 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .emoji { font-size: 1.2em; }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+        }
+        .card h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: var(--accent-blue);
+        }
+        .card p, .card li {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+        .card ul {
+            padding-left: 20px;
+        }
+        .card ul li {
+            margin-bottom: 6px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 4px 20px rgba(188, 140, 255, 0.15);
+        }
+        .feature-card .feature-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        .feature-card h4 {
+            font-size: 1.05em;
+            margin-bottom: 6px;
+            color: var(--accent-cyan);
+        }
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.88em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9em;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--bg-secondary);
+            color: var(--accent-blue);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        td { color: var(--text-secondary); }
+        tr:hover td { background: rgba(88, 166, 255, 0.05); }
+        .highlight-text { color: var(--accent-green); font-weight: 600; }
+        .warn-text { color: var(--accent-orange); font-weight: 600; }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.88em;
+            color: var(--accent-green);
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+        .score-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-card .score-label {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .score-card .score-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-card .score-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bg-secondary);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-card .score-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+        .score-excellent .score-value { color: var(--accent-green); }
+        .score-excellent .score-fill { background: var(--accent-green); }
+        .score-good .score-value { color: var(--accent-blue); }
+        .score-good .score-fill { background: var(--accent-blue); }
+        .score-fair .score-value { color: var(--accent-orange); }
+        .score-fair .score-fill { background: var(--accent-orange); }
+        .why-trending {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(188, 140, 255, 0.08));
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+        }
+        .why-trending h3 {
+            color: var(--accent-purple);
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 500;
+        }
+        .tag-blue { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); border: 1px solid rgba(88, 166, 255, 0.3); }
+        .tag-green { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); border: 1px solid rgba(63, 185, 80, 0.3); }
+        .tag-purple { background: rgba(188, 140, 255, 0.15); color: var(--accent-purple); border: 1px solid rgba(188, 140, 255, 0.3); }
+        .tag-orange { background: rgba(210, 153, 34, 0.15); color: var(--accent-orange); border: 1px solid rgba(210, 153, 34, 0.3); }
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+        .footer a { color: var(--accent-blue); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .quickstart-steps {
+            counter-reset: step;
+        }
+        .quickstart-steps .step {
+            counter-increment: step;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        .quickstart-steps .step::before {
+            content: counter(step);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .section-title { font-size: 1.3em; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-container { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 0.8em; }
+            th, td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DreamServer</h1>
+        <div class="subtitle">Local AI anywhere, for everyone &mdash; 本地AI，人人可用</div>
+        <div class="meta">
+            <span class="meta-badge"><span class="icon">📦</span> Light-Heart-Labs/DreamServer</span>
+            <span class="meta-badge"><span class="icon">⭐</span> <span class="highlight">987</span> stars</span>
+            <span class="meta-badge"><span class="icon">🔥</span> 今日 +89</span>
+            <span class="meta-badge"><span class="icon">🐍</span> Python</span>
+            <span class="meta-badge"><span class="icon">📜</span> Apache 2.0</span>
+        </div>
+        <div class="tag-list" style="justify-content: center; margin-top: 16px;">
+            <span class="tag tag-blue">本地AI</span>
+            <span class="tag tag-green">LLM推理</span>
+            <span class="tag tag-purple">隐私优先</span>
+            <span class="tag tag-orange">全栈AI</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">📖</span> 项目简介</h2>
+        <div class="card">
+            <p>DreamServer 是由 <strong>Light Heart Labs</strong>（创始人 Michael Bradley）打造的一站式本地AI平台。它的核心使命是让AI成为<strong>"主权人权"</strong>而非租用服务 &mdash; 用户在自己的硬件上运行完整的AI能力栈，无需云服务，无需订阅，无人监视。</p>
+            <p style="margin-top: 10px;">项目口号"Five Companies Control AI. We're Taking It Back."（五家公司控制了AI，我们要夺回它）精准概括了其定位 &mdash; 对抗AI集中化，赋予个人完整的AI自主权。</p>
+        </div>
+    </div>
+
+    <!-- 核心功能 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">⚡</span> 核心功能</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h4>聊天 & 推理</h4>
+                <p>Open WebUI聊天界面 + llama-server高性能推理 + LiteLLM API网关，支持本地/云端/混合模式</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <h4>语音能力</h4>
+                <p>Whisper语音识别 + Kokoro文本转语音，完整的语音交互闭环</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h4>AI Agent</h4>
+                <p>Hermes Agent自主浏览器代理 + OpenClaw Agent框架 + APE策略引擎，支持复杂任务自动化</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h4>工作流自动化</h4>
+                <p>n8n工作流引擎，400+集成（Slack、邮件、数据库、API），可视化编排</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h4>知识 & 搜索</h4>
+                <p>Qdrant向量数据库 + SearXNG隐私搜索 + Perplexica深度研究，完整RAG流水线</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h4>图像生成</h4>
+                <p>ComfyUI节点式图像生成，支持FLUX等模型，本地创作无限制</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h4>隐私 & 安全</h4>
+                <p>Privacy Shield PII脱敏代理 + Token Spy用量监控 + Langfuse可观测性</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧩</div>
+                <h4>扩展系统</h4>
+                <p>Manifest驱动的热插拔扩展，<code>dream enable</code>一键启用，模块化架构</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">🏗️</span> 技术架构与特点</h2>
+        <div class="card">
+            <h3>架构设计</h3>
+            <p>DreamServer 采用<strong>Docker Compose</strong>编排的微服务架构，每个服务作为独立扩展运行。安装器（DREAMGATE）采用6库13阶段的模块化设计，自动完成GPU检测、模型选择、凭证生成和服务编排。</p>
+            <div class="code-block"># 一键安装命令
+curl -fsSL https://raw.githubusercontent.com/Light-Heart-Labs/DreamServer/main/dream-server/get-dream-server.sh | bash</div>
+        </div>
+        <div class="card">
+            <h3>硬件自动检测</h3>
+            <p>安装器自动检测GPU硬件并选择最优模型，覆盖全平台：</p>
+            <table>
+                <tr>
+                    <th>平台</th>
+                    <th>支持范围</th>
+                    <th>GPU后端</th>
+                </tr>
+                <tr>
+                    <td>NVIDIA</td>
+                    <td>RTX 3060 ~ H100（0-5级）</td>
+                    <td>CUDA</td>
+                </tr>
+                <tr>
+                    <td>AMD Strix Halo</td>
+                    <td>64GB / 96GB 统一内存</td>
+                    <td>ROCm</td>
+                </tr>
+                <tr>
+                    <td>Apple Silicon</td>
+                    <td>M1 ~ M4 Ultra（0-4级）</td>
+                    <td>Metal</td>
+                </tr>
+                <tr>
+                    <td>Intel Arc</td>
+                    <td>A380 ~ A770（2级）</td>
+                    <td>SYCL</td>
+                </tr>
+                <tr>
+                    <td>CPU / 无GPU</td>
+                    <td>任意硬件</td>
+                    <td>Cloud模式回退</td>
+                </tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Bootstrap 模式</h3>
+            <p>独创的引导模式：先下载1.5B小模型（不到1分钟），用户立即开始聊天，完整模型在后台下载，就绪后<strong>零停机热切换</strong>。</p>
+        </div>
+        <div class="card">
+            <h3>dream-cli 命令行工具</h3>
+            <div class="code-block">dream status                # 健康检查 + GPU状态
+dream list                  # 所有服务状态
+dream mode cloud            # 切换到云端API模式
+dream mode local            # 切回本地推理
+dream mode hybrid           # 本地主、云端备
+dream model swap T3         # 切换硬件层级
+dream enable n8n            # 启用扩展
+dream preset save gaming    # 保存配置快照</div>
+        </div>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">🔥</span> 为什么火（Trending 原因）</h2>
+        <div class="why-trending">
+            <h3>Trending 核心驱动力</h3>
+            <ul style="padding-left: 20px;">
+                <li style="color: var(--text-secondary); margin-bottom: 10px;"><strong style="color: var(--accent-green);">时机精准</strong> &mdash; 2026年本地AI爆发元年，用户对云端AI的隐私和数据控制担忧达到顶峰，DreamServer的"AI主权"理念正好切中时代脉搏</li>
+                <li style="color: var(--text-secondary); margin-bottom: 10px;"><strong style="color: var(--accent-green);">一站式解决方案</strong> &mdash; 将十几个分散项目（Ollama、Open WebUI、ComfyUI、n8n、Qdrant等）整合为一键部署的完整栈，降低了极高的使用门槛</li>
+                <li style="color: var(--text-secondary); margin-bottom: 10px;"><strong style="color: var(--accent-green);">全平台覆盖</strong> &mdash; 同时支持NVIDIA、AMD（含Strix Halo）、Apple Silicon和Intel Arc，这是同类项目中罕见的广度</li>
+                <li style="color: var(--text-secondary); margin-bottom: 10px;"><strong style="color: var(--accent-green);">社区驱动</strong> &mdash; 活跃的贡献者生态（80+合并PR的核心贡献者），社区构建（如Arch Linux裸机重建）展现了强大的生命力</li>
+                <li style="color: var(--text-secondary); margin-bottom: 10px;"><strong style="color: var(--accent-green);">理念共鸣</strong> &mdash; "One person, one dream, one machine"的反集中化叙事在开发者社区引发强烈共鸣</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">⚖️</span> 同类项目对比</h2>
+        <div class="card" style="overflow-x: auto;">
+            <table>
+                <tr>
+                    <th>维度</th>
+                    <th>DreamServer</th>
+                    <th>Ollama + Open WebUI</th>
+                    <th>LocalAI</th>
+                </tr>
+                <tr>
+                    <td>定位</td>
+                    <td class="highlight-text">全栈AI平台</td>
+                    <td>LLM + 聊天</td>
+                    <td>仅LLM推理</td>
+                </tr>
+                <tr>
+                    <td>一键安装</td>
+                    <td class="highlight-text">全部自动配置</td>
+                    <td>仅LLM+聊天</td>
+                    <td>仅LLM</td>
+                </tr>
+                <tr>
+                    <td>GPU自动检测</td>
+                    <td class="highlight-text">NVIDIA+AMD+Apple+Intel</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>AI Agent</td>
+                    <td class="highlight-text">Hermes/OpenClaw</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>工作流</td>
+                    <td class="highlight-text">n8n（400+集成）</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>语音</td>
+                    <td class="highlight-text">Whisper + Kokoro</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>图像生成</td>
+                    <td class="highlight-text">ComfyUI</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>RAG</td>
+                    <td class="highlight-text">Qdrant + 嵌入</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>扩展系统</td>
+                    <td class="highlight-text">Manifest热插拔</td>
+                    <td>不支持</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td>成熟度</td>
+                    <td><span class="warn-text">新兴项目（~1K stars）</span></td>
+                    <td class="highlight-text">成熟（100K+ stars）</td>
+                    <td>较成熟（30K+ stars）</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">🎯</span> 应用场景</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🏠</div>
+                <h4>个人AI工作站</h4>
+                <p>在家用PC/Mac上运行完整的AI助手，聊天、写作、编程、生成图片，数据不出家门</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏢</div>
+                <h4>企业内网AI</h4>
+                <p>在隔离环境中部署AI能力，满足金融、医疗、法律等对数据隐私有严格要求的行业</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔬</div>
+                <h4>研究和实验</h4>
+                <p>本地运行不同模型对比效果，RAG流水线实验，Agent行为研究</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📡</div>
+                <h4>边缘/离线部署</h4>
+                <p>在网络受限环境中提供完整AI能力 &mdash; 远程站点、船舶、离岸平台等</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 适合谁使用 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">👥</span> 适合谁使用</h2>
+        <div class="card">
+            <table>
+                <tr>
+                    <th>用户类型</th>
+                    <th>适合度</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>隐私敏感用户</td>
+                    <td class="highlight-text">★★★★★</td>
+                    <td>核心受众 &mdash; 不希望任何数据离开本地设备的用户</td>
+                </tr>
+                <tr>
+                    <td>独立开发者</td>
+                    <td class="highlight-text">★★★★★</td>
+                    <td>零成本获取完整AI栈，扩展系统支持自定义开发</td>
+                </tr>
+                <tr>
+                    <td>AI爱好者/研究者</td>
+                    <td class="highlight-text">★★★★☆</td>
+                    <td>一站式体验多种AI能力，但高级研究者可能需要更深度的定制</td>
+                </tr>
+                <tr>
+                    <td>中小企业</td>
+                    <td class="highlight-text">★★★★☆</td>
+                    <td>替代昂贵的SaaS订阅，但需要一定的运维能力</td>
+                </tr>
+                <tr>
+                    <td>AI初学者</td>
+                    <td><span class="warn-text">★★★☆☆</span></td>
+                    <td>一键安装很友好，但完整功能栈的学习曲线不低</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">🚀</span> 快速上手指南</h2>
+        <div class="card">
+            <div class="quickstart-steps">
+                <div class="step">
+                    <div>
+                        <strong>安装 DreamServer</strong>
+                        <div class="code-block">curl -fsSL https://raw.githubusercontent.com/Light-Heart-Labs/DreamServer/main/dream-server/get-dream-server.sh | bash</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div>
+                        <strong>等待引导完成</strong>
+                        <p style="color: var(--text-secondary);">Bootstrap模式自动下载1.5B小模型，不到1分钟即可开始聊天。完整模型在后台下载。</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div>
+                        <strong>打开浏览器访问</strong>
+                        <div class="code-block">http://localhost:3000  # Open WebUI聊天界面</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div>
+                        <strong>探索更多功能</strong>
+                        <div class="code-block">dream status     # 查看所有服务状态
+dream enable n8n # 启用工作流引擎
+dream mode hybrid # 切换到混合模式</div>
+                    </div>
+                </div>
+            </div>
+            <p style="margin-top: 12px; color: var(--text-muted); font-size: 0.85em;">💡 前提条件：需要Docker（Linux/Windows/macOS）和至少8GB显存的GPU（或Apple Silicon Mac）。无GPU可使用Cloud模式。</p>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2 class="section-title"><span class="emoji">📊</span> 综合评分</h2>
+        <div class="score-container">
+            <div class="score-card score-excellent">
+                <div class="score-label">创新性</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-label">代码质量</div>
+                <div class="score-value">8.5</div>
+                <div class="score-bar"><div class="score-fill" style="width: 85%"></div></div>
+            </div>
+            <div class="score-card score-excellent">
+                <div class="score-label">实用性</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value">8.0</div>
+                <div class="score-bar"><div class="score-fill" style="width: 80%"></div></div>
+            </div>
+            <div class="score-card score-excellent">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-fill" style="width: 90%"></div></div>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 20px; text-align: center;">
+            <p style="font-size: 1.1em;">综合评分 <strong style="font-size: 1.8em; color: var(--accent-green);">8.7</strong> / 10</p>
+            <p style="color: var(--text-muted); margin-top: 6px;">一个极具潜力的本地AI平台，理念先进、功能全面、社区活跃。作为新兴项目还需时间验证稳定性，但方向和执行力都令人印象深刻。</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>分析日期: 2026-05-18 | 数据来源: <a href="https://github.com/Light-Heart-Labs/DreamServer">GitHub</a></p>
+        <p style="margin-top: 4px;">Generated by GitHub Trending Analyzer</p>
+    </div>
+</body>
+</html>
