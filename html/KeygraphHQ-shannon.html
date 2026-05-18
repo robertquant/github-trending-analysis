@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shannon - AI自动化渗透测试工具 | GitHub Trending 深度分析</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --cyan: #39d2c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; line-height: 1.7; }
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    background: linear-gradient(135deg, var(--accent), var(--purple), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+  .hero .subtitle { color: var(--muted); font-size: 1.1rem; }
+  .hero .meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .hero .meta span { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.9rem; color: var(--muted); }
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-lang { background: #3178c6; color: #fff; }
+  .badge-star { background: linear-gradient(135deg, #f85149, #d29922); color: #fff; }
+  .badge-trending { background: linear-gradient(135deg, var(--green), var(--cyan)); color: #fff; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card h2 .icon { font-size: 1.2rem; }
+  .card p, .card li { color: var(--fg); font-size: 0.95rem; }
+  .card ul { padding-left: 1.2rem; }
+  .card ul li { margin-bottom: 0.4rem; }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .score-item {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .score-item .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .score-item .value { font-size: 1.6rem; font-weight: 700; }
+  .score-item .bar {
+    width: 80%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0.5rem auto 0;
+    overflow: hidden;
+  }
+  .score-item .bar-fill { height: 100%; border-radius: 2px; }
+
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+    border: 1px solid rgba(88,166,255,0.3);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+  }
+  .highlight-box strong { color: var(--accent); }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+  }
+  .comparison-table th, .comparison-table td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .comparison-table th {
+    color: var(--accent);
+    font-weight: 600;
+    background: rgba(88,166,255,0.05);
+  }
+  .comparison-table tr:hover { background: rgba(255,255,255,0.02); }
+
+  pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    margin: 0.8rem 0;
+    line-height: 1.5;
+  }
+  code { font-family: 'SFMono-Regular', Consolas, monospace; }
+  .code-comment { color: #6e7681; }
+  .code-cmd { color: var(--green); }
+  .code-string { color: #a5d6ff; }
+  .code-keyword { color: var(--purple); }
+
+  .phase-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 1rem 0;
+  }
+  .phase-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .phase-item .phase-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .phase-item .phase-name { font-weight: 600; font-size: 0.9rem; }
+  .phase-item .phase-desc { color: var(--muted); font-size: 0.85rem; }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+  .tag {
+    padding: 0.25rem 0.7rem;
+    background: rgba(188,140,255,0.1);
+    border: 1px solid rgba(188,140,255,0.3);
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    color: var(--purple);
+  }
+
+  .verdict {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(63,185,80,0.08), rgba(57,210,192,0.08));
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 12px;
+    margin-top: 1rem;
+  }
+  .verdict .emoji { font-size: 2rem; }
+  .verdict .text { font-size: 1.1rem; font-weight: 600; color: var(--green); margin-top: 0.5rem; }
+  .verdict .desc { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.6rem; }
+    .score-grid { grid-template-columns: repeat(3, 1fr); }
+    .container { padding: 1rem; }
+    .card { padding: 1rem 1.2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <h1>Shannon - AI 自动化渗透测试工具</h1>
+    <p class="subtitle">自主式白盒 AI 渗透测试，源码分析 + 真实漏洞利用，零误报安全报告</p>
+    <div class="meta">
+      <span><span class="badge badge-lang">TypeScript</span></span>
+      <span><span class="badge badge-star">42,526 Stars</span></span>
+      <span><span class="badge badge-trending">+335 Today</span></span>
+      <span>AGPL-3.0 License</span>
+      <span>by KeygraphHQ</span>
+    </div>
+  </div>
+
+  <!-- 项目简介 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F6E1;</span> 项目简介与核心功能</h2>
+    <p>Shannon 是由 <strong>Keygraph</strong> 团队开发的自主式白盒 AI 渗透测试工具，专为 Web 应用和 API 安全测试而设计。它结合了<strong>源代码分析</strong>与<strong>动态漏洞利用</strong>，能够像一位「永不休息的高级安全工程师」一样自动完成完整的渗透测试流程。</p>
+    <div class="highlight-box">
+      <strong>核心理念：「无利用，不报告」（No Exploit, No Report）</strong><br>
+      Shannon 不会报告理论上的漏洞。只有当它成功利用一个漏洞并生成可复现的 PoC（概念验证）时，该漏洞才会出现在最终报告中。这意味着<strong>零误报</strong>。
+    </div>
+    <ul>
+      <li><strong>完全自主运行</strong>：一条命令即可启动完整渗透测试，自动处理 2FA/TOTP 登录、SSO、浏览器导航、漏洞利用和报告生成</li>
+      <li><strong>可复现的 PoC</strong>：最终报告只包含已验证的、可利用的漏洞，附带可复制粘贴的概念验证代码</li>
+      <li><strong>OWASP 覆盖</strong>：识别并验证注入攻击、XSS、SSRF、身份认证/授权绕过等漏洞类别</li>
+      <li><strong>代码感知动态测试</strong>：分析源代码指导攻击策略，再通过实时浏览器和 CLI 工具验证漏洞</li>
+      <li><strong>并行处理</strong>：漏洞分析和利用阶段跨所有攻击类别并发执行</li>
+    </ul>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="card">
+    <h2><span class="icon">&#x2699;</span> 技术架构与特点</h2>
+    <p>Shannon 采用<strong>多智能体架构</strong>，以 Anthropic Claude Agent SDK 作为推理引擎，结合 Temporal 工作流引擎和 Docker 容器化隔离。</p>
+
+    <div class="phase-flow">
+      <div class="phase-item">
+        <div class="phase-num">1</div>
+        <div>
+          <div class="phase-name">Pre-Reconnaissance（预侦察）</div>
+          <div class="phase-desc">分析源代码，识别应用框架、入口点和潜在攻击面</div>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">2</div>
+        <div>
+          <div class="phase-name">Reconnaissance（侦察）</div>
+          <div class="phase-desc">通过浏览器自动化进行实时应用探索，构建攻击面地图</div>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">3</div>
+        <div>
+          <div class="phase-name">Vulnerability Analysis（漏洞分析）</div>
+          <div class="phase-desc">5 个并行 Agent 按 OWASP 分类寻找潜在漏洞，生成假设的可利用路径</div>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">4</div>
+        <div>
+          <div class="phase-name">Exploitation（漏洞利用）</div>
+          <div class="phase-desc">将假设转化为实际攻击，使用浏览器自动化和 CLI 工具执行真实漏洞利用</div>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">5</div>
+        <div>
+          <div class="phase-name">Reporting（报告）</div>
+          <div class="phase-desc">汇总已验证的发现，生成专业可操作的安全评估报告</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:1rem"><strong>技术栈：</strong></p>
+    <div class="tag-list">
+      <span class="tag">TypeScript</span>
+      <span class="tag">Anthropic Claude SDK</span>
+      <span class="tag">Docker</span>
+      <span class="tag">Temporal</span>
+      <span class="tag">Browser Automation</span>
+      <span class="tag">Multi-Agent</span>
+      <span class="tag">pnpm</span>
+      <span class="tag">AWS Bedrock</span>
+      <span class="tag">Google Vertex AI</span>
+    </div>
+
+    <p style="margin-top:1rem"><strong>模型分层策略：</strong></p>
+    <table class="comparison-table">
+      <tr><th>层级</th><th>模型</th><th>用途</th></tr>
+      <tr><td>Small</td><td>Claude Haiku 4.5</td><td>快速摘要与分类</td></tr>
+      <tr><td>Medium</td><td>Claude Sonnet 4.6</td><td>安全分析与漏洞识别</td></tr>
+      <tr><td>Large</td><td>Claude Opus 4.7</td><td>深度推理与复杂利用</td></tr>
+    </table>
+  </div>
+
+  <!-- 基准测试 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F3AF;</span> Benchmark 表现</h2>
+    <div class="highlight-box">
+      <strong>XBOW Security Benchmark: 96.15%（100/104 exploits）</strong><br>
+      在无提示、源码感知的 XBOW 安全基准测试中，Shannon Lite 成功利用了 104 个挑战中的 100 个。
+    </div>
+    <p style="margin-top:0.8rem"><strong>实战测试结果：</strong></p>
+    <table class="comparison-table">
+      <tr><th>目标</th><th>发现漏洞数</th><th>亮点</th></tr>
+      <tr><td>OWASP Juice Shop</td><td>20+</td><td>认证绕过、数据库窃取、权限提升、IDOR、SSRF</td></tr>
+      <tr><td>c{api}tal API</td><td>~15</td><td>根级命令注入、认证绕过、Mass Assignment 权限提升、XSS 零误报</td></tr>
+      <tr><td>OWASP crAPI</td><td>15+</td><td>JWT 多攻击向量、PostgreSQL 完整入侵、SSRF 令牌转发、XSS 零误报</td></tr>
+    </table>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F4CB;</span> 应用场景</h2>
+    <ul>
+      <li><strong>CI/CD 安全门禁</strong>：每次构建自动执行渗透测试，防止漏洞进入生产环境</li>
+      <li><strong>发布前安全审计</strong>：在每次版本发布前进行全面安全评估</li>
+      <li><strong>安全团队效能提升</strong>：自动化繁重的渗透测试工作，让安全工程师专注于高层策略</li>
+      <li><strong>合规审计辅助</strong>：生成专业的渗透测试报告，满足合规审计需求</li>
+      <li><strong>安全培训与教育</strong>：学习渗透测试方法论和常见 Web 漏洞利用技术</li>
+      <li><strong>漏洞赏金准备</strong>：在提交漏洞报告前先自行测试修复</li>
+    </ul>
+  </div>
+
+  <!-- 为什么火 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F525;</span> 为什么火（Trending 原因）</h2>
+    <ul>
+      <li><strong>填补安全测试频率缺口</strong>：如项目自述所言——你的团队每天都在持续交付代码，但渗透测试一年才做一次。Shannon 让渗透测试也能做到持续化</li>
+      <li><strong>AI 安全赛道爆发</strong>：2026 年 AI + 安全是最大热点之一，Shannon 完美契合这一趋势</li>
+      <li><strong>96.15% 的惊人基准测试成绩</strong>：在 XBOW 基准测试中达到 96.15% 的成功率，超越许多传统工具</li>
+      <li><strong>「无利用不报告」理念</strong>：零误报承诺直击传统 SAST/DAST 工具的最大痛点</li>
+      <li><strong>AGPL 开源</strong>：核心框架完全开源，降低使用门槛，社区信任度高</li>
+      <li><strong>完整的产品矩阵</strong>：从开源 Lite 版到企业级 Pro 版，覆盖不同用户需求</li>
+    </ul>
+  </div>
+
+  <!-- 同类对比 -->
+  <div class="card">
+    <h2><span class="icon">&#x2696;</span> 同类项目对比</h2>
+    <table class="comparison-table">
+      <tr>
+        <th>特性</th>
+        <th>Shannon Lite</th>
+        <th>Burp Suite</th>
+        <th>OWASP ZAP</th>
+        <th>Snyk / SonarQube</th>
+      </tr>
+      <tr>
+        <td>测试类型</td>
+        <td>白盒 + 动态利用</td>
+        <td>黑盒代理扫描</td>
+        <td>黑盒扫描</td>
+        <td>静态分析 (SAST)</td>
+      </tr>
+      <tr>
+        <td>自主程度</td>
+        <td>完全自主</td>
+        <td>需人工操作</td>
+        <td>半自动</td>
+        <td>自动化</td>
+      </tr>
+      <tr>
+        <td>PoC 验证</td>
+        <td>自动生成</td>
+        <td>需人工验证</td>
+        <td>需人工验证</td>
+        <td>无</td>
+      </tr>
+      <tr>
+        <td>误报率</td>
+        <td>极低（零误报承诺）</td>
+        <td>中等</td>
+        <td>较高</td>
+        <td>中等偏高</td>
+      </tr>
+      <tr>
+        <td>源码分析</td>
+        <td>有</td>
+        <td>无</td>
+        <td>无</td>
+        <td>有</td>
+      </tr>
+      <tr>
+        <td>价格</td>
+        <td>开源免费（API 费用 ~$50/次）</td>
+        <td>付费</td>
+        <td>免费</td>
+        <td>免费/付费</td>
+      </tr>
+      <tr>
+        <td>AI 驱动</td>
+        <td>是（Claude）</td>
+        <td>否</td>
+        <td>否</td>
+        <td>部分</td>
+      </tr>
+    </table>
+    <p style="margin-top:0.8rem; color: var(--muted); font-size: 0.88rem;">Shannon 的独特定位在于：它是唯一一个结合<strong>源码分析 + AI 自主决策 + 真实漏洞利用验证</strong>的完全自动化渗透测试工具。</p>
+  </div>
+
+  <!-- 适合谁 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F465;</span> 适合谁使用</h2>
+    <table class="comparison-table">
+      <tr><th>用户群体</th><th>推荐度</th><th>原因</th></tr>
+      <tr><td>安全工程师 / 渗透测试员</td><td style="color:var(--green);">强烈推荐</td><td>自动化繁重工作，提升测试效率</td></tr>
+      <tr><td>DevSecOps 团队</td><td style="color:var(--green);">强烈推荐</td><td>CI/CD 集成，每次构建自动安全测试</td></tr>
+      <tr><td>全栈 / 后端开发者</td><td style="color:var(--green);">推荐</td><td>自行测试代码安全性，无需等待年度渗透测试</td></tr>
+      <tr><td>初创公司 / 小团队</td><td style="color:var(--orange);">推荐</td><td>替代昂贵的第三方渗透测试服务</td></tr>
+      <tr><td>安全学习者</td><td style="color:var(--orange);">推荐</td><td>学习渗透测试方法论和漏洞利用技术</td></tr>
+      <tr><td>企业级安全团队</td><td style="color:var(--purple);">推荐 Pro 版</td><td>需要 SAST + SCA + 商业逻辑测试等更全面的能力</td></tr>
+    </table>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F680;</span> 快速上手指南</h2>
+    <p><strong>前置要求：</strong>Docker、Node.js 18+、Anthropic API Key（或其他支持的 AI 提供商）</p>
+
+    <pre><code><span class="code-comment"># 1. 配置凭证（交互式向导，仅需一次）</span>
+<span class="code-cmd">npx @keygraph/shannon setup</span>
+
+<span class="code-comment"># 或直接设置环境变量</span>
+<span class="code-keyword">export</span> ANTHROPIC_API_KEY=<span class="code-string">your-api-key</span>
+
+<span class="code-comment"># 2. 启动渗透测试</span>
+<span class="code-cmd">npx @keygraph/shannon start -u https://your-app.com -r /path/to/your-repo</span>
+
+<span class="code-comment"># 3. 监控进度</span>
+<span class="code-cmd">npx @keygraph/shannon logs &lt;workspace&gt;</span>
+<span class="code-cmd">npx @keygraph/shannon status</span>
+
+<span class="code-comment"># 4. 查看报告</span>
+<span class="code-comment"># 报告保存在 ~/.shannon/workspaces/ 目录下</span>
+<span class="code-comment"># deliverables/comprehensive_security_assessment_report.md</span></code></pre>
+
+    <p style="margin-top:1rem"><strong>带认证的配置示例：</strong></p>
+    <pre><code><span class="code-comment"># my-app-config.yaml</span>
+<span class="code-keyword">authentication:</span>
+  <span class="code-keyword">login_type:</span> form
+  <span class="code-keyword">login_url:</span> <span class="code-string">"https://your-app.com/login"</span>
+  <span class="code-keyword">credentials:</span>
+    <span class="code-keyword">username:</span> <span class="code-string">"test@example.com"</span>
+    <span class="code-keyword">password:</span> <span class="code-string">"yourpassword"</span>
+    <span class="code-keyword">totp_secret:</span> <span class="code-string">"LB2E2RX7XFHSTGCK"</span>  <span class="code-comment"># 可选的 2FA</span>
+
+<span class="code-cmd">npx @keygraph/shannon start -u https://your-app.com -r /path/to/repo -c ./my-app-config.yaml</span></code></pre>
+
+    <div class="highlight-box" style="border-color: rgba(248,81,73,0.3); background: linear-gradient(135deg, rgba(248,81,73,0.08), rgba(210,153,34,0.08));">
+      <strong style="color: var(--red);">重要警告</strong><br>
+      Shannon <strong>不是被动扫描器</strong>——它会主动执行攻击。切勿在生产环境运行！仅在沙箱、测试或本地开发环境中使用，并确保已获得系统所有者的明确书面授权。
+    </div>
+  </div>
+
+  <!-- Shannon Pro -->
+  <div class="card">
+    <h2><span class="icon">&#x1F451;</span> Shannon Pro — 企业级全平台</h2>
+    <table class="comparison-table">
+      <tr><th>能力</th><th>Shannon Lite</th><th>Shannon Pro</th></tr>
+      <tr><td>静态分析</td><td>代码审查提示</td><td>完整 SAST + SCA + 密钥检测 + 商业逻辑测试</td></tr>
+      <tr><td>动态测试</td><td>自主 AI 渗透测试</td><td>渗透测试 + 静动态关联</td></tr>
+      <tr><td>分析引擎</td><td>代码审查提示</td><td>CPG 数据流 + 每节点 LLM 推理</td></tr>
+      <tr><td>CI/CD 集成</td><td>手动 / CLI</td><td>原生 CI/CD + GitHub PR 扫描</td></tr>
+      <tr><td>部署方式</td><td>CLI</td><td>托管云或自托管 Runner</td></tr>
+      <tr><td>商业逻辑测试</td><td>无</td><td>自动不变量发现 + Fuzzer 生成 + 利用合成</td></tr>
+    </table>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="card">
+    <h2><span class="icon">&#x1F4CA;</span> 综合评分</h2>
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="label">创新性</div>
+        <div class="value" style="color: var(--accent);">9.5</div>
+        <div class="bar"><div class="bar-fill" style="width:95%; background: linear-gradient(90deg, var(--accent), var(--purple));"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">代码质量</div>
+        <div class="value" style="color: var(--green);">8.5</div>
+        <div class="bar"><div class="bar-fill" style="width:85%; background: linear-gradient(90deg, var(--green), var(--cyan));"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">实用性</div>
+        <div class="value" style="color: var(--orange);">9.0</div>
+        <div class="bar"><div class="bar-fill" style="width:90%; background: linear-gradient(90deg, var(--orange), #f0883e);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">文档完善度</div>
+        <div class="value" style="color: var(--purple);">9.0</div>
+        <div class="bar"><div class="bar-fill" style="width:90%; background: linear-gradient(90deg, var(--purple), #d2a8ff);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">社区活跃度</div>
+        <div class="value" style="color: var(--cyan);">8.5</div>
+        <div class="bar"><div class="bar-fill" style="width:85%; background: linear-gradient(90deg, var(--cyan), #56d4dd);"></div></div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:1rem;">
+      <span style="font-size:1.3rem; font-weight:700; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">综合评分：8.9 / 10</span>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="verdict">
+    <div class="text">强烈推荐：AI 安全领域的标杆级工具</div>
+    <div class="desc">Shannon 将 AI 自主渗透测试从概念变为现实，96.15% 的基准测试成绩和「无利用不报告」的零误报承诺使其成为 2026 年最具影响力的安全工具之一。对于任何关注 Web 应用安全性的团队来说，这是一个不容错过的工具。</div>
+  </div>
+
+  <div class="footer">
+    <p>GitHub Trending 深度分析 &middot; 2026-05-18 &middot; 数据来源：GitHub、WebSearch</p>
+  </div>
+
+</div>
+</body>
+</html>
