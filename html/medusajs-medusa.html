@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medusa - GitHub Trending 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid #21262d;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; }
+        .meta-bar {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 16px; margin-top: 20px;
+        }
+        .meta-badge {
+            background: #161b22; border: 1px solid #30363d; border-radius: 20px;
+            padding: 6px 16px; font-size: 0.9em; display: inline-flex;
+            align-items: center; gap: 6px;
+        }
+        .meta-badge .label { color: #8b949e; }
+        .meta-badge .value { color: #58a6ff; font-weight: 600; }
+        .card {
+            background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+            padding: 28px 32px; margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.4em; margin-bottom: 16px; padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 { color: #79c0ff; font-size: 1.1em; margin: 16px 0 8px; }
+        .card p, .card li { color: #c9d1d9; font-size: 0.95em; }
+        .card ul { padding-left: 20px; }
+        .card ul li { margin-bottom: 6px; }
+        .card ul li::marker { color: #58a6ff; }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border: 1px solid rgba(88,166,255,0.3); border-radius: 8px;
+            padding: 16px 20px; margin: 12px 0;
+        }
+        .highlight-box p { color: #e6edf3; }
+        .score-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117; border: 1px solid #21262d; border-radius: 10px;
+            padding: 16px; text-align: center;
+        }
+        .score-item .score-label { color: #8b949e; font-size: 0.85em; margin-bottom: 6px; }
+        .score-item .score-value { font-size: 1.8em; font-weight: 700; }
+        .score-item .score-bar {
+            height: 4px; background: #21262d; border-radius: 2px;
+            margin-top: 8px; overflow: hidden;
+        }
+        .score-item .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+        .s9 { color: #3fb950; } .s8 { color: #58a6ff; } .s7 { color: #bc8cff; } .s6 { color: #d29922; }
+        .bar-9 { background: linear-gradient(90deg, #3fb950, #2ea043); }
+        .bar-8 { background: linear-gradient(90deg, #58a6ff, #1f6feb); }
+        .bar-7 { background: linear-gradient(90deg, #bc8cff, #8b5cf6); }
+        .bar-6 { background: linear-gradient(90deg, #d29922, #bb8009); }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th {
+            background: #0d1117; color: #58a6ff; padding: 10px 14px;
+            text-align: left; border-bottom: 2px solid #30363d; font-weight: 600;
+        }
+        td { padding: 10px 14px; border-bottom: 1px solid #21262d; }
+        tr:hover td { background: rgba(88,166,255,0.05); }
+        .code-block {
+            background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
+            padding: 16px 20px; margin: 12px 0;
+            font-family: 'Fira Code', 'SF Mono', Consolas, monospace;
+            font-size: 0.88em; overflow-x: auto; color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .tag {
+            display: inline-block; background: rgba(88,166,255,0.15); color: #58a6ff;
+            border-radius: 4px; padding: 2px 8px; font-size: 0.82em; margin: 2px;
+        }
+        .tag.green { background: rgba(63,185,80,0.15); color: #3fb950; }
+        .tag.purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+        .tag.orange { background: rgba(210,153,34,0.15); color: #d29922; }
+        .footer {
+            text-align: center; padding: 30px 0; color: #484f58;
+            font-size: 0.85em; border-top: 1px solid #21262d; margin-top: 40px;
+        }
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 20px 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Medusa</h1>
+        <p class="subtitle">The World's Most Flexible Commerce Platform</p>
+        <div class="meta-bar">
+            <span class="meta-badge"><span class="label">语言</span><span class="value">TypeScript</span></span>
+            <span class="meta-badge"><span class="label">Stars</span><span class="value">33,296</span></span>
+            <span class="meta-badge"><span class="label">今日增长</span><span class="value">+200</span></span>
+            <span class="meta-badge"><span class="label">协议</span><span class="value">MIT</span></span>
+            <span class="meta-badge"><span class="label">日期</span><span class="value">2026-05-18</span></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>项目简介与核心功能</h2>
+        <p>Medusa 是一个开源的无头（Headless）电商平台，被誉为<strong>"开源版 Shopify"</strong>。它提供了构建数字商务所需的全部基础模块，同时赋予开发者 100% 的代码和数据所有权。</p>
+        <div class="highlight-box">
+            <p>与 SaaS 电商平台不同，Medusa 采用模块化无头架构，将后端与前端正交分离，开发者可自由选择 Next.js、Remix、Gatsby 等任何前端框架构建店面。</p>
+        </div>
+        <h3>核心功能模块</h3>
+        <ul>
+            <li><strong>产品管理</strong> — 支持多品类、多变体、多仓库的产品目录</li>
+            <li><strong>购物车与结账</strong> — 灵活的购物车引擎，支持自定义结账流程</li>
+            <li><strong>订单管理</strong> — 完整的订单生命周期管理，含退货、换货、索赔</li>
+            <li><strong>支付集成</strong> — 内置 Stripe、PayPal 等支付网关，可扩展自定义支付</li>
+            <li><strong>配送物流</strong> — 多仓库、多承运商支持，含实时费率计算</li>
+            <li><strong>促销与折扣</strong> — 灵活的促销规则引擎（百分比/固定/买赠）</li>
+            <li><strong>多货币/多语言</strong> — 原生国际化支持</li>
+            <li><strong>B2B 功能</strong> — 企业定价、批量订单、公司账户管理</li>
+            <li><strong>Workflows</strong> — 声明式业务编排引擎，构建复杂业务逻辑</li>
+            <li><strong>Admin Dashboard</strong> — 全新的现代化管理后台</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>技术架构与特点</h2>
+        <h3>架构概览</h3>
+        <p>Medusa v2 采用了全新的模块化架构设计，将电商平台拆分为独立可组合的 Commerce Modules：</p>
+        <div class="code-block">
+<span class="comment">// Medusa 核心架构层次</span>
+<span class="cmd">┌─────────────────────────────────┐</span>
+<span class="cmd">│        Storefront (Next.js)      │  ← 任何前端框架</span>
+<span class="cmd">├─────────────────────────────────┤</span>
+<span class="cmd">│     Medusa Admin Dashboard       │  ← 管理后台</span>
+<span class="cmd">├─────────────────────────────────┤</span>
+<span class="cmd">│   REST API + GraphQL + Medusa JS │  ← API 层</span>
+<span class="cmd">├─────────────────────────────────┤</span>
+<span class="cmd">│   Workflows & Modules Engine     │  ← 业务编排</span>
+<span class="cmd">├─────────────────────────────────┤</span>
+<span class="cmd">│  Product | Cart | Order | Payment │  ← 商务模块</span>
+<span class="cmd">│  Shipping | Pricing | Inventory  │</span>
+<span class="cmd">├─────────────────────────────────┤</span>
+<span class="cmd">│    Database (PostgreSQL) + Redis  │  ← 数据层</span>
+<span class="cmd">└─────────────────────────────────┘</span>
+        </div>
+        <h3>关键技术特点</h3>
+        <table>
+            <tr><th>特性</th><th>说明</th></tr>
+            <tr><td><span class="tag">TypeScript</span></td><td>全栈 TypeScript，类型安全贯穿前后端</td></tr>
+            <tr><td><span class="tag green">模块化</span></td><td>每个商务能力独立打包为 npm 模块，按需使用</td></tr>
+            <tr><td><span class="tag purple">Workflows</span></td><td>声明式编排引擎，将复杂业务流程组合为可重用 Workflow</td></tr>
+            <tr><td><span class="tag orange">API-First</span></td><td>同时提供 REST 和 GraphQL API，SDK 支持</td></tr>
+            <tr><td><span class="tag">插件生态</span></td><td>官方和社区丰富的支付、物流、通知等插件</td></tr>
+            <tr><td><span class="tag green">Docker 部署</span></td><td>一键 Docker Compose 部署，支持 Kubernetes</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>应用场景</h2>
+        <ul>
+            <li><strong>DTC 品牌电商</strong> — 面向消费者的品牌直销网站，追求高度定制的购物体验</li>
+            <li><strong>B2B 批发平台</strong> — 企业间批量采购、定制定价、多级审批</li>
+            <li><strong>多商户市场 (Marketplace)</strong> — 类似 Amazon 的多卖家平台</li>
+            <li><strong>分销商平台</strong> — 复杂供应链和分销网络管理</li>
+            <li><strong>POS 系统</strong> — 线上线下库存同步的零售收银系统</li>
+            <li><strong>服务型业务</strong> — 预约、订阅、数字产品销售</li>
+            <li><strong>国际电商</strong> — 多区域、多币种、多语言全球化运营</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>为什么火（Trending 原因）</h2>
+        <div class="highlight-box">
+            <p>Medusa 正在成为 2026 年开源电商领域最热门的选择之一。它解决了 Shopify 等 SaaS 平台的核心痛点：高昂的交易费、受限的定制能力、以及令人担忧的供应商锁定风险。</p>
+        </div>
+        <ul>
+            <li><strong>反供应商锁定趋势</strong> — 越来越多企业意识到数据主权和平台独立性的重要性</li>
+            <li><strong>Medusa v2 的重大升级</strong> — 模块化架构 + Workflows 引擎 + 全新 Admin，大幅降低开发门槛</li>
+            <li><strong>Medusa Cloud 上线</strong> — 官方托管服务消除了"自建难"的顾虑，降低上手门槛</li>
+            <li><strong>AI 时代的电商基础设施</strong> — API-First 设计天然适配 AI Agent 集成，成为 AI 电商首选底座</li>
+            <li><strong>成本优势</strong> — 相比 Shopify Plus 动辄 $2,000/月 + 交易手续费，Medusa 零授权费</li>
+            <li><strong>社区爆发式增长</strong> — 33K+ Stars，14,000+ Discord 成员，生态插件快速增长</li>
+            <li><strong>开发者优先理念</strong> — 现代技术栈（TypeScript/Node.js/PostgreSQL）对开发者极具吸引力</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>同类项目对比</h2>
+        <table>
+            <tr>
+                <th>维度</th>
+                <th>Medusa</th>
+                <th>Shopify</th>
+                <th>Saleor</th>
+                <th>WooCommerce</th>
+            </tr>
+            <tr>
+                <td>开源</td>
+                <td><span class="tag green">MIT 开源</span></td>
+                <td>闭源 SaaS</td>
+                <td><span class="tag green">开源</span></td>
+                <td><span class="tag green">开源</span></td>
+            </tr>
+            <tr>
+                <td>技术栈</td>
+                <td>TypeScript/Node</td>
+                <td>Ruby/Liquid</td>
+                <td>Python/GraphQL</td>
+                <td>PHP/WordPress</td>
+            </tr>
+            <tr>
+                <td>Headless</td>
+                <td>原生支持</td>
+                <td>需 Hydrogen</td>
+                <td>原生支持</td>
+                <td>需插件</td>
+            </tr>
+            <tr>
+                <td>定制灵活性</td>
+                <td>极高</td>
+                <td>受限</td>
+                <td>高</td>
+                <td>中等</td>
+            </tr>
+            <tr>
+                <td>成本</td>
+                <td>免费（自建）</td>
+                <td>$39-$2,000+/月</td>
+                <td>免费（自建）</td>
+                <td>免费（需主机）</td>
+            </tr>
+            <tr>
+                <td>上手难度</td>
+                <td>中等</td>
+                <td>低</td>
+                <td>中高</td>
+                <td>低</td>
+            </tr>
+            <tr>
+                <td>B2B 支持</td>
+                <td>原生</td>
+                <td>Plus 版</td>
+                <td>原生</td>
+                <td>需插件</td>
+            </tr>
+            <tr>
+                <td>GitHub Stars</td>
+                <td>33K+</td>
+                <td>N/A</td>
+                <td>21K+</td>
+                <td>9K+</td>
+            </tr>
+            <tr>
+                <td>数据所有权</td>
+                <td>100% 自有</td>
+                <td>平台持有</td>
+                <td>100% 自有</td>
+                <td>100% 自有</td>
+            </tr>
+        </table>
+        <div class="highlight-box">
+            <p><strong>核心优势</strong>：Medusa 在"灵活性 + 开发体验"之间取得了最佳平衡。Saleor 基于 Python/GraphQL 对 JS 开发者不友好；WooCommerce 受限于 WordPress 架构；Shopify 则根本不开放源码。</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>适合谁使用</h2>
+        <ul>
+            <li><strong>全栈/前端开发者</strong> — 熟悉 TypeScript/React/Next.js 的开发者上手极快</li>
+            <li><strong>创业团队</strong> — 需要快速搭建可定制电商 MVP，预算有限</li>
+            <li><strong>正在逃离 Shopify 的品牌</strong> — 受够了高昂交易费和受限定制的商家</li>
+            <li><strong>B2B 企业</strong> — 需要复杂定价、批量订单、企业客户管理功能</li>
+            <li><strong>电商代理商/工作室</strong> — 为多个客户构建定制电商解决方案</li>
+            <li><strong>技术驱动的 DTC 品牌</strong> — 需要深度集成 CRM、ERP、分析等工具</li>
+            <li><strong>AI 产品团队</strong> — 需要可编程的电商 API 来构建 AI 驱动的购物体验</li>
+        </ul>
+        <div class="highlight-box" style="background: rgba(210,153,34,0.1); border-color: rgba(210,153,34,0.3);">
+            <p style="color: #d29922;"><strong>不太适合</strong>：没有技术团队的传统商家、完全不懂代码的小白用户 —— 这类用户更适合 Shopify 或 WooCommerce。</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>快速上手指南</h2>
+        <h3>1. 创建项目</h3>
+        <div class="code-block">
+<span class="cmd">npx create-medusa-app@latest</span>
+<span class="comment"># 按提示选择项目名称、数据库等</span>
+<span class="comment"># 自动安装后端 + Admin Dashboard + Next.js 店面</span>
+        </div>
+        <h3>2. 启动开发服务</h3>
+        <div class="code-block">
+<span class="cmd">cd my-medusa-store</span>
+<span class="cmd">npm run dev</span>
+<span class="comment"># 后端运行在 http://localhost:9000</span>
+<span class="comment"># Admin 运行在 http://localhost:7001</span>
+<span class="comment"># 店面运行在 http://localhost:8000</span>
+        </div>
+        <h3>3. 配置数据库</h3>
+        <div class="code-block">
+<span class="comment"># .env 文件</span>
+DATABASE_URL=postgres://user:password@localhost:5432/medusa
+REDIS_URL=redis://localhost:6379
+        </div>
+        <h3>4. 添加支付模块</h3>
+        <div class="code-block">
+<span class="cmd">npm install @medusajs/payment-stripe</span>
+<span class="comment"># 在 medusa-config.ts 中配置 Stripe 模块</span>
+        </div>
+        <h3>5. 自定义产品 Workflows</h3>
+        <div class="code-block">
+<span class="comment">// src/workflows/custom-create-product.ts</span>
+import { createWorkflow, WorkflowResponse } from "@medusajs/framework/workflows-sdk"
+import { createProductStep } from "./steps/create-product"
+
+export const customCreateProductWorkflow = createWorkflow(
+  "custom-create-product",
+  (input) => {
+    const product = createProductStep(input)
+    return new WorkflowResponse(product)
+  }
+)
+        </div>
+        <h3>6. 部署上线</h3>
+        <div class="code-block">
+<span class="comment"># 方式一：Medusa Cloud（推荐）</span>
+<span class="cmd">medusa cloud deploy</span>
+
+<span class="comment"># 方式二：Docker 自部署</span>
+<span class="cmd">docker compose up -d</span>
+
+<span class="comment"># 方式三：Vercel (店面) + Railway/Render (后端)</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value s9">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value s9">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value s9">9.5</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width: 95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value s8">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill bar-8" style="width: 85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value s9">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill bar-9" style="width: 90%"></div></div>
+            </div>
+        </div>
+        <div class="highlight-box" style="margin-top: 20px;">
+            <p><strong>综合评价：9.0 / 10</strong> — Medusa 是目前开源电商领域的最佳选择之一。v2 的模块化架构和 Workflows 引擎代表了现代电商平台的设计方向，TypeScript 全栈和 API-First 的设计理念使其成为 AI 时代的电商基础设施首选。如果你正在构建一个需要深度定制的电商项目，Medusa 值得认真考虑。</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>相关链接</h2>
+        <ul>
+            <li><strong>GitHub</strong>: <a href="https://github.com/medusajs/medusa" style="color: #58a6ff;">github.com/medusajs/medusa</a></li>
+            <li><strong>官方网站</strong>: <a href="https://medusajs.com" style="color: #58a6ff;">medusajs.com</a></li>
+            <li><strong>文档</strong>: <a href="https://docs.medusajs.com" style="color: #58a6ff;">docs.medusajs.com</a></li>
+            <li><strong>Discord 社区</strong>: 14,000+ 成员</li>
+            <li><strong>Medusa Cloud</strong>: 官方托管服务</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>GitHub Trending 深度分析 | 生成日期: 2026-05-18</p>
+    </div>
+</div>
+</body>
+</html>
