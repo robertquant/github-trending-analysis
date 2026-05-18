@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: Dograh — 开源语音 Agent 平台</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-card-hover: #21293a;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2e0;
+            --gradient-1: linear-gradient(135deg, #58a6ff 0%, #bc8cff 50%, #f0883e 100%);
+            --gradient-2: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);
+            --gradient-3: linear-gradient(135deg, #bc8cff 0%, #f85149 100%);
+            --gradient-4: linear-gradient(135deg, #39d2e0 0%, #58a6ff 50%, #bc8cff 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(188, 140, 255, 0.06) 0%, transparent 50%);
+            animation: headerPulse 8s ease-in-out infinite alternate;
+        }
+        @keyframes headerPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        .header h1 {
+            font-size: 2.8em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            position: relative;
+        }
+        .header .meta-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+        .badge:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+        .badge .icon { font-size: 1.1em; }
+        .badge.highlight {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.15), rgba(188, 140, 255, 0.1));
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Sections */
+        .section {
+            margin-top: 40px;
+        }
+        .section-title {
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid transparent;
+            border-image: var(--gradient-1) 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .emoji { font-size: 1.2em; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .card h3 {
+            font-size: 1.15em;
+            margin-bottom: 10px;
+            color: var(--accent-blue);
+        }
+        .card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        /* Feature List */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+        .feature-list li:last-child { border-bottom: none; }
+        .feature-list .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            margin-top: 9px;
+            flex-shrink: 0;
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+        }
+        th {
+            background: var(--bg-secondary);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            color: var(--text-secondary);
+        }
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+        .tag-yes {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        .tag-no {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        /* Score */
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .score-card:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+        .score-value {
+            font-size: 2.4em;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #6e7681; }
+        .code-block .command { color: var(--accent-green); }
+        .code-block .flag { color: var(--accent-orange); }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .keyword { color: var(--accent-purple); }
+        .code-label {
+            display: inline-block;
+            background: var(--bg-secondary);
+            color: var(--accent-cyan);
+            padding: 3px 10px;
+            border-radius: 6px 6px 0 0;
+            font-size: 0.8em;
+            font-family: monospace;
+            margin-bottom: -1px;
+            border: 1px solid var(--border);
+            border-bottom: none;
+        }
+
+        /* Alert Box */
+        .alert-box {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(188, 140, 255, 0.05));
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        .alert-box.important {
+            background: linear-gradient(135deg, rgba(248, 81, 73, 0.08), rgba(240, 136, 62, 0.05));
+            border-color: rgba(248, 81, 73, 0.3);
+        }
+        .alert-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+        .alert-box.important h4 {
+            color: var(--accent-orange);
+        }
+        .alert-box p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gradient-1);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-primary);
+        }
+        .timeline-item h4 {
+            color: var(--accent-cyan);
+            font-size: 0.95em;
+        }
+        .timeline-item p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .header .subtitle { font-size: 1em; }
+            .container { padding: 12px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .section-title { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Dograh</h1>
+            <p class="subtitle">开源语音 Agent 平台 — Vapi & Retell 的自托管替代方案</p>
+            <div class="meta-badges">
+                <span class="badge highlight"><span class="icon">⭐</span> 1,466 Stars (+287 today)</span>
+                <span class="badge"><span class="icon">🐍</span> Python</span>
+                <span class="badge"><span class="icon">📜</span> BSD 2-Clause</span>
+                <span class="badge"><span class="icon">🏢</span> YC 校友团队</span>
+                <span class="badge"><span class="icon">🔥</span> Hacker News 热门</span>
+            </div>
+        </div>
+
+        <!-- 项目简介 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">📋</span> 项目简介</h2>
+            <div class="card">
+                <p><strong>Dograh</strong> 是一个完全开源的语音 AI Agent 平台，由 YC 校友和有退出经验的创始人团队打造。它定位为 <strong>Vapi 和 Retell 的开源替代方案</strong>，让用户能够通过拖拽式工作流构建器快速创建生产级语音 Agent，无需按分钟付费。</p>
+                <br>
+                <p>核心理念：<strong>100% 开源、可自托管、零供应商锁定</strong>。从零到运行一个语音 Bot，只需不到 2 分钟。</p>
+            </div>
+            <div class="alert-box">
+                <h4>🎯 核心亮点</h4>
+                <p>无需 API 密钥即可启动 — Dograh 内置自动生成的密钥和自带的 LLM / TTS / STT 技术栈。连接你自己的密钥用于 LLM、TTS、STT 或电话线路（如 Twilio、Vonage、Telnyx）随时可用。</p>
+            </div>
+        </div>
+
+        <!-- 核心功能 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">⚡</span> 核心功能</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>🎙️ 语音能力</h3>
+                    <ul class="feature-list">
+                        <li><span class="dot"></span>内置电话集成：Twilio、Vonage、Vobiz、Cloudonix</li>
+                        <li><span class="dot"></span>支持呼叫转接至人工客服</li>
+                        <li><span class="dot"></span>自定义 TTS/STT 模型</li>
+                        <li><span class="dot"></span>低延迟实时语音交互</li>
+                        <li><span class="dot"></span>英语支持，可扩展其他语言</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🔧 开发者体验</h3>
+                    <ul class="feature-list">
+                        <li><span class="dot"></span>零配置启动 — 自动生成 API 密钥</li>
+                        <li><span class="dot"></span>Python 技术栈 — 易于定制</li>
+                        <li><span class="dot"></span>Docker First — 一致化部署</li>
+                        <li><span class="dot"></span>模块化架构 — 可替换组件</li>
+                        <li><span class="dot"></span>拖拽式工作流构建器</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🧪 测试与质量</h3>
+                    <ul class="feature-list">
+                        <li><span class="dot"></span>测试模式 — 端到端验证，不影响生产</li>
+                        <li><span class="dot"></span>仪表板内 Web 通话 — 边建边测</li>
+                        <li><span class="dot"></span>QA 节点 — 分析跨节点提示质量</li>
+                        <li><span class="dot"></span>灵活的 LLM/STT/TTS 切换</li>
+                        <li><span class="dot"></span>入站/出站呼叫支持</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">🏗️</span> 技术架构与特点</h2>
+            <div class="card">
+                <h3>架构概览</h3>
+                <p>Dograh 基于 <strong>Pipecat</strong> 框架构建，这是一个专为实时音视频 AI 应用设计的开源框架。平台采用模块化设计，核心组件包括：</p>
+                <br>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>组件</th>
+                                <th>说明</th>
+                                <th>特点</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>工作流引擎</strong></td>
+                                <td>拖拽式可视化构建器</td>
+                                <td>无需代码，直观设计对话流</td>
+                            </tr>
+                            <tr>
+                                <td><strong>语音处理层</strong></td>
+                                <td>STT → LLM → TTS 流水线</td>
+                                <td>可替换每个环节的模型</td>
+                            </tr>
+                            <tr>
+                                <td><strong>电话集成层</strong></td>
+                                <td>多运营商 SIP/PSTN 网关</td>
+                                <td>Twilio、Vonage、Telnyx 等</td>
+                            </tr>
+                            <tr>
+                                <td><strong>部署层</strong></td>
+                                <td>Docker Compose 容器化</td>
+                                <td>一条命令启动全栈</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Web 界面</strong></td>
+                                <td>管理仪表板 + Web Call</td>
+                                <td>浏览器内直接测试语音 Agent</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="alert-box">
+                <h4>🔑 架构关键设计</h4>
+                <p>Dograh 的核心引擎基于 Pipecat，这意味着它继承了 Pipecat 在实时音视频处理方面的优势，包括 WebSocket 连接管理、音频帧处理、以及灵活的 Bot 框架集成。同时，Dograh 在上层封装了更友好的工作流 UI 和一键部署体验。</p>
+            </div>
+        </div>
+
+        <!-- 同类对比 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">⚖️</span> 同类项目对比</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th>Dograh</th>
+                            <th>Vapi</th>
+                            <th>Retell AI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>许可证</strong></td>
+                            <td><span class="tag-yes">BSD 2-Clause (开源)</span></td>
+                            <td><span class="tag-no">专有</span></td>
+                            <td><span class="tag-no">专有</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>可自托管</strong></td>
+                            <td><span class="tag-yes">✅ 一条 Docker 命令</span></td>
+                            <td><span class="tag-no">❌ 仅 SaaS</span></td>
+                            <td><span class="tag-no">❌ 仅 SaaS</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>定价</strong></td>
+                            <td>免费（自托管）/ 用量计费（云）</td>
+                            <td>按分钟 SaaS</td>
+                            <td>按分钟 SaaS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>自定义 LLM/STT/TTS</strong></td>
+                            <td><span class="tag-yes">✅ 任意提供商</span></td>
+                            <td>有限配置</td>
+                            <td>有限配置</td>
+                        </tr>
+                        <tr>
+                            <td><strong>源码级定制</strong></td>
+                            <td><span class="tag-yes">✅ 每行代码可修改</span></td>
+                            <td><span class="tag-no">❌ 闭源</span></td>
+                            <td><span class="tag-no">❌ 闭源</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>数据驻留</strong></td>
+                            <td>你的基础设施，你的规则</td>
+                            <td>其云端</td>
+                            <td>其云端</td>
+                        </tr>
+                        <tr>
+                            <td><strong>供应商锁定</strong></td>
+                            <td><span class="tag-yes">无</span></td>
+                            <td><span class="tag-no">完全锁定</span></td>
+                            <td><span class="tag-no">完全锁定</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>对话质量/轮次</strong></td>
+                            <td>良好（基于 Pipecat）</td>
+                            <td>灵活但有延迟反馈</td>
+                            <td><span class="tag-yes">优秀（擅长轮次管理）</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>成熟度</strong></td>
+                            <td>早期（1.4k Stars）</td>
+                            <td>成熟</td>
+                            <td>成熟</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">🔥</span> 为什么火 (Trending 原因)</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>1. 市场痛点精准</h3>
+                    <p>Vapi 和 Retell 按分钟收费的模式让大量中小企业和开发者望而却步。Dograh 提供了完全免费的替代方案，精准切入了"开源 vs SaaS"的永恒争论。</p>
+                </div>
+                <div class="card">
+                    <h3>2. Better Stack 推广</h3>
+                    <p>被知名技术媒体 Better Stack 专题报道，YouTube 视频覆盖了大量开发者群体，带来了可观的初始流量和 Star 增长。</p>
+                </div>
+                <div class="card">
+                    <h3>3. Hacker News 爆发</h3>
+                    <p>在 Hacker News 上获得 "Show HN" 推荐，社区讨论热烈。YC 校友背景加上开源策略，精准命中了 HN 用户群体的偏好。</p>
+                </div>
+                <div class="card">
+                    <h3>4. Voice AI 风口</h3>
+                    <p>2025-2026 年语音 AI Agent 正处于爆发期。企业电话客服、预约提醒、销售外呼等场景需求激增，Dograh 恰好站在了这个浪潮上。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">🌍</span> 应用场景</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>📞 客服中心</h3>
+                    <p>构建 AI 接听客服，自动处理常见咨询、工单创建，复杂问题无缝转接人工客服。</p>
+                </div>
+                <div class="card">
+                    <h3>🎯 销售外呼</h3>
+                    <p>AI 销售助手自动拨打潜在客户电话，进行初步意向筛选和线索资质评估。</p>
+                </div>
+                <div class="card">
+                    <h3>🏥 医疗预约</h3>
+                    <p>语音 Agent 处理预约确认、提醒、改期等场景，减轻前台工作量。</p>
+                </div>
+                <div class="card">
+                    <h3>🏠 房产中介</h3>
+                    <p>自动应答房产咨询、预约看房、跟进意向客户，7×24 小时不间断。</p>
+                </div>
+                <div class="card">
+                    <h3>📊 市场调研</h3>
+                    <p>自动化电话调研和数据收集，用自然对话获取用户反馈。</p>
+                </div>
+                <div class="card">
+                    <h3>🎓 教育培训</h3>
+                    <p>语言练习伙伴、面试模拟、知识问答等交互式学习场景。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 适合谁 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">👥</span> 适合谁使用</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>✅ 推荐使用</h3>
+                    <ul class="feature-list">
+                        <li><span class="dot"></span><strong>初创团队</strong> — 预算有限但需要语音 AI 能力</li>
+                        <li><span class="dot"></span><strong>数据敏感企业</strong> — 需要完全控制数据驻留和隐私</li>
+                        <li><span class="dot"></span><strong>Python 开发者</strong> — 希望深度定制语音 Agent 行为</li>
+                        <li><span class="dot"></span><strong>DevOps 团队</strong> — 需要自托管、可扩展的语音平台</li>
+                        <li><span class="dot"></span><strong>AI Agent 构建者</strong> — 需要语音交互作为 Agent 能力的一部分</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>⚠️ 谨慎考虑</h3>
+                    <ul class="feature-list">
+                        <li><span class="dot"></span><strong>非技术用户</strong> — 虽有拖拽界面，但自托管仍需基础运维知识</li>
+                        <li><span class="dot"></span><strong>需要极致对话质量</strong> — Retell 在轮次管理方面仍领先</li>
+                        <li><span class="dot"></span><strong>大规模生产部署</strong> — 项目相对年轻，生产级稳定性待验证</li>
+                        <li><span class="dot"></span><strong>非英语场景</strong> — 目前主要支持英语，多语言能力待完善</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速上手 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">🚀</span> 快速上手指南</h2>
+
+            <div class="card">
+                <h3>Step 1: 一键部署 (60秒)</h3>
+                <div class="code-label">bash</div>
+                <div class="code-block">
+<span class="command">curl</span> <span class="flag">-o</span> docker-compose.yaml \
+  https://raw.githubusercontent.com/dograh-hq/dograh/main/docker-compose.yaml \
+  && <span class="command">REGISTRY</span>=ghcr.io/dograh-hq <span class="command">ENABLE_TELEMETRY</span>=true \
+  <span class="command">docker</span> compose up <span class="flag">--pull</span> always</div>
+                <p style="margin-top: 12px; font-size: 0.9em; color: var(--text-secondary);">首次启动约需 2-3 分钟下载所有镜像。</p>
+            </div>
+
+            <div class="card">
+                <h3>Step 2: 创建第一个语音 Bot</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>1. 打开 http://localhost:3010</h4>
+                        <p>浏览器访问 Dograh 管理界面</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>2. 选择模式并命名</h4>
+                        <p>选择「入站」或「出站」，给 Bot 命名（如「客户线索筛选」）</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>3. 描述使用场景</h4>
+                        <p>用 5-10 个词描述场景（如「筛选保险表单中的购买意向」）</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>4. 点击 Web Call</h4>
+                        <p>直接在浏览器中与你的语音 Agent 对话！无需任何 API 密钥。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Step 3: 接入电话线路 (可选)</h3>
+                <div class="code-label">yaml</div>
+                <div class="code-block">
+<span class="comment"># 在 Dograh 仪表板中配置电话运营商</span>
+<span class="comment"># 支持: Twilio / Vonage / Telnyx / Vobiz / Cloudonix</span>
+
+<span class="comment"># 仅需填入: Account SID + Auth Token</span>
+<span class="comment"># 系统自动处理 Webhook 和路由配置</span></div>
+            </div>
+
+            <div class="alert-box important">
+                <h4>💡 提示</h4>
+                <p>如需在远程服务器部署，请参考 <a href="https://docs.dograh.com" style="color: var(--accent-blue);">官方文档</a> 中的 HTTPS 配置指南。</p>
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">📊</span> 综合评分</h2>
+            <div class="grid-3">
+                <div class="score-card">
+                    <div class="score-value">8.5</div>
+                    <div class="score-label">创新性</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--gradient-1);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-value">7.5</div>
+                    <div class="score-label">代码质量</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 75%; background: var(--gradient-2);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-value">9.0</div>
+                    <div class="score-label">实用性</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--gradient-3);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-value">7.0</div>
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 70%; background: var(--gradient-4);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-value">8.0</div>
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: var(--gradient-1);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-value" style="font-size: 2em;">8.0</div>
+                    <div class="score-label">总评</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: var(--gradient-4);"></div></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 16px;">
+                <h3>评分解读</h3>
+                <ul class="feature-list">
+                    <li><span class="dot"></span><strong>创新性 8.5</strong> — 在语音 AI 领域以完全开源+自托管模式切入，精准定位了市场空白</li>
+                    <li><span class="dot"></span><strong>代码质量 7.5</strong> — 基于 Pipecat 成熟框架，架构清晰，但项目较新，部分模块尚在迭代</li>
+                    <li><span class="dot"></span><strong>实用性 9.0</strong> — 一条命令部署、无需 API 密钥即可测试、拖拽式工作流，上手门槛极低</li>
+                    <li><span class="dot"></span><strong>文档完善度 7.0</strong> — README 清晰，有官方文档站点，但高级功能和 API 文档仍在完善中</li>
+                    <li><span class="dot"></span><strong>社区活跃度 8.0</strong> — Slack 社区活跃、创始人亲自参与、Better Stack 和 HN 带来了强劲增长</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 总结 -->
+        <div class="section">
+            <h2 class="section-title"><span class="emoji">📝</span> 总结</h2>
+            <div class="card">
+                <p>Dograh 是目前 <strong>语音 AI Agent 领域最有潜力的开源项目之一</strong>。它以 BSD 2-Clause 协议完全开放源代码，提供了 Vapi 和 Retell 等商业产品的真正替代方案。</p>
+                <br>
+                <p>对于一个仅有 ~1,500 Star 的早期项目来说，它的功能完整度和易用性令人印象深刻。YC 校友团队的背景、Better Stack 的报道和 Hacker News 的热度，都预示着这个项目有着良好的增长势头。</p>
+                <br>
+                <p><strong>如果你正在寻找一个开源、可自托管、零供应商锁定的语音 AI Agent 平台，Dograh 目前是最佳选择。</strong></p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析日期: 2026-05-18 | 数据来源: GitHub, Hacker News, Better Stack, Reddit</p>
+            <p style="margin-top: 8px;">
+                <a href="https://github.com/dograh-hq/dograh" style="color: var(--accent-blue); text-decoration: none;">GitHub 仓库</a>
+                &nbsp;·&nbsp;
+                <a href="https://docs.dograh.com" style="color: var(--accent-blue); text-decoration: none;">官方文档</a>
+                &nbsp;·&nbsp;
+                <a href="https://dograh.com" style="color: var(--accent-blue); text-decoration: none;">官网</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
