@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: Agents Towards Production — GenAI Agent 生产级实战教程</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-card-hover: #21293a;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2e0;
+            --gradient-1: linear-gradient(135deg, #58a6ff 0%, #bc8cff 50%, #f0883e 100%);
+            --gradient-2: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);
+            --gradient-3: linear-gradient(135deg, #bc8cff 0%, #f85149 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(188, 140, 255, 0.06) 0%, transparent 50%);
+            animation: headerPulse 8s ease-in-out infinite alternate;
+        }
+        @keyframes headerPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        .header h1 {
+            font-size: 2.8em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            position: relative;
+        }
+        .header .meta-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .badge.lang { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .badge.stars { border-color: var(--accent-orange); color: var(--accent-orange); }
+        .badge.today { border-color: var(--accent-green); color: var(--accent-green); }
+        .badge.license { border-color: var(--accent-purple); color: var(--accent-purple); }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: #3d444d;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.15em;
+            margin: 16px 0 8px;
+            color: var(--accent-blue);
+        }
+        .card p, .card li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        .card ul { padding-left: 20px; margin-top: 8px; }
+        .card li { margin-bottom: 6px; }
+
+        /* Gradient headings */
+        .gradient-text-blue {
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-purple {
+            background: var(--gradient-3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-main {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Tag chips */
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 14px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .tag.blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+        .tag.purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+        .tag.green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .tag.orange { background: rgba(240,136,62,0.15); color: var(--accent-orange); }
+        .tag.cyan { background: rgba(57,210,224,0.15); color: var(--accent-cyan); }
+
+        /* Score table */
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .score-table th, .score-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .score-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-table td { color: var(--text-primary); }
+        .score-table tr:last-child td { border-bottom: none; }
+        .score-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .score-value { font-weight: 700; font-size: 1.1em; }
+
+        /* Code block */
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        code {
+            font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+            color: var(--accent-cyan);
+        }
+        pre code { color: var(--text-primary); }
+
+        /* Comparison table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .compare-table th, .compare-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.92em;
+        }
+        .compare-table th {
+            background: var(--bg-secondary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        .compare-table tr:hover td { background: rgba(88,166,255,0.05); }
+
+        /* Highlight box */
+        .highlight-box {
+            border-left: 4px solid var(--accent-blue);
+            background: rgba(88,166,255,0.08);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .highlight-box.green {
+            border-left-color: var(--accent-green);
+            background: rgba(63,185,80,0.08);
+        }
+        .highlight-box.orange {
+            border-left-color: var(--accent-orange);
+            background: rgba(240,136,62,0.08);
+        }
+        .highlight-box.purple {
+            border-left-color: var(--accent-purple);
+            background: rgba(188,140,255,0.08);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 18px; }
+            .score-table th, .score-table td { padding: 8px 10px; }
+            .compare-table th, .compare-table td { padding: 8px 10px; font-size: 0.85em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Agents Towards Production</h1>
+        <p class="subtitle">GenAI Agent 从原型到企业级部署的端到端实战教程合集</p>
+        <div class="meta-badges">
+            <span class="badge lang">🐍 Python / Jupyter Notebook</span>
+            <span class="badge stars">⭐ 19,768 Stars</span>
+            <span class="badge today">📈 +225 Today</span>
+            <span class="badge.license">📜 Custom Non-Commercial</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">📋</span> <span class="gradient-text-blue">项目简介与核心功能</span></h2>
+        <p><strong>Agents Towards Production</strong> 是由 AI 教育者 Nir Diamant 创建的开源实战教程合集，旨在帮助开发者将 GenAI Agent 从原型阶段推进到生产级部署。项目提供了 <strong>28 个端到端、代码优先的教程</strong>，覆盖了构建生产级 AI Agent 所需的全部关键组件。</p>
+
+        <div class="highlight-box">
+            <strong>核心理念：</strong>The open-source playbook for turning AI agents into real-world products.
+        </div>
+
+        <h3>教程覆盖的核心模块</h3>
+        <ul>
+            <li><strong>🔌 工具集成</strong> — 安全的工具调用（OAuth2 认证、人类-in-the-loop 控制）</li>
+            <li><strong>📊 数据处理</strong> — Web 数据采集（Bright Data、Tavily 实时搜索）</li>
+            <li><strong>🔍 RAG &amp; 知识管理</strong> — 生产级 RAG 系统（Contextual AI 平台）</li>
+            <li><strong>🧠 记忆系统</strong> — 双重记忆（短期/长期）、语义搜索（Redis、Mem0、Cognee）</li>
+            <li><strong>🚀 部署</strong> — Docker 容器化、AWS Bedrock AgentCore、Ollama 本地部署</li>
+            <li><strong>👥 多 Agent 协调</strong> — A2A 协议、多 Agent 通信</li>
+            <li><strong>🔒 安全</strong> — 输入/输出/工具安全防护（LlamaFirewall、Apex 安全评估）</li>
+            <li><strong>🧩 Agent 框架</strong> — LangGraph、FastAPI、MCP 协议、Kotlin/Koog</li>
+            <li><strong>🛠️ 模型定制</strong> — Fine-tuning 领域专家 Agent</li>
+            <li><strong>🔍 可观测性</strong> — LangSmith 追踪与调试</li>
+            <li><strong>📊 评估</strong> — 自动化 Agent 评估与行为分析（IntellAgent）</li>
+            <li><strong>🖥️ UI/前端</strong> — Streamlit 聊天机器人界面</li>
+        </ul>
+
+        <div class="tag-group">
+            <span class="tag blue">LangGraph</span>
+            <span class="tag purple">LangSmith</span>
+            <span class="tag green">FastAPI</span>
+            <span class="tag orange">Docker</span>
+            <span class="tag cyan">Redis</span>
+            <span class="tag blue">MCP</span>
+            <span class="tag purple">A2A Protocol</span>
+            <span class="tag green">Ollama</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> <span class="gradient-text-purple">技术架构与特点</span></h2>
+        <p>项目采用模块化教程设计，每个教程都是独立可运行的 Jupyter Notebook 或 Python 脚本，覆盖 AI Agent 生命周期的各个阶段。</p>
+
+        <h3>AI Agent 生产级架构</h3>
+        <div class="highlight-box purple">
+            <strong>架构分层：</strong><br>
+            编排层 (LangGraph) → 记忆层 (Redis/Mem0/Cognee) → 工具层 (MCP/Arcade) → 安全层 (LlamaFirewall) → 可观测层 (LangSmith) → 评估层 (IntellAgent) → 部署层 (Docker/AWS/Ollama)
+        </div>
+
+        <h3>技术栈一览</h3>
+        <table class="compare-table">
+            <thead>
+                <tr><th>类别</th><th>技术/工具</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>语言</td><td>Python, Jupyter Notebook, Kotlin</td></tr>
+                <tr><td>编排框架</td><td>LangGraph（有向图状态工作流）</td></tr>
+                <tr><td>可观测性</td><td>LangSmith（追踪、调试、监控）</td></tr>
+                <tr><td>工具协议</td><td>MCP（Model Context Protocol）</td></tr>
+                <tr><td>多 Agent 通信</td><td>A2A Protocol</td></tr>
+                <tr><td>记忆系统</td><td>Redis, Mem0, Cognee</td></tr>
+                <tr><td>安全防护</td><td>LlamaFirewall, Apex</td></tr>
+                <tr><td>RAG</td><td>Contextual AI</td></tr>
+                <tr><td>数据采集</td><td>Bright Data, Tavily</td></tr>
+                <tr><td>部署</td><td>Docker, AWS Bedrock AgentCore, RunPod GPU, Ollama</td></tr>
+                <tr><td>API 框架</td><td>FastAPI（同步 + 流式端点）</td></tr>
+                <tr><td>UI</td><td>Streamlit</td></tr>
+            </tbody>
+        </table>
+
+        <h3>设计特点</h3>
+        <ul>
+            <li><strong>代码优先</strong> — 每个教程包含可直接运行的完整代码</li>
+            <li><strong>模块化</strong> — 独立文件夹结构，每个教程自成一体</li>
+            <li><strong>企业级</strong> — 覆盖安全、可观测性、评估等生产关键需求</li>
+            <li><strong>多框架支持</strong> — 不绑定单一框架，展示多种生产方案</li>
+            <li><strong>持续更新</strong> — 定期添加新教程和技术</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> <span class="gradient-text-blue">应用场景</span></h2>
+        <ul>
+            <li><strong>企业级 AI Agent 开发</strong> — 需要将 Agent 从 PoC 推向生产的工程团队</li>
+            <li><strong>AI Agent 安全审计</strong> — 学习输入/输出安全防护、Prompt 注入防御</li>
+            <li><strong>RAG 系统构建</strong> — 企业知识库、文档检索、智能问答</li>
+            <li><strong>多 Agent 协作系统</strong> — 任务分解、Agent 间通信、工作流编排</li>
+            <li><strong>模型微调与优化</strong> — 领域专家 Agent 的 Fine-tuning 实战</li>
+            <li><strong>AI Agent 运维监控</strong> — 追踪、调试、评估 Agent 行为</li>
+            <li><strong>本地/私有化部署</strong> — Ollama 本地模型 + Docker 容器化方案</li>
+            <li><strong>金融文档分析</strong> — 结合 Contextual AI 的金融 RAG 系统</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> <span class="gradient-text-main">为什么火 (Trending 原因)</span></h2>
+        <div class="highlight-box orange">
+            <strong>今日 +225 Stars，总 19,768 Stars</strong>
+        </div>
+        <ul>
+            <li><strong>时机精准</strong> — 2025-2026 年是 AI Agent 从实验走向生产的关键年份，市场急需实战指南</li>
+            <li><strong>痛点解决</strong> — 大多数 AI 教程停留在 "Hello World" 级别，此项目填补了 "从原型到生产" 的空白</li>
+            <li><strong>系统全面</strong> — 覆盖 Agent 生命周期的每个环节，而非单一技术点</li>
+            <li><strong>品牌效应</strong> — 作者 Nir Diamant 是 Amazon #1 畅销书《RAG Made Simple》作者，DiamantAI 社区 50,000+ 订阅者</li>
+            <li><strong>企业赞助</strong> — Arcade、Bright Data、Contextual AI、Redis、Mem0 等知名公司贡献教程</li>
+            <li><strong>社区驱动</strong> — Reddit r/LangChain、LinkedIn 等平台广泛传播</li>
+            <li><strong>配套生态</strong> — 与作者另一个 22k+ Star 的 genai_agents 仓库形成互补</li>
+            <li><strong>AI Agent 招聘需求</strong> — 通过 DiamantAI Collective 提供 AI 工程岗位对接</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span> <span class="gradient-text-purple">同类项目对比</span></h2>
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>定位</th>
+                    <th>教程数</th>
+                    <th>侧重</th>
+                    <th>Stars</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>agents-towards-production</strong></td>
+                    <td>生产级 Agent 全栈教程</td>
+                    <td>28</td>
+                    <td>从原型到企业部署全链路</td>
+                    <td>19.7k</td>
+                </tr>
+                <tr>
+                    <td>NirDiamant/genai_agents</td>
+                    <td>GenAI Agent 技术教程</td>
+                    <td>50+</td>
+                    <td>Agent 技术与实现技巧</td>
+                    <td>22.1k</td>
+                </tr>
+                <tr>
+                    <td>langchain-ai/langgraph</td>
+                    <td>Agent 编排框架</td>
+                    <td>—</td>
+                    <td>有向图工作流编排</td>
+                    <td>~15k</td>
+                </tr>
+                <tr>
+                    <td>microsoft/autogen</td>
+                    <td>多 Agent 对话框架</td>
+                    <td>—</td>
+                    <td>多 Agent 协作</td>
+                    <td>~45k</td>
+                </tr>
+                <tr>
+                    <td>crewAIInc/crewAI</td>
+                    <td>多 Agent 编排框架</td>
+                    <td>—</td>
+                    <td>角色扮演式 Agent 协作</td>
+                    <td>~30k</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box green">
+            <strong>差异化优势：</strong>不同于 LangGraph、AutoGen、CrewAI 等框架项目，agents-towards-production 不做框架，而是做 <em>教程生态</em>。它教你如何在真实生产环境中<strong>使用</strong>这些框架，并补充了安全、可观测性、评估、部署等框架本身不覆盖的关键环节。
+        </div>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">👥</span> <span class="gradient-text-blue">适合谁使用</span></h2>
+        <ul>
+            <li><strong>AI 工程师</strong> — 需要将 Agent 从 PoC 推向生产环境，但缺乏实战经验</li>
+            <li><strong>后端工程师转 AI</strong> — 有工程基础，想系统学习 AI Agent 生产化</li>
+            <li><strong>技术决策者 / 架构师</strong> — 评估 Agent 技术栈、了解生产架构设计</li>
+            <li><strong>AI 创业者</strong> — 快速搭建可上线的 Agent 产品</li>
+            <li><strong>数据科学家</strong> — 想了解模型之外的生产级工程实践</li>
+            <li><strong>学生 / 自学者</strong> — 系统学习 AI Agent 工程化，构建作品集</li>
+        </ul>
+
+        <div class="highlight-box">
+            <strong>前提知识：</strong>Python 基础、了解 LLM 基本概念（Prompt、Embedding）、基本命令行操作
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> <span class="gradient-text-main">快速上手指南</span></h2>
+
+        <h3>1. 克隆仓库</h3>
+        <pre><code>git clone https://github.com/NirDiamant/agents-towards-production.git
+cd agents-towards-production</code></pre>
+
+        <h3>2. 选择教程并安装依赖</h3>
+        <pre><code># 例如：多工具 Agent 编排教程
+cd tutorials/agentic-applications-by-xpander.ai
+pip install -r meeting-recorder-agent/requirements.txt</code></pre>
+
+        <h3>3. 运行教程</h3>
+        <pre><code># Jupyter Notebook 交互式学习
+jupyter notebook tutorial.ipynb
+
+# 或直接运行 Python 脚本
+python app.py</code></pre>
+
+        <h3>推荐学习路径</h3>
+        <div class="highlight-box green">
+            <strong>入门：</strong>LangGraph 状态工作流 → Streamlit UI → Docker 容器化<br>
+            <strong>进阶：</strong>Redis 记忆系统 → 安全防护 (LlamaFirewall) → LangSmith 可观测性<br>
+            <strong>高级：</strong>多 Agent 协调 (A2A) → Fine-tuning → AWS Bedrock 部署
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">📊</span> <span class="gradient-text-purple">综合评分</span></h2>
+        <table class="score-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>评分</th>
+                    <th>详情</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>创新性</strong></td>
+                    <td><span class="score-value" style="color: var(--accent-orange);">7.5 / 10</span></td>
+                    <td>
+                        <div class="score-bar"><div class="score-bar-fill" style="width: 75%; background: var(--gradient-1);"></div></div>
+                        不是全新框架，而是系统化教程；但在"生产级"定位上填补空白
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>代码质量</strong></td>
+                    <td><span class="score-value" style="color: var(--accent-green);">8.5 / 10</span></td>
+                    <td>
+                        <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--gradient-2);"></div></div>
+                        每个教程独立可运行，结构清晰，代码注释完善
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>实用性</strong></td>
+                    <td><span class="score-value" style="color: var(--accent-green);">9.5 / 10</span></td>
+                    <td>
+                        <div class="score-bar"><div class="score-bar-fill" style="width: 95%; background: var(--gradient-2);"></div></div>
+                        直接解决"从 Demo 到生产"的核心痛点，覆盖安全、部署、评估全链路
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>文档完善度</strong></td>
+                    <td><span class="score-value" style="color: var(--accent-green);">9.0 / 10</span></td>
+                    <td>
+                        <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--gradient-2);"></div></div>
+                        README 详尽、架构图清晰、每个教程有独立说明，配套书籍和 Newsletter
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>社区活跃度</strong></td>
+                    <td><span class="score-value" style="color: var(--accent-green);">9.0 / 10</span></td>
+                    <td>
+                        <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--gradient-2);"></div></div>
+                        19.7k Stars，50k+ Newsletter 订阅，企业赞助，Reddit/LinkedIn 活跃讨论
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>综合评分</strong></td>
+                    <td><span class="score-value gradient-text-main" style="font-size: 1.3em;">8.7 / 10</span></td>
+                    <td>
+                        <div class="score-bar"><div class="score-bar-fill" style="width: 87%; background: var(--gradient-1);"></div></div>
+                        当前最全面的 AI Agent 生产化实战资源，强烈推荐
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>📅 分析日期：2026-05-18 | 🔗 GitHub: <a href="https://github.com/NirDiamant/agents-towards-production" style="color: var(--accent-blue);">NirDiamant/agents-towards-production</a></p>
+        <p style="margin-top: 8px;">Powered by GitHub Trending Deep Analyzer</p>
+    </div>
+
+</div>
+</body>
+</html>
