@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost CMS 深度分析 | GitHub Trending</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #151b23 100%);
+            border: 1px solid #21262d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+        .hero h1 {
+            font-size: 36px;
+            background: linear-gradient(135deg, #818cf8, #6ee7b7, #818cf8);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .hero .subtitle { font-size: 17px; color: #8b949e; margin-bottom: 24px; max-width: 600px; }
+        .hero-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .hero-stat .value { color: #f0f6fc; font-weight: 600; font-size: 16px; }
+        .hero-stat .icon { font-size: 18px; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 20px;
+            color: #f0f6fc;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .emoji { font-size: 22px; }
+        .card h3 { font-size: 16px; color: #d2a8ff; margin: 16px 0 8px; }
+        .card p { margin-bottom: 12px; font-size: 14.5px; }
+        .card ul, .card ol { padding-left: 20px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; font-size: 14.5px; }
+
+        /* Tech Stack Tags */
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .tech-tag {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .tech-tag.green {
+            background: rgba(74, 222, 128, 0.1);
+            border-color: rgba(74, 222, 128, 0.25);
+            color: #86efac;
+        }
+        .tech-tag.orange {
+            background: rgba(251, 146, 60, 0.1);
+            border-color: rgba(251, 146, 60, 0.25);
+            color: #fdba74;
+        }
+        .tech-tag.cyan {
+            background: rgba(34, 211, 238, 0.1);
+            border-color: rgba(34, 211, 238, 0.25);
+            color: #67e8f9;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 13.5px;
+        }
+        .comparison-table th {
+            background: #1c2128;
+            color: #f0f6fc;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #30363d;
+        }
+        .comparison-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+        }
+        .comparison-table tr:hover td { background: rgba(99, 102, 241, 0.04); }
+        .comparison-table .highlight { color: #6ee7b7; font-weight: 500; }
+        .comparison-table .warn { color: #fbbf24; }
+        .comparison-table .bad { color: #f87171; }
+
+        /* Score Grid */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .score-item {
+            background: #1c2128;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .score-label { font-size: 12px; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .score-item .score-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #6ee7b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-bar {
+            width: 100%;
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #818cf8, #6ee7b7);
+        }
+        .score-total {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(110, 231, 183, 0.1));
+            border-radius: 10px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .score-total .total-label { font-size: 14px; color: #8b949e; }
+        .score-total .total-value { font-size: 36px; font-weight: 800; color: #f0f6fc; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .flag { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+
+        /* Quick Start Steps */
+        .steps { counter-reset: step; }
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #1c2128;
+            border-radius: 8px;
+            border: 1px solid #21262d;
+        }
+        .step-num {
+            counter-increment: step;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            background: linear-gradient(135deg, #818cf8, #6366f1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: #fff;
+        }
+        .step-content h4 { color: #f0f6fc; font-size: 15px; margin-bottom: 6px; }
+        .step-content p { color: #8b949e; font-size: 13.5px; margin: 0; }
+
+        /* Trending Reasons */
+        .reason-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .reason-item {
+            padding: 14px 16px;
+            background: #1c2128;
+            border-radius: 8px;
+            border-left: 3px solid #818cf8;
+            font-size: 14px;
+        }
+        .reason-item strong { color: #a5b4fc; }
+
+        /* Use Cases */
+        .use-case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .use-case {
+            padding: 16px;
+            background: #1c2128;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #21262d;
+        }
+        .use-case .uc-icon { font-size: 28px; margin-bottom: 8px; }
+        .use-case .uc-title { color: #f0f6fc; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .use-case .uc-desc { color: #8b949e; font-size: 12.5px; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px 0 16px;
+            color: #484f58;
+            font-size: 12px;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+        .footer a { color: #818cf8; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .hero { padding: 32px 20px; }
+            .hero h1 { font-size: 26px; }
+            .card { padding: 20px; }
+            .hero-stats { gap: 16px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-badge">🔥 GitHub Trending · 2026-05-18</div>
+        <h1>TryGhost/Ghost</h1>
+        <p class="subtitle">独立现代出版技术平台 — 集博客、会员制、订阅、Newsletter于一体的开源 Node.js CMS</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><span class="icon">⭐</span> <span class="value">53,113</span> Stars</div>
+            <div class="hero-stat"><span class="icon">📈</span> 今日 <span class="value">+209</span></div>
+            <div class="hero-stat"><span class="icon">🍴</span> <span class="value">11.5K</span> Forks</div>
+            <div class="hero-stat"><span class="icon">👥</span> <span class="value">1.7K+</span> Users</div>
+            <div class="hero-stat"><span class="icon">📦</span> <span class="value">971</span> Releases</div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2><span class="emoji">📖</span> 项目简介与核心功能</h2>
+        <p>Ghost 是由 <strong>Ghost Foundation</strong> 维护的开源出版平台，自 2013 年发布以来已发展为最流行的 Node.js CMS 之一。它专注于<strong>现代内容发布</strong>，将博客、Newsletter、会员订阅和付费内容整合在一个统一的平台中。</p>
+        <h3>核心功能</h3>
+        <ul>
+            <li><strong>专业编辑器</strong> — 基于 Markdown 的富文本编辑器，支持拖拽图片、嵌入卡片、实时预览</li>
+            <li><strong>原生 Newsletter</strong> — 内置邮件发送功能，直接从后台向订阅者推送内容</li>
+            <li><strong>会员订阅</strong> — 原生支持免费/付费会员体系，Stripe 集成实现内容变现</li>
+            <li><strong>Headless CMS</strong> — 完整的 REST API + Admin API，支持与任意前端框架搭配</li>
+            <li><strong>主题系统</strong> — Handlebars 模板引擎 + 自定义主题，灵活控制外观</li>
+            <li><strong>SEO 优化</strong> — 内置站点地图、结构化数据、社交媒体标签、Canonical URL</li>
+            <li><strong>自动化运维</strong> — ghost-cli 一键部署、自动 SSL、一键更新</li>
+        </ul>
+    </div>
+
+    <!-- Tech Architecture -->
+    <div class="card">
+        <h2><span class="emoji">🏗️</span> 技术架构与特点</h2>
+        <div class="tech-tags">
+            <span class="tech-tag">Node.js</span>
+            <span class="tech-tag green">JavaScript 60.5%</span>
+            <span class="tech-tag cyan">TypeScript 30.7%</span>
+            <span class="tech-tag orange">Handlebars</span>
+            <span class="tech-tag">MySQL / SQLite</span>
+            <span class="tech-tag green">pnpm Monorepo</span>
+            <span class="tech-tag">Nx Build System</span>
+            <span class="tech-tag cyan">REST API</span>
+            <span class="tech-tag orange">Docker</span>
+        </div>
+        <h3>架构亮点</h3>
+        <ul>
+            <li><strong>Monorepo 架构</strong> — 使用 pnpm workspace + Nx 管理多个子包（ghost core、admin、API 等），模块化清晰</li>
+            <li><strong>双数据库支持</strong> — 生产环境推荐 MySQL，开发/轻量场景支持 SQLite</li>
+            <li><strong>Ghost-CLI 工具链</strong> — npm 全局安装即可管理完整的 Ghost 实例生命周期</li>
+            <li><strong>Headless First</strong> — Content API / Admin API / Members API 完善的 RESTful 接口设计</li>
+            <li><strong>AI Agent 集成准备</strong> — 仓库中包含 <code>.agents/skills</code>、<code>.claude/skills</code>、<code>.codex/environments</code> 等 AI 开发工具配置</li>
+            <li><strong>45,177 次提交</strong>，971 个版本发布 — 13 年持续迭代，代码质量高度成熟</li>
+        </ul>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2><span class="emoji">🎯</span> 应用场景</h2>
+        <div class="use-case-grid">
+            <div class="use-case">
+                <div class="uc-icon">📝</div>
+                <div class="uc-title">独立博客</div>
+                <div class="uc-desc">专业写作者的轻量级博客平台</div>
+            </div>
+            <div class="use-case">
+                <div class="uc-icon">📬</div>
+                <div class="uc-title">Newsletter</div>
+                <div class="uc-desc">替代 Substack 的独立邮件订阅</div>
+            </div>
+            <div class="use-case">
+                <div class="uc-icon">💰</div>
+                <div class="uc-title">付费会员</div>
+                <div class="uc-desc">内容变现，0% 平台手续费</div>
+            </div>
+            <div class="use-case">
+                <div class="uc-icon">🏢</div>
+                <div class="uc-title">企业官网</div>
+                <div class="uc-desc">公司博客、产品发布、品牌展示</div>
+            </div>
+            <div class="use-case">
+                <div class="uc-icon">🎓</div>
+                <div class="uc-title">在线课程</div>
+                <div class="uc-desc">会员专属内容，教程发布平台</div>
+            </div>
+            <div class="use-case">
+                <div class="uc-icon">🔌</div>
+                <div class="uc-title">Headless CMS</div>
+                <div class="uc-desc">Next.js/Nuxt 等前端的后端内容引擎</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Reasons -->
+    <div class="card">
+        <h2><span class="emoji">📈</span> 为什么火（Trending 原因）</h2>
+        <div class="reason-grid">
+            <div class="reason-item">
+                <strong>创作者经济崛起</strong> — 独立出版、付费会员、Newsletter 成为内容创业主流，Ghost 完美契合这一趋势
+            </div>
+            <div class="reason-item">
+                <strong>Substack 替代热潮</strong> — Ghost 0% 手续费 vs Substack 10% 抽成，越来越多创作者迁移
+            </div>
+            <div class="reason-item">
+                <strong>Headless CMS 需求</strong> — 前端框架（Next.js/Nuxt/SvelteKit）普及，Ghost 作为内容后端备受青睐
+            </div>
+            <div class="reason-item">
+                <strong>13年持续迭代</strong> — 45K+ 提交、971 个版本，证明了项目的成熟度和长期可靠性
+            </div>
+            <div class="reason-item">
+                <strong>MIT 开源协议</strong> — 完全自由使用、修改和部署，无供应商锁定
+            </div>
+            <div class="reason-item">
+                <strong>AI 集成趋势</strong> — 仓库新增 AI Agent 配置文件，积极拥抱 AI 辅助开发
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2><span class="emoji">⚔️</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>Ghost</th>
+                    <th>WordPress</th>
+                    <th>Substack</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>定位</strong></td>
+                    <td class="highlight">出版+会员+Newsletter</td>
+                    <td>通用 CMS</td>
+                    <td>Newsletter 平台</td>
+                </tr>
+                <tr>
+                    <td><strong>开源</strong></td>
+                    <td class="highlight">MIT 开源</td>
+                    <td class="highlight">GPL 开源</td>
+                    <td class="bad">闭源</td>
+                </tr>
+                <tr>
+                    <td><strong>交易费用</strong></td>
+                    <td class="highlight">0%</td>
+                    <td class="warn">取决于插件</td>
+                    <td class="bad">10%</td>
+                </tr>
+                <tr>
+                    <td><strong>性能</strong></td>
+                    <td class="highlight">极快 (Node.js)</td>
+                    <td class="warn">中等 (PHP)</td>
+                    <td class="highlight">快 (托管)</td>
+                </tr>
+                <tr>
+                    <td><strong>SEO</strong></td>
+                    <td class="highlight">内置优秀</td>
+                    <td class="highlight">插件丰富</td>
+                    <td class="bad">有限</td>
+                </tr>
+                <tr>
+                    <td><strong>自定义</strong></td>
+                    <td class="highlight">主题+代码全控</td>
+                    <td class="highlight">海量插件主题</td>
+                    <td class="bad">极有限</td>
+                </tr>
+                <tr>
+                    <td><strong>Newsletter</strong></td>
+                    <td class="highlight">原生内置</td>
+                    <td class="warn">需插件</td>
+                    <td class="highlight">核心功能</td>
+                </tr>
+                <tr>
+                    <td><strong>数据所有权</strong></td>
+                    <td class="highlight">完全自有</td>
+                    <td class="highlight">完全自有</td>
+                    <td class="bad">托管在平台</td>
+                </tr>
+                <tr>
+                    <td><strong>上手难度</strong></td>
+                    <td class="warn">中等</td>
+                    <td class="warn">中等</td>
+                    <td class="highlight">极简</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2><span class="emoji">👤</span> 适合谁使用</h2>
+        <ul>
+            <li><strong>独立写作者 / 博主</strong> — 需要专业发布工具且希望拥有自己内容的创作者</li>
+            <li><strong>Newsletter 创业者</strong> — 想从 Substack 迁移以避免 10% 抽成的人</li>
+            <li><strong>前端开发者</strong> — 需要 Headless CMS 配合 Next.js/Nuxt 等框架的项目</li>
+            <li><strong>媒体 / 出版机构</strong> — 需要会员订阅、付费墙功能的内容团队</li>
+            <li><strong>SaaS 公司</strong> — 需要品牌博客+内容营销+SEO 的技术公司</li>
+            <li><strong>在线教育者</strong> — 发布课程内容、管理付费学员</li>
+        </ul>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2><span class="emoji">🚀</span> 快速上手指南</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>安装 Ghost CLI</h4>
+                    <p>通过 npm 全局安装 Ghost 命令行工具</p>
+                    <div class="code-block"><span class="cmd">npm</span> install ghost-cli <span class="flag">-g</span></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>本地安装（开发体验）</h4>
+                    <p>1 分钟内启动本地 Ghost 实例</p>
+                    <div class="code-block"><span class="cmd">ghost</span> install local</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>生产环境部署</h4>
+                    <p>在服务器上完整安装，自动配置 SSL（Let's Encrypt）</p>
+                    <div class="code-block"><span class="cmd">ghost</span> install</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>或使用 Docker</h4>
+                    <p>通过 Docker 快速启动，适合容器化部署</p>
+                    <div class="code-block"><span class="cmd">docker</span> run <span class="flag">-d</span> <span class="flag">-p</span> 2368:2368 ghost</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <h4>或选择 Ghost(Pro) 托管</h4>
+                    <p>2 分钟创建站点，CDN/备份/安全全托管，收入 100% 归 Ghost Foundation</p>
+                    <div class="code-block"><span class="comment"># 访问 https://ghost.org 开始创建</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+        <h2><span class="emoji">⭐</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value">7.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 75%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value">9.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+            </div>
+        </div>
+        <div class="score-total">
+            <div class="total-label">综合评分</div>
+            <div class="total-value">8.7 / 10</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>数据来源：<a href="https://github.com/TryGhost/Ghost">GitHub - TryGhost/Ghost</a> · 分析时间：2026-05-18</p>
+        <p>Powered by GitHub Trending Analyzer</p>
+    </div>
+
+</div>
+</body>
+</html>
