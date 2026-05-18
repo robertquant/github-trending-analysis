@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Research Skills for Claude Code - 深度分析</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+  .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+  /* Hero Section */
+  .hero { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); border-bottom: 1px solid #21262d; }
+  .hero h1 { font-size: 2.4em; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+  .hero .subtitle { color: #8b949e; font-size: 1.1em; margin-bottom: 24px; }
+  .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.85em; font-weight: 600; }
+  .badge-lang { background: rgba(56,139,253,0.15); color: #58a6ff; border: 1px solid rgba(56,139,253,0.3); }
+  .badge-stars { background: rgba(210,153,34,0.15); color: #e3b341; border: 1px solid rgba(210,153,34,0.3); }
+  .badge-today { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+
+  /* Cards */
+  .card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 28px; margin: 24px 0; transition: border-color 0.3s; }
+  .card:hover { border-color: #30363d; }
+  .card h2 { font-size: 1.5em; margin-bottom: 16px; background: linear-gradient(90deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .card h3 { color: #58a6ff; font-size: 1.15em; margin: 20px 0 10px; }
+  .card p { color: #8b949e; margin-bottom: 12px; }
+  .card ul { padding-left: 20px; color: #8b949e; }
+  .card li { margin-bottom: 6px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { background: #21262d; color: #58a6ff; padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.9em; }
+  td { padding: 10px 16px; border-bottom: 1px solid #21262d; color: #c9d1d9; font-size: 0.92em; }
+  tr:hover { background: rgba(56,139,253,0.04); }
+
+  /* Code */
+  pre { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+  code { font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace; font-size: 0.88em; }
+  pre code { color: #e6edf3; }
+  :not(pre) > code { background: rgba(56,139,253,0.1); padding: 2px 6px; border-radius: 4px; color: #79c0ff; font-size: 0.88em; }
+
+  /* Pipeline Diagram */
+  .pipeline { background: #0d1117; border-radius: 10px; padding: 24px; margin: 16px 0; }
+  .pipeline-step { display: flex; align-items: center; padding: 8px 0; }
+  .pipeline-step .step-num { background: linear-gradient(135deg, #58a6ff, #bc8cff); color: #0d1117; font-weight: 700; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; flex-shrink: 0; }
+  .pipeline-step .step-text { margin-left: 14px; color: #c9d1d9; }
+  .pipeline-step .step-text .step-label { color: #8b949e; font-size: 0.85em; }
+  .pipeline-step .gate { background: rgba(247,120,186,0.15); color: #f778ba; padding: 2px 10px; border-radius: 4px; font-size: 0.8em; font-weight: 600; margin-left: 10px; }
+  .pipeline-arrow { text-align: center; color: #30363d; font-size: 1.2em; padding: 2px 0; margin-left: 14px; }
+
+  /* Score Section */
+  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 20px 0; }
+  .score-item { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 20px; text-align: center; }
+  .score-item .score-label { color: #8b949e; font-size: 0.85em; margin-bottom: 8px; }
+  .score-item .score-value { font-size: 2em; font-weight: 700; }
+  .score-item .score-bar { height: 4px; border-radius: 2px; margin-top: 10px; background: #21262d; }
+  .score-item .score-bar-fill { height: 100%; border-radius: 2px; }
+
+  .s-blue .score-value { color: #58a6ff; }
+  .s-blue .score-bar-fill { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
+  .s-purple .score-value { color: #bc8cff; }
+  .s-purple .score-bar-fill { background: linear-gradient(90deg, #bc8cff, #d2a8ff); }
+  .s-green .score-value { color: #3fb950; }
+  .s-green .score-bar-fill { background: linear-gradient(90deg, #3fb950, #56d364); }
+  .s-orange .score-value { color: #e3b341; }
+  .s-orange .score-bar-fill { background: linear-gradient(90deg, #e3b341, #f0c050); }
+  .s-pink .score-value { color: #f778ba; }
+  .s-pink .score-bar-fill { background: linear-gradient(90deg, #f778ba, #ff9bce); }
+
+  /* Total Score */
+  .total-score { text-align: center; padding: 30px; background: linear-gradient(135deg, rgba(56,139,253,0.08), rgba(188,140,255,0.08)); border-radius: 12px; border: 1px solid #21262d; margin: 24px 0; }
+  .total-score .total-num { font-size: 3.5em; font-weight: 800; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .total-score .total-label { color: #8b949e; font-size: 1.1em; }
+
+  /* Comparison stars */
+  .stars { color: #e3b341; letter-spacing: 2px; }
+
+  /* Tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .tag { padding: 4px 12px; border-radius: 6px; font-size: 0.82em; background: rgba(56,139,253,0.08); color: #79c0ff; border: 1px solid rgba(56,139,253,0.15); }
+
+  /* Quick Start */
+  .quickstart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  @media (max-width: 600px) { .quickstart-grid { grid-template-columns: 1fr; } }
+
+  /* Trending reasons */
+  .trend-item { display: flex; gap: 12px; margin: 12px 0; padding: 12px; background: rgba(56,139,253,0.04); border-radius: 8px; border-left: 3px solid #58a6ff; }
+  .trend-num { color: #58a6ff; font-weight: 700; font-size: 1.2em; flex-shrink: 0; }
+  .trend-text { color: #c9d1d9; font-size: 0.95em; }
+
+  /* Footer */
+  footer { text-align: center; padding: 30px; color: #484f58; font-size: 0.85em; border-top: 1px solid #21262d; margin-top: 40px; }
+  footer a { color: #58a6ff; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Academic Research Skills<br>for Claude Code</h1>
+  <div class="subtitle">从研究到发表的完整学术写作 AI 协作工具链</div>
+  <div class="badges">
+    <span class="badge badge-lang">Python</span>
+    <span class="badge badge-stars">11,493 Stars</span>
+    <span class="badge badge-today">+1,302 Today</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Overview Card -->
+  <div class="card">
+    <h2>项目概述</h2>
+    <p>Academic Research Skills (ARS) 是目前 Claude Code 生态中<strong style="color:#e6edf3">最成熟、最完整</strong>的学术研究工具套件。由吴政宜 (Cheng-I Wu) 开发，项目包含 <strong style="color:#58a6ff">4 大核心技能</strong>、<strong style="color:#bc8cff">45+ 专业 Agent</strong>、<strong style="color:#f778ba">25+ 工作模式</strong>，覆盖从文献调研到论文发表的完整流程。</p>
+    <div class="tags">
+      <span class="tag">Claude Code Plugin</span>
+      <span class="tag">学术写作</span>
+      <span class="tag">文献综述</span>
+      <span class="tag">同行评审</span>
+      <span class="tag">引用验证</span>
+      <span class="tag">反幻觉</span>
+      <span class="tag">LaTeX</span>
+    </div>
+    <p style="margin-top:16px; padding: 14px; background: rgba(63,185,80,0.08); border-radius: 8px; border-left: 3px solid #3fb950; color: #8b949e;">
+      <strong style="color:#3fb950">核心理念：</strong> AI 是你的副驾驶，而不是驾驶员。处理繁琐工作，让研究者专注于真正需要人脑的部分。
+    </p>
+  </div>
+
+  <!-- 4 Skills Modules -->
+  <div class="card">
+    <h2>4 大核心技能模块</h2>
+    <table>
+      <thead>
+        <tr><th>模块</th><th>Agent</th><th>模式</th><th>核心功能</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong style="color:#58a6ff">Deep Research</strong></td><td>13</td><td>7</td><td>深度研究、PRISMA系统综述、苏格拉底引导、事实核查</td></tr>
+        <tr><td><strong style="color:#bc8cff">Academic Paper</strong></td><td>12</td><td>10</td><td>论文撰写、大纲规划、修订辅导、引用转换、LaTeX输出</td></tr>
+        <tr><td><strong style="color:#f778ba">Academic Reviewer</strong></td><td>7</td><td>6</td><td>EIC+3评审+魔鬼代言人、0-100分质量评分、校准模式</td></tr>
+        <tr><td><strong style="color:#e3b341">Academic Pipeline</strong></td><td>10阶段</td><td>编排</td><td>自适应检查点、完整性验证、协作评估</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card">
+    <h2>10 阶段完整流水线</h2>
+    <div class="pipeline">
+      <div class="pipeline-step"><div class="step-num">1</div><div class="step-text">RESEARCH — 深度研究 <span class="step-label">/ 文献调研、系统综述</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">2</div><div class="step-text">WRITE — 论文撰写 <span class="step-label">/ 大纲、初稿、修订</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">2.5</div><div class="step-text">INTEGRITY GATE <span class="gate">强制</span> <span class="step-label">/ 引用验证、反幻觉检查</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">3</div><div class="step-text">REVIEW — 同行评审 <span class="step-label">/ 多视角模拟评审</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">3'</div><div class="step-text">RE-REVIEW — 复审 <span class="step-label">/ 验证修订结果</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">4</div><div class="step-text">REVISE — 修订 <span class="step-label">/ 针对性修改</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">4.5</div><div class="step-text">INTEGRITY GATE <span class="gate">强制</span> <span class="step-label">/ 最终完整性验证</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">5</div><div class="step-text">FINALIZE — 定稿 <span class="step-label">/ 格式化、PDF输出</span></div></div>
+      <div class="pipeline-arrow">↓</div>
+      <div class="pipeline-step"><div class="step-num">6</div><div class="step-text">SUMMARY — 过程总结 <span class="step-label">/ 协作质量评估 6维度 1-100分</span></div></div>
+    </div>
+  </div>
+
+  <!-- Technical Highlights -->
+  <div class="card">
+    <h2>核心技术亮点</h2>
+    <h3>反幻觉与引用验证</h3>
+    <table>
+      <thead><tr><th>机制</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>三层引用锚定</code></td><td>每条引用携带 quote/page/section 级别定位锚点</td></tr>
+        <tr><td><code>声明-引用审计</code></td><td>可选审计通道 (ARS_CLAIM_AUDIT=1)，验证引用是否支撑声明</td></tr>
+        <tr><td><code>三索引交叉验证</code></td><td>Semantic Scholar + OpenAlex + Crossref 三库三角验证</td></tr>
+        <tr><td><code>5类幻觉模式检测</code></td><td>TF/PAC/IH/PH/SH 五种已知幻觉模式自动检测</td></tr>
+      </tbody>
+    </table>
+    <h3>AI 行为控制</h3>
+    <table>
+      <thead><tr><th>机制</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>反谄媚协议</code></td><td>魔鬼代言人必须对反驳评分1-5，仅≥4分才能让步</td></tr>
+        <tr><td><code>意图检测层</code></td><td>区分"探索性"和"目标导向"对话，避免过早收敛</td></tr>
+        <tr><td><code>对话健康指标</code></td><td>每5轮自动检测持续性赞同、冲突回避、过早收敛</td></tr>
+        <tr><td><code>风格校准</code></td><td>从历史论文学习写作风格，保持个人一致性</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Trending Reasons -->
+  <div class="card">
+    <h2>为什么火 (Trending 原因)</h2>
+    <div class="trend-item">
+      <div class="trend-num">1</div>
+      <div class="trend-text"><strong>精准痛点定位</strong> — 学术研究者长期面临文献管理、引用格式、同行评审等繁琐工作，ARS 一站式解决</div>
+    </div>
+    <div class="trend-item">
+      <div class="trend-num">2</div>
+      <div class="trend-text"><strong>学术诚信优先</strong> — 明确声明"AI是副驾驶不是驾驶员"，在 AI 论文争议不断的背景下赢得信任</div>
+    </div>
+    <div class="trend-item">
+      <div class="trend-num">3</div>
+      <div class="trend-text"><strong>引用幻觉问题直击</strong> — 基于 Zhao et al. (2026) 对 2.5M 篇论文的审计数据，三层锚定+审计机制直击痛点</div>
+    </div>
+    <div class="trend-item">
+      <div class="trend-num">4</div>
+      <div class="trend-text"><strong>极高迭代速度</strong> — v1.0 到 v3.9.3，400+ commits，20 个 releases，几乎每周迭代</div>
+    </div>
+    <div class="trend-item">
+      <div class="trend-num">5</div>
+      <div class="trend-text"><strong>Claude Code 生态红利</strong> — 作为首批高质量学术插件获得巨大流量</div>
+    </div>
+    <div class="trend-item">
+      <div class="trend-num">6</div>
+      <div class="trend-text"><strong>全平台传播</strong> — Hacker News、LinkedIn、Twitter/X、知乎等广泛讨论</div>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <div class="card">
+    <h2>同类项目对比</h2>
+    <table>
+      <thead><tr><th>项目</th><th>定位</th><th>Agent</th><th>反幻觉</th><th>流水线</th></tr></thead>
+      <tbody>
+        <tr style="background:rgba(56,139,253,0.06)"><td><strong style="color:#58a6ff">ARS (本项目)</strong></td><td>学术写作全流程</td><td>45+</td><td>三层锚定+审计</td><td>10阶段</td></tr>
+        <tr><td>K-Dense-AI/scientific-agent-skills</td><td>科研通用技能包</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>tech-leads-club/agent-skills</td><td>通用技能注册中心</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>Orchestra-Research/AI-research-SKILLs</td><td>AI研究工程技能</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p><strong style="color:#e6edf3">差异化优势：</strong>ARS 是唯一专注于学术研究深度定制的端到端解决方案，在引用验证、学术诚信、反幻觉方面的投入远超同类项目。</p>
+  </div>
+
+  <!-- Target Users -->
+  <div class="card">
+    <h2>适合谁使用</h2>
+    <table>
+      <thead><tr><th>用户类型</th><th>推荐度</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>研究生 / 博士生</td><td class="stars">★★★★★</td><td>完整覆盖论文写作全流程</td></tr>
+        <tr><td>大学教授 / 研究员</td><td class="stars">★★★★★</td><td>评审模拟和引用审计极具价值</td></tr>
+        <tr><td>Claude Code 用户</td><td class="stars">★★★★★</td><td>原生插件，30秒安装</td></tr>
+        <tr><td>AI 研究者</td><td class="stars">★★★★☆</td><td>反幻觉和声明验证机制值得学习</td></tr>
+        <tr><td>其他 AI 助手用户</td><td class="stars">★★★☆☆</td><td>需适配其他平台</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick Start -->
+  <div class="card">
+    <h2>快速上手指南</h2>
+    <h3>30 秒安装</h3>
+    <pre><code># Claude Code 插件安装（推荐）
+/plugin marketplace add Imbad0202/academic-research-skills
+/plugin install academic-research-skills</code></pre>
+
+    <h3>常用命令</h3>
+    <div class="quickstart-grid">
+      <div>
+        <pre><code># 苏格拉底式规划论文结构
+/ars-plan
+
+# 文献综述
+/ars-lit-review "AI在高等教育中的影响"</code></pre>
+      </div>
+      <div>
+        <pre><code># 完整流水线
+"我想写一篇关于人口结构变化的研究论文"
+
+# 论文评审
+"Review this paper"</code></pre>
+      </div>
+    </div>
+
+    <h3>成本估算</h3>
+    <p>一篇 <strong style="color:#e6edf3">15,000 词</strong> 的论文，完整流水线约花费 <strong style="color:#3fb950">$4-6</strong>（基于 Claude API 定价）</p>
+  </div>
+
+  <!-- Scores -->
+  <div class="card">
+    <h2>综合评分</h2>
+    <div class="scores">
+      <div class="score-item s-blue">
+        <div class="score-label">创新性</div>
+        <div class="score-value">9.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+      </div>
+      <div class="score-item s-purple">
+        <div class="score-label">代码质量</div>
+        <div class="score-value">9.0</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+      </div>
+      <div class="score-item s-green">
+        <div class="score-label">实用性</div>
+        <div class="score-value">9.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+      </div>
+      <div class="score-item s-orange">
+        <div class="score-label">文档完善度</div>
+        <div class="score-value">9.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+      </div>
+      <div class="score-item s-pink">
+        <div class="score-label">社区活跃度</div>
+        <div class="score-value">8.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:85%"></div></div>
+      </div>
+    </div>
+
+    <div class="total-score">
+      <div class="total-num">9.2</div>
+      <div class="total-label">/ 10 综合评分</div>
+    </div>
+
+    <p>ARS 是目前 Claude Code 生态中最成熟、最完整的学术研究工具。其在<strong style="color:#e6edf3">引用幻觉检测</strong>和<strong style="color:#e6edf3">学术诚信</strong>方面的投入远超同类项目，反谄媚和意图检测等创新机制展示了对 AI 行为模式的深度理解。</p>
+  </div>
+
+</div>
+
+<footer>
+  <p>分析由 AI 自动生成 | 项目信息截止 2026-05-19</p>
+  <p><a href="https://github.com/Imbad0202/academic-research-skills">GitHub 仓库</a></p>
+</footer>
+
+</body>
+</html>
