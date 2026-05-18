@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析: ggml-org/llama.cpp - LLM Inference in C/C++</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card-bg: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-purple: #bc8cff;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+    --gradient-2: linear-gradient(135deg, #3fb950, #58a6ff);
+    --gradient-3: linear-gradient(135deg, #f85149, #d29922);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* Hero Section */
+  .hero {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--gradient-1);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(88,166,255,0.15);
+    color: var(--accent);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    border: 1px solid rgba(88,166,255,0.3);
+  }
+  .hero h1 {
+    font-size: 2.2em;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .hero .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+    margin-bottom: 20px;
+  }
+  .stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .stat-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-align: center;
+    min-width: 120px;
+  }
+  .stat-value {
+    font-size: 1.6em;
+    font-weight: 700;
+    background: var(--gradient-2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card h2 {
+    font-size: 1.4em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h2 .icon {
+    font-size: 1.2em;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .card p, .card li { color: var(--text); line-height: 1.8; }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+  .card a { color: var(--accent); text-decoration: none; }
+  .card a:hover { text-decoration: underline; }
+
+  /* Feature Grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .feature-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .feature-item h3 {
+    font-size: 1em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .feature-item p {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Table */
+  .styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 0.9em;
+  }
+  .styled-table th {
+    background: rgba(88,166,255,0.1);
+    color: var(--accent);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--accent);
+  }
+  .styled-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .styled-table tr:hover td {
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Score Section */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .score-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .score-item .score-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .score-item .score-value {
+    font-size: 2em;
+    font-weight: 700;
+  }
+  .score-item .score-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .score-item .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  /* Code Block */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+  .code-block .comment { color: #8b949e; }
+  .code-block .command { color: #79c0ff; }
+  .code-block .flag { color: #d2a8ff; }
+  .code-block .string { color: #a5d6ff; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin: 3px;
+  }
+  .tag-blue { background: rgba(88,166,255,0.15); color: #58a6ff; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-orange { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+    margin-top: 12px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .timeline-item h4 {
+    color: var(--accent);
+    font-size: 0.95em;
+    margin-bottom: 4px;
+  }
+  .timeline-item p {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+
+  /* Quick Start */
+  .step-list {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin-top: 12px;
+  }
+  .step-list li {
+    counter-increment: step;
+    padding: 16px 16px 16px 56px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+  }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    width: 28px;
+    height: 28px;
+    background: var(--gradient-1);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85em;
+  }
+  .step-list li code {
+    background: rgba(88,166,255,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+
+  /* Why Trending */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .why-item {
+    background: linear-gradient(135deg, rgba(88,166,255,0.05), rgba(188,140,255,0.05));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .why-item h3 {
+    font-size: 1em;
+    color: var(--accent-purple);
+    margin-bottom: 8px;
+  }
+  .why-item p {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    line-height: 1.6;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    margin-top: 32px;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .hero { padding: 24px; }
+    .hero h1 { font-size: 1.6em; }
+    .stats-row { gap: 8px; }
+    .stat-item { min-width: 90px; padding: 10px 14px; }
+    .stat-value { font-size: 1.3em; }
+    .card { padding: 20px; }
+    .feature-grid, .why-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <span class="hero-badge">C/C++ | LLM Inference Engine</span>
+    <h1>ggml-org/llama.cpp</h1>
+    <p class="subtitle">LLM inference in C/C++ &mdash; 本地运行大语言模型的事实标准引擎</p>
+    <div style="margin-top: 12px;">
+      <span class="tag tag-blue">110,971 Stars</span>
+      <span class="tag tag-green">+283 Today</span>
+      <span class="tag tag-purple">MIT License</span>
+      <span class="tag tag-orange">GGUF Format</span>
+      <span class="tag tag-red">Multi-Backend</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-value">110K+</div>
+        <div class="stat-label">GitHub Stars</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">100+</div>
+        <div class="stat-label">支持模型</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">15+</div>
+        <div class="stat-label">硬件后端</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">GGUF</div>
+        <div class="stat-label">核心格式</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(88,166,255,0.15);color:#58a6ff;">&#128218;</span> 项目简介</h2>
+    <p><strong>llama.cpp</strong> 是由 Georgi Gerganov 发起的开源 C/C++ 大语言模型推理引擎，现已成为 <strong>ggml-org</strong> 组织的核心项目，并已正式加入 <strong>Hugging Face</strong> 生态系统。它是目前本地运行 LLM 最流行的底层引擎，Ollama、LM Studio、GPT4All 等知名工具均基于 llama.cpp 构建。</p>
+    <p style="margin-top:12px;">项目目标极其明确：<strong>用最少的依赖、最广泛的硬件支持，实现最先进的 LLM 推理性能</strong>。从 Mac 到 PC、从手机到服务器、从 CPU 到 GPU，llama.cpp 几乎可以在任何设备上运行大模型。</p>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <h3>零依赖 C/C++ 实现</h3>
+        <p>纯 C/C++ 编写，无需 Python、PyTorch 等重量级依赖，编译即可运行，体积小巧。</p>
+      </div>
+      <div class="feature-item">
+        <h3>极致量化支持</h3>
+        <p>支持 1.5-bit 到 8-bit 全系列量化，将模型体积压缩数倍同时保持高质量输出。</p>
+      </div>
+      <div class="feature-item">
+        <h3>全平台硬件加速</h3>
+        <p>Apple Metal、NVIDIA CUDA、AMD HIP、Vulkan、SYCL、WebGPU 等 15+ 后端。</p>
+      </div>
+      <div class="feature-item">
+        <h3>OpenAI 兼容 API</h3>
+        <p>内置 llama-server，提供与 OpenAI API 兼容的 HTTP 接口，可直接替换生产环境。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Architecture -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(63,185,80,0.15);color:#3fb950;">&#9881;</span> 技术架构与特点</h2>
+
+    <h3 style="color:var(--accent);margin:16px 0 12px;">GGUF 模型格式</h3>
+    <p>llama.cpp 使用 <strong>GGUF (Generalized GGML Universal Format)</strong> 作为核心模型格式。GGUF 将量化权重、模型元数据、词表等打包在单一文件中，支持 mmap 高效加载，是本地推理的事实标准格式。</p>
+
+    <h3 style="color:var(--accent);margin:16px 0 12px;">支持的硬件后端</h3>
+    <table class="styled-table">
+      <thead>
+        <tr><th>后端</th><th>目标设备</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Metal</td><td>Apple Silicon (M1/M2/M3/M4)</td><td>稳定</td></tr>
+        <tr><td>CUDA</td><td>NVIDIA GPU</td><td>稳定</td></tr>
+        <tr><td>HIP</td><td>AMD GPU</td><td>稳定</td></tr>
+        <tr><td>Vulkan</td><td>跨平台 GPU</td><td>稳定</td></tr>
+        <tr><td>SYCL</td><td>Intel/NVIDIA GPU</td><td>稳定</td></tr>
+        <tr><td>CANN</td><td>华为昇腾 NPU</td><td>稳定</td></tr>
+        <tr><td>WebGPU</td><td>浏览器</td><td>开发中</td></tr>
+        <tr><td>Hexagon</td><td>高通 Snapdragon</td><td>开发中</td></tr>
+        <tr><td>OpenCL</td><td>Adreno GPU</td><td>稳定</td></tr>
+        <tr><td>CPU (AVX/NEON)</td><td>x86/ARM 通用 CPU</td><td>稳定</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:var(--accent);margin:20px 0 12px;">2025-2026 重大更新</h3>
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>加入 Hugging Face</h4>
+        <p>GGML/llama.cpp 正式加入 Hugging Face，确保长期开源发展，与 HF 生态深度整合。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>Router Mode 动态模型管理</h4>
+        <p>llama-server 新增路由模式，支持运行时动态加载、卸载和切换多个 GGUF 模型，无需重启。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>全新 WebUI (SvelteKit)</h4>
+        <p>内置现代化 Web 界面，支持模型切换、文本处理、对话交互。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>多模态推理</h4>
+        <p>支持 LLaVA、Qwen2-VL、Moondream 等视觉语言模型，实现图文理解。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>原生 MXFP4 支持 (gpt-oss)</h4>
+        <p>与 NVIDIA 合作，新增原生 MXFP4 格式支持，进一步降低模型体积。</p>
+      </div>
+    </div>
+
+    <h3 style="color:var(--accent);margin:20px 0 12px;">核心工具链</h3>
+    <table class="styled-table">
+      <thead>
+        <tr><th>工具</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>llama-cli</code></td><td>命令行对话/补全工具，支持 grammar 约束输出</td></tr>
+        <tr><td><code>llama-server</code></td><td>OpenAI 兼容 HTTP 服务器，支持多用户并发、speculative decoding</td></tr>
+        <tr><td><code>llama-bench</code></td><td>推理性能基准测试工具</td></tr>
+        <tr><td><code>llama-perplexity</code></td><td>模型困惑度评估工具</td></tr>
+        <tr><td><code>llama-simple</code></td><td>最小推理示例，适合开发者学习集成</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Application Scenarios -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(188,140,255,0.15);color:#bc8cff;">&#127919;</span> 应用场景</h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <h3>本地隐私 AI</h3>
+        <p>在个人电脑上运行 LLM，数据不出本机，适合金融、医疗、法律等敏感场景。</p>
+      </div>
+      <div class="feature-item">
+        <h3>边缘设备部署</h3>
+        <p>在树莓派、手机等资源受限设备上运行小型模型，实现离线智能。</p>
+      </div>
+      <div class="feature-item">
+        <h3>开发与测试</h3>
+        <p>开发者本地快速验证模型效果，无需云 API 费用，加速迭代。</p>
+      </div>
+      <div class="feature-item">
+        <h3>生产级服务</h3>
+        <p>llama-server 提供 OpenAI 兼容 API，可直接作为后端推理服务部署。</p>
+      </div>
+      <div class="feature-item">
+        <h3>模型量化研究</h3>
+        <p>丰富的量化选项（1.5bit~8bit）和评估工具，适合量化算法研究。</p>
+      </div>
+      <div class="feature-item">
+        <h3>嵌入式/移动应用</h3>
+        <p>提供 iOS (XCFramework)、Android、React Native 绑定，支持移动端集成。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why Trending -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(210,153,34,0.15);color:#d29922;">&#128293;</span> 为什么火 (Trending 原因)</h2>
+    <div class="why-grid">
+      <div class="why-item">
+        <h3>本地 AI 需求爆发</h3>
+        <p>随着数据隐私意识增强和模型小型化趋势（Phi、Gemma、Mistral），在本地运行 LLM 的需求急剧增长，llama.cpp 是首选引擎。</p>
+      </div>
+      <div class="why-item">
+        <h3>加入 Hugging Face 生态</h3>
+        <p>GGML 正式加入 Hugging Face，带来更紧密的平台集成、更丰富的模型资源和更强的社区支持，引发广泛关注。</p>
+      </div>
+      <div class="why-item">
+        <h3>多模态 + Router Mode</h3>
+        <p>新增多模态推理和动态模型路由等企业级功能，从个人工具升级为生产级推理平台。</p>
+      </div>
+      <div class="why-item">
+        <h3>生态系统基石地位</h3>
+        <p>Ollama、LM Studio、GPT4All、Mozilla llamafile 等数十个上层项目均依赖 llama.cpp，它是本地 AI 生态的基石。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(248,81,73,0.15);color:#f85149;">&#9878;</span> 同类项目对比</h2>
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>特性</th>
+          <th style="color:var(--accent-green);">llama.cpp</th>
+          <th>Ollama</th>
+          <th>vLLM</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>定位</td><td><strong>底层推理引擎</strong></td><td>用户友好的封装层</td><td>高吞吐服务引擎</td></tr>
+        <tr><td>语言</td><td>C/C++</td><td>Go (封装 llama.cpp)</td><td>Python</td></tr>
+        <tr><td>硬件支持</td><td><strong>CPU + 全 GPU</strong></td><td>CPU + CUDA + Metal</td><td>主要 GPU (CUDA)</td></tr>
+        <tr><td>量化格式</td><td><strong>GGUF (1.5-8bit)</strong></td><td>GGUF (via llama.cpp)</td><td>AWQ / GPTQ</td></tr>
+        <tr><td>CPU 推理</td><td><strong>优秀</strong></td><td>良好</td><td>不支持</td></tr>
+        <tr><td>并发性能</td><td>中等</td><td>有限</td><td><strong>优秀 (PagedAttention)</strong></td></tr>
+        <tr><td>易用性</td><td>中等</td><td><strong>极简</strong></td><td>中等</td></tr>
+        <tr><td>生产部署</td><td>适合轻量级</td><td>个人使用</td><td><strong>企业级首选</strong></td></tr>
+        <tr><td>适用场景</td><td>本地/边缘/研究</td><td>快速上手/个人</td><td>高并发生产服务</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px;color:var(--text-secondary);font-size:0.9em;">
+      <strong>总结：</strong>llama.cpp 是本地推理的基石引擎，Ollama 基于它提供极简体验，vLLM 则专注生产级高并发场景。三者定位互补，llama.cpp 的独特优势在于零依赖、全平台 CPU/GPU 支持和极致量化。
+    </p>
+  </div>
+
+  <!-- Who Should Use -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(88,166,255,0.15);color:#58a6ff;">&#128100;</span> 适合谁使用</h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <h3>AI 开发者</h3>
+        <p>需要本地快速测试模型、集成 LLM 能力到产品中的开发者。提供 Python/Go/Rust/Java 等 20+ 语言绑定。</p>
+      </div>
+      <div class="feature-item">
+        <h3>隐私敏感用户</h3>
+        <p>需要数据不出本机的场景：金融分析、法律文书、医疗问答、企业内部知识库。</p>
+      </div>
+      <div class="feature-item">
+        <h3>边缘/IoT 工程师</h3>
+        <p>在资源受限设备上部署 AI，llama.cpp 的轻量级和 CPU 优化使其成为嵌入式 AI 首选。</p>
+      </div>
+      <div class="feature-item">
+        <h3>研究人员</h3>
+        <p>量化算法研究、模型评估、推理优化研究。丰富的工具链和 benchmark 支持。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Start -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(63,185,80,0.15);color:#3fb950;">&#9889;</span> 快速上手指南</h2>
+
+    <ol class="step-list">
+      <li>
+        <strong>安装 llama.cpp</strong><br>
+        <div class="code-block">
+<span class="comment"># macOS (Homebrew)</span>
+<span class="command">brew</span> install llama.cpp
+
+<span class="comment"># Linux - 从源码编译</span>
+<span class="command">git</span> clone https://github.com/ggml-org/llama.cpp
+<span class="command">cd</span> llama.cpp && <span class="command">make</span> -j$(nproc)
+
+<span class="comment"># Windows (winget)</span>
+<span class="command">winget</span> install GGLORG.llama.cpp
+        </div>
+      </li>
+      <li>
+        <strong>下载并运行模型</strong><br>
+        <div class="code-block">
+<span class="comment"># 直接从 Hugging Face 下载并运行（推荐）</span>
+<span class="command">llama-cli</span> <span class="flag">-hf</span> ggml-org/gemma-3-1b-it-GGUF
+
+<span class="comment"># 或使用本地 GGUF 文件</span>
+<span class="command">llama-cli</span> <span class="flag">-m</span> my_model.gguf <span class="flag">-cnv</span>
+        </div>
+      </li>
+      <li>
+        <strong>启动 OpenAI 兼容 API 服务</strong><br>
+        <div class="code-block">
+<span class="comment"># 启动服务器（默认端口 8080）</span>
+<span class="command">llama-server</span> <span class="flag">-hf</span> ggml-org/gemma-3-1b-it-GGUF <span class="flag">--port</span> 8080
+
+<span class="comment"># 浏览器访问 http://localhost:8080 即可使用 WebUI</span>
+<span class="comment"># API 端点: http://localhost:8080/v1/chat/completions</span>
+        </div>
+      </li>
+      <li>
+        <strong>使用 Python 调用</strong><br>
+        <div class="code-block">
+<span class="command">pip</span> install llama-cpp-python
+
+<span class="comment"># Python 代码</span>
+<span class="command">from</span> llama_cpp <span class="command">import</span> Llama
+llm = Llama(<span class="string">"model.gguf"</span>)
+output = llm(<span class="string">"Hello, how are you?"</span>, max_tokens=100)
+<span class="command">print</span>(output)
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <!-- Scores -->
+  <div class="card">
+    <h2><span class="icon" style="background:rgba(188,140,255,0.15);color:#bc8cff;">&#11088;</span> 综合评分</h2>
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="score-label">创新性</div>
+        <div class="score-value" style="color:#bc8cff;">9.0</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--gradient-1);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">代码质量</div>
+        <div class="score-value" style="color:#3fb950;">9.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--gradient-2);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">实用性</div>
+        <div class="score-value" style="color:#58a6ff;">10</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:100%;background:var(--gradient-1);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">文档完善度</div>
+        <div class="score-value" style="color:#d29922;">8.5</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--gradient-3);"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">社区活跃度</div>
+        <div class="score-value" style="color:#f85149;">10</div>
+        <div class="score-bar"><div class="score-bar-fill" style="width:100%;background:linear-gradient(135deg,#f85149,#d29922);"></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:24px;">
+      <div style="font-size:0.9em;color:var(--text-secondary);margin-bottom:8px;">综合评分</div>
+      <div style="font-size:3em;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">9.4 / 10</div>
+      <div style="font-size:0.85em;color:var(--text-secondary);margin-top:4px;">本地 LLM 推理领域的绝对标杆</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Generated on 2026-05-19 | Powered by AI Deep Analysis</p>
+    <p style="margin-top:8px;">
+      <a href="https://github.com/ggml-org/llama.cpp" style="color:var(--accent);">GitHub Repository</a> &middot;
+      <a href="https://huggingface.co/ggml-org" style="color:var(--accent);">Hugging Face</a> &middot;
+      <a href="https://github.com/ggml-org/llama.cpp/discussions" style="color:var(--accent);">Discussions</a>
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
