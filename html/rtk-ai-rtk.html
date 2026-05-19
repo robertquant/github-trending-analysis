@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTK (Rust Token Killer) - 深度分析报告</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2333;
+    --bg-card-hover: #222d3f;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-purple: #bc8cff;
+    --accent-orange: #f0883e;
+    --accent-red: #f85149;
+    --accent-cyan: #39d2c0;
+    --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+    --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+    --gradient-3: linear-gradient(135deg, #f0883e, #f85149);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--gradient-1);
+  }
+  .hero h1 {
+    font-size: 2.5em;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero .subtitle {
+    font-size: 1.2em;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+  .hero .tagline {
+    display: inline-block;
+    padding: 8px 20px;
+    background: rgba(88,166,255,0.1);
+    border: 1px solid rgba(88,166,255,0.3);
+    border-radius: 20px;
+    color: var(--accent-blue);
+    font-size: 0.95em;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .stat-card:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    border-color: var(--accent-blue);
+  }
+  .stat-card .value {
+    font-size: 2em;
+    font-weight: 700;
+    background: var(--gradient-2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .label {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-top: 4px;
+  }
+
+  .section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 24px;
+  }
+  .section h2 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h2 .icon {
+    font-size: 1.2em;
+  }
+  .section h3 {
+    color: var(--accent-blue);
+    margin: 20px 0 10px;
+    font-size: 1.15em;
+  }
+  .section p, .section li {
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+  .section ul {
+    padding-left: 20px;
+  }
+  .section li {
+    margin-bottom: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.92em;
+  }
+  th {
+    background: var(--bg-card);
+    color: var(--accent-blue);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  tr:hover td {
+    background: rgba(88,166,255,0.05);
+  }
+
+  .code-block {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.88em;
+    line-height: 1.6;
+  }
+  .code-block .comment { color: #6a737d; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .cmd { color: #79c0ff; }
+
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .strategy-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s;
+  }
+  .strategy-card:hover {
+    border-color: var(--accent-purple);
+    transform: translateY(-2px);
+  }
+  .strategy-card h4 {
+    color: var(--accent-purple);
+    margin-bottom: 8px;
+  }
+  .strategy-card p {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+
+  .savings-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+  }
+  .savings-bar .label {
+    min-width: 120px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+  }
+  .savings-bar .bar-bg {
+    flex: 1;
+    height: 24px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .savings-bar .bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #fff;
+    transition: width 1s ease;
+  }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .score-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .score-card .score {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .score-card .score-label {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+  .score-card .stars {
+    margin-top: 6px;
+    font-size: 0.85em;
+  }
+
+  .trending-reasons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .reason-item {
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent-orange);
+    border-radius: 0 8px 8px 0;
+    padding: 16px;
+  }
+  .reason-item strong {
+    color: var(--accent-orange);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .reason-item p {
+    font-size: 0.9em;
+  }
+
+  .who-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .who-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .who-card:hover {
+    border-color: var(--accent-cyan);
+  }
+  .who-card .emoji { font-size: 1.8em; margin-bottom: 8px; }
+  .who-card .title { color: var(--accent-cyan); font-weight: 600; margin-bottom: 4px; }
+  .who-card .desc { color: var(--text-secondary); font-size: 0.88em; }
+
+  .total-score {
+    text-align: center;
+    padding: 30px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 20px;
+  }
+  .total-score .big-score {
+    font-size: 3.5em;
+    font-weight: 800;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .total-score .desc {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+    margin-top: 8px;
+  }
+
+  .compare-table td:first-child {
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--bg-card);
+    border-radius: 10px;
+  }
+  .flow-node {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9em;
+  }
+  .flow-arrow {
+    color: var(--text-secondary);
+    font-size: 1.2em;
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .hero h1 { font-size: 1.8em; }
+    .section { padding: 20px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    table { font-size: 0.82em; }
+    th, td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>RTK (Rust Token Killer)</h1>
+  <div class="subtitle">高性能 CLI 代理 | LLM Token 消耗降低 60-90%</div>
+  <div class="tagline">rtk-ai/rtk | Rust | MIT License | 48.2k+ Stars</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="value">48.2k+</div>
+    <div class="label">GitHub Stars</div>
+  </div>
+  <div class="stat-card">
+    <div class="value">100+</div>
+    <div class="label">支持命令数</div>
+  </div>
+  <div class="stat-card">
+    <div class="value">&lt;10ms</div>
+    <div class="label">性能开销</div>
+  </div>
+  <div class="stat-card">
+    <div class="value">13</div>
+    <div class="label">支持 AI 工具</div>
+  </div>
+  <div class="stat-card">
+    <div class="value">80%</div>
+    <div class="label">平均 Token 节省</div>
+  </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+  <h2><span class="icon">📋</span> 项目简介</h2>
+  <p>RTK (Rust Token Killer) 是一个高性能 CLI 代理工具，能够将 AI 编程助手中的 LLM token 消耗降低 <strong style="color:var(--accent-green)">60-90%</strong>。它作为 AI 编码工具和终端命令之间的智能中间层，拦截并压缩常用开发命令的输出，再传递给 LLM 上下文。</p>
+  <br>
+  <p><strong>核心价值</strong>：一个 30 分钟的 Claude Code 会话中，标准输出约消耗 <strong style="color:var(--accent-red)">118,000</strong> tokens，使用 RTK 后仅需约 <strong style="color:var(--accent-green)">23,900</strong> tokens。</p>
+
+  <div class="flow-diagram">
+    <div class="flow-node" style="background:rgba(88,166,255,0.15);color:var(--accent-blue);">Claude / Cursor</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node" style="background:rgba(188,140,255,0.15);color:var(--accent-purple);">RTK 代理</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node" style="background:rgba(63,185,80,0.15);color:var(--accent-green);">Shell 命令</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node" style="background:rgba(240,136,62,0.15);color:var(--accent-orange);">压缩输出</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node" style="background:rgba(88,166,255,0.15);color:var(--accent-blue);">LLM 上下文</div>
+  </div>
+</div>
+
+<!-- 四大压缩策略 -->
+<div class="section">
+  <h2><span class="icon">⚡</span> 四大压缩策略</h2>
+  <div class="strategy-grid">
+    <div class="strategy-card">
+      <h4>🎯 Smart Filtering</h4>
+      <p>移除噪音（注释、空白行、样板代码），保留核心信息</p>
+    </div>
+    <div class="strategy-card">
+      <h4>📦 Grouping</h4>
+      <p>聚合相似项（按目录分组文件、按类型分组错误）</p>
+    </div>
+    <div class="strategy-card">
+      <h4>✂️ Truncation</h4>
+      <p>保留相关上下文，截断冗余内容</p>
+    </div>
+    <div class="strategy-card">
+      <h4>🔄 Deduplication</h4>
+      <p>折叠重复日志行并附带计数</p>
+    </div>
+  </div>
+</div>
+
+<!-- Token 节省数据 -->
+<div class="section">
+  <h2><span class="icon">📊</span> Token 节省数据（30 分钟 Claude Code 会话）</h2>
+  <table>
+    <thead>
+      <tr><th>操作</th><th>频率</th><th>标准 Tokens</th><th>RTK Tokens</th><th>节省率</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ls / tree</td><td>10x</td><td>2,000</td><td>400</td><td style="color:var(--accent-green)">-80%</td></tr>
+      <tr><td>cat / read</td><td>20x</td><td>40,000</td><td>12,000</td><td style="color:var(--accent-green)">-70%</td></tr>
+      <tr><td>grep / rg</td><td>8x</td><td>16,000</td><td>3,200</td><td style="color:var(--accent-green)">-80%</td></tr>
+      <tr><td>git status</td><td>10x</td><td>3,000</td><td>600</td><td style="color:var(--accent-green)">-80%</td></tr>
+      <tr><td>git diff</td><td>5x</td><td>10,000</td><td>2,500</td><td style="color:var(--accent-green)">-75%</td></tr>
+      <tr><td>git add/commit/push</td><td>8x</td><td>1,600</td><td>120</td><td style="color:var(--accent-green)">-92%</td></tr>
+      <tr><td>cargo test / npm test</td><td>5x</td><td>25,000</td><td>2,500</td><td style="color:var(--accent-green)">-90%</td></tr>
+      <tr><td>pytest</td><td>4x</td><td>8,000</td><td>800</td><td style="color:var(--accent-green)">-90%</td></tr>
+      <tr><td>go test</td><td>3x</td><td>6,000</td><td>600</td><td style="color:var(--accent-green)">-90%</td></tr>
+      <tr><td>docker ps</td><td>3x</td><td>900</td><td>180</td><td style="color:var(--accent-green)">-80%</td></tr>
+      <tr style="font-weight:700">
+        <td style="color:var(--accent-blue)">总计</td><td></td>
+        <td style="color:var(--accent-red)">~118,000</td>
+        <td style="color:var(--accent-green)">~23,900</td>
+        <td style="color:var(--accent-green);font-size:1.1em">-80%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 支持 AI 工具 -->
+<div class="section">
+  <h2><span class="icon">🤖</span> 支持 13 个 AI 编码工具</h2>
+  <table>
+    <thead>
+      <tr><th>工具</th><th>安装方式</th><th>集成方法</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Claude Code</td><td><code>rtk init -g</code></td><td>PreToolUse hook</td></tr>
+      <tr><td>GitHub Copilot</td><td><code>rtk init -g --copilot</code></td><td>PreToolUse hook</td></tr>
+      <tr><td>Cursor</td><td><code>rtk init -g --agent cursor</code></td><td>hooks.json</td></tr>
+      <tr><td>Gemini CLI</td><td><code>rtk init -g --gemini</code></td><td>BeforeTool hook</td></tr>
+      <tr><td>Codex (OpenAI)</td><td><code>rtk init -g --codex</code></td><td>AGENTS.md</td></tr>
+      <tr><td>Windsurf</td><td><code>rtk init --agent windsurf</code></td><td>.windsurfrules</td></tr>
+      <tr><td>Cline / Roo Code</td><td><code>rtk init --agent cline</code></td><td>.clinerules</td></tr>
+      <tr><td>Hermes</td><td><code>rtk init --agent hermes</code></td><td>Python plugin</td></tr>
+      <tr><td>Kilo Code</td><td><code>rtk init --agent kilocode</code></td><td>.kilocode/rules</td></tr>
+      <tr><td>Google Antigravity</td><td><code>rtk init --agent antigravity</code></td><td>.agents/rules</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+  <h2><span class="icon">🔥</span> 为什么火 (Trending 原因)</h2>
+  <div class="trending-reasons">
+    <div class="reason-item">
+      <strong>痛点精准</strong>
+      <p>AI 编码工具 token 消耗是真实痛点，每次 git status 吃 2000 tokens 令人崩溃</p>
+    </div>
+    <div class="reason-item">
+      <strong>效果显著</strong>
+      <p>60-90% 节省率，直观且可量化（rtk gain 可视化展示）</p>
+    </div>
+    <div class="reason-item">
+      <strong>零侵入</strong>
+      <p>Hook 安装后透明工作，无需改变任何工作流程</p>
+    </div>
+    <div class="reason-item">
+      <strong>生态广泛</strong>
+      <p>支持 13 个主流 AI 编码工具，覆盖几乎所有用户</p>
+    </div>
+    <div class="reason-item">
+      <strong>极致工程</strong>
+      <p>Rust 单二进制，&lt;10ms 开销，零依赖，跨平台</p>
+    </div>
+    <div class="reason-item">
+      <strong>时机完美</strong>
+      <p>AI 编码工具爆发期，Claude Code / Cursor / Copilot 用户激增</p>
+    </div>
+    <div class="reason-item">
+      <strong>社区传播</strong>
+      <p>Hacker News、Reddit、知乎、SegmentFault 多平台讨论引爆</p>
+    </div>
+  </div>
+</div>
+
+<!-- 同类对比 -->
+<div class="section">
+  <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+  <table class="compare-table">
+    <thead>
+      <tr><th>特性</th><th>RTK</th><th>Aider</th><th>Claude Code 原生</th><th>Shell 别名</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Token 优化</td><td style="color:var(--accent-green)">60-90%</td><td>无专门优化</td><td>无</td><td>手动、不全面</td></tr>
+      <tr><td>支持命令数</td><td>100+</td><td>N/A</td><td>N/A</td><td>需逐个配置</td></tr>
+      <tr><td>自动 Hook</td><td style="color:var(--accent-green)">✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      <tr><td>支持工具数</td><td>13</td><td>1</td><td>1</td><td>N/A</td></tr>
+      <tr><td>性能开销</td><td>&lt;10ms</td><td>N/A</td><td>N/A</td><td>0</td></tr>
+      <tr><td>分析统计</td><td style="color:var(--accent-green)">rtk gain</td><td>无</td><td>有限</td><td>无</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 适合谁 -->
+<div class="section">
+  <h2><span class="icon">👥</span> 适合谁使用</h2>
+  <div class="who-grid">
+    <div class="who-card">
+      <div class="emoji">💻</div>
+      <div class="title">AI 编码重度用户</div>
+      <div class="desc">每天使用 Claude Code / Cursor / Copilot 2+ 小时</div>
+    </div>
+    <div class="who-card">
+      <div class="emoji">🏗️</div>
+      <div class="title">大型项目维护者</div>
+      <div class="desc">代码量大，命令输出冗长的开发者</div>
+    </div>
+    <div class="who-card">
+      <div class="emoji">💰</div>
+      <div class="title">成本敏感用户</div>
+      <div class="desc">按 token 计费的 API 用户，直接节省费用</div>
+    </div>
+    <div class="who-card">
+      <div class="emoji">👔</div>
+      <div class="title">团队负责人</div>
+      <div class="desc">统一部署 Hook，整个团队自动受益</div>
+    </div>
+    <div class="who-card">
+      <div class="emoji">☁️</div>
+      <div class="title">DevOps 工程师</div>
+      <div class="desc">频繁使用 AWS / Docker / K8s 命令</div>
+    </div>
+  </div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+  <h2><span class="icon">🚀</span> 快速上手指南</h2>
+  <h3>1. 安装（一键）</h3>
+  <div class="code-block">
+    <span class="comment"># macOS / Linux (推荐)</span><br>
+    <span class="cmd">curl</span> -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh<br><br>
+    <span class="comment"># Homebrew</span><br>
+    <span class="cmd">brew</span> install rtk<br><br>
+    <span class="comment"># Cargo</span><br>
+    <span class="cmd">cargo</span> install --git https://github.com/rtk-ai/rtk
+  </div>
+
+  <h3>2. 配置 AI 工具</h3>
+  <div class="code-block">
+    <span class="comment"># Claude Code（推荐）</span><br>
+    <span class="cmd">rtk</span> init -g<br><br>
+    <span class="comment"># 验证安装</span><br>
+    <span class="cmd">rtk</span> --version<br>
+    <span class="cmd">rtk</span> gain<br><br>
+    <span class="comment"># 重启 AI 工具后生效</span>
+  </div>
+
+  <h3>3. 日常使用（自动生效）</h3>
+  <div class="code-block">
+    <span class="comment"># Hook 自动生效，正常使用即可</span><br>
+    <span class="cmd">git</span> status    <span class="comment"># 自动 → rtk git status（200 tokens 而非 2000）</span><br>
+    <span class="cmd">git</span> diff      <span class="comment"># 自动 → rtk git diff</span><br>
+    <span class="cmd">cargo</span> test   <span class="comment"># 自动 → rtk cargo test（仅显示失败）</span>
+  </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+  <h2><span class="icon">⭐</span> 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-card">
+      <div class="score" style="color:var(--accent-green)">9/10</div>
+      <div class="score-label">创新性</div>
+      <div class="stars" style="color:var(--accent-orange)">⭐⭐⭐⭐⭐</div>
+    </div>
+    <div class="score-card">
+      <div class="score" style="color:var(--accent-blue)">9/10</div>
+      <div class="score-label">代码质量</div>
+      <div class="stars" style="color:var(--accent-orange)">⭐⭐⭐⭐⭐</div>
+    </div>
+    <div class="score-card">
+      <div class="score" style="color:var(--accent-purple)">10/10</div>
+      <div class="score-label">实用性</div>
+      <div class="stars" style="color:var(--accent-orange)">⭐⭐⭐⭐⭐</div>
+    </div>
+    <div class="score-card">
+      <div class="score" style="color:var(--accent-cyan)">9/10</div>
+      <div class="score-label">文档完善度</div>
+      <div class="stars" style="color:var(--accent-orange)">⭐⭐⭐⭐⭐</div>
+    </div>
+    <div class="score-card">
+      <div class="score" style="color:var(--accent-orange)">10/10</div>
+      <div class="score-label">社区活跃度</div>
+      <div class="stars" style="color:var(--accent-orange)">⭐⭐⭐⭐⭐</div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="big-score">9.4 / 10</div>
+    <div class="desc">AI 编码时代的必备工具 — 精准定位、极致执行</div>
+  </div>
+</div>
+
+<div style="text-align:center;color:var(--text-secondary);font-size:0.85em;padding:20px 0;">
+  分析日期：2026-05-20 | 数据来源：GitHub、Hacker News、Reddit、知乎<br>
+  🤖 由 AI 自动分析生成 | Powered by Claude Code
+</div>
+
+</body>
+</html>
