@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>plausible/analytics - GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff, #f78166, #58a6ff);
+            background-size: 300% 100%;
+            animation: gradientMove 4s ease infinite;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .header .icon { font-size: 64px; margin-bottom: 16px; }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; margin-bottom: 20px; }
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid #30363d;
+            background: #161b22;
+        }
+        .badge-stars { color: #e3b341; border-color: #e3b34144; }
+        .badge-lang { color: #6e4a7e; border-color: #6e4a7e44; }
+        .badge-today { color: #f78166; border-color: #f7816644; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #58a6ff44; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card p { margin-bottom: 12px; color: #c9d1d9; }
+        .card ul { padding-left: 20px; margin-bottom: 12px; }
+        .card li { margin-bottom: 8px; }
+        .card li::marker { color: #58a6ff; }
+
+        /* Score Section */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 20px 12px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+        }
+        .score-item .label { font-size: 0.85em; color: #8b949e; margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-item .bar {
+            margin-top: 8px;
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9em;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        .comparison-table th {
+            background: #0d1117;
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+        .comparison-table tr:hover { background: #1c2128; }
+        .comparison-table .highlight { color: #58a6ff; font-weight: 600; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .tag { color: #7ee787; }
+
+        /* Scenario Tags */
+        .scenario-tags { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        .scenario-tag {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #161b22, #1c2128);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .scenario-tag:hover { border-color: #58a6ff; transform: translateY(-2px); }
+
+        /* Why Trending */
+        .trending-reasons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .trending-reason {
+            padding: 20px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            border-left: 3px solid;
+        }
+        .trending-reason:nth-child(1) { border-left-color: #f78166; }
+        .trending-reason:nth-child(2) { border-left-color: #58a6ff; }
+        .trending-reason:nth-child(3) { border-left-color: #bc8cff; }
+        .trending-reason:nth-child(4) { border-left-color: #7ee787; }
+        .trending-reason h4 { color: #f0f6fc; margin-bottom: 8px; }
+        .trending-reason p { color: #8b949e; font-size: 0.9em; margin: 0; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            margin-top: 20px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .scores-grid { grid-template-columns: repeat(2, 1fr); }
+            .trending-reasons { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="icon">📊</div>
+        <h1>Plausible Analytics</h1>
+        <p class="subtitle">开源、隐私优先的轻量级网站分析工具 — Google Analytics 的优雅替代品</p>
+        <div class="badges">
+            <span class="badge badge-stars">⭐ 25,908 Stars</span>
+            <span class="badge badge-lang">🔶 Elixir</span>
+            <span class="badge badge-today">🔥 +637 Today</span>
+            <span class="badge">📅 Trending 2026-05-19</span>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2><span class="icon">📋</span> 项目简介与核心功能</h2>
+        <p>Plausible Analytics 是一个开源的、以隐私为核心的网站流量分析工具，定位为 <strong>Google Analytics 的轻量替代品</strong>。由爱沙尼亚公司 Plausible Insights OÜ 开发和维护，完全独立运营，不依赖广告收入，仅靠用户订阅资助。</p>
+        <ul>
+            <li><strong>隐私至上</strong> — 不使用 Cookie，不存储个人数据和 IP 地址，无需 Cookie 横幅即可合规</li>
+            <li><strong>完全合规</strong> — 开箱即满足 GDPR、CCPA、PECR 等隐私法规</li>
+            <li><strong>极致轻量</strong> — 追踪脚本仅 ~1KB，远小于 GA 的 ~45KB</li>
+            <li><strong>简洁仪表盘</strong> — 所有关键指标一目了然，无需培训即可上手</li>
+            <li><strong>目标转化追踪</strong> — 支持自定义事件、收入归因、漏斗分析</li>
+            <li><strong>实时流量监控</strong> — 实时查看当前网站访客动态</li>
+            <li><strong>API 与集成</strong> — 提供完整的 Events API 和 Stats API，支持 CSV 导出</li>
+            <li><strong>双模式部署</strong> — 云托管（SaaS）或自托管（Community Edition）</li>
+        </ul>
+    </div>
+
+    <!-- Tech Architecture -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+        <p>Plausible 采用了精心设计的现代技术栈，以高并发处理能力著称：</p>
+        <div class="trending-reasons">
+            <div class="trending-reason">
+                <h4>Backend: Elixir + Phoenix</h4>
+                <p>Elixir 基于 Erlang VM，天然支持高并发和容错。Phoenix 框架提供高性能 Web 服务。Plausible 是 GitHub 上 Star 数第 3 的 Elixir 项目，甚至超过 Phoenix 框架本身。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>数据库: PostgreSQL + ClickHouse</h4>
+                <p>双数据库架构：PostgreSQL 处理通用数据（用户、站点配置），ClickHouse 专攻分析查询。ClickHouse 是列式数据库，在海量数据分析场景下性能卓越。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>Frontend: React + TailwindCSS</h4>
+                <p>现代前端方案，响应式设计，仪表盘加载迅速、交互流畅。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>追踪脚本: MIT 许可</h4>
+                <p>为避免 AGPL 的传染性影响，前端追踪脚本单独以 MIT 许可发布，可自由嵌入任何网站。</p>
+            </div>
+        </div>
+        <div class="code-block">
+            <span class="comment"># 技术栈一览</span><br>
+            Backend:  <span class="keyword">Elixir</span> + <span class="string">Phoenix Framework</span><br>
+            DB:       <span class="tag">PostgreSQL</span> (通用数据) + <span class="tag">ClickHouse</span> (分析数据)<br>
+            Frontend: <span class="keyword">React</span> + <span class="string">TailwindCSS</span><br>
+            License:  <span class="string">AGPLv3</span> (服务端) + <span class="tag">MIT</span> (追踪脚本)
+        </div>
+    </div>
+
+    <!-- Application Scenarios -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <p>Plausible 适合广泛的网站流量分析需求，尤其是对隐私合规有要求的场景：</p>
+        <div class="scenario-tags">
+            <span class="scenario-tag">📝 个人博客</span>
+            <span class="scenario-tag">🏢 企业官网</span>
+            <span class="scenario-tag">🛒 电商网站</span>
+            <span class="scenario-tag">📰 新闻媒体</span>
+            <span class="scenario-tag">🏛️ 政府网站</span>
+            <span class="scenario-tag">🎓 教育机构</span>
+            <span class="scenario-tag">🏥 医疗健康</span>
+            <span class="scenario-tag">💡 SaaS 产品</span>
+            <span class="scenario-tag">📱 SPA 应用</span>
+            <span class="scenario-tag">🔓 开源项目站</span>
+        </div>
+        <div style="margin-top: 16px;">
+            <p>特别适合以下需求的组织和个人：</p>
+            <ul>
+                <li><strong>EU 境内运营的网站</strong> — GDPR 合规是硬性要求，Plausible 无需 Cookie 横幅即可满足</li>
+                <li><strong>追求简洁的团队</strong> — 不需要 GA4 那样的复杂功能，只想要清晰的核心指标</li>
+                <li><strong>注重网站性能的站长</strong> — 1KB 脚本对页面加载几乎零影响</li>
+                <li><strong>希望拥有数据的组织</strong> — 自托管版本可完全掌控原始数据</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+        <div class="trending-reasons">
+            <div class="trending-reason">
+                <h4>GDPR 执法趋严</h4>
+                <p>2025-2026 年欧盟隐私法规执法力度持续加大，越来越多网站被迫移除 GA 或部署复杂的 Cookie 横幅。Plausible 作为无需 Cookie 的替代方案，需求激增。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>GA4 体验不佳</h4>
+                <p>GA4 复杂难用、界面混乱、学习成本高，大量用户寻求更简洁的替代方案。Plausible 正好满足"只看核心数据"的需求。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>成熟度与口碑</h4>
+                <p>经过数年打磨，产品已非常成熟。G2 上好评如潮，被广泛推荐为最佳隐私分析工具之一。25K+ Star 证明了社区的认可。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>独立可持续的商业模式</h4>
+                <p>完全靠订阅收入维持，不接受 VC 投资，不做广告，不卖数据。这种"纯粹"的产品理念在开发者社区中极具吸引力。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th class="highlight">Plausible</th>
+                    <th>Google Analytics</th>
+                    <th>Matomo</th>
+                    <th>Umami</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>开源</td>
+                    <td class="highlight">✅ AGPL</td>
+                    <td>❌</td>
+                    <td>✅ GPL</td>
+                    <td>✅ MIT</td>
+                </tr>
+                <tr>
+                    <td>无需 Cookie</td>
+                    <td class="highlight">✅</td>
+                    <td>❌</td>
+                    <td>可配置</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>GDPR 合规</td>
+                    <td class="highlight">✅ 开箱即用</td>
+                    <td>需额外配置</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>脚本大小</td>
+                    <td class="highlight">~1KB</td>
+                    <td>~45KB</td>
+                    <td>~15-45KB</td>
+                    <td>~2KB</td>
+                </tr>
+                <tr>
+                    <td>功能丰富度</td>
+                    <td>核心够用</td>
+                    <td>非常丰富</td>
+                    <td class="highlight">非常丰富</td>
+                    <td>基础</td>
+                </tr>
+                <tr>
+                    <td>仪表盘复杂度</td>
+                    <td class="highlight">简洁直觉</td>
+                    <td>复杂难学</td>
+                    <td>中等</td>
+                    <td>简洁</td>
+                </tr>
+                <tr>
+                    <td>自托管</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>价格</td>
+                    <td>€9/月起</td>
+                    <td>免费</td>
+                    <td>免费自托管</td>
+                    <td>免费自托管</td>
+                </tr>
+                <tr>
+                    <td>数据所有权</td>
+                    <td class="highlight">100% 你的</td>
+                    <td>Google 控制</td>
+                    <td>100% 你的</td>
+                    <td>100% 你的</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 12px; color: #8b949e; font-size: 0.9em;">
+            <strong>选择建议：</strong>需要隐私合规 + 简洁 → Plausible；需要全功能 GA 替代 → Matomo；预算有限 + MIT 许可 → Umami。
+        </p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+        <div class="trending-reasons">
+            <div class="trending-reason">
+                <h4>👨‍💻 独立开发者 / 博主</h4>
+                <p>想要了解网站流量但不想侵犯访客隐私。简单的仪表盘和轻量脚本完美匹配个人项目。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>🏢 中小企业</h4>
+                <p>需要合规分析但无法负担专职数据团队。Plausible 的简洁性意味着无需培训。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>🏛️ 政府/公共机构</h4>
+                <p>对隐私和合规有极高要求。自托管 + 无 Cookie + GDPR 合规是理想选择。</p>
+            </div>
+            <div class="trending-reason">
+                <h4>🇪🇺 欧盟运营企业</h4>
+                <p>GDPR 合规是法律要求。Plausible 数据完全在 EU 处理，无需担心 Schrems II 裁决。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <p><strong>方式一：云托管（推荐新手）</strong></p>
+        <div class="code-block">
+<span class="comment">// 1. 注册 Plausible Cloud (https://plausible.io) — 2分钟完成</span>
+<span class="comment">// 2. 添加你的网站域名</span>
+<span class="comment">// 3. 在网站 &lt;head&gt; 中添加追踪脚本：</span>
+
+&lt;<span class="keyword">script</span> <span class="tag">defer</span> <span class="tag">data-domain</span>=<span class="string">"yourdomain.com"</span>
+        <span class="tag">src</span>=<span class="string">"https://plausible.io/js/script.js"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
+        </div>
+
+        <p><strong>方式二：Docker 自托管</strong></p>
+        <div class="code-block">
+<span class="comment"># 1. 克隆仓库</span>
+git clone https://github.com/plausible/analytics.git
+cd analytics
+
+<span class="comment"># 2. 使用 Docker Compose 启动</span>
+docker compose up -d
+
+<span class="comment"># 3. 访问 http://localhost:8000</span>
+<span class="comment"># 4. 创建管理员账户，添加站点，获取追踪代码</span>
+        </div>
+
+        <p><strong>方式三：自定义事件追踪</strong></p>
+        <div class="code-block">
+<span class="comment">// 追踪自定义事件</span>
+&lt;<span class="keyword">script</span>&gt;
+  plausible(<span class="string">'Signup'</span>);
+  plausible(<span class="string">'Purchase'</span>, { <span class="tag">revenue</span>: { <span class="tag">amount</span>: 9.99, <span class="tag">currency</span>: <span class="string">'USD'</span> }});
+&lt;/<span class="keyword">script</span>&gt;
+        </div>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+        <h2><span class="icon">⭐</span> 综合评分</h2>
+        <div class="scores-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value">8.0</div>
+                <div class="bar"><div class="bar-fill" style="width:80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:24px; padding:16px; background:#0d1117; border-radius:10px; border:1px solid #21262d;">
+            <span style="color:#8b949e; font-size:0.9em;">综合评分</span><br>
+            <span style="font-size:2.4em; font-weight:700; background:linear-gradient(135deg,#58a6ff,#bc8cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">8.8 / 10</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>分析日期: 2026-05-19 | 数据来源: GitHub, Plausible.io, G2, Reddit</p>
+        <p>
+            <a href="https://github.com/plausible/analytics" target="_blank">GitHub 仓库</a> ·
+            <a href="https://plausible.io" target="_blank">官方网站</a> ·
+            <a href="https://plausible.io/docs" target="_blank">文档</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
