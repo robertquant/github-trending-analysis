@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>anthropics/claude-plugins-official - GitHub Trending 深度分析</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --bg-card-hover: #22272e;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        .header .badge {
+            display: inline-block;
+            padding: 4px 14px;
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--accent-blue);
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .header h1 {
+            font-size: 2.6em;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .stat-item .icon { font-size: 18px; }
+        .stat-item .value { color: var(--text-primary); font-weight: 600; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: rgba(88, 166, 255, 0.3); }
+
+        .card h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 .emoji { font-size: 1.2em; }
+
+        .card h3 {
+            font-size: 1.15em;
+            font-weight: 600;
+            margin: 16px 0 10px;
+            color: var(--accent-cyan);
+        }
+
+        .card p, .card li {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .card ul {
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .card ul li::before {
+            content: '▸ ';
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: rgba(88, 166, 255, 0.08);
+            border-left: 3px solid var(--accent-blue);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .highlight-box strong { color: var(--accent-blue); }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            color: #79c0ff;
+            overflow-x: auto;
+        }
+
+        .code-block .comment { color: var(--text-muted); }
+        .code-block .cmd { color: var(--accent-green); }
+
+        /* Plugin Grid */
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .plugin-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .plugin-card:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        .plugin-card .plugin-name {
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .plugin-card .plugin-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        thead th {
+            background: var(--bg-secondary);
+            color: var(--accent-cyan);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tbody tr:hover { background: var(--bg-secondary); }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .score-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .score-item .score-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 800;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-item .score-bar {
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--gradient-2);
+        }
+
+        /* Quick Start Steps */
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            margin: 16px 0;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h4 {
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(188, 140, 255, 0.1);
+            border: 1px solid rgba(188, 140, 255, 0.2);
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--accent-purple);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        /* Language Bar */
+        .lang-bar {
+            display: flex;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .lang-bar div { height: 100%; }
+
+        .lang-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .lang-legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .lang-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .stats-bar { gap: 16px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .plugin-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="badge">GitHub Trending #4 | 2026-05-20</div>
+            <h1>anthropics/claude-plugins-official</h1>
+            <p class="subtitle">Anthropic 官方管理的高质量 Claude Code 插件目录 —— 一站式插件市场，扩展你的 AI 编程工作流</p>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="icon">&#9733;</span>
+                    <span class="value">20,000+</span> Stars
+                </div>
+                <div class="stat-item">
+                    <span class="icon">&#402;</span>
+                    <span class="value">2,500+</span> Forks
+                </div>
+                <div class="stat-item">
+                    <span class="icon">&#9881;</span>
+                    <span class="value">394</span> Commits
+                </div>
+                <div class="stat-item">
+                    <span class="icon">&#128196;</span>
+                    <span class="value">667</span> Issues
+                </div>
+                <div class="stat-item">
+                    <span class="icon">&#128065;</span>
+                    <span class="value">147</span> Watchers
+                </div>
+            </div>
+            <div class="tags" style="justify-content: center; margin-top: 20px;">
+                <span class="tag">Claude Code</span>
+                <span class="tag">Plugins</span>
+                <span class="tag">MCP</span>
+                <span class="tag">Skills</span>
+                <span class="tag">LSP</span>
+                <span class="tag">Anthropic</span>
+            </div>
+        </div>
+
+        <!-- 项目简介 -->
+        <div class="card">
+            <h2><span class="emoji">&#128218;</span> 项目简介与核心功能</h2>
+            <p><strong>claude-plugins-official</strong> 是 Anthropic 官方维护的 Claude Code 插件市场目录。它为 Claude Code（Anthropic 的 AI 编程助手）提供了一个集中式的插件发现、安装和管理平台。</p>
+
+            <div class="highlight-box">
+                <strong>核心定位：</strong> 类似于 VS Code 扩展市场、npm 生态，但专门为 Claude Code AI 编程助手打造。用户可以通过一条命令安装由 Anthropic 官方或社区开发的高质量插件。
+            </div>
+
+            <h3>核心功能</h3>
+            <ul>
+                <li><strong>插件市场（Marketplace）</strong> —— 提供集中化的插件浏览、发现和安装体验</li>
+                <li><strong>双轨制插件来源</strong> —— <code>/plugins</code>（Anthropic 内部开发）+ <code>/external_plugins</code>（社区/第三方提交）</li>
+                <li><strong>一键安装</strong> —— 通过 <code>/plugin install {name}@claude-plugins-official</code> 命令即可安装</li>
+                <li><strong>标准化插件结构</strong> —— 每个插件包含 <code>plugin.json</code> 元数据、MCP 配置、命令、代理和技能定义</li>
+                <li><strong>质量审核机制</strong> —— 外部插件需满足质量和安全标准才能被收录</li>
+                <li><strong>内置 Discover Tab</strong> —— 在 Claude Code 中直接浏览 <code>/plugin > Discover</code></li>
+            </ul>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="card">
+            <h2><span class="emoji">&#9881;</span> 技术架构与特点</h2>
+
+            <h3>语言组成</h3>
+            <div class="lang-bar">
+                <div style="width: 31.6%; background: #3572A5;"></div>
+                <div style="width: 28.9%; background: #3178C6;"></div>
+                <div style="width: 19.5%; background: #E34C26;"></div>
+                <div style="width: 13.0%; background: #89E051;"></div>
+                <div style="width: 7.0%; background: #F7DF1E;"></div>
+            </div>
+            <div class="lang-legend">
+                <span><span class="lang-dot" style="background: #3572A5;"></span> Python 31.6%</span>
+                <span><span class="lang-dot" style="background: #3178C6;"></span> TypeScript 28.9%</span>
+                <span><span class="lang-dot" style="background: #E34C26;"></span> HTML 19.5%</span>
+                <span><span class="lang-dot" style="background: #89E051;"></span> Shell 13.0%</span>
+                <span><span class="lang-dot" style="background: #F7DF1E;"></span> JavaScript 7.0%</span>
+            </div>
+
+            <h3>插件标准结构</h3>
+            <div class="code-block">
+<span class="comment"># 每个插件遵循统一的结构规范</span>
+plugin-name/
+├── .claude-plugin/
+│   └── plugin.json      <span class="comment"># 插件元数据（必需）</span>
+├── .mcp.json            <span class="comment"># MCP 服务器配置（可选）</span>
+├── commands/            <span class="comment"># 斜杠命令（可选）</span>
+├── agents/              <span class="comment"># Agent 定义（可选）</span>
+├── skills/              <span class="comment"># Skill 定义（可选）</span>
+└── README.md            <span class="comment"># 文档</span>
+            </div>
+
+            <h3>架构亮点</h3>
+            <ul>
+                <li><strong>MCP（Model Context Protocol）集成</strong> —— 插件通过 MCP 协议与 Claude Code 通信，实现工具调用、上下文共享</li>
+                <li><strong>Skills + Agents + Hooks 三层扩展模型</strong> —— 覆盖从简单命令到复杂工作流的全场景</li>
+                <li><strong>LSP 深度集成</strong> —— 提供 typescript-lsp 等语言服务协议插件，增强代码智能</li>
+                <li><strong>marketplace.json 注册机制</strong> —— 通过标准化清单文件管理插件注册和发现</li>
+            </ul>
+        </div>
+
+        <!-- 热门插件 -->
+        <div class="card">
+            <h2><span class="emoji">&#128293;</span> 热门插件一览</h2>
+            <p>目录目前包含 <strong>36+ 官方精选插件</strong>，社区已索引 <strong>6,000+ 公开插件</strong>。以下是高影响力插件：</p>
+
+            <div class="plugin-grid">
+                <div class="plugin-card">
+                    <div class="plugin-name">typescript-lsp</div>
+                    <div class="plugin-desc">TypeScript/JavaScript 语言服务器，提供代码智能、类型检查和自动补全</div>
+                </div>
+                <div class="plugin-card">
+                    <div class="plugin-name">playwright</div>
+                    <div class="plugin-desc">浏览器自动化与 E2E 测试，支持点击、表单填充、截图等操作</div>
+                </div>
+                <div class="plugin-card">
+                    <div class="plugin-name">security-guidance</div>
+                    <div class="plugin-desc">安全最佳实践指导，帮助 Claude 编写更安全的代码</div>
+                </div>
+                <div class="plugin-card">
+                    <div class="plugin-name">context7</div>
+                    <div class="plugin-desc">上下文管理增强，优化长对话中的信息保持能力</div>
+                </div>
+                <div class="plugin-card">
+                    <div class="plugin-name">claude-code-setup</div>
+                    <div class="plugin-desc">扫描项目并自动推荐应激活的插件配置</div>
+                </div>
+                <div class="plugin-card">
+                    <div class="plugin-name">github</div>
+                    <div class="plugin-desc">GitHub 官方 MCP 服务器，管理仓库、Issue、PR 等</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="card">
+            <h2><span class="emoji">&#127919;</span> 应用场景</h2>
+            <ul>
+                <li><strong>日常开发提效</strong> —— 安装 LSP 插件获得类型安全，安装 Playwright 实现自动化测试</li>
+                <li><strong>团队标准化</strong> —— 通过统一插件配置确保团队成员的 Claude Code 行为一致</li>
+                <li><strong>安全编码</strong> —— security-guidance 插件帮助实时检测和规避安全漏洞</li>
+                <li><strong>项目定制化</strong> —— 为特定项目类型（如 WordPress、React）安装专用 Skill 插件</li>
+                <li><strong>MCP 工具集成</strong> —— 通过 MCP 插件连接外部服务（数据库、API、CI/CD）</li>
+                <li><strong>插件开发参考</strong> —— 作为开发自己插件的模板和最佳实践参考</li>
+            </ul>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="card">
+            <h2><span class="emoji">&#128640;</span> 为什么火（Trending 原因分析）</h2>
+
+            <div class="highlight-box">
+                <strong>核心驱动力：</strong> Anthropic 正式推出 Claude Code 插件系统（Public Beta），这是 AI 编程工具生态化的里程碑事件。
+            </div>
+
+            <ul>
+                <li><strong>官方背书 + 生态爆发</strong> —— Anthropic 官方发布插件市场，标志 Claude Code 从工具升级为平台。社区已涌现 6,000+ 插件</li>
+                <li><strong>填补空白</strong> —— 之前 Claude Code 缺乏标准化扩展机制，插件市场解决了"如何扩展"的核心痛点</li>
+                <li><strong>开发者刚需</strong> —— LSP、安全检测、浏览器测试等高频需求一键解决，极大提升 AI 编程效率</li>
+                <li><strong>社区传播效应</strong> —— Reddit 帖子 "28 official plugins most people don't know about" 引爆讨论，形成病毒式传播</li>
+                <li><strong>GitHub 生态协同</strong> —— 与 GitHub MCP 服务器深度集成，开发者可直接在 Claude Code 中管理 GitHub 工作流</li>
+                <li><strong>低门槛高回报</strong> —— 一行命令安装插件，即时获得增强能力，用户获得感极强</li>
+            </ul>
+        </div>
+
+        <!-- 同类对比 -->
+        <div class="card">
+            <h2><span class="emoji">&#9878;</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>claude-plugins-official</th>
+                        <th>VS Code Extensions</th>
+                        <th>Cursor Plugins</th>
+                        <th>GitHub Copilot Extensions</th>
+                    </ul>
+                    </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>管理方</strong></td>
+                        <td>Anthropic 官方</td>
+                        <td>Microsoft</td>
+                        <td>Cursor 团队</td>
+                        <td>GitHub</td>
+                    </tr>
+                    <tr>
+                        <td><strong>目标工具</strong></td>
+                        <td>Claude Code</td>
+                        <td>VS Code</td>
+                        <td>Cursor IDE</td>
+                        <td>GitHub Copilot</td>
+                    </tr>
+                    <tr>
+                        <td><strong>协议标准</strong></td>
+                        <td>MCP</td>
+                        <td>LSP / 自定义</td>
+                        <td>复用 VS Code</td>
+                        <td>自定义 API</td>
+                    </tr>
+                    <tr>
+                        <td><strong>插件数量</strong></td>
+                        <td>36+ 官方 / 6000+ 社区</td>
+                        <td>40,000+</td>
+                        <td>复用 VS Code 生态</td>
+                        <td>~100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>开源</strong></td>
+                        <td>&#10003;</td>
+                        <td>&#10003;（部分）</td>
+                        <td>&#10007;</td>
+                        <td>&#10007;</td>
+                    </tr>
+                    <tr>
+                        <td><strong>质量审核</strong></td>
+                        <td>Anthropic 人工审核</td>
+                        <td>自动+人工</td>
+                        <td>无独立审核</td>
+                        <td>GitHub 审核</td>
+                    </tr>
+                    <tr>
+                        <td><strong>独特优势</strong></td>
+                        <td>AI 原生、MCP 标准</td>
+                        <td>生态最大</td>
+                        <td>IDE 融合</td>
+                        <td>GitHub 深度集成</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 适合谁使用 -->
+        <div class="card">
+            <h2><span class="emoji">&#128101;</span> 适合谁使用</h2>
+            <ul>
+                <li><strong>Claude Code 日常用户</strong> —— 任何人都可以通过安装插件立即提升 Claude Code 的能力</li>
+                <li><strong>前端/全栈开发者</strong> —— typescript-lsp、playwright 等插件直接提升前端开发体验</li>
+                <li><strong>安全工程师</strong> —— security-guidance 插件帮助在编码阶段就植入安全最佳实践</li>
+                <li><strong>DevOps 工程师</strong> —— 通过 MCP 插件连接 CI/CD、监控等基础设施</li>
+                <li><strong>插件/工具开发者</strong> —— 希望为 Claude Code 生态贡献扩展的开发者</li>
+                <li><strong>技术团队负责人</strong> —— 希望标准化团队 AI 编程工作流的管理者</li>
+            </ul>
+        </div>
+
+        <!-- 快速上手 -->
+        <div class="card">
+            <h2><span class="emoji">&#9889;</span> 快速上手指南</h2>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>确保已安装 Claude Code</h4>
+                        <p>安装最新版 Claude Code CLI，确保版本支持插件系统</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>浏览可用插件</h4>
+                        <div class="code-block"><span class="cmd">/plugin</span> &gt; <span class="cmd">Discover</span>    <span class="comment"># 在 Claude Code 中浏览官方市场</span></div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>安装插件</h4>
+                        <div class="code-block"><span class="cmd">/plugin install</span> typescript-lsp@claude-plugins-official<br><span class="cmd">/plugin install</span> playwright@claude-plugins-official<br><span class="cmd">/plugin install</span> security-guidance@claude-plugins-official</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>使用插件</h4>
+                        <p>安装后，插件的命令、Agent 和 MCP 工具将自动可用。输入 <code>/</code> 查看新增的斜杠命令</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>提交你的插件（可选）</h4>
+                        <p>如果是第三方开发者，按照标准结构开发插件后，通过插件目录提交表单申请收录到 <code>/external_plugins</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="card">
+            <h2><span class="emoji">&#127942;</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 24px;">
+                <strong>综合得分：8.9 / 10</strong><br>
+                <span style="color: var(--text-secondary);">
+                    Anthropic 官方出品，AI 编程工具生态化的关键基础设施。20K Stars 证明开发者对标准化插件系统的强烈需求。
+                    MCP 协议的开放性和双轨制（内部+外部）的包容性为其生态增长奠定了坚实基础。
+                    唯一不足是当前文档仍偏简洁，部分插件缺少详细使用说明。
+                </span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>数据来源：GitHub &middot; Reddit &middot; Claude Code 官方文档 &middot; 社区评测</p>
+            <p style="margin-top: 6px;">分析时间：2026-05-20 | Powered by Claude Code Deep Analyzer</p>
+        </div>
+    </div>
+</body>
+</html>
