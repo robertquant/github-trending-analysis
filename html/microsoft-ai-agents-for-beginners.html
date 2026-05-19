@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: microsoft/ai-agents-for-beginners</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .subtitle { color: #8b949e; font-size: 1.1em; margin-bottom: 30px; }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 1.3em;
+            color: #58a6ff;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .badge-lang { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+        .badge-star { background: #e3b34133; color: #e3b341; border: 1px solid #e3b34155; }
+        .badge-today { background: #3fb95033; color: #3fb950; border: 1px solid #3fb95055; }
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .meta-row .badge { font-size: 0.85em; padding: 5px 14px; }
+        p { margin-bottom: 12px; }
+        ul { padding-left: 20px; margin-bottom: 12px; }
+        li { margin-bottom: 6px; }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .label { font-size: 0.85em; color: #8b949e; margin-bottom: 6px; }
+        .score-item .value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .score-high { color: #3fb950; }
+        .score-mid { color: #e3b341; }
+        .score-low { color: #f85149; }
+        .bar-container {
+            width: 100%;
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .bar-fill { height: 100%; border-radius: 3px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        th { color: #8b949e; font-size: 0.9em; font-weight: 600; }
+        td { font-size: 0.95em; }
+        tr:hover { background: #161b2288; }
+        .lesson-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .lesson-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .lesson-num {
+            background: #1f6feb;
+            color: #fff;
+            border-radius: 50%;
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+        .highlight { color: #f0883e; }
+        code {
+            background: #1f2937;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: #f0883e;
+        }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            color: #c9d1d9;
+        }
+        .vs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 12px;
+        }
+        .vs-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .vs-card h4 { color: #bc8cff; margin-bottom: 8px; font-size: 0.95em; }
+        .vs-card p { font-size: 0.88em; margin-bottom: 6px; }
+        .footer {
+            text-align: center;
+            color: #484f58;
+            font-size: 0.85em;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #21262d;
+        }
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            h1 { font-size: 1.6em; }
+            .card { padding: 16px; }
+            .vs-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>microsoft/ai-agents-for-beginners</h1>
+    <p class="subtitle">12 Lessons to Get Started Building AI Agents | 微软出品 AI Agent 入门课程</p>
+
+    <div class="meta-row">
+        <span class="badge badge-lang">Jupyter Notebook / Python</span>
+        <span class="badge badge-star">63,374 Stars</span>
+        <span class="badge badge-today">+1,013 Today</span>
+        <span class="badge" style="background:#bc8cff33;color:#bc8cff;border:1px solid #bc8cff55;">MIT License</span>
+        <span class="badge" style="background:#f778ba33;color:#f778ba;border:1px solid #f778ba55;">by Microsoft</span>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2>📋 项目简介与核心功能</h2>
+        <p><strong>microsoft/ai-agents-for-beginners</strong> 是微软官方推出的 AI Agent 入门课程，旨在帮助开发者从零开始学习构建 AI 智能体（Agent）。该项目是微软 "For Beginners" 系列课程的最新成员，与 ML for Beginners、Generative AI for Beginners 等经典课程一脉相承。</p>
+        <p>课程最初发布时包含 12 个课时，后逐步扩展至 <strong class="highlight">18 个课时</strong>，涵盖了从基础概念到生产部署的完整知识体系。</p>
+        <p><strong>核心特色：</strong></p>
+        <ul>
+            <li>每课包含 <strong>文字教程 + 短视频 + Python 代码示例 + 扩展学习链接</strong></li>
+            <li>基于 <strong>Microsoft Agent Framework (MAF)</strong> 和 <strong>Azure AI Foundry Agent Service V2</strong></li>
+            <li>支持 <strong>50+ 种语言翻译</strong>（含简体中文、繁体中文）</li>
+            <li>配套 Discord 社区支持和 GitHub Discussion</li>
+        </ul>
+    </div>
+
+    <!-- 课程内容 -->
+    <div class="card">
+        <h2>📚 18课时完整课程大纲</h2>
+        <div class="lesson-list">
+            <div class="lesson-item"><span class="lesson-num">1</span> Intro to AI Agents and Agent Use Cases</div>
+            <div class="lesson-item"><span class="lesson-num">2</span> Exploring AI Agentic Frameworks</div>
+            <div class="lesson-item"><span class="lesson-num">3</span> Understanding AI Agentic Design Patterns</div>
+            <div class="lesson-item"><span class="lesson-num">4</span> Tool Use Design Pattern</div>
+            <div class="lesson-item"><span class="lesson-num">5</span> Agentic RAG</div>
+            <div class="lesson-item"><span class="lesson-num">6</span> Building Trustworthy AI Agents</div>
+            <div class="lesson-item"><span class="lesson-num">7</span> Planning Design Pattern</div>
+            <div class="lesson-item"><span class="lesson-num">8</span> Multi-Agent Design Pattern</div>
+            <div class="lesson-item"><span class="lesson-num">9</span> Metacognition Design Pattern</div>
+            <div class="lesson-item"><span class="lesson-num">10</span> AI Agents in Production</div>
+            <div class="lesson-item"><span class="lesson-num">11</span> Using Agentic Protocols (MCP, A2A, NLWeb)</div>
+            <div class="lesson-item"><span class="lesson-num">12</span> Context Engineering for AI Agents</div>
+            <div class="lesson-item"><span class="lesson-num">13</span> Managing Agentic Memory</div>
+            <div class="lesson-item"><span class="lesson-num">14</span> Exploring Microsoft Agent Framework</div>
+            <div class="lesson-item"><span class="lesson-num">15</span> Building Computer Use Agents (CUA)</div>
+            <div class="lesson-item"><span class="lesson-num">16</span> Deploying Scalable Agents (即将上线)</div>
+            <div class="lesson-item"><span class="lesson-num">17</span> Creating Local AI Agents (即将上线)</div>
+            <div class="lesson-item"><span class="lesson-num">18</span> Securing AI Agents</div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2>🏗️ 技术架构与特点</h2>
+        <p><strong>核心技术栈：</strong></p>
+        <ul>
+            <li><strong>Microsoft Agent Framework (MAF)</strong> — 微软自研的 Agent 开发框架，提供统一的 Agent 构建抽象</li>
+            <li><strong>Azure AI Foundry Agent Service V2</strong> — Azure 云端的托管 Agent 服务，支持模型部署和工具集成</li>
+            <li><strong>Python</strong> — 所有代码示例均使用 Python 编写</li>
+            <li><strong>MCP / A2A / NLWeb</strong> — 涵盖最新的 Agentic 协议标准</li>
+        </ul>
+        <p><strong>架构特点：</strong></p>
+        <ul>
+            <li><strong>渐进式学习路径</strong> — 从单 Agent 基础概念到多 Agent 协作，层层递进</li>
+            <li><strong>设计模式驱动</strong> — 重点讲解 Tool Use、Planning、Multi-Agent、Metacognition 四大设计模式</li>
+            <li><strong>生产就绪导向</strong> — 包含"AI Agents in Production"和"Securing AI Agents"等实战课程</li>
+            <li><strong>多提供商支持</strong> — 除 Azure 外，部分代码也支持 OpenAI 兼容提供商（如 MiniMax）</li>
+            <li><strong>自动化翻译管线</strong> — 通过 GitHub Action 自动维护 50+ 语言的翻译同步</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2>🎯 应用场景</h2>
+        <ul>
+            <li><strong>企业自动化</strong> — 构建 RAG 智能客服、文档处理 Agent、工作流自动化</li>
+            <li><strong>数据分析</strong> — 多 Agent 协作完成复杂数据分析和报告生成</li>
+            <li><strong>代码辅助</strong> — 基于 Tool Use 模式构建代码审查、测试生成 Agent</li>
+            <li><strong>计算机操作</strong> — Computer Use Agent (CUA) 课程教授如何构建桌面/浏览器自动化 Agent</li>
+            <li><strong>教育与研究</strong> — 高校和培训机构用作 AI Agent 入门教材</li>
+            <li><strong>个人学习</strong> — 开发者系统性学习 AI Agent 从入门到生产化的完整知识链</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2>🔥 为什么火（Trending 原因）</h2>
+        <ul>
+            <li><strong>AI Agent 是 2025-2026 年最热赛道</strong> — 随着大模型能力增强，Agent 成为大模型落地的核心范式，需求爆发</li>
+            <li><strong>微软官方背书</strong> — Microsoft 品牌效应 + Azure 生态深度整合，具备权威性</li>
+            <li><strong>"For Beginners" 系列金字招牌</strong> — 微软此前的 ML for Beginners（70K+ Stars）和 Generative AI for Beginners 已积累大量口碑</li>
+            <li><strong>课程持续更新</strong> — 从最初的 12 课扩展到 18 课，新增 MCP/A2A 协议、CUA 等前沿内容，保持与时俱进</li>
+            <li><strong>50+ 语言翻译</strong> — 自动化翻译管线降低全球开发者学习门槛</li>
+            <li><strong>完全免费</strong> — MIT 开源，零成本入门</li>
+            <li><strong>实战导向</strong> — 不是纯理论教学，每课都有可运行的代码示例</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2>⚔️ 同类项目对比</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>Stars</th>
+                    <th>定位</th>
+                    <th>优势</th>
+                    <th>不足</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>microsoft/ai-agents-for-beginners</strong></td>
+                    <td>63K</td>
+                    <td>Agent 入门课程</td>
+                    <td>微软官方、体系完整、多语言</td>
+                    <td>绑定 Azure 生态</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/datawhalechina/hello-agents">datawhalechina/hello-agents</a></td>
+                    <td>~5K</td>
+                    <td>中文 Agent 入门</td>
+                    <td>中文原生、开源社区驱动</td>
+                    <td>内容深度较浅</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/humanlayer/12-factor-agents">humanlayer/12-factor-agents</a></td>
+                    <td>20K</td>
+                    <td>Agent 设计原则</td>
+                    <td>理论深度高、生产视角</td>
+                    <td>非教程形式、无代码实践</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/langchain-ai/langchain">langchain-ai/langchain</a></td>
+                    <td>100K+</td>
+                    <td>Agent 开发框架</td>
+                    <td>生态丰富、社区庞大</td>
+                    <td>框架而非课程</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/microsoft/generative-ai-for-beginners">microsoft/generative-ai-for-beginners</a></td>
+                    <td>80K+</td>
+                    <td>GenAI 入门课程</td>
+                    <td>同系列、21 课内容丰富</td>
+                    <td>侧重 GenAI 而非 Agent</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2>👥 适合谁使用</h2>
+        <div class="vs-grid">
+            <div class="vs-card">
+                <h4>强烈推荐</h4>
+                <p>AI/ML 初学者想入门 Agent 开发</p>
+                <p>后端开发者想了解 AI Agent 架构</p>
+                <p>团队负责人评估 Agent 技术方向</p>
+                <p>高校学生和研究人员</p>
+                <p>正在从传统开发转向 AI 开发的工程师</p>
+            </div>
+            <div class="vs-card">
+                <h4>可能不适合</h4>
+                <p>已精通 Agent 开发的高级从业者</p>
+                <p>不想使用 Azure/Microsoft 技术栈的团队</p>
+                <p>需要非 Python 语言（Java/Go/Rust）Agent 教程的开发者</p>
+                <p>寻找可直接用于生产环境的 Agent 框架而非学习资源的开发者</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2>🚀 快速上手指南</h2>
+        <p><strong>1. 克隆仓库（推荐 sparse checkout，避免下载大量翻译文件）：</strong></p>
+        <div class="code-block">git clone --filter=blob:none --sparse https://github.com/microsoft/ai-agents-for-beginners.git
+cd ai-agents-for-beginners
+git sparse-checkout set --no-cone '/*' '!translations' '!translated_images'</div>
+        <p><strong>2. 配置 Azure AI Foundry：</strong></p>
+        <ul>
+            <li>注册 <a href="https://azure.microsoft.com">Azure 账户</a></li>
+            <li>创建 Azure AI Foundry 资源</li>
+            <li>获取 API Key 和 Endpoint</li>
+        </ul>
+        <p><strong>3. 配置环境变量：</strong></p>
+        <div class="code-block">export AZURE_AI_ENDPOINT="https://your-resource.services.ai.azure.com/api"
+export AZURE_AI_API_KEY="your-api-key"
+export MODEL_DEPLOYMENT_NAME="your-model-deployment"</div>
+        <p><strong>4. 运行第一课代码：</strong></p>
+        <div class="code-block">cd code_samples/01-intro-to-ai-agents
+pip install -r requirements.txt
+python main.py</div>
+        <p><strong>5. 按顺序学习课程：</strong> 每课约 30-60 分钟，包含阅读 + 视频 + 实践。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2>⭐ 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value score-mid">7.5</div>
+                <div class="bar-container"><div class="bar-fill" style="width:75%;background:linear-gradient(90deg,#e3b341,#f0883e);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value score-high">8.5</div>
+                <div class="bar-container"><div class="bar-fill" style="width:85%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value score-high">9.5</div>
+                <div class="bar-container"><div class="bar-fill" style="width:95%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value score-high">9.0</div>
+                <div class="bar-container"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value score-high">9.5</div>
+                <div class="bar-container"><div class="bar-fill" style="width:95%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid #21262d;">
+            <span style="font-size:0.9em;color:#8b949e;">综合评分</span>
+            <div style="font-size:2.5em;font-weight:700;background:linear-gradient(135deg,#3fb950,#58a6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">8.8 / 10</div>
+            <span style="color:#3fb950;">强烈推荐</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>分析时间: 2026-05-19 | 数据来源: GitHub, Web Search</p>
+        <p>AI 深度分析 by Claude Code</p>
+    </div>
+</div>
+</body>
+</html>
