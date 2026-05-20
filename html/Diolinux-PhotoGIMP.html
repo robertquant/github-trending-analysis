@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoGIMP 深度分析 | GitHub Trending</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #161b22 100%);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .hero h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .hero .subtitle {
+            font-size: 1.2em;
+            color: #8b949e;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-blue { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+        .badge-purple { background: #8957e533; color: #bc8cff; border: 1px solid #8957e533; }
+        .badge-green { background: #23863633; color: #3fb950; border: 1px solid #23863655; }
+        .badge-orange { background: #d2992233; color: #d29922; border: 1px solid #d2992255; }
+
+        /* Card */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card p, .card li { color: #b1bac4; }
+        .card ul { padding-left: 20px; }
+        .card ul li { margin-bottom: 8px; }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .feature-item:hover {
+            transform: translateY(-2px);
+            border-color: #58a6ff44;
+        }
+        .feature-item h3 {
+            color: #58a6ff;
+            font-size: 1.05em;
+            margin-bottom: 8px;
+        }
+        .feature-item p { font-size: 0.9em; color: #8b949e; }
+
+        /* Score Section */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            border: 1px solid #21262d;
+        }
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 8px 0 4px;
+        }
+        .score-item .score-label {
+            font-size: 0.85em;
+            color: #8b949e;
+        }
+        .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 16px;
+            font-size: 0.92em;
+        }
+        .comparison-table th {
+            background: #1f6feb22;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #1f6feb44;
+        }
+        .comparison-table th:first-child { border-radius: 8px 0 0 0; }
+        .comparison-table th:last-child { border-radius: 0 8px 0 0; }
+        .comparison-table td {
+            padding: 11px 16px;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        .comparison-table tr:hover td { background: #161b2288; }
+        .comparison-table tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+        .comparison-table tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+        .check { color: #3fb950; font-weight: bold; }
+        .cross { color: #f85149; font-weight: bold; }
+        .partial { color: #d29922; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+            font-size: 0.88em;
+            color: #79c0ff;
+            overflow-x: auto;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #d2a8ff; }
+
+        /* Quick Start Steps */
+        .steps {
+            counter-reset: step;
+            margin-top: 16px;
+        }
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            color: #0d1117;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-content { flex: 1; }
+        .step-content strong { color: #e6edf3; }
+
+        /* Trending Reasons */
+        .trend-reasons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .trend-reason {
+            background: linear-gradient(135deg, #1a1e2e, #161b22);
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .trend-reason .emoji { font-size: 2em; margin-bottom: 8px; }
+        .trend-reason h4 { color: #e6edf3; margin-bottom: 6px; font-size: 0.95em; }
+        .trend-reason p { color: #8b949e; font-size: 0.85em; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .hero h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .scores-grid { grid-template-columns: repeat(2, 1fr); }
+            .comparison-table { font-size: 0.82em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Diolinux/PhotoGIMP</h1>
+        <p class="subtitle">让 GIMP 3+ 变成 Photoshop 的免费补丁</p>
+        <div class="badges">
+            <span class="badge badge-blue">GPL v3.0</span>
+            <span class="badge badge-purple">图像编辑</span>
+            <span class="badge badge-green">跨平台</span>
+            <span class="badge badge-orange">GIMP 3.0+</span>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2><span class="icon">📖</span> 项目简介</h2>
+        <p><strong>PhotoGIMP</strong> 是一个免费、社区驱动的补丁项目，由巴西 Linux 博主 <strong>Diolinux</strong> 创建和维护。它通过替换 GIMP 的配置文件，将 GIMP 3.0+ 的界面布局、工具栏位置、快捷键方案全面改造为与 Adobe Photoshop 一致的体验。</p>
+        <p style="margin-top:12px;">与传统"魔改"不同，PhotoGIMP 不修改 GIMP 源码，只是覆盖配置文件（快捷键、布局、主题等），因此不会影响 GIMP 的核心功能，也不会删除你的自定义画笔、字体和插件。</p>
+    </div>
+
+    <!-- Core Features -->
+    <div class="card">
+        <h2><span class="icon">✨</span> 核心功能</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <h3>Photoshop 风格工具栏</h3>
+                <p>工具重新排列，位置与 Photoshop 一致。画笔、橡皮擦、移动工具等都在你习惯的位置。</p>
+            </div>
+            <div class="feature-item">
+                <h3>Photoshop 快捷键</h3>
+                <p>完全按照 Adobe 官方 Windows 版文档映射快捷键，B 选画笔、V 选移动、E 选橡皮擦，无需重新学习。</p>
+            </div>
+            <div class="feature-item">
+                <h3>最大化画布空间</h3>
+                <p>默认设置优化了面板布局，提供最大工作区域，减少干扰，专注创作。</p>
+            </div>
+            <div class="feature-item">
+                <h3>自定义启动画面</h3>
+                <p>独特的 PhotoGIMP 启动画面和图标，安装后在系统菜单中以独立应用呈现。</p>
+            </div>
+            <div class="feature-item">
+                <h3>跨平台支持</h3>
+                <p>完整支持 Linux（Flatpak/原生包）、Windows、macOS 三大平台。</p>
+            </div>
+            <div class="feature-item">
+                <h3>安全可逆</h3>
+                <p>仅替换配置文件，不碰源码。删除配置文件夹即可完全恢复 GIMP 原始状态。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Architecture -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+        <p>PhotoGIMP 的核心原理是替换 GIMP 的用户配置文件，而非修改源代码：</p>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>配置文件</th>
+                    <th>作用</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>shortcutsrc</code></td><td>键盘快捷键映射，对齐 Photoshop 方案</td></tr>
+                <tr><td><code>toolrc</code></td><td>工具配置和排序</td></tr>
+                <tr><td><code>sessionrc</code></td><td>窗口布局和面板位置</td></tr>
+                <tr><td><code>dockrc</code></td><td>停靠面板/面板配置</td></tr>
+                <tr><td><code>gimprc</code></td><td>通用 GIMP 偏好设置（画布、网格等）</td></tr>
+                <tr><td><code>contextrc</code></td><td>活动工具/颜色上下文设置</td></tr>
+                <tr><td><code>splashes/</code></td><td>自定义 PhotoGIMP 启动画面</td></tr>
+                <tr><td><code>theme.css</code></td><td>UI 主题微调样式</td></tr>
+                <tr><td><code>templaterc</code></td><td>预定义画布模板</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top:16px; color:#8b949e; font-size:0.9em;">
+            <strong>设计亮点：</strong>仅通过配置层改造，而非源码层面的修改。这意味着每次 GIMP 更新后，PhotoGIMP 都能快速适配，维护成本极低。
+        </p>
+    </div>
+
+    <!-- Trending Reasons -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火？Trending 原因</h2>
+        <div class="trend-reasons">
+            <div class="trend-reason">
+                <div class="emoji">🚀</div>
+                <h4>GIMP 3.0 正式发布</h4>
+                <p>GIMP 3.0 是多年来的重大版本更新，带来了 GTK3、改进的 UI 和性能提升，重新激发了社区热情。</p>
+            </div>
+            <div class="trend-reason">
+                <div class="emoji">💸</div>
+                <h4>Adobe 订阅疲劳</h4>
+                <p>越来越多用户寻求免费替代方案。PhotoGIMP 降低了 Photoshop 用户的迁移门槛。</p>
+            </div>
+            <div class="trend-reason">
+                <div class="emoji">🐧</div>
+                <h4>Linux 桌面生态崛起</h4>
+                <p>Linux 桌面用户持续增长，对专业级免费图像编辑工具的需求激增。</p>
+            </div>
+            <div class="trend-reason">
+                <div class="emoji">🎯</div>
+                <h4>零学习成本</h4>
+                <p>Photoshop 用户无需重新学习，安装即用，这一卖点在社交媒体上引发广泛传播。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>PhotoGIMP</th>
+                    <th>GIMP 原版</th>
+                    <th>Adobe Photoshop</th>
+                    <th>Krita</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>价格</strong></td><td class="check">免费</td><td class="check">免费</td><td class="cross">订阅制 (~$20/月)</td><td class="check">免费</td></tr>
+                <tr><td><strong>PS 快捷键</strong></td><td class="check">开箱即用</td><td class="cross">需手动设置</td><td class="check">原生支持</td><td class="cross">不支持</td></tr>
+                <tr><td><strong>PS 布局</strong></td><td class="check">高度相似</td><td class="cross">默认差异大</td><td class="check">原生标准</td><td class="cross">数字绘画导向</td></tr>
+                <tr><td><strong>AI 功能</strong></td><td class="cross">无</td><td class="cross">无</td><td class="check">Firefly AI</td><td class="cross">无</td></tr>
+                <tr><td><strong>RAW 处理</strong></td><td class="partial">有限</td><td class="partial">有限</td><td class="check">Camera RAW</td><td class="partial">有限</td></tr>
+                <tr><td><strong>CMYK/印刷</strong></td><td class="partial">基本支持</td><td class="partial">基本支持</td><td class="check">完整支持</td><td class="partial">基本支持</td></tr>
+                <tr><td><strong>跨平台</strong></td><td class="check">全平台</td><td class="check">全平台</td><td class="check">Win/Mac</td><td class="check">全平台</td></tr>
+                <tr><td><strong>定位</strong></td><td>PS 迁移桥梁</td><td>通用图像编辑</td><td>行业标准</td><td>数字绘画</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>Photoshop → Linux 迁移</strong> — 从 Adobe 生态切换到 Linux 的设计师，希望保持熟悉的操作习惯</li>
+            <li><strong>学生/教育场景</strong> — 预算有限的设计专业学生，需要免费但接近 Photoshop 体验的工具</li>
+            <li><strong>开源爱好者</strong> — 希望使用纯自由软件完成日常图像编辑工作的用户</li>
+            <li><strong>临时替代</strong> — Photoshop 许可证到期或换电脑时，作为过渡方案快速上手</li>
+            <li><strong>非营利组织</strong> — 需要控制软件预算同时又需要图像处理能力的团队</li>
+        </ul>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2><span class="icon">👤</span> 适合谁使用</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <h3>强烈推荐</h3>
+                <p>有 Photoshop 基础的 Linux 用户、想脱离 Adobe 订阅的自由设计师、设计专业学生、预算有限的小团队。</p>
+            </div>
+            <div class="feature-item">
+                <h3>一般推荐</h3>
+                <p>Windows/macOS 上的 Photoshop 替代需求者、偶尔需要图像编辑的普通用户、想要了解开源图像编辑工具的人。</p>
+            </div>
+            <div class="feature-item">
+                <h3>不推荐</h3>
+                <p>专业印刷从业者（需要完整 CMYK 工作流）、重度依赖 Adobe 生态协同的团队、需要 AI 生成功能的创作者。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-content">
+                    <strong>安装 GIMP 3.0+</strong>
+                    <div class="code-block"><span class="comment"># Linux (Flatpak)</span><br>flatpak install flathub org.gimp.GIMP<br><br><span class="comment"># 或访问 gimp.org 下载</span></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <strong>启动并关闭 GIMP 一次</strong>
+                    <p style="color:#8b949e;">这一步确保 GIMP 生成所需的配置文件夹。</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <strong>备份现有配置（可选）</strong>
+                    <div class="code-block"><span class="comment"># Linux</span><br>cp -r ~/.config/GIMP/3.0 ~/GIMP-3.0-backup<br><br><span class="comment"># Windows: 复制 %APPDATA%\GIMP\3.0</span></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <strong>下载并解压 PhotoGIMP</strong>
+                    <div class="code-block"><span class="comment"># 从 GitHub Releases 下载最新版本</span><br><span class="cmd">https://github.com/Diolinux/PhotoGIMP/releases</span><br><br><span class="comment"># Linux: 解压到家目录（覆盖 ~/.config 和 ~/.local）</span><br><span class="comment"># Windows: 解压到 %APPDATA%\GIMP</span></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <strong>启动 GIMP，享受 Photoshop 体验</strong>
+                    <p style="color:#8b949e;">你将看到新的启动画面和 Photoshop 风格的界面布局。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="scores-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value" style="color: #d29922;">6.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 65%; background: linear-gradient(90deg, #d29922, #e3b341);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value" style="color: #3fb950;">7.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 70%; background: linear-gradient(90deg, #238636, #3fb950);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value" style="color: #58a6ff;">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, #1f6feb, #58a6ff);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value" style="color: #3fb950;">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: linear-gradient(90deg, #238636, #3fb950);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value" style="color: #bc8cff;">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: linear-gradient(90deg, #8957e5, #bc8cff);"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:24px; padding:16px; background:linear-gradient(135deg, #1f6feb22, #8957e522); border-radius:10px;">
+            <span style="font-size:0.9em; color:#8b949e;">综合评分</span>
+            <div style="font-size:2.5em; font-weight:700; background:linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">7.9 / 10</div>
+            <span style="font-size:0.85em; color:#d29922;">非常优秀的 Photoshop 迁移工具</span>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="card">
+        <h2><span class="icon">📋</span> 项目信息</h2>
+        <table class="comparison-table">
+            <tbody>
+                <tr><td><strong>仓库地址</strong></td><td><a href="https://github.com/Diolinux/PhotoGIMP" style="color:#58a6ff;">github.com/Diolinux/PhotoGIMP</a></td></tr>
+                <tr><td><strong>创建者</strong></td><td>Diolinux（巴西 Linux 社区知名博主）</td></tr>
+                <tr><td><strong>许可证</strong></td><td>GPL v3.0</td></tr>
+                <tr><td><strong>支持平台</strong></td><td>Linux / Windows / macOS</td></tr>
+                <tr><td><strong>前置依赖</strong></td><td>GIMP 3.0+</td></tr>
+                <tr><td><strong>安装方式</strong></td><td>配置文件覆盖（非程序安装）</td></tr>
+                <tr><td><strong>分析日期</strong></td><td>2026-05-20</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>由 AI 深度分析生成 | Powered by Claude Code</p>
+        <p style="margin-top:4px;"><a href="https://github.com/Diolinux/PhotoGIMP">GitHub 仓库</a> | <a href="https://gimp.org">GIMP 官网</a></p>
+    </div>
+</div>
+</body>
+</html>
