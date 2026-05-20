@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: Alishahryar1/free-claude-code</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #161b22 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(168, 85, 247, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: #8b949e;
+            margin-bottom: 20px;
+        }
+        .hero .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 0.9em;
+        }
+        .hero .meta span {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 4px 14px;
+            border-radius: 20px;
+            color: #58a6ff;
+        }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #58a6ff44; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 {
+            color: #79c0ff;
+            font-size: 1.1em;
+            margin: 16px 0 8px;
+        }
+        .card p, .card li { color: #b1bac4; }
+        .card ul { padding-left: 20px; }
+        .card ul li { margin-bottom: 6px; }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .score-item .label {
+            font-size: 0.85em;
+            color: #8b949e;
+            margin-bottom: 8px;
+        }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-item .bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+        .s-innovation .value { color: #f778ba; }
+        .s-innovation .bar-fill { background: linear-gradient(90deg, #f778ba, #ff9ecf); }
+        .s-quality .value { color: #58a6ff; }
+        .s-quality .bar-fill { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
+        .s-practical .value { color: #3fb950; }
+        .s-practical .bar-fill { background: linear-gradient(90deg, #3fb950, #56d364); }
+        .s-docs .value { color: #d2a8ff; }
+        .s-docs .bar-fill { background: linear-gradient(90deg, #d2a8ff, #bc8cff); }
+        .s-community .value { color: #ffa657; }
+        .s-community .bar-fill { background: linear-gradient(90deg, #ffa657, #f0883e); }
+        .score-total {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+        .score-total .big {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #3fb950, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Provider Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        th {
+            background: #1c2128;
+            color: #58a6ff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            font-size: 0.9em;
+            color: #b1bac4;
+        }
+        tr:hover td { background: rgba(56, 189, 248, 0.04); }
+        code {
+            background: #1c2128;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.88em;
+            color: #79c0ff;
+        }
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.88em;
+            color: #79c0ff;
+            line-height: 1.5;
+        }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            background: rgba(188, 140, 255, 0.1);
+            border: 1px solid rgba(188, 140, 255, 0.2);
+            color: #d2a8ff;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85em;
+        }
+        .tag.blue {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.2);
+            color: #58a6ff;
+        }
+        .tag.green {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: rgba(63, 185, 80, 0.2);
+            color: #3fb950;
+        }
+
+        /* Comparison table */
+        .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+        .vs-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .vs-item h4 { color: #79c0ff; margin-bottom: 8px; }
+
+        .highlight { color: #ffa657; font-weight: 600; }
+        .footer {
+            text-align: center;
+            color: #484f58;
+            padding: 40px 0 20px;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 700px) {
+            .hero { padding: 28px 20px; }
+            .hero h1 { font-size: 1.6em; }
+            .card { padding: 20px; }
+            .vs-row { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Alishahryar1/free-claude-code</h1>
+        <p class="subtitle">让 Claude Code 白嫖的终极代理 - 通过 NVIDIA NIM、Kimi、DeepSeek 等免费模型驱动 Claude Code</p>
+        <div class="meta">
+            <span>&#11088; 13,200+ Stars</span>
+            <span>&#128736; Python 3.14 + FastAPI</span>
+            <span>&#128274; MIT License</span>
+            <span>&#128640; GitHub Trending #1</span>
+        </div>
+        <div class="tags" style="margin-top:16px;">
+            <span class="tag blue">AI Proxy</span>
+            <span class="tag blue">Claude Code</span>
+            <span class="tag">NVIDIA NIM</span>
+            <span class="tag green">Free Tier</span>
+            <span class="tag">FastAPI</span>
+            <span class="tag">LLM Gateway</span>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="card">
+        <h2>&#128064; 项目简介与核心功能</h2>
+        <p><strong>Free Claude Code</strong> 是一个轻量级的本地代理服务器（Proxy），它拦截 Claude Code 发出的 Anthropic API 请求，并将其路由到 <strong>10+ 种替代提供商</strong>，包括免费的 NVIDIA NIM、Kimi、DeepSeek、OpenRouter，以及本地模型（Ollama、LM Studio、llama.cpp）。</p>
+        <h3>核心功能</h3>
+        <ul>
+            <li><strong>即插即用代理</strong> - 无需修改 Claude Code 本身，通过环境变量即可接入</li>
+            <li><strong>10+ Provider 后端</strong> - NVIDIA NIM、Kimi、Wafer、OpenRouter、DeepSeek、LM Studio、llama.cpp、Ollama、OpenCode Zen、Z.ai</li>
+            <li><strong>分层模型路由</strong> - Opus/Sonnet/Haiku 流量可分别路由到不同 Provider</li>
+            <li><strong>原生 Model Picker</strong> - 支持 Claude Code 的 <code>/model</code> 模型选择器</li>
+            <li><strong>流式输出 & Tool Use</strong> - 完整支持 streaming、工具调用、thinking blocks</li>
+            <li><strong>Discord/Telegram Bot</strong> - 可通过消息平台远程使用 Claude Code，支持语音</li>
+            <li><strong>VS Code / JetBrains 支持</strong> - 原生集成主流 IDE 扩展</li>
+            <li><strong>本地 Admin UI</strong> - 可视化管理界面配置 Provider 和设置</li>
+        </ul>
+    </div>
+
+    <!-- Architecture -->
+    <div class="card">
+        <h2>&#127959; 技术架构与特点</h2>
+        <h3>架构概览</h3>
+        <pre>Claude Code CLI / VSCode / JetBrains
+        |
+        | ANTHROPIC_BASE_URL=http://localhost:8082
+        v
++-------------------+
+|   Free CC Proxy   |  &lt;-- FastAPI + Uvicorn
+|   (Python 3.14)   |
+|                   |  /v1/messages  /v1/models
+|  Model Router     |  -- Opus  → Provider A
+|  Protocol Trans.  |  -- Sonnet → Provider B
+|  Request Optim.   |  -- Haiku  → Provider C
++-------------------+
+        |
+        v
+  NVIDIA NIM / Kimi / DeepSeek / OpenRouter /
+  Ollama / LM Studio / llama.cpp / Z.ai ...</pre>
+
+        <h3>技术亮点</h3>
+        <ul>
+            <li><strong>Python 3.14</strong> - 采用最新 Python 版本，使用现代语法特性</li>
+            <li><strong>FastAPI ASGI</strong> - 高性能异步 Web 框架，原生支持 SSE 流式响应</li>
+            <li><strong>协议转换</strong> - 将 Anthropic Messages API 协议无缝翻译为 OpenAI Chat / Anthropic Messages 等多种格式</li>
+            <li><strong>请求优化</strong> - 简单的 Claude Code 探针请求在本地直接应答，节省配额和延迟</li>
+            <li><strong>Thinking Block 规范化</strong> - 正确处理各 Provider 的推理/思考块格式差异</li>
+            <li><strong>插件式 Provider</strong> - 通过 <code>OpenAIChatTransport</code> 和 <code>AnthropicMessagesTransport</code> 基类扩展</li>
+        </ul>
+
+        <h3>项目结构</h3>
+        <pre>free-claude-code/
+├── server.py          # ASGI 入口
+├── api/               # FastAPI 路由、服务层、路由、优化
+├── core/              # Anthropic 协议辅助和 SSE 工具
+├── providers/         # Provider 传输、注册、限流
+├── messaging/         # Discord/Telegram 适配器、语音
+├── cli/               # CLI 入口点和 Claude 进程管理
+├── config/            # 设置、Provider 目录、日志
+└── tests/             # 单元和契约测试</pre>
+    </div>
+
+    <!-- Providers -->
+    <div class="card">
+        <h2>&#127760; 支持的 Provider</h2>
+        <table>
+            <thead>
+                <tr><th>Provider</th><th>费用</th><th>代表模型</th><th>协议</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>NVIDIA NIM</td><td class="highlight">免费</td><td>GLM-4.7, GLM-5, Kimi-K2.5</td><td>OpenAI Chat</td></tr>
+                <tr><td>Kimi</td><td>免费/付费</td><td>Kimi-K2.5</td><td>OpenAI Chat</td></tr>
+                <tr><td>Wafer</td><td>付费</td><td>DeepSeek-V4-Pro, GLM-5.1</td><td>Anthropic Messages</td></tr>
+                <tr><td>OpenRouter</td><td>免费/付费</td><td>Step-3.5-Flash, DeepSeek</td><td>Anthropic Messages</td></tr>
+                <tr><td>DeepSeek</td><td>免费/低价</td><td>DeepSeek-Chat</td><td>Anthropic Messages</td></tr>
+                <tr><td>LM Studio</td><td class="highlight">免费(本地)</td><td>任意本地模型</td><td>Anthropic Messages</td></tr>
+                <tr><td>llama.cpp</td><td class="highlight">免费(本地)</td><td>任意 GGUF 模型</td><td>Anthropic Messages</td></tr>
+                <tr><td>Ollama</td><td class="highlight">免费(本地)</td><td>Llama3.1 等</td><td>Anthropic Messages</td></tr>
+                <tr><td>OpenCode Zen</td><td>免费/付费</td><td>GPT-5.3-Codex, Claude Sonnet 4</td><td>OpenAI Chat</td></tr>
+                <tr><td>Z.ai</td><td>付费</td><td>GLM-5.1, GLM-5-Turbo</td><td>OpenAI Chat</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2>&#127919; 应用场景</h2>
+        <ul>
+            <li><strong>个人开发者体验 Claude Code</strong> - 无需付费即可尝试 Claude Code 的完整工作流</li>
+            <li><strong>本地模型开发</strong> - 通过 Ollama / LM Studio 使用本地模型进行 AI 辅助编程</li>
+            <li><strong>多模型混搭</strong> - Opus 用 Kimi-K2.5、Sonnet 用 DeepSeek、Haiku 用本地模型</li>
+            <li><strong>远程协作编程</strong> - 通过 Discord/Telegram Bot 远程控制 Claude Code</li>
+            <li><strong>成本优化</strong> - 企业场景下通过低价 Provider 替代 Anthropic 直连降低成本</li>
+            <li><strong>模型评估</strong> - 在 Claude Code 环境中对比不同模型在编程任务上的表现</li>
+        </ul>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2>&#128293; 为什么火 (Trending 原因)</h2>
+        <ul>
+            <li><strong>直击痛点</strong> - Claude Code 是当前最火的 AI 编程工具之一，但需要付费 API，该项目解决了「想用但不想花钱」的核心需求</li>
+            <li><strong>时机绝佳</strong> - NVIDIA NIM 提供免费 API 端点（~40 req/min），与 Claude Code 的流行形成完美配合</li>
+            <li><strong>社交传播</strong> - Instagram、YouTube、Reddit、LinkedIn、CSDN 等平台广泛传播教程和推荐</li>
+            <li><strong>工程质量高</strong> - Python 3.14 + FastAPI，代码结构清晰，文档完善，Admin UI 降低门槛</li>
+            <li><strong>生态丰富</strong> - 10+ Provider、CLI/VSCode/JetBrains/Discord/Telegram 多端支持</li>
+            <li><strong>一周涨星 7,800+</strong> - 快速登上 GitHub Trending 日榜/周榜首位</li>
+        </ul>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2>&#9878; 同类项目对比</h2>
+        <table>
+            <thead>
+                <tr><th>项目</th><th>定位</th><th>Provider 数</th><th>Admin UI</th><th>消息平台</th><th>IDE 集成</th></tr>
+            </thead>
+            <tbody>
+                <tr><td class="highlight">free-claude-code</td><td>Claude Code 专用代理</td><td>10+</td><td>&#10004;</td><td>Discord/Telegram</td><td>CLI/VSCode/JetBrains</td></tr>
+                <tr><td>LiteLLM</td><td>通用 LLM 代理</td><td>100+</td><td>&#10004;</td><td>&#10008;</td><td>无专用集成</td></tr>
+                <tr><td>OpenRouter</td><td>云端 LLM 网关</td><td>200+</td><td>N/A(云端)</td><td>&#10008;</td><td>需第三方桥接</td></tr>
+                <tr><td>free-llm-api-resources</td><td>资源列表</td><td>N/A</td><td>&#10008;</td><td>&#10008;</td><td>&#10008;</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top:12px;color:#8b949e;">free-claude-code 的优势在于<strong>专为 Claude Code 优化</strong>，开箱即用，不需要了解底层协议细节。LiteLLM 更通用但配置更复杂；OpenRouter 是商业服务而非开源工具。</p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2>&#128100; 适合谁使用</h2>
+        <div class="vs-row">
+            <div class="vs-item">
+                <h4>&#10004; 推荐使用</h4>
+                <ul>
+                    <li>想体验 Claude Code 但不想付费的个人开发者</li>
+                    <li>有本地 GPU 想用 Ollama 跑模型的人</li>
+                    <li>需要多模型 A/B 测试的 AI 工程师</li>
+                    <li>想通过 Discord 远程编程的极客</li>
+                    <li>学习 API 代理和协议转换的开发者</li>
+                </ul>
+            </div>
+            <div class="vs-item">
+                <h4>&#9888; 不太适合</h4>
+                <ul>
+                    <li>需要生产级稳定性的企业用户</li>
+                    <li>要求 Anthropic 官方支持的场景</li>
+                    <li>对数据隐私有严格合规要求的场景（代理经手所有请求）</li>
+                    <li>不熟悉命令行工具的初学者</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2>&#9889; 快速上手指南</h2>
+        <h3>1. 安装 Claude Code</h3>
+        <pre>npm install -g @anthropic-ai/claude-code</pre>
+        <h3>2. 安装运行时</h3>
+        <pre>curl -LsSf https://astral.sh/uv/install.sh | sh
+uv self update
+uv python install 3.14</pre>
+        <h3>3. 获取 NVIDIA NIM API Key（免费）</h3>
+        <p>访问 <code>build.nvidia.com/settings/api-keys</code> 创建免费 API Key</p>
+        <h3>4. 安装并启动代理</h3>
+        <pre>uv tool install --force git+https://github.com/Alishahryar1/free-claude-code.git
+fcc-server</pre>
+        <h3>5. 配置 Admin UI</h3>
+        <p>打开 <code>http://127.0.0.1:8082/admin</code>，粘贴 NVIDIA NIM API Key，点击 Validate → Apply</p>
+        <h3>6. 启动 Claude Code</h3>
+        <pre>fcc-claude</pre>
+        <p>代理会自动设置环境变量并启动 Claude Code，默认使用 <code>nvidia_nim/z-ai/glm4.7</code> 模型。</p>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+        <h2>&#128202; 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item s-innovation">
+                <div class="label">创新性</div>
+                <div class="value">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+            </div>
+            <div class="score-item s-quality">
+                <div class="label">代码质量</div>
+                <div class="value">8.0</div>
+                <div class="bar"><div class="bar-fill" style="width:80%"></div></div>
+            </div>
+            <div class="score-item s-practical">
+                <div class="label">实用性</div>
+                <div class="value">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-item s-docs">
+                <div class="label">文档完善度</div>
+                <div class="value">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-item s-community">
+                <div class="label">社区活跃度</div>
+                <div class="value">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+            </div>
+        </div>
+        <div class="score-total">
+            综合得分 <span class="big">8.7</span> / 10
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Generated on 2026-05-20 | GitHub Trending Daily Analysis</p>
+    </div>
+
+</div>
+</body>
+</html>
