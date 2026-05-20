@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析 | truelockmc/streambert</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #161b22 100%);
+            border-radius: 16px;
+            border: 1px solid #30363d;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; }
+        .header .badges {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.82em;
+            font-weight: 600;
+        }
+        .badge-js { background: #f1e05a22; color: #f1e05a; border: 1px solid #f1e05a44; }
+        .badge-electron { background: #47848f22; color: #47848f; border: 1px solid #47848f44; }
+        .badge-react { background: #61dafb22; color: #61dafb; border: 1px solid #61dafb44; }
+        .badge-vite { background: #bd34fe22; color: #bd34fe; border: 1px solid #bd34fe44; }
+        .badge-privacy { background: #3fb95022; color: #3fb950; border: 1px solid #3fb95044; }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.45em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card p, .card li { color: #b1bac4; margin-bottom: 8px; }
+        .card ul { padding-left: 22px; }
+        .card ul li::marker { color: #58a6ff; }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            transition: border-color 0.2s;
+        }
+        .feature-item:hover { border-color: #58a6ff; }
+        .feature-item .feat-icon { font-size: 1.6em; margin-bottom: 8px; }
+        .feature-item h3 { font-size: 1em; color: #e6edf3; margin-bottom: 6px; }
+        .feature-item p { font-size: 0.88em; color: #8b949e; margin: 0; }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .score-label { font-size: 0.85em; color: #8b949e; margin-bottom: 6px; }
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-item .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+        .comparison-table th {
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+        }
+        .comparison-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        .comparison-table tr:hover td { background: #161b22; }
+        .comparison-table .highlight { color: #3fb950; font-weight: 600; }
+        code {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 2px 7px;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.88em;
+            color: #f0883e;
+        }
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.88em;
+            color: #e6edf3;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: 500;
+            margin: 2px 3px;
+        }
+        .tag-green { background: #3fb95022; color: #3fb950; }
+        .tag-blue { background: #58a6ff22; color: #58a6ff; }
+        .tag-purple { background: #bc8cff22; color: #bc8cff; }
+        .tag-orange { background: #f0883e22; color: #f0883e; }
+        .trending-reason {
+            background: linear-gradient(135deg, #161b22, #1a1e2e);
+            border-left: 4px solid #f778ba;
+            padding: 18px 22px;
+            border-radius: 0 10px 10px 0;
+            margin-top: 12px;
+        }
+        .trending-reason li { margin-bottom: 10px; }
+        .footer {
+            text-align: center;
+            color: #484f58;
+            font-size: 0.85em;
+            margin-top: 40px;
+            padding: 20px;
+        }
+        .tech-stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            body { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>Streambert</h1>
+        <p class="subtitle">跨平台无广告流媒体桌面应用 — 一站式电影/剧集/动漫流媒体与下载工具</p>
+        <div class="badges">
+            <span class="badge badge-js">JavaScript</span>
+            <span class="badge badge-electron">Electron</span>
+            <span class="badge badge-react">React</span>
+            <span class="badge badge-vite">Vite</span>
+            <span class="badge badge-privacy">Zero Ads &amp; Tracking</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">🎬</span> 项目简介</h2>
+        <p><strong>Streambert</strong> 是一款基于 Electron 的跨平台桌面应用，让用户可以免费<strong>流式观看和下载</strong>全球任何电影、电视剧和动漫。项目最大的卖点是完全<strong>无广告、无追踪</strong>，以隐私为核心理念。</p>
+        <p style="margin-top:10px;">该项目由独立开发者 <strong>truelockmc</strong>（true_lock）创建，最新版本为 <strong>v2.4</strong>，支持 Windows、Linux（.deb / .AppImage / .pacman）全平台，并已上线 Pinokio 应用商店。</p>
+        <div class="tech-stack">
+            <span class="tag tag-blue">Electron</span>
+            <span class="tag tag-blue">React (JSX)</span>
+            <span class="tag tag-blue">Vite</span>
+            <span class="tag tag-green">TMDB API</span>
+            <span class="tag tag-green">AniList API</span>
+            <span class="tag tag-orange">FFmpeg</span>
+            <span class="tag tag-purple">VidSrc / 2Embed</span>
+            <span class="tag tag-purple">AllManga.to</span>
+        </div>
+    </div>
+
+    <!-- 核心功能 -->
+    <div class="card">
+        <h2><span class="icon">✨</span> 核心功能</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feat-icon">🎦</div>
+                <h3>流媒体播放</h3>
+                <p>通过 VidSrc、videasy.net、2Embed 等源直接播放电影、电视剧和动漫，速度比浏览器更快</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">📥</div>
+                <h3>多线程下载</h3>
+                <p>提取 .m3u8 播放列表链接，使用 FFmpeg 多线程下载完整影片，可导出到任意存储设备</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">🎌</div>
+                <h3>动漫专区</h3>
+                <p>自动识别动漫内容，元数据切换为 AniList，媒体文件从 AllManga.to 获取 .mp4 直链</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">📃</div>
+                <h3>字幕管理</h3>
+                <p>内置字幕下载和管理功能，支持多语言字幕加载</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">📚</div>
+                <h3>个人资料库</h3>
+                <p>追踪观看历史、收藏想看列表、管理下载文件</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">✨</div>
+                <h3>热门推荐</h3>
+                <p>基于 TMDB 的每日热门内容发现，浏览全球趋势影视</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">🛡️</div>
+                <h3>隐私优先</h3>
+                <p>零广告、零追踪、零数据收集，永远免费使用</p>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">⚙️</div>
+                <h3>高度可定制</h3>
+                <p>可自定义界面外观和功能设置，包括画中画/弹出播放器</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+        <p>Streambert 采用经典的 <strong>Electron + React + Vite</strong> 架构，将前端渲染与原生桌面能力结合：</p>
+        <pre>
+Project Root
+├── main.js              # Electron 主进程
+├── preload.js           # 安全桥接（contextBridge）
+├── vite.config.js       # Vite 构建配置
+├── src/
+│   ├── App.jsx          # React 根组件
+│   ├── main.jsx         # React 入口
+│   ├── components/      # UI 组件（17个模块化组件）
+│   │   ├── MediaCard.jsx
+│   │   ├── DownloadModal.jsx
+│   │   ├── TrendingCarousel.jsx
+│   │   └── ...
+│   ├── pages/           # 页面（首页/电影/剧集/下载/设置/资料库）
+│   ├── ipc/             # IPC 通信层（下载/播放/存储/字幕/allmanga）
+│   ├── utils/           # 工具函数（API/字幕/备份/评分等）
+│   └── styles/          # 全局样式 + 自定义字体</pre>
+        <p><strong>架构亮点：</strong></p>
+        <ul>
+            <li><strong>IPC 分层设计</strong>：主进程与渲染进程通过 preload.js 安全桥接，ipc/ 目录按功能模块化（downloads、player、storage、subtitles、allmanga）</li>
+            <li><strong>多源聚合</strong>：视频源（VidSrc/2Embed）、元数据源（TMDB/AniList）、动漫源（AllManga.to）三层解耦</li>
+            <li><strong>原生下载能力</strong>：利用 FFmpeg 处理 .m3u8 流，支持多线程下载</li>
+            <li><strong>模块化组件</strong>：17 个独立组件，每个 Modal/页面/工具各自封装</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>影视爱好者</strong>：一站式观看全球电影和电视剧，无需多个订阅平台</li>
+            <li><strong>动漫迷</strong>：集成 AniList + AllManga 双源，自动识别动漫内容</li>
+            <li><strong>离线观看需求</strong>：多线程下载功能适合旅行、通勤等无网络场景</li>
+            <li><strong>隐私敏感用户</strong>：零广告零追踪，不收集任何用户数据</li>
+            <li><strong>Linux 用户</strong>：原生支持 .deb / .pacman / .AppImage，覆盖 Debian/Ubuntu/Arch 全系</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+        <div class="trending-reason">
+            <ul>
+                <li><strong>订阅疲劳的解药</strong>：在 Netflix、Disney+、HBO 等平台订阅费用不断上涨的背景下，一个免费的全能流媒体工具直击用户痛点</li>
+                <li><strong>隐私理念共鸣</strong>：零广告、零追踪的承诺在隐私意识觉醒的时代引发了开发者社区的强烈共鸣</li>
+                <li><strong>一站式体验</strong>：电影 + 电视剧 + 动漫三合一，字幕管理、下载、资料库一应俱全，减少了多工具切换的麻烦</li>
+                <li><strong>Linux 原生支持</strong>：v2.4 新增 Arch Linux（.pacman）支持，Linux 社区响应热烈</li>
+                <li><strong>独立开发者故事</strong>：Reddit r/Piracy 社区的讨论帖和 Instagram 传播让项目获得了病毒式关注</li>
+                <li><strong>技术实现优秀</strong>：干净的 React 组件架构 + Electron IPC 分层设计，代码质量在同类项目中属上乘</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>平台</th>
+                    <th>广告/追踪</th>
+                    <th>下载</th>
+                    <th>动漫</th>
+                    <th>开源</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong class="highlight">Streambert</strong></td>
+                    <td>Win/Mac/Linux</td>
+                    <td class="highlight">无</td>
+                    <td class="highlight">支持（多线程）</td>
+                    <td class="highlight">原生支持</td>
+                    <td class="highlight">是</td>
+                </tr>
+                <tr>
+                    <td>Stremio</td>
+                    <td>全平台+移动</td>
+                    <td>插件决定</td>
+                    <td>需插件</td>
+                    <td>需插件</td>
+                    <td>部分开源</td>
+                </tr>
+                <tr>
+                    <td>Popcorn Time</td>
+                    <td>Win/Mac/Linux</td>
+                    <td>无</td>
+                    <td>支持</td>
+                    <td>有限</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>Jellyfin</td>
+                    <td>全平台+NAS</td>
+                    <td>无</td>
+                    <td>支持</td>
+                    <td>插件</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>CloudStream</td>
+                    <td>Android</td>
+                    <td>无</td>
+                    <td>支持</td>
+                    <td>支持</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>ani-cli</td>
+                    <td>终端</td>
+                    <td>无</td>
+                    <td>支持</td>
+                    <td>专属</td>
+                    <td>是</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top:12px;color:#8b949e;">Streambert 的核心优势在于：桌面端开箱即用的 GUI 体验 + 多源聚合 + 无广告追踪的三重组合，这在同类项目中较为稀缺。</p>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <h3>普通影视观众</h3>
+                <p>想要免费、无广告观看电影/剧集的用户，界面友好，安装即用</p>
+            </div>
+            <div class="feature-item">
+                <h3>动漫爱好者</h3>
+                <p>AniList 集成 + AllManga 直链获取，比浏览器观看更流畅</p>
+            </div>
+            <div class="feature-item">
+                <h3>Linux 桌面用户</h3>
+                <p>原生 .deb/.pacman/.AppImage 支持，不依赖 Wine 或虚拟机</p>
+            </div>
+            <div class="feature-item">
+                <h3>Electron 学习者</h3>
+                <p>项目架构清晰，IPC 分层规范，是学习 Electron 桌面应用开发的优秀参考</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <p><strong>前置要求：</strong></p>
+        <ul>
+            <li>Node.js >= 22.12.0（仅源码构建需要）</li>
+            <li>免费的 TMDB API Read Access Token</li>
+            <li>FFmpeg（仅下载功能需要）</li>
+        </ul>
+        <p style="margin-top:14px;"><strong>方式一：预编译安装（推荐）</strong></p>
+        <pre># Linux (.deb)
+sudo dpkg -i streambert_*.deb
+
+# Arch Linux (.pacman)
+sudo pacman -U streambert-*.pacman
+
+# AppImage
+chmod +x Streambert-x64.AppImage &amp;&amp; ./Streambert-x64.AppImage
+
+# Windows
+# 下载 Streambert Setup *.exe 并运行</pre>
+        <p style="margin-top:14px;"><strong>方式二：从源码构建</strong></p>
+        <pre>git clone https://github.com/truelockmc/streambert.git
+cd streambert
+npm install
+npm run build        # 通用构建
+# 或
+npm run build:deb    # 构建 .deb 包
+npm run build:appimage  # 构建 AppImage</pre>
+        <p style="margin-top:14px;"><strong>首次启动</strong>：应用会提示输入 TMDB API Key，获取方式参见项目 README 中的指南。只需输入一次，后续自动保存。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value">7.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:75%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value">7.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:70%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value">7.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:70%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value">7.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:75%"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+            <span style="font-size:1.6em;font-weight:700;background:linear-gradient(135deg,#58a6ff,#bc8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">综合评分：7.6 / 10</span>
+            <p style="color:#8b949e;margin-top:6px;">一款实用性强、架构清晰的流媒体桌面工具，适合日常观影和技术学习</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>GitHub Trending 深度分析 | 生成日期：2026-05-21</p>
+        <p style="margin-top:4px;">项目地址：<a href="https://github.com/truelockmc/streambert" style="color:#58a6ff;">github.com/truelockmc/streambert</a></p>
+    </div>
+
+</div>
+</body>
+</html>
