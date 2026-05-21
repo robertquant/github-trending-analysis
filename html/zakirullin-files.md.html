@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: zakirullin/files.md - 私密、安静的思考空间</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid #30363d;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #58a6ff, #3fb950, #d2a8ff, #f78166);
+        }
+        .header .icon { font-size: 60px; margin-bottom: 16px; }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #3fb950);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.15em; }
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            background: rgba(88,166,255,0.1);
+            border: 1px solid rgba(88,166,255,0.3);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #58a6ff;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #58a6ff; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .emoji { font-size: 1.2em; }
+        .card p, .card li { color: #b1bac4; margin-bottom: 8px; }
+        .card ul { padding-left: 20px; }
+        .card ul li::marker { color: #58a6ff; }
+        .card a { color: #58a6ff; text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
+        .highlight {
+            background: linear-gradient(135deg, rgba(63,185,80,0.1), rgba(88,166,255,0.1));
+            border-left: 3px solid #3fb950;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-style: italic;
+            color: #b1bac4;
+        }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            background: rgba(210,168,255,0.1);
+            border: 1px solid rgba(210,168,255,0.3);
+            padding: 3px 12px;
+            border-radius: 16px;
+            font-size: 0.85em;
+            color: #d2a8ff;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 20px 12px;
+            background: rgba(88,166,255,0.05);
+            border-radius: 10px;
+            border: 1px solid #21262d;
+        }
+        .score-item .label { font-size: 0.85em; color: #8b949e; margin-bottom: 8px; }
+        .score-item .score { font-size: 2em; font-weight: 700; }
+        .score-item .bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.8s ease;
+        }
+        .s1 { color: #3fb950; } .s1 .bar-fill { background: #3fb950; width: 85%; }
+        .s2 { color: #58a6ff; } .s2 .bar-fill { background: #58a6ff; width: 90%; }
+        .s3 { color: #d2a8ff; } .s3 .bar-fill { background: #d2a8ff; width: 92%; }
+        .s4 { color: #f78166; } .s4 .bar-fill { background: #f78166; width: 80%; }
+        .s5 { color: #f0883e; } .s5 .bar-fill { background: #f0883e; width: 88%; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        table th, table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        table th {
+            background: rgba(88,166,255,0.1);
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        table td { color: #b1bac4; font-size: 0.95em; }
+        table tr:hover td { background: rgba(88,166,255,0.03); }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            color: #79c0ff;
+        }
+        .step-list { counter-reset: step; list-style: none; padding: 0; }
+        .step-list li {
+            counter-increment: step;
+            padding: 12px 12px 12px 50px;
+            position: relative;
+            margin-bottom: 8px;
+            background: rgba(63,185,80,0.03);
+            border-radius: 8px;
+        }
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            background: linear-gradient(135deg, #58a6ff, #3fb950);
+            color: #0d1117;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .badge-green { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+        .badge-blue { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+        .badge-orange { background: rgba(240,136,62,0.15); color: #f0883e; border: 1px solid rgba(240,136,62,0.3); }
+        .badge-purple { background: rgba(210,168,255,0.15); color: #d2a8ff; border: 1px solid rgba(210,168,255,0.3); }
+        .trending-reason {
+            background: linear-gradient(135deg, rgba(247,129,102,0.08), rgba(210,168,255,0.08));
+            border: 1px solid rgba(247,129,102,0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 16px;
+        }
+        .trending-reason h3 {
+            color: #f78166;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+        }
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .header .meta { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="icon">🌱</div>
+        <h1>files.md</h1>
+        <p class="subtitle">私密、安静的思考空间 — 用纯 .md 文件管理你的生活</p>
+        <div class="meta">
+            <span>⭐ ~2,200+ Stars</span>
+            <span>🔥 HN 708 pts / 345 评论</span>
+            <span>📝 Go + PWA</span>
+            <span>📅 5年持续开发</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="emoji">📋</span> 项目简介与核心功能</h2>
+        <p><strong>files.md</strong> 是一个极简主义的笔记和知识管理应用，核心理念是<strong>「用纯 Markdown 文件存储一切」</strong>。它不是又一个功能臃肿的笔记应用，而是一个安静、私密的思考空间。</p>
+        <div class="highlight">
+            "Own your data as plain local files. Own the software that opens those files. Grow your knowledge with files and your own brain. Plain files and self-owned software can last through the ages."
+        </div>
+        <p><strong>核心功能：</strong></p>
+        <ul>
+            <li><strong>📝 笔记与文档</strong> — 用 .md 文件组织笔记、文档、项目资料</li>
+            <li><strong>💚 日记与习惯追踪</strong> — 自动按月生成日记文件，支持习惯记录</li>
+            <li><strong>✅ 任务与清单</strong> — 轻量级待办事项、购物清单、阅读清单</li>
+            <li><strong>🤖 Telegram Bot</strong> — 通过聊天快速记录想法、任务、日记</li>
+            <li><strong>🔗 知识链接</strong> — 在笔记间建立连接，形成知识网络</li>
+            <li><strong>📊 LaTeX 支持</strong> — 文本+数学公式覆盖几乎所有记录需求</li>
+        </ul>
+        <div class="tag-list">
+            <span class="tag">Local-first</span>
+            <span class="tag">PWA</span>
+            <span class="tag">Markdown</span>
+            <span class="tag">隐私优先</span>
+            <span class="tag">开源</span>
+            <span class="tag">LLM友好</span>
+            <span class="tag">零配置</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="emoji">🏗️</span> 技术架构与特点</h2>
+        <p><strong>技术栈：</strong></p>
+        <table>
+            <tr><th>层</th><th>技术</th><th>说明</th></tr>
+            <tr><td>前端</td><td>原生 JS + PWA</td><td>无构建系统，打开 index.html 即运行</td></tr>
+            <tr><td>后端</td><td>Go 单二进制</td><td>同步服务器为单个 Go 二进制文件</td></tr>
+            <tr><td>存储</td><td>OPFS / 本地文件系统</td><td>默认使用 OPFS，可切换到本地目录</td></tr>
+            <tr><td>同步</td><td>云端文件夹 / 自托管</td><td>支持 iCloud、Dropbox、Google Drive 或自建服务器</td></tr>
+            <tr><td>Bot</td><td>Telegram Bot</td><td>移动端快速输入入口</td></tr>
+            <tr><td>编辑器</td><td>CodeMirror</td><td>Markdown 编辑器核心</td></tr>
+            <tr><td>测试</td><td>E2E 测试</td><td>覆盖 Web 端和服务器端</td></tr>
+        </table>
+        <p><strong>架构亮点：</strong></p>
+        <ul>
+            <li><strong>无构建系统</strong> — 10年后打开 index.html 依然能运行，极致的可移植性</li>
+            <li><strong>Vendor 所有依赖</strong> — 所有第三方库直接包含在仓库中，不依赖外部包管理器</li>
+            <li><strong>一人或 LLM 可理解全项目</strong> — 极简代码，方便 AI 扩展</li>
+            <li><strong>细粒度锁机制</strong> — 使用数据库级、日志级、配置级细粒度锁替代全局锁</li>
+            <li><strong>追加式同步日志</strong> — 基于文件重命名追踪的轻量同步方案</li>
+        </ul>
+        <div class="code-block">
+web/           → Web 应用 (PWA)，index.html 为入口<br>
+web/lib/       → 前端库<br>
+cmd/server/    → 服务器入口<br>
+cmd/*/         → 实用脚本（whoop指标、wiki链接转换等）<br>
+server/bot.go  → Telegram Bot<br>
+server/sync/   → 同步 API<br>
+vendor/        → 后端依赖<br>
+tests/         → E2E 测试
+        </div>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="emoji">🔥</span> 为什么火？Trending 原因分析</h2>
+        <div class="trending-reason">
+            <h3>1. 反「Second Brain」浪潮中的清流</h3>
+            <p>在 Obsidian、Notion 等工具推动「第二大脑」风靡全球的当下，files.md 大胆提出反对观点：知识管理工具越复杂，反而越阻碍真正的思考。引用 "I Deleted My Second Brain" 的观点，指出大量笔记只是在拖延真正的思维劳动。</p>
+        </div>
+        <div class="trending-reason">
+            <h3>2. 作者个人品牌加持</h3>
+            <p>zakirullin 此前的 "Cognitive load is what matters" 在 HN 获得 <strong>721 条评论</strong>，建立了强大的个人声誉。files.md 的 Show HN 帖子获得 <strong>708 点 / 345 条评论</strong>，讨论度极高。</p>
+        </div>
+        <div class="trending-reason">
+            <h3>3. 5年打磨的真诚作品</h3>
+            <p>不是又一个 AI wrapper，而是一个开发者认真用了 <strong>5 年</strong> 的工具。README 中详细的 ADR（架构决策记录）展示了对每个设计选择的深思熟虑。</p>
+        </div>
+        <div class="trending-reason">
+            <h3>4. 开发者对 AI 时代的独特思考</h3>
+            <p>项目强调「LLM 友好」和「AI 可以扩展」——但不依赖 AI。这种平衡在当前 AI 过热的氛围中独树一帜，触动了开发者社群的共鸣。</p>
+        </div>
+        <div class="trending-reason">
+            <h3>5. 极致简化的技术哲学</h3>
+            <p>无构建系统、无 Electron、无 npm、Go 单二进制——"10年后打开 index.html 还能运行"的理念击中了厌倦 JavaScript 疲劳的开发者群体。</p>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="emoji">💡</span> 应用场景</h2>
+        <table>
+            <tr><th>场景</th><th>用法</th><th>适合度</th></tr>
+            <tr><td>个人知识管理</td><td>用笔记+链接构建知识网络</td><td><span class="badge badge-green">极佳</span></td></tr>
+            <tr><td>日记 / 情绪记录</td><td>通过 Bot 快速记录，自动归档到月份文件</td><td><span class="badge badge-green">极佳</span></td></tr>
+            <tr><td>任务管理</td><td>轻量级待办，专注当下可执行项</td><td><span class="badge badge-blue">优秀</span></td></tr>
+            <tr><td>习惯追踪</td><td>按习惯创建文件，每日打卡</td><td><span class="badge badge-blue">优秀</span></td></tr>
+            <tr><td>团队协作</td><td>缺少多人实时协作功能</td><td><span class="badge badge-orange">有限</span></td></tr>
+            <tr><td>项目管理</td><td>基本文档管理可用，但非核心设计目标</td><td><span class="badge badge-orange">有限</span></td></tr>
+            <tr><td>AI 辅助扩展</td><td>LLM 可理解代码库并定制功能</td><td><span class="badge badge-purple">独特</span></td></tr>
+        </table>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="card">
+        <h2><span class="emoji">⚔️</span> 同类项目对比</h2>
+        <table>
+            <tr>
+                <th>特性</th>
+                <th>files.md</th>
+                <th>Obsidian</th>
+                <th>Notion</th>
+                <th>Logseq</th>
+            </tr>
+            <tr>
+                <td>开源</td>
+                <td><span class="badge badge-green">完全开源</span></td>
+                <td>核心闭源</td>
+                <td>闭源</td>
+                <td>开源</td>
+            </tr>
+            <tr>
+                <td>数据格式</td>
+                <td>纯 .md 文件</td>
+                <td>纯 .md 文件</td>
+                <td>私有数据库</td>
+                <td>纯 .md 文件</td>
+            </tr>
+            <tr>
+                <td>本地优先</td>
+                <td><span class="badge badge-green">完全本地</span></td>
+                <td>本地优先</td>
+                <td>云端</td>
+                <td>本地优先</td>
+            </tr>
+            <tr>
+                <td>安装需求</td>
+                <td>零安装（浏览器）</td>
+                <td>Electron 桌面应用</td>
+                <td>浏览器 / 桌面应用</td>
+                <td>Electron 桌面应用</td>
+            </tr>
+            <tr>
+                <td>插件系统</td>
+                <td>LLM 定制代码</td>
+                <td>丰富插件生态</td>
+                <td>API 集成</td>
+                <td>插件生态</td>
+            </tr>
+            <tr>
+                <td>同步方案</td>
+                <td>云文件夹 / 自托管</td>
+                <td>付费 Obsidian Sync</td>
+                <td>内置云同步</td>
+                <td>iCloud / Git</td>
+            </tr>
+            <tr>
+                <td>代码量</td>
+                <td>极简（一人可理解）</td>
+                <td>中大型</td>
+                <td>大型</td>
+                <td>中型</td>
+            </tr>
+            <tr>
+                <td>LLM 友好</td>
+                <td><span class="badge badge-green">专为 LLM 设计</span></td>
+                <td>一般</td>
+                <td>一般</td>
+                <td>一般</td>
+            </tr>
+            <tr>
+                <td>哲学</td>
+                <td>「限制催生创造力」</td>
+                <td>功能丰富</td>
+                <td>全能工作台</td>
+                <td>大纲+双向链接</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="emoji">👥</span> 适合谁使用？</h2>
+        <ul>
+            <li><strong>🧠 深度思考者</strong> — 厌倦了「第二大脑」的繁复，想回归纯粹思考的人</li>
+            <li><strong>👨‍💻 开发者</strong> — 喜欢纯文本、版本控制、可被 LLM 理解的工具链</li>
+            <li><strong>🔒 隐私倡导者</strong> — 数据绝不出设备，零隐私风险</li>
+            <li><strong>🤖 AI 探索者</strong> — 想用 LLM 定制自己笔记工具的极客</li>
+            <li><strong>✍️ 写作者</strong> — 通过知识链接和笔记复利产出深度文章</li>
+            <li><strong>🚫 不适合：</strong>需要团队协作、复杂数据库视图、富媒体编辑的用户</li>
+        </ul>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="emoji">🚀</span> 快速上手指南</h2>
+        <h3 style="color: #58a6ff; margin: 16px 0 12px;">方式一：在线体验（零安装）</h3>
+        <ol class="step-list">
+            <li>打开 <a href="https://app.files.md" target="_blank">app.files.md</a>（推荐 Chrome）</li>
+            <li>点击地址栏右侧「Install files.md」安装为 PWA</li>
+            <li>打开本地文件夹以持久化数据</li>
+            <li>开始记录！按 <code>[</code> 插入笔记链接，<code>Cmd+Enter</code> 打开聊天</li>
+        </ol>
+        <h3 style="color: #3fb950; margin: 24px 0 12px;">方式二：自托管同步服务器</h3>
+        <div class="code-block">
+# 克隆仓库<br>
+git clone https://github.com/zakirullin/files.md.git<br>
+cd files.md<br>
+<br>
+# 构建并运行服务器（需要 Go 环境）<br>
+go build -o filesmd ./cmd/server<br>
+./filesmd<br>
+<br>
+# 或直接运行<br>
+go run ./cmd/server
+        </div>
+        <h3 style="color: #d2a8ff; margin: 24px 0 12px;">方式三：使用 Telegram Bot</h3>
+        <div class="code-block">
+# 在 BotFather 创建 Bot，配置 token<br>
+# 通过 Bot 快速发送消息 → 自动存入 .md 文件<br>
+# 支持快速记录：任务、日记、笔记
+        </div>
+        <h3 style="color: #f78166; margin: 24px 0 12px;">常用快捷键</h3>
+        <table>
+            <tr><th>快捷键</th><th>功能</th></tr>
+            <tr><td><code>[</code></td><td>插入文件链接</td></tr>
+            <tr><td><code>Cmd/Ctrl + K</code></td><td>搜索文件</td></tr>
+            <tr><td><code>Cmd/Ctrl + N</code></td><td>新建文件</td></tr>
+            <tr><td><code>Cmd/Ctrl + Enter</code></td><td>打开聊天</td></tr>
+            <tr><td><code>Cmd/Ctrl + Y</code></td><td>插入复选框</td></tr>
+        </table>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="emoji">⭐</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item s1">
+                <div class="label">创新性</div>
+                <div class="score">8.5</div>
+                <div class="bar"><div class="bar-fill"></div></div>
+            </div>
+            <div class="score-item s2">
+                <div class="label">代码质量</div>
+                <div class="score">9.0</div>
+                <div class="bar"><div class="bar-fill"></div></div>
+            </div>
+            <div class="score-item s3">
+                <div class="label">实用性</div>
+                <div class="score">9.2</div>
+                <div class="bar"><div class="bar-fill"></div></div>
+            </div>
+            <div class="score-item s4">
+                <div class="label">文档完善度</div>
+                <div class="score">8.0</div>
+                <div class="bar"><div class="bar-fill"></div></div>
+            </div>
+            <div class="score-item s5">
+                <div class="label">社区活跃度</div>
+                <div class="score">8.8</div>
+                <div class="bar"><div class="bar-fill"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top: 24px;">
+            <span style="font-size: 1.8em; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #3fb950); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                总分：8.7 / 10
+            </span>
+            <p style="color: #8b949e; margin-top: 8px;">一款用5年心血打磨的极简笔记工具，哲学深度和技术品质兼备</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>分析日期: 2026-05-21 | 数据来源: GitHub, Hacker News, Trendshift</p>
+        <p>Powered by GitHub Trending Analyzer</p>
+    </div>
+
+</div>
+</body>
+</html>
