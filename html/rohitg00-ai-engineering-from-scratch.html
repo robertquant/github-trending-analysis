@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析: rohitg00/ai-engineering-from-scratch | GitHub Trending</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    line-height: 1.7;
+    padding: 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* Hero Section */
+  .hero {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e2e 100%);
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(56, 139, 253, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #388bfd, #a371f7);
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 2.4em;
+    background: linear-gradient(135deg, #58a6ff, #a371f7, #f778ba);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+  .hero .tagline {
+    font-size: 1.15em;
+    color: #8b949e;
+    margin-bottom: 20px;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .hero-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #8b949e;
+  }
+  .hero-meta .num { color: #58a6ff; font-weight: 600; }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: #388bfd; }
+  .stat-card .value {
+    font-size: 2em;
+    font-weight: 700;
+    background: linear-gradient(135deg, #58a6ff, #a371f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .label { font-size: 13px; color: #8b949e; margin-top: 4px; }
+
+  /* Cards */
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 1.4em;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #21262d;
+    background: linear-gradient(135deg, #58a6ff, #a371f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .card h3 {
+    font-size: 1.1em;
+    color: #58a6ff;
+    margin: 16px 0 8px;
+  }
+  .card p { color: #c9d1d9; margin-bottom: 12px; }
+  .card ul { padding-left: 20px; margin-bottom: 12px; }
+  .card li { margin-bottom: 6px; color: #c9d1d9; }
+  .card li::marker { color: #388bfd; }
+
+  /* Tags */
+  .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .tag {
+    display: inline-block;
+    background: #1f2937;
+    color: #58a6ff;
+    border: 1px solid #30363d;
+    padding: 3px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* Score Table */
+  .score-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+  .score-table th {
+    text-align: left;
+    padding: 10px 16px;
+    background: #1c2128;
+    color: #8b949e;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .score-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #21262d;
+  }
+  .score-bar-wrap {
+    background: #21262d;
+    border-radius: 6px;
+    height: 20px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 200px;
+  }
+  .score-bar {
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* Code Block */
+  pre {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 12px 0;
+  }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: #1c2128;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  pre code { background: none; padding: 0; }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+
+  /* Phase Grid */
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .phase-item {
+    background: #1c2128;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: border-color 0.2s;
+  }
+  .phase-item:hover { border-color: #388bfd; }
+  .phase-item .phase-num { color: #a371f7; font-weight: 700; font-size: 13px; }
+  .phase-item .phase-name { color: #c9d1d9; font-size: 14px; margin-top: 2px; }
+  .phase-item .phase-count { color: #8b949e; font-size: 12px; }
+
+  /* Comparison Table */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+  .comp-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: #1c2128;
+    color: #8b949e;
+    font-size: 13px;
+    border-bottom: 2px solid #30363d;
+  }
+  .comp-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #21262d;
+    font-size: 14px;
+  }
+  .comp-table tr:hover td { background: #1c2128; }
+  .highlight { color: #58a6ff; font-weight: 600; }
+
+  /* Quick Start */
+  .step-list { counter-reset: step; }
+  .step-item {
+    position: relative;
+    padding-left: 48px;
+    margin-bottom: 20px;
+  }
+  .step-item::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #388bfd, #a371f7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+  }
+  .step-item strong { color: #58a6ff; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 32px;
+    color: #484f58;
+    font-size: 13px;
+    border-top: 1px solid #21262d;
+    margin-top: 40px;
+  }
+  .footer a { color: #58a6ff; text-decoration: none; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { padding: 32px 20px; }
+    .hero h1 { font-size: 1.6em; }
+    .card { padding: 20px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .phase-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">TRENDING ANALYSIS · 2026-05-21</div>
+    <h1>AI Engineering from Scratch</h1>
+    <div class="tagline">Learn it. Build it. Ship it for others.</div>
+    <p style="color:#8b949e; max-width:700px;">
+      从线性代数到自主智能体集群 —— 435 节课程、20 个阶段、约 320 小时，用 Python / TypeScript / Rust / Julia 四种语言，每个算法从原始数学开始构建。
+    </p>
+    <div class="hero-meta">
+      <span>⭐ <span class="num">9.5k</span> Stars</span>
+      <span>🍴 <span class="num">1.9k</span> Forks</span>
+      <span>📝 <span class="num">435</span> Lessons</span>
+      <span>📦 <span class="num">1,046</span> Commits</span>
+      <span>👤 rohitg00</span>
+      <span>📜 MIT License</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="value">435</div>
+      <div class="label">课程总数</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">20</div>
+      <div class="label">学习阶段</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">320h</div>
+      <div class="label">预计学时</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">4</div>
+      <div class="label">编程语言</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">373</div>
+      <div class="label">可复用 Skills</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">99</div>
+      <div class="label">Prompt 模板</div>
+    </div>
+  </div>
+
+  <!-- Project Overview -->
+  <div class="card">
+    <h2>项目简介与核心功能</h2>
+    <p>
+      <strong>AI Engineering from Scratch</strong> 是由 Rohit Ghumare 发起的开源 AI 工程学习课程，目标是填补一个关键缺口：<em>"84% 的学生已经在使用 AI 工具，但只有 18% 觉得自己做好了专业使用的准备。"</em>
+    </p>
+    <p>不同于市面上碎片化的教程，该项目提供了从底层数学到前沿 Agent 工程的完整学习路径：</p>
+    <ul>
+      <li><strong>从零构建</strong> — 每个算法先从纯数学推导开始，再手写代码实现，最后才引入生产级框架</li>
+      <li><strong>可交付成果</strong> — 每节课产出可复用的 artifact：Prompt 模板、Skill 文件、Agent 或 MCP Server</li>
+      <li><strong>多语言支持</strong> — Python（80.8%）、TypeScript、Rust、Julia 四种语言实现</li>
+      <li><strong>渐进式路径</strong> — 20 个阶段线性堆叠，从数学基础到自主系统到最终毕业项目</li>
+    </ul>
+    <div class="tag-group">
+      <span class="tag">python</span>
+      <span class="tag">typescript</span>
+      <span class="tag">rust</span>
+      <span class="tag">julia</span>
+      <span class="tag">deep-learning</span>
+      <span class="tag">transformers</span>
+      <span class="tag">llm</span>
+      <span class="tag">agents</span>
+      <span class="tag">mcp</span>
+      <span class="tag">generative-ai</span>
+      <span class="tag">computer-vision</span>
+      <span class="tag">nlp</span>
+      <span class="tag">reinforcement-learning</span>
+    </div>
+  </div>
+
+  <!-- Tech Architecture -->
+  <div class="card">
+    <h2>技术架构与特点</h2>
+    <h3>课程结构</h3>
+    <p>每节课遵循统一的六步法（Motto → Problem → Concept → Build It → Use It → Ship It），文件结构标准化：</p>
+    <pre><code><span class="comment"># 每节课的目录结构</span>
+phases/&lt;NN&gt;-&lt;phase-name&gt;/&lt;NN&gt;-&lt;lesson-name&gt;/
+├── code/      <span class="comment"># 可运行实现 (Python, TypeScript, Rust, Julia)</span>
+├── docs/
+│   └── en.md  <span class="comment"># 课程讲义</span>
+└── outputs/   <span class="comment"># 产出的 prompt / skill / agent / MCP server</span></code></pre>
+
+    <h3>20 个学习阶段</h3>
+    <div class="phase-grid">
+      <div class="phase-item">
+        <div class="phase-num">Phase 0</div>
+        <div class="phase-name">Setup & Tooling</div>
+        <div class="phase-count">12 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 1</div>
+        <div class="phase-name">Math Foundations</div>
+        <div class="phase-count">22 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 2</div>
+        <div class="phase-name">ML Fundamentals</div>
+        <div class="phase-count">18 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 3</div>
+        <div class="phase-name">Deep Learning Core</div>
+        <div class="phase-count">13 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 4</div>
+        <div class="phase-name">Computer Vision</div>
+        <div class="phase-count">28 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 5</div>
+        <div class="phase-name">NLP Foundations</div>
+        <div class="phase-count">29 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 6</div>
+        <div class="phase-name">Speech & Audio</div>
+        <div class="phase-count">17 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 7</div>
+        <div class="phase-name">Transformers</div>
+        <div class="phase-count">14 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 8</div>
+        <div class="phase-name">Generative AI</div>
+        <div class="phase-count">14 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 9</div>
+        <div class="phase-name">Reinforcement Learning</div>
+        <div class="phase-count">12 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 10</div>
+        <div class="phase-name">LLMs from Scratch</div>
+        <div class="phase-count">22 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 11</div>
+        <div class="phase-name">LLM Engineering</div>
+        <div class="phase-count">15 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 12</div>
+        <div class="phase-name">Multimodal AI</div>
+        <div class="phase-count">25 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 13</div>
+        <div class="phase-name">Tools & Protocols</div>
+        <div class="phase-count">23 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 14</div>
+        <div class="phase-name">Agent Engineering</div>
+        <div class="phase-count">42 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 15</div>
+        <div class="phase-name">Autonomous Systems</div>
+        <div class="phase-count">22 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 16</div>
+        <div class="phase-name">Multi-Agent & Swarms</div>
+        <div class="phase-count">25 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 17</div>
+        <div class="phase-name">Infrastructure & Production</div>
+        <div class="phase-count">28 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 18</div>
+        <div class="phase-name">Ethics & Alignment</div>
+        <div class="phase-count">30 lessons</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">Phase 19</div>
+        <div class="phase-name">Capstone Projects</div>
+        <div class="phase-count">17 projects</div>
+      </div>
+    </div>
+
+    <h3>核心工具链</h3>
+    <ul>
+      <li><strong>SkillKit</strong> — 一键安装 373 个 skills 到 Claude / Cursor / Codex 等 AI 编码代理</li>
+      <li><strong>Agent Workbench</strong> — Phase 14 毕业项目输出的可复用 Agent 工作台</li>
+      <li><strong>catalog.json</strong> — 自动化课程目录构建，CI 确保数据一致性</li>
+      <li><strong>内置 AI 技能</strong> — <code>/find-your-level</code> 水平测试、<code>/check-understanding</code> 阶段测验</li>
+    </ul>
+  </div>
+
+  <!-- Application Scenarios -->
+  <div class="card">
+    <h2>应用场景</h2>
+    <table class="comp-table">
+      <tr>
+        <th>场景</th>
+        <th>对应阶段</th>
+        <th>说明</th>
+      </tr>
+      <tr>
+        <td>AI 入门系统学习</td>
+        <td>Phase 0-3</td>
+        <td>从环境搭建到神经网络核心，零基础友好</td>
+      </tr>
+      <tr>
+        <td>计算机视觉工程师</td>
+        <td>Phase 4</td>
+        <td>28 节课覆盖 CNN → ViT → Diffusion → 3D Vision</td>
+      </tr>
+      <tr>
+        <td>NLP / LLM 工程师</td>
+        <td>Phase 5, 7, 10, 11</td>
+        <td>从词嵌入到 Transformer 到 RAG 到 MCP</td>
+      </tr>
+      <tr>
+        <td>Agent 开发者</td>
+        <td>Phase 14, 16</td>
+        <td>Agent Loop → LangGraph → Multi-Agent → Swarm</td>
+      </tr>
+      <tr>
+        <td>AI 基础设施工程师</td>
+        <td>Phase 17</td>
+        <td>vLLM、SGLang、TensorRT-LLM、GPU 调度</td>
+      </tr>
+      <tr>
+        <td>AI 安全研究员</td>
+        <td>Phase 18</td>
+        <td>RLHF、红队测试、越狱防御、对齐研究</td>
+      </tr>
+      <tr>
+        <td>AI 技能工具链集成</td>
+        <td>Phase 13</td>
+        <td>MCP Server/Client、A2A 协议、工具生态</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Why Trending -->
+  <div class="card">
+    <h2>为什么火？Trending 原因分析</h2>
+    <h3>1. 精准定位市场缺口</h3>
+    <p>引用权威数据（84% 使用 AI vs 18% 感觉准备好）直击痛点，在 AI 工具爆发但系统性教学稀缺的背景下，提供了一条清晰的学习路径。</p>
+
+    <h3>2. "从零构建"的方法论优势</h3>
+    <p>与 fast.ai 的"自顶向下"不同，该项目采用严格的"自底向上"——先从数学推导写出算法，再引入 PyTorch/sklearn。学完后真正理解底层原理。</p>
+
+    <h3>3. 每节课产出可复用工具</h3>
+    <p>不仅学习理论，每节课都产出可安装到 Claude / Cursor 的 skill、prompt 或 MCP server。到课程结束，学员拥有 435 个可实际使用的 AI 工具。</p>
+
+    <h3>4. 覆盖 2026 年前沿技术</h3>
+    <p>内容更新至最新：DeepSeek-V3 架构、EAGLE-3 推测解码、MCP 协议、A2A 协议、Claude Code 权限模式等，时效性极强。</p>
+
+    <h3>5. 社区驱动力强</h3>
+    <p>被 ByteByteGo 评为"2026 年最有影响力的 AI GitHub 仓库之一"，LinkedIn / X / Reddit 大量推荐，55,593 月访问量。</p>
+  </div>
+
+  <!-- Comparison -->
+  <div class="card">
+    <h2>同类项目对比</h2>
+    <table class="comp-table">
+      <tr>
+        <th>项目</th>
+        <th>Stars</th>
+        <th>课程量</th>
+        <th>方法</th>
+        <th>产出物</th>
+        <th>语言</th>
+      </tr>
+      <tr>
+        <td class="highlight">ai-engineering-from-scratch</td>
+        <td class="highlight">9.5k</td>
+        <td class="highlight">435 lessons</td>
+        <td>自底向上</td>
+        <td class="highlight">Skills + Prompts + MCP</td>
+        <td>Python/TS/Rust/Julia</td>
+      </tr>
+      <tr>
+        <td>rasbt/LLMs-from-scratch</td>
+        <td>~50k</td>
+        <td>~30 chapters</td>
+        <td>自底向上</td>
+        <td>代码笔记</td>
+        <td>Python</td>
+      </tr>
+      <tr>
+        <td>microsoft/ai-agents-for-beginners</td>
+        <td>~15k</td>
+        <td>~10 lessons</td>
+        <td>自顶向下</td>
+        <td>示例代码</td>
+        <td>Python</td>
+      </tr>
+      <tr>
+        <td>fast.ai (practical deep learning)</td>
+        <td>~26k</td>
+        <td>~7 courses</td>
+        <td>自顶向下</td>
+        <td>代码笔记</td>
+        <td>Python</td>
+      </tr>
+      <tr>
+        <td>dive-into-deep-learning</td>
+        <td>~25k</td>
+        <td>~20 chapters</td>
+        <td>混合</td>
+        <td>交互式代码</td>
+        <td>Python/MXLab/PyTorch</td>
+      </tr>
+    </table>
+    <p><strong>核心差异：</strong>该项目的独特之处在于其<strong>工具化产出</strong>（每个 lesson 都有可安装的 skill/prompt）和<strong>覆盖广度</strong>（从数学到 Agent Swarm 的完整链路），以及与 AI 编码代理生态（Claude、Cursor、Codex）的深度集成。</p>
+  </div>
+
+  <!-- Target Audience -->
+  <div class="card">
+    <h2>适合谁使用</h2>
+    <div class="phase-grid">
+      <div class="phase-item">
+        <div class="phase-name" style="font-weight:600;">编程 + AI 新手</div>
+        <div class="phase-count">Phase 0 开始 · ~306h</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-name" style="font-weight:600;">会 Python 的 ML 新手</div>
+        <div class="phase-count">Phase 1 开始 · ~270h</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-name" style="font-weight:600;">了解 ML 的 DL 新手</div>
+        <div class="phase-count">Phase 3 开始 · ~200h</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-name" style="font-weight:600;">懂 DL 想学 LLM/Agent</div>
+        <div class="phase-count">Phase 10 开始 · ~100h</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-name" style="font-weight:600;">资深工程师专攻 Agent</div>
+        <div class="phase-count">Phase 14 开始 · ~60h</div>
+      </div>
+    </div>
+    <p style="margin-top:16px;">内置 <code>/find-your-level</code> 测试（10 道题），可以智能定位你的起始阶段并生成个性化学习路径。</p>
+  </div>
+
+  <!-- Quick Start -->
+  <div class="card">
+    <h2>快速上手指南</h2>
+    <div class="step-list">
+      <div class="step-item">
+        <strong>在线阅读</strong>（零安装）<br>
+        直接访问 <a href="https://aiengineeringfromscratch.com" style="color:#58a6ff;">aiengineeringfromscratch.com</a>，选择任意已完成的课程阅读。
+      </div>
+      <div class="step-item">
+        <strong>克隆并运行</strong><br>
+        <pre><code>git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
+cd ai-engineering-from-scratch
+python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py</code></pre>
+      </div>
+      <div class="step-item">
+        <strong>测试你的水平</strong><br>
+        在 Claude / Cursor / Codex 等支持 SkillKit 的编辑器中运行：
+        <pre><code><span class="comment"># 10 道题定位你的起始阶段</span>
+/find-your-level
+
+<span class="comment"># 测验某个阶段的理解度</span>
+/check-understanding 3</code></pre>
+      </div>
+      <div class="step-item">
+        <strong>安装课程 Skills 到你的 AI 代理</strong><br>
+        <pre><code><span class="comment"># 安装所有 skills（SkillKit 布局）</span>
+python3 scripts/install_skills.py ~/.claude/skills
+
+<span class="comment"># 只安装某个阶段</span>
+python3 scripts/install_skills.py ./out --phase 14
+
+<span class="comment"># 按标签过滤</span>
+python3 scripts/install_skills.py ./out --tag rag</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div class="card">
+    <h2>综合评分</h2>
+    <table class="score-table">
+      <tr>
+        <th style="width:140px;">维度</th>
+        <th style="width:220px;">评分</th>
+        <th>评价</th>
+      </tr>
+      <tr>
+        <td>创新性</td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar" style="width:90%; background:linear-gradient(90deg,#388bfd,#a371f7);">9.0</div>
+          </div>
+        </td>
+        <td>工具化产出（Skills/MCP）的课程设计极具创新，AI 代理生态集成是独特卖点</td>
+      </tr>
+      <tr>
+        <td>代码质量</td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar" style="width:88%; background:linear-gradient(90deg,#388bfd,#a371f7);">8.8</div>
+          </div>
+        </td>
+        <td>标准化目录结构、CI 自动校验（audit_lessons.py）、catalog.json 一致性检查</td>
+      </tr>
+      <tr>
+        <td>实用性</td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar" style="width:95%; background:linear-gradient(90deg,#388bfd,#a371f7);">9.5</div>
+          </div>
+        </td>
+        <td>每节课都有可交付工具，覆盖从入门到前沿的完整链路，适合不同水平的学习者</td>
+      </tr>
+      <tr>
+        <td>文档完善度</td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar" style="width:92%; background:linear-gradient(90deg,#388bfd,#a371f7);">9.2</div>
+          </div>
+        </td>
+        <td>README 极其详尽，每节课有 docs/en.md，配套网站、ROADMAP、CHANGELOG 齐全</td>
+      </tr>
+      <tr>
+        <td>社区活跃度</td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar" style="width:85%; background:linear-gradient(90deg,#388bfd,#a371f7);">8.5</div>
+          </div>
+        </td>
+        <td>9.5k stars、1.9k forks、活跃的 PR/Issue，但维护者较少，社区贡献正在增长</td>
+      </tr>
+    </table>
+    <div style="text-align:center; margin-top:24px; padding:20px; background:#1c2128; border-radius:12px;">
+      <div style="font-size:14px; color:#8b949e; margin-bottom:8px;">综合评分</div>
+      <div style="font-size:3em; font-weight:800; background:linear-gradient(135deg,#58a6ff,#a371f7,#f778ba); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">9.0 / 10</div>
+      <div style="color:#8b949e; margin-top:4px;">强烈推荐</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>分析日期: 2026-05-21 · 数据来源: GitHub, WebSearch</p>
+    <p><a href="https://github.com/rohitg00/ai-engineering-from-scratch">GitHub 仓库</a> · <a href="https://aiengineeringfromscratch.com">官方网站</a></p>
+  </div>
+
+</div>
+</body>
+</html>
