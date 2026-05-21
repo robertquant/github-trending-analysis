@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViMax 深度分析报告 | HKUDS/ViMax</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+        }
+        .hero h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #f97316, #eab308, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .hero .subtitle {
+            font-size: 1.2em;
+            color: #8b949e;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .hero .badges {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-orange { background: #f973161a; color: #f97316; border: 1px solid #f9731644; }
+        .badge-green { background: #22c55e1a; color: #22c55e; border: 1px solid #22c55e44; }
+        .badge-blue { background: #58a6ff1a; color: #58a6ff; border: 1px solid #58a6ff44; }
+        .badge-purple { background: #bc8cff1a; color: #bc8cff; border: 1px solid #bc8cff44; }
+        .badge-red { background: #f851491a; color: #f85149; border: 1px solid #f8514944; }
+
+        /* Section Styles */
+        .section {
+            margin: 30px 0;
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid #21262d;
+            font-size: 1.4em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header .icon { font-size: 1.2em; }
+        .section-body { padding: 24px 28px; }
+
+        /* Cards Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #388bfd; }
+        .card h3 {
+            font-size: 1.05em;
+            margin-bottom: 8px;
+            color: #f0f6fc;
+        }
+        .card p { font-size: 0.9em; color: #8b949e; }
+
+        /* Feature List */
+        .feature-list { list-style: none; }
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .feature-list li:last-child { border-bottom: none; }
+        .feature-list .emoji { font-size: 1.2em; flex-shrink: 0; }
+        .feature-list strong { color: #f0f6fc; }
+
+        /* Score Table */
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .score-table th, .score-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        .score-table th {
+            color: #8b949e;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-table td { color: #c9d1d9; }
+        .score-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #21262d;
+            overflow: hidden;
+            width: 100%;
+            max-width: 200px;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        /* Comparison Table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .compare-table th, .compare-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+            font-size: 0.9em;
+        }
+        .compare-table th {
+            color: #f0f6fc;
+            font-weight: 600;
+            background: #0d1117;
+        }
+        .compare-table tr:hover { background: #161b22; }
+        .compare-table .highlight { background: #22c55e1a; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 18px 20px;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .variable { color: #ffa657; }
+
+        /* Alert Box */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            border-left: 4px solid;
+        }
+        .alert-info { background: #58a6ff1a; border-left-color: #58a6ff; }
+        .alert-success { background: #22c55e1a; border-left-color: #22c55e; }
+        .alert-warning { background: #f973161a; border-left-color: #f97316; }
+
+        /* Tags */
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.82em;
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8em; }
+            .section-body { padding: 16px; }
+            .card-grid { grid-template-columns: 1fr; }
+            .score-bar { max-width: 120px; }
+        }
+
+        /* Architecture Diagram */
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .arch-step {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 12px 24px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        .arch-step strong { color: #f0f6fc; }
+        .arch-arrow { color: #388bfd; font-size: 1.2em; }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, #161b22, #1c2333);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+        }
+        .summary-box .big-score {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f97316, #eab308);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .summary-box .score-label {
+            font-size: 1.1em;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>ViMax</h1>
+    <p class="subtitle">Agentic Video Generation — 导演、编剧、制片人、视频生成器四合一的AI视频创作框架</p>
+    <div class="badges">
+        <span class="badge badge-green">Open Source</span>
+        <span class="badge badge-blue">Multi-Agent</span>
+        <span class="badge badge-purple">AI Video Generation</span>
+        <span class="badge badge-orange">End-to-End</span>
+        <span class="badge badge-red">Trending</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Project Overview -->
+    <div class="section">
+        <div class="section-header"><span class="icon">📋</span> 项目简介</div>
+        <div class="section-body">
+            <p style="font-size:1.05em;margin-bottom:16px;">
+                <strong>ViMax</strong> 是由 <strong>香港大学数据科学实验室（HKUDS）</strong> 开发的开源多智能体（Multi-Agent）视频生成框架。它将视频制作的四大核心角色 —— <strong>导演（Director）</strong>、<strong>编剧（Screenwriter）</strong>、<strong>制片人（Producer）</strong> 和 <strong>视频生成器（Video Generator）</strong> 整合到一个自动化流水线中，实现了从创意想法到完整视频的端到端自动生成。
+            </p>
+            <div class="alert alert-info">
+                <strong>核心价值：</strong>只需输入一个简单的创意概念，ViMax 便能自动完成剧本创作、分镜设计、角色创建、参考图管理、一致性校验以及最终视频生成，全程无需人工干预。
+            </div>
+            <div class="tag-group">
+                <span class="tag">Python</span>
+                <span class="tag">Multi-Agent</span>
+                <span class="tag">Video Generation</span>
+                <span class="tag">Google Veo</span>
+                <span class="tag">Gemini</span>
+                <span class="tag">OpenRouter</span>
+                <span class="tag">MiniMax</span>
+                <span class="tag">Storyboard</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Features -->
+    <div class="section">
+        <div class="section-header"><span class="icon">✨</span> 核心功能</div>
+        <div class="section-body">
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Idea2Video — 创意转视频</h3>
+                    <p>输入一个简单的创意概念（如"如果猫和狗是最好的朋友"），ViMax 自动完成从剧本到成片的全部流程。支持风格选择（卡通、写实等）和目标受众定制。</p>
+                </div>
+                <div class="card">
+                    <h3>Novel2Video — 小说转视频</h3>
+                    <p>智能将完整小说转化为分集视频内容，包含叙事压缩、角色追踪和逐场景视觉适配。RAG引擎确保关键情节和角色对话完整保留。</p>
+                </div>
+                <div class="card">
+                    <h3>Script2Video — 剧本转视频</h3>
+                    <p>提供完整剧本即可生成视频，支持对镜头数量、节奏、场景设计等精细控制。适合有明确创作意图的内容创作者。</p>
+                </div>
+                <div class="card">
+                    <h3>AutoCameo — 个人客串</h3>
+                    <p>上传你的照片，ViMax 智能将你作为角色融入视频中，在整个视频中保持一致的外貌和自然的互动。也可以用于宠物。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Architecture -->
+    <div class="section">
+        <div class="section-header"><span class="icon">🏗️</span> 技术架构</div>
+        <div class="section-body">
+            <div class="arch-flow">
+                <div class="arch-step" style="border-color:#58a6ff;">
+                    <strong>INPUT LAYER</strong><br>
+                    <span style="color:#8b949e;font-size:0.9em;">创意 & 剧本 & 小说 | 自然语言提示 | 参考图片 | 风格指令 | 配置</span>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-step" style="border-color:#f97316;">
+                    <strong>CENTRAL ORCHESTRATION</strong><br>
+                    <span style="color:#8b949e;font-size:0.9em;">智能体调度 | 阶段转换 | 资源管理 | 重试/回退逻辑</span>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div style="display:flex;gap:16px;width:100%;max-width:600px;flex-wrap:wrap;justify-content:center;">
+                    <div class="arch-step" style="max-width:280px;border-color:#bc8cff;">
+                        <strong>SCRIPT UNDERSTANDING</strong><br>
+                        <span style="color:#8b949e;font-size:0.85em;">角色/环境提取 | 场景边界 | 风格意图</span>
+                    </div>
+                    <div class="arch-step" style="max-width:280px;border-color:#22c55e;">
+                        <strong>SCENE & SHOT PLANNING</strong><br>
+                        <span style="color:#8b949e;font-size:0.85em;">分镜步骤 | 镜头列表 | 关键帧 & 节拍</span>
+                    </div>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-step" style="border-color:#eab308;">
+                    <strong>VISUAL ASSET PLANNING</strong><br>
+                    <span style="color:#8b949e;font-size:0.9em;">参考图选择 | 风格引导 | 提示词条件化</span>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div style="display:flex;gap:16px;width:100%;max-width:600px;flex-wrap:wrap;justify-content:center;">
+                    <div class="arch-step" style="max-width:280px;border-color:#f85149;">
+                        <strong>ASSET INDEXING</strong><br>
+                        <span style="color:#8b949e;font-size:0.85em;">帧/参考目录 | 嵌入向量 | 检索复用</span>
+                    </div>
+                    <div class="arch-step" style="max-width:280px;border-color:#3fb950;">
+                        <strong>CONSISTENCY & CONTINUITY</strong><br>
+                        <span style="color:#8b949e;font-size:0.85em;">角色/环境追踪 | 参考匹配 | 时间一致性</span>
+                    </div>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-step" style="border-color:#f97316;">
+                    <strong>VISUAL SYNTHESIS & ASSEMBLY</strong><br>
+                    <span style="color:#8b949e;font-size:0.9em;">图像生成 | 最优帧选择 | 首尾帧→视频 | 剪辑 & 时间线组装</span>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-step" style="border-color:#22c55e;border-width:2px;">
+                    <strong>OUTPUT LAYER</strong><br>
+                    <span style="color:#8b949e;font-size:0.9em;">帧 | 片段 & 最终视频 | 日志 | 工作目录产物</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top:30px;margin-bottom:16px;color:#f0f6fc;">关键技术亮点</h3>
+            <ul class="feature-list">
+                <li><span class="emoji">🧬</span> <div><strong>RAG 长脚本生成引擎</strong> — 智能分析长篇小说类故事，自动分割为多场景剧本，保留所有关键情节和对话</div></li>
+                <li><span class="emoji">🪄</span> <div><strong>表现力分镜设计</strong> — 基于摄影语言创建富有表现力的分镜，为后续视频生成建立叙事节奏</div></li>
+                <li><span class="emoji">🔮</span> <div><strong>多机位拍摄模拟</strong> — 模拟多摄像机拍摄，在保持角色位置和背景一致的同时提供沉浸式观看体验</div></li>
+                <li><span class="emoji">🧸</span> <div><strong>智能参考图选择</strong> — 智能选择当前视频首帧所需的参考图，包括前一时间线出现的分镜，确保多角色和环境元素的准确性</div></li>
+                <li><span class="emoji">✅</span> <div><strong>自动一致性校验</strong> — 并行生成多张图像，通过 MLLM/VLM 模仿人类创作者的工作流程选择最佳一致图像</div></li>
+                <li><span class="emoji">⚡</span> <div><strong>高效并行镜头生成</strong> — 对同一摄像机的连续镜头进行并行处理，实现高效视频制作</div></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="section">
+        <div class="section-header"><span class="icon">🔥</span> 为什么火（Trending 原因）</div>
+        <div class="section-body">
+            <div class="card-grid">
+                <div class="card" style="border-left:3px solid #f97316;">
+                    <h3>1. 填补市场空白</h3>
+                    <p>目前市面上几乎所有的 AI 视频工具（Sora、Runway、Veo）都只关注"文生视频"的单步操作。ViMax 是唯一一个开源的、端到端的多智能体视频生成框架，覆盖从创意到成片的完整流程。</p>
+                </div>
+                <div class="card" style="border-left:3px solid #22c55e;">
+                    <h3>2. 解决核心痛点</h3>
+                    <p>AI 视频生成长期面临三大痛点：只能生成几秒短片、角色/场景不一致、缺乏叙事结构。ViMax 从架构层面同时解决了这三个问题。</p>
+                </div>
+                <div class="card" style="border-left:3px solid #58a6ff;">
+                    <h3>3. 学术背景背书</h3>
+                    <p>来自香港大学数据科学实验室，学术严谨性与工程实用性兼具。已在多个社交平台和开发者社区引发广泛关注。</p>
+                </div>
+                <div class="card" style="border-left:3px solid #bc8cff;">
+                    <h3>4. 时机契合</h3>
+                    <p>2026 年是 Agentic AI 的爆发年，多智能体框架成为最热趋势。ViMax 将这一趋势与视频生成结合，精准踩中了技术浪潮。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Scenarios -->
+    <div class="section">
+        <div class="section-header"><span class="icon">🎯</span> 应用场景</div>
+        <div class="section-body">
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🎬 短视频创作者</h3>
+                    <p>快速将创意想法转化为完整的短视频内容，适合 YouTube Shorts、TikTok 等平台的内容创作。</p>
+                </div>
+                <div class="card">
+                    <h3>📚 小说/IP 改编</h3>
+                    <p>将小说内容自动转化为视频剧集，适合 IP 孵化、故事板预可视化等。</p>
+                </div>
+                <div class="card">
+                    <h3>🎓 教育与培训</h3>
+                    <p>自动生成教学视频、培训材料，将文字教材转化为生动的视频内容。</p>
+                </div>
+                <div class="card">
+                    <h3>🎮 游戏预告片</h3>
+                    <p>基于游戏设定和故事线自动生成游戏预告片和宣传片。</p>
+                </div>
+                <div class="card">
+                    <h3>📺 广告营销</h3>
+                    <p>快速生成产品宣传视频、品牌故事视频，降低视频制作成本。</p>
+                </div>
+                <div class="card">
+                    <h3>🔬 AI 研究</h3>
+                    <p>作为多智能体视频生成的研究平台，探索 AI 创意的边界和可能性。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="section">
+        <div class="section-header"><span class="icon">⚖️</span> 同类项目对比</div>
+        <div class="section-body">
+            <div style="overflow-x:auto;">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th style="color:#22c55e;">ViMax (HKUDS)</th>
+                            <th>OpenAI Sora</th>
+                            <th>Google Veo 3</th>
+                            <th>Runway Gen-4</th>
+                            <th>Mora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>开源</strong></td>
+                            <td class="highlight" style="color:#22c55e;">✅ 完全开源</td>
+                            <td>❌ 闭源</td>
+                            <td>❌ 闭源</td>
+                            <td>❌ 闭源</td>
+                            <td style="color:#22c55e;">✅ 开源</td>
+                        </tr>
+                        <tr>
+                            <td><strong>多智能体</strong></td>
+                            <td class="highlight" style="color:#22c55e;">✅ 4+ Agent</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>✅ 多模块</td>
+                        </tr>
+                        <tr>
+                            <td><strong>端到端流程</strong></td>
+                            <td class="highlight" style="color:#22c55e;">✅ 创意→成片</td>
+                            <td>文本/图→视频</td>
+                            <td>文本/图→视频</td>
+                            <td>文本/图→视频</td>
+                            <td>文本→视频</td>
+                        </tr>
+                        <tr>
+                            <td><strong>角色一致性</strong></td>
+                            <td class="highlight" style="color:#22c55e;">✅ 自动校验</td>
+                            <td>有限</td>
+                            <td>较好</td>
+                            <td>有限</td>
+                            <td>有限</td>
+                        </tr>
+                        <tr>
+                            <td><strong>长视频支持</strong></td>
+                            <td class="highlight" style="color:#22c55e;">✅ 多场景拼接</td>
+                            <td>20s以内</td>
+                            <td>~60s</td>
+                            <td>~30s</td>
+                            <td>短片段</td>
+                        </tr>
+                        <tr>
+                            <td><strong>视觉质量</strong></td>
+                            <td>依赖底层模型</td>
+                            <td style="color:#f97316;">⭐⭐⭐⭐⭐</td>
+                            <td style="color:#f97316;">⭐⭐⭐⭐⭐</td>
+                            <td style="color:#f97316;">⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>脚本生成</strong></td>
+                            <td class="highlight" style="color:#22c55e;">✅ 内置</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>成本</strong></td>
+                            <td class="highlight">API调用费</td>
+                            <td>订阅制</td>
+                            <td>订阅制</td>
+                            <td>订阅制</td>
+                            <td>免费/自部署</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="alert alert-success" style="margin-top:20px;">
+                <strong>ViMax 的独特定位：</strong>它不是一个视频生成模型，而是一个<strong>编排框架</strong>。它可以灵活接入不同的底层模型（Gemini、Veo、MiniMax等），专注于解决"如何将创意组织成有叙事结构的视频"这一更高层次的问题。
+            </div>
+        </div>
+    </div>
+
+    <!-- Target Users -->
+    <div class="section">
+        <div class="section-header"><span class="icon">👥</span> 适合谁使用</div>
+        <div class="section-body">
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🧑‍💻 AI 应用开发者</h3>
+                    <p>希望构建视频生成应用的开发者，可以利用 ViMax 作为核心框架，快速搭建端到端的视频创作工具。</p>
+                </div>
+                <div class="card">
+                    <h3>🎬 独立内容创作者</h3>
+                    <p>没有专业视频制作团队，但希望通过 AI 快速将创意转化为视频内容的创作者。</p>
+                </div>
+                <div class="card">
+                    <h3>🔬 AI 研究人员</h3>
+                    <p>研究多智能体系统、AI 创意生成、视频一致性等方向的研究者，可以基于 ViMax 进行二次开发和实验。</p>
+                </div>
+                <div class="card">
+                    <h3>📚 教育工作者</h3>
+                    <p>希望将文字教材自动转化为视频课程的老师，或需要制作教学动画的教育机构。</p>
+                </div>
+            </div>
+            <div class="alert alert-warning" style="margin-top:16px;">
+                <strong>注意：</strong>使用 ViMax 需要一定的编程基础（Python），且需要配置各 AI 模型的 API Key（如 Google AI Studio、OpenRouter、MiniMax 等）。
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="section">
+        <div class="section-header"><span class="icon">🚀</span> 快速上手指南</div>
+        <div class="section-body">
+            <h3 style="color:#f0f6fc;margin-bottom:12px;">1. 克隆并安装</h3>
+            <div class="code-block">
+<span class="comment"># 克隆仓库</span>
+git clone https://github.com/HKUDS/ViMax.git
+cd ViMax
+
+<span class="comment"># 使用 uv 安装依赖（推荐）</span>
+uv sync
+            </div>
+
+            <h3 style="color:#f0f6fc;margin:20px 0 12px;">2. 配置 API Key</h3>
+            <div class="code-block">
+<span class="comment"># 编辑 configs/idea2video.yaml</span>
+<span class="keyword">chat_model</span>:
+  <span class="keyword">init_args</span>:
+    <span class="variable">model</span>: <span class="string">google/gemini-2.5-flash-lite-preview-09-2025</span>
+    <span class="variable">model_provider</span>: <span class="string">openai</span>
+    <span class="variable">api_key</span>: <span class="string">&lt;YOUR_API_KEY&gt;</span>
+    <span class="variable">base_url</span>: <span class="string">https://openrouter.ai/api/v1</span>
+
+<span class="keyword">image_generator</span>:
+  <span class="keyword">class_path</span>: <span class="string">tools.ImageGeneratorNanobananaGoogleAPI</span>
+  <span class="keyword">init_args</span>:
+    <span class="variable">api_key</span>: <span class="string">&lt;YOUR_API_KEY&gt;</span>
+
+<span class="keyword">video_generator</span>:
+  <span class="keyword">class_path</span>: <span class="string">tools.VideoGeneratorVeoGoogleAPI</span>
+  <span class="keyword">init_args</span>:
+    <span class="variable">api_key</span>: <span class="string">&lt;YOUR_API_KEY&gt;</span>
+            </div>
+
+            <h3 style="color:#f0f6fc;margin:20px 0 12px;">3. 运行创意生成</h3>
+            <div class="code-block">
+<span class="comment"># 编辑 main_idea2video.py 中的创意</span>
+<span class="variable">idea</span> = <span class="string">"""
+如果一只猫和一只狗是最好的朋友，它们遇到一只新猫会发生什么？
+"""</span>
+<span class="variable">user_requirement</span> = <span class="string">"""
+面向儿童，不超过3个场景。
+"""</span>
+<span class="variable">style</span> = <span class="string">"Cartoon"</span>
+
+<span class="comment"># 运行</span>
+python main_idea2video.py
+            </div>
+
+            <h3 style="color:#f0f6fc;margin:20px 0 12px;">4. 使用 MiniMax 模型（可选）</h3>
+            <div class="code-block">
+<span class="comment"># MiniMax 支持超长上下文（1M tokens），适合长篇小说转视频</span>
+<span class="keyword">chat_model</span>:
+  <span class="keyword">init_args</span>:
+    <span class="variable">model</span>: <span class="string">MiniMax-M2.7</span>
+    <span class="variable">model_provider</span>: <span class="string">minimax</span>
+    <span class="variable">api_key</span>: <span class="string">&lt;YOUR_MINIMAX_API_KEY&gt;</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score -->
+    <div class="section">
+        <div class="section-header"><span class="icon">📊</span> 综合评分</div>
+        <div class="section-body">
+            <div style="display:flex;gap:30px;align-items:center;flex-wrap:wrap;">
+                <div class="summary-box" style="min-width:180px;">
+                    <div class="big-score">8.4</div>
+                    <div class="score-label">综合评分 / 10</div>
+                </div>
+                <div style="flex:1;min-width:300px;">
+                    <table class="score-table">
+                        <thead>
+                            <tr><th>维度</th><th>评分</th><th>可视化</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>创新性</strong></td>
+                                <td style="color:#f97316;font-weight:700;">9.0</td>
+                                <td><div class="score-bar"><div class="score-bar-fill" style="width:90%;background:linear-gradient(90deg,#f97316,#eab308);"></div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>代码质量</strong></td>
+                                <td style="color:#22c55e;font-weight:700;">8.5</td>
+                                <td><div class="score-bar"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#22c55e,#3fb950);"></div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>实用性</strong></td>
+                                <td style="color:#58a6ff;font-weight:700;">8.5</td>
+                                <td><div class="score-bar"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#58a6ff,#388bfd);"></div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>文档完善度</strong></td>
+                                <td style="color:#bc8cff;font-weight:700;">8.0</td>
+                                <td><div class="score-bar"><div class="score-bar-fill" style="width:80%;background:linear-gradient(90deg,#bc8cff,#8b5cf6);"></div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>社区活跃度</strong></td>
+                                <td style="color:#f85149;font-weight:700;">7.8</td>
+                                <td><div class="score-bar"><div class="score-bar-fill" style="width:78%;background:linear-gradient(90deg,#f85149,#da3633);"></div></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding:40px 20px;color:#484f58;font-size:0.85em;">
+        <p>Generated on 2026-05-21 | Data Source: <a href="https://github.com/HKUDS/ViMax" style="color:#58a6ff;">GitHub - HKUDS/ViMax</a></p>
+        <p style="margin-top:8px;">Powered by AI Deep Analysis Engine</p>
+    </div>
+
+</div>
+</body>
+</html>
