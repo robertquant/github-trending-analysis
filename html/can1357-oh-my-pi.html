@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>can1357/oh-my-pi 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e2e 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            color: #0d1117;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .hero h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: #8b949e;
+            margin-bottom: 24px;
+        }
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #8b949e;
+        }
+        .hero-meta .label { color: #58a6ff; font-weight: 600; }
+
+        /* Score Section */
+        .score-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        .score-section h2 {
+            font-size: 1.4em;
+            color: #e6edf3;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .score-card {
+            background: linear-gradient(135deg, #21262d, #1c2128);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .score-card:hover { transform: translateY(-2px); border-color: #58a6ff; }
+        .score-card .score-name {
+            font-size: 13px;
+            color: #8b949e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .score-card .score-value {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-card .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-card .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            transition: width 1s ease;
+        }
+        .overall-score {
+            text-align: center;
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border-radius: 12px;
+            border: 1px solid rgba(88,166,255,0.3);
+        }
+        .overall-score .big-score {
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .overall-score .score-label { color: #8b949e; font-size: 14px; margin-top: 4px; }
+
+        /* Card Sections */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.4em;
+            color: #e6edf3;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+        }
+        .card h3 {
+            color: #58a6ff;
+            margin: 20px 0 10px;
+            font-size: 1.1em;
+        }
+        .card p { margin-bottom: 12px; color: #c9d1d9; }
+        .card ul { padding-left: 20px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; color: #c9d1d9; }
+        .card li::marker { color: #58a6ff; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .feature-item .feature-title {
+            color: #58a6ff;
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .feature-item .feature-desc {
+            color: #8b949e;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .comparison-table th {
+            background: #21262d;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+            font-weight: 600;
+        }
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        .comparison-table tr:hover td { background: rgba(88,166,255,0.05); }
+        .comparison-table .highlight { color: #7ee787; font-weight: 600; }
+        .comparison-table .dim { color: #8b949e; }
+
+        /* Code Blocks */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 18px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .keyword { color: #ff7b72; }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            background: rgba(88,166,255,0.15);
+            color: #58a6ff;
+            padding: 3px 12px;
+            border-radius: 14px;
+            font-size: 12px;
+            margin: 3px;
+            border: 1px solid rgba(88,166,255,0.3);
+        }
+        .tag.green { background: rgba(126,231,135,0.15); color: #7ee787; border-color: rgba(126,231,135,0.3); }
+        .tag.purple { background: rgba(188,140,255,0.15); color: #bc8cff; border-color: rgba(188,140,255,0.3); }
+        .tag.orange { background: rgba(255,166,87,0.15); color: #ffa657; border-color: rgba(255,166,87,0.3); }
+
+        /* Why Hot */
+        .reason-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .reason-item {
+            background: linear-gradient(135deg, #21262d, #1c2128);
+            border-left: 3px solid #bc8cff;
+            padding: 16px;
+            border-radius: 0 10px 10px 0;
+        }
+        .reason-item .reason-title {
+            color: #bc8cff;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .reason-item .reason-desc { color: #8b949e; font-size: 13px; line-height: 1.5; }
+
+        /* Who Section */
+        .who-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .who-card {
+            background: #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            border: 1px solid #30363d;
+        }
+        .who-card .who-icon { font-size: 1.6em; margin-bottom: 8px; }
+        .who-card .who-title { color: #58a6ff; font-weight: 700; margin-bottom: 6px; }
+        .who-card .who-desc { color: #8b949e; font-size: 13px; }
+
+        /* Steps */
+        .step-list { counter-reset: step; margin-top: 16px; }
+        .step {
+            counter-increment: step;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+            padding: 16px;
+            background: #21262d;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+        .step::before {
+            content: counter(step);
+            min-width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            color: #0d1117;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        .step-content .step-title { color: #e6edf3; font-weight: 700; margin-bottom: 4px; }
+        .step-content .step-desc { color: #8b949e; font-size: 13px; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #484f58;
+            font-size: 13px;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .hero { padding: 28px 20px; }
+            .hero h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .feature-grid { grid-template-columns: 1fr; }
+            .comparison-table { font-size: 12px; }
+            .comparison-table th, .comparison-table td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-badge">GITHUB TRENDING DEEP ANALYSIS</div>
+        <h1>oh-my-pi (omp)</h1>
+        <p class="subtitle">终端 AI 编程代理 — 哈希锚定编辑、优化工具链、LSP 集成、Python/JS 执行、浏览器驱动、子代理协作，以及更多</p>
+        <div class="hero-meta">
+            <span><span class="label">仓库:</span> can1357/oh-my-pi</span>
+            <span><span class="label">作者:</span> Can Boluk (基于 Mario Zechner 的 Pi)</span>
+            <span><span class="label">语言:</span> TypeScript + Rust</span>
+            <span><span class="label">许可:</span> MIT</span>
+            <span><span class="label">运行时:</span> Bun</span>
+        </div>
+        <div style="margin-top: 16px;">
+            <span class="tag">AI Agent</span>
+            <span class="tag green">Terminal</span>
+            <span class="tag purple">Coding</span>
+            <span class="tag orange">LSP/DAP</span>
+            <span class="tag">40+ Providers</span>
+            <span class="tag green">Rust Core</span>
+        </div>
+    </div>
+
+    <!-- Overall Score -->
+    <div class="score-section">
+        <h2>&#11088; 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-card">
+                <div class="score-name">创新性</div>
+                <div class="score-value">9.2</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 92%"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-name">代码质量</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-name">实用性</div>
+                <div class="score-value">9.3</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 93%"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-name">文档完善度</div>
+                <div class="score-value">8.8</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 88%"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-name">社区活跃度</div>
+                <div class="score-value">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+            </div>
+        </div>
+        <div class="overall-score">
+            <div class="big-score">9.0 / 10</div>
+            <div class="score-label">综合得分 — 极力推荐</div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2>&#128218; 项目简介与核心功能</h2>
+        <p><strong>oh-my-pi (omp)</strong> 是一款面向终端的全功能 AI 编程代理，由 <strong>Can Boluk</strong> 基于 Mario Zechner 的 <strong>Pi</strong> 项目深度扩展而来。它不是简单的代码补全工具，而是一个将 IDE 级别的代码智能完整搬入终端的编程助手。</p>
+        <p>核心理念：<strong>"将 IDE 的能力内置于代理"</strong> — 从 LSP 语义理解、DAP 调试器驱动，到 AST 结构化编辑、浏览器自动化，所有能力都原生集成在进程内，无需外部依赖。</p>
+
+        <h3>&#128736; 核心数据</h3>
+        <ul>
+            <li><strong>40+</strong> 个 LLM 提供商（Anthropic, OpenAI, Gemini, xAI, Groq, Mistral, 本地 Ollama 等）</li>
+            <li><strong>32</strong> 个内置工具（read, write, edit, search, bash, eval, lsp, debug, browser 等）</li>
+            <li><strong>13</strong> 个 LSP 操作（诊断、导航、符号、重命名、代码操作等）</li>
+            <li><strong>27</strong> 个 DAP 调试操作（断点、单步、线程、栈帧、变量检查等）</li>
+            <li><strong>~27,000</strong> 行 Rust 核心代码（搜索、Shell、AST、语法高亮、PTY 全部进程内实现）</li>
+            <li>跨平台：<strong>macOS, Linux, Windows</strong>（无需 WSL）</li>
+        </ul>
+    </div>
+
+    <!-- Tech Architecture -->
+    <div class="card">
+        <h2>&#9881; 技术架构与特点</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-title">Hashline 哈希锚定编辑</div>
+                <div class="feature-desc">模型通过内容哈希锚点定位修改位置，而非逐行重述代码。避免空白符冲突和 "找不到字符串" 循环。Grok 4 Fast 在相同任务下输出 token 减少 61%。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">LSP 深度集成</div>
+                <div class="feature-desc">所有写入操作经过 LSP 处理：重命名自动更新所有引用、re-exports、barrel 文件。代理拥有与 IDE 完全相同的代码理解能力。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">DAP 调试器驱动</div>
+                <div class="feature-desc">直接驱动 lldb/dlv/debugpy 调试器，设断点、单步执行、检查变量。告别 print 调试，代理可以真正理解程序运行时状态。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">Rust 原生核心</div>
+                <div class="feature-desc">ripgrep、glob、find、shell (brush) 全部链接进进程，消除 fork/exec 开销。三个 Rust crate（pi-natives, pi-shell, pi-ast）通过 N-API 暴露给 TypeScript。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">子代理系统</div>
+                <div class="feature-desc">task 工具将任务分发到隔离的 worktree 子代理，返回 schema 验证的类型化结果。支持并行执行、IRC 进程间通信、独立工具面。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">持久 Python + JS 执行</div>
+                <div class="feature-desc">内建持久化 Python 和 Bun worker 内核，支持从内部回调代理工具。可在一个会话中混合使用 Python 数据分析和 JavaScript 可视化。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">时间旅行流规则 (TTSR)</div>
+                <div class="feature-desc">规则在模型偏离时通过正则匹配中断流，注入系统提醒后从同一点重试。零上下文税的实时纠偏。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">Hindsight 记忆系统</div>
+                <div class="feature-desc">会话间持久化记忆：retain 写入事实、recall 检索、reflect 综合。项目级隔离，跨会话持续学习代码库。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">14 种 Web 搜索后端</div>
+                <div class="feature-desc">支持 Exa, Brave, Jina, Perplexity, Gemini 等 14 种搜索后端。自动将 GitHub、arXiv、Stack Overflow 转为结构化 Markdown。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">浏览器自动化</div>
+                <div class="feature-desc">基于 Puppeteer 的浏览器驱动，默认隐身模式。可驱动任何 Electron 应用（如 Slack），代理可像读取本地文件一样读取网页。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">GitHub 即文件系统</div>
+                <div class="feature-desc">PR、Issue 通过 pr://、issue:// 协议作为路径读取。无需学习额外工具，read 一个接口搞定所有。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-title">配置无缝继承</div>
+                <div class="feature-desc">自动识别并加载 .claude, .cursor, .windsurf, .gemini, .codex, .cline 等八种格式的现有配置，零迁移成本。</div>
+            </div>
+        </div>
+
+        <h3>&#128230; Monorepo 架构</h3>
+        <table class="comparison-table">
+            <thead>
+                <tr><th>包名</th><th>职责</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="highlight">@oh-my-pi/pi-ai</span></td><td>多提供商 LLM 客户端，流式传输与模型集成</td></tr>
+                <tr><td><span class="highlight">@oh-my-pi/pi-agent-core</span></td><td>代理运行时，工具调用与状态管理</td></tr>
+                <tr><td><span class="highlight">@oh-my-pi/pi-coding-agent</span></td><td>交互式编程代理 CLI 与 SDK</td></tr>
+                <tr><td><span class="highlight">@oh-my-pi/pi-tui</span></td><td>终端 UI 库，差量渲染引擎</td></tr>
+                <tr><td><span class="highlight">@oh-my-pi/pi-natives</span></td><td>N-API 绑定（grep, shell, image, text, 语法高亮等）</td></tr>
+                <tr><td><span class="highlight">pi-shell (Rust)</span></td><td>嵌入式 Shell / PTY / 进程管理（基于 brush-shell）</td></tr>
+                <tr><td><span class="highlight">pi-ast (Rust)</span></td><td>tree-sitter 代码摘要与 AST 工具（50+ 语言）</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Application Scenarios -->
+    <div class="card">
+        <h2>&#127919; 应用场景</h2>
+        <ul>
+            <li><strong>日常开发辅助</strong> — 代码编写、重构、调试一站式终端体验，无需离开命令行</li>
+            <li><strong>代码审查</strong> — /review 命令生成 P0-P3 优先级分类的审查报告，带置信度评分</li>
+            <li><strong>跨语言项目</strong> — 支持 50+ 语言的 AST 操作和 tree-sitter 语法，多语言项目无缝工作</li>
+            <li><strong>大规模重构</strong> — LSP 驱动的重命名自动更新所有引用、re-exports 和 barrel 文件</li>
+            <li><strong>调试复杂问题</strong> — 直接驱动 lldb/dlv/debugpy，代理能理解运行时状态而非依赖 print</li>
+            <li><strong>数据分析</strong> — 持久 Python + JS 内核支持在一个会话内混合分析数据并可视化</li>
+            <li><strong>多模型策略</strong> — 按角色（default/smol/slow/plan/commit）路由不同模型，平衡成本与质量</li>
+            <li><strong>CI/CD 集成</strong> — RPC 和 SDK 模式支持嵌入自动化流水线</li>
+            <li><strong>团队协作</strong> — 子代理并行执行任务，schema 验证的结果交付</li>
+        </ul>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2>&#128293; 为什么火（Trending 原因）</h2>
+        <div class="reason-list">
+            <div class="reason-item">
+                <div class="reason-title">IDE 级能力终端化</div>
+                <div class="reason-desc">首次将 LSP 语义理解、DAP 调试器、AST 结构化编辑完整搬入终端 AI 代理。这不是又一个 wrapper，而是真正重新定义了终端编程代理的上限。</div>
+            </div>
+            <div class="reason-item">
+                <div class="reason-title">极致性能优化</div>
+                <div class="reason-desc">~27K 行 Rust 核心代码将搜索、Shell、AST、语法高亮全进程内实现。编辑格式优化让 Grok Code Fast 准确率从 6.7% 飙升到 68.3%，模型输出 token 减少 61%。</div>
+            </div>
+            <div class="reason-item">
+                <div class="reason-title">模型无关 + 40+ 提供商</div>
+                <div class="reason-desc">不绑定任何特定模型。支持 Anthropic, OpenAI, Gemini, xAI, Groq, 本地 Ollama 等 40+ 提供商，含回退链、轮询凭证、路径作用域角色等高级路由功能。</div>
+            </div>
+            <div class="reason-item">
+                <div class="reason-title">Pi 的精神继承者</div>
+                <div class="reason-desc">基于 Mario Zechner 广受好评的 Pi 项目，在保持 Unix 哲学和极简 UX 的同时加入了 "开箱即用" 的完整工具链。社区评价称 "Pi 赢在你想让工具不碍事的时候"。</div>
+            </div>
+            <div class="reason-item">
+                <div class="reason-title">零迁移成本</div>
+                <div class="reason-desc">自动读取 .claude, .cursor, .windsurf 等 8 种现有配置格式，无需任何迁移脚本。团队已有配置可以立即生效。</div>
+            </div>
+            <div class="reason-item">
+                <div class="reason-title">AI 编程代理竞争白热化</div>
+                <div class="reason-desc">2025-2026 年 Claude Code、Cursor、Aider、Codex CLI 竞争激烈，oh-my-pi 以 "终端原生 + 全功能" 的差异化定位脱颖而出。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2>&#9878; 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th class="highlight">oh-my-pi</th>
+                    <th>Claude Code</th>
+                    <th>Cursor</th>
+                    <th>Aider</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>形态</td>
+                    <td class="highlight">终端 TUI</td>
+                    <td>终端 CLI</td>
+                    <td>IDE 插件</td>
+                    <td>终端 CLI</td>
+                </tr>
+                <tr>
+                    <td>模型支持</td>
+                    <td class="highlight">40+ 提供商</td>
+                    <td class="dim">仅 Claude</td>
+                    <td>多模型</td>
+                    <td>多模型</td>
+                </tr>
+                <tr>
+                    <td>LSP 集成</td>
+                    <td class="highlight">&#10004; 深度集成</td>
+                    <td class="dim">&#10007;</td>
+                    <td>&#10004; IDE 原生</td>
+                    <td class="dim">&#10007;</td>
+                </tr>
+                <tr>
+                    <td>调试器</td>
+                    <td class="highlight">&#10004; DAP 驱动</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                </tr>
+                <tr>
+                    <td>子代理</td>
+                    <td class="highlight">&#10004; 并行+隔离</td>
+                    <td>&#10004; 子代理</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                </tr>
+                <tr>
+                    <td>浏览器</td>
+                    <td class="highlight">&#10004; Puppeteer</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                </tr>
+                <tr>
+                    <td>Rust 原生核心</td>
+                    <td class="highlight">&#10004; ~27K 行</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                </tr>
+                <tr>
+                    <td>编辑方式</td>
+                    <td class="highlight">哈希锚定</td>
+                    <td>str_replace</td>
+                    <td>Diff 应用</td>
+                    <td>SEARCH/REPLACE</td>
+                </tr>
+                <tr>
+                    <td>记忆系统</td>
+                    <td class="highlight">Hindsight</td>
+                    <td>&#10004;</td>
+                    <td class="dim">&#10007;</td>
+                    <td class="dim">&#10007;</td>
+                </tr>
+                <tr>
+                    <td>开源许可</td>
+                    <td class="highlight">MIT</td>
+                    <td class="dim">闭源</td>
+                    <td class="dim">闭源</td>
+                    <td>Apache 2.0</td>
+                </tr>
+                <tr>
+                    <td>插件/扩展</td>
+                    <td class="highlight">&#10004; TypeScript</td>
+                    <td>&#10004;</td>
+                    <td>&#10004;</td>
+                    <td class="dim">有限</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 16px; color: #8b949e; font-size: 13px;">
+            <strong>总结：</strong>oh-my-pi 在模型自由度、LSP/DAP 深度集成、Rust 原生性能方面具有独特优势。它是目前唯一将 IDE 级代码智能完整带入终端的开源 AI 编程代理。对于偏好终端工作流的开发者，它是 Claude Code 和 Cursor 之外的有力替代。
+        </p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2>&#129309; 适合谁使用</h2>
+        <div class="who-grid">
+            <div class="who-card">
+                <div class="who-title">&#128187; 终端重度用户</div>
+                <div class="who-desc">日常开发在终端完成、偏好键盘驱动工作流的开发者。oh-my-pi 让你在不离开终端的前提下获得 IDE 级 AI 辅助。</div>
+            </div>
+            <div class="who-card">
+                <div class="who-title">&#128640; 追求极致效率的工程师</div>
+                <div class="who-desc">需要 LSP 语义重命名、调试器驱动的开发者。omp 让 AI 代理真正理解你的代码结构，而不是简单的文本替换。</div>
+            </div>
+            <div class="who-card">
+                <div class="who-title">&#127760; 多模型策略师</div>
+                <div class="who-desc">希望按任务类型灵活切换模型、利用回退链和轮询凭证降低成本、不被锁定在单一提供商的团队。</div>
+            </div>
+            <div class="who-card">
+                <div class="who-title">&#128736; DevOps / SRE</div>
+                <div class="who-desc">需要在远程服务器上用 AI 辅助调试、分析日志、管理配置的运维工程师。SSH 集成让远程工作如同本地。</div>
+            </div>
+            <div class="who-card">
+                <div class="who-title">&#128218; 开源爱好者</div>
+                <div class="who-desc">希望使用完全开源的 AI 编程工具、可以自定义工具和扩展、对底层实现有完全掌控权的开发者。</div>
+            </div>
+            <div class="who-card">
+                <div class="who-title">&#128202; 数据科学家</div>
+                <div class="who-desc">需要在一个会话中混合使用 Python 数据分析和 JavaScript 可视化的数据工作者。持久内核让迭代更流畅。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2>&#128640; 快速上手指南</h2>
+        <div class="step-list">
+            <div class="step">
+                <div class="step-content">
+                    <div class="step-title">安装 oh-my-pi</div>
+                    <div class="step-desc">
+                        <div class="code-block">
+<span class="comment"># macOS / Linux (推荐)</span>
+<span class="cmd">curl</span> -fsSL https://omp.sh/install | sh
+
+<span class="comment"># 或通过 Bun</span>
+<span class="cmd">bun</span> install -g @oh-my-pi/pi-coding-agent
+
+<span class="comment"># Windows (PowerShell)</span>
+<span class="cmd">irm</span> https://omp.sh/install.ps1 | iex</div>
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <div class="step-title">配置 API 密钥</div>
+                    <div class="step-desc">
+                        <div class="code-block">
+<span class="comment"># 使用 OAuth 登录（支持 Anthropic, Google, GitHub Copilot 等）</span>
+<span class="cmd">omp</span> /login
+
+<span class="comment"># 或设置环境变量</span>
+<span class="cmd">export</span> <span class="string">ANTHROPIC_API_KEY</span>=<span class="string">sk-ant-...</span>
+<span class="cmd">export</span> <span class="string">OPENAI_API_KEY</span>=<span class="string">sk-...</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <div class="step-title">进入项目目录并启动</div>
+                    <div class="step-desc">
+                        <div class="code-block">
+<span class="cmd">cd</span> your-project
+<span class="cmd">omp</span>
+
+<span class="comment"># 或单次提问模式</span>
+<span class="cmd">omp</span> -p <span class="string">"解释这个项目的主要模块"</span>
+
+<span class="comment"># 使用慢速模型深度推理</span>
+<span class="cmd">omp</span> --slow
+
+<span class="comment"># 使用计划模式</span>
+<span class="cmd">omp</span> --plan</div>
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-content">
+                    <div class="step-title">常用操作</div>
+                    <div class="step-desc">
+                        <div class="code-block">
+<span class="comment"># 代码审查</span>
+/review
+
+<span class="comment"># 切换模型</span>
+/model
+
+<span class="comment"># 启用额外工具</span>
+<span class="cmd">omp</span> --tools read,edit,bash,lsp,debug,browser
+
+<span class="comment"># SDK 集成 (Node.js)</span>
+<span class="keyword">import</span> { createAgentSession } <span class="keyword">from</span> <span class="string">"@oh-my-pi/pi-coding-agent"</span>;
+<span class="keyword">const</span> { session } = <span class="keyword">await</span> createAgentSession({...});
+<span class="keyword">await</span> session.prompt(<span class="string">"重构 auth 模块"</span>);</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>分析日期: 2026-05-21 | 数据来源: <a href="https://github.com/can1357/oh-my-pi">GitHub</a></p>
+        <p style="margin-top: 8px;">由 AI 自动分析生成 | Powered by Claude Code</p>
+    </div>
+</div>
+</body>
+</html>
