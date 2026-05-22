@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forge 深度分析 - 自托管LLM工具调用的可靠性层</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #161b22 100%);
+            border-radius: 16px;
+            border: 1px solid #30363d;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56,139,253,0.05) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+            position: relative;
+        }
+        .meta-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            position: relative;
+        }
+        .meta-item {
+            background: rgba(56,139,253,0.1);
+            border: 1px solid rgba(56,139,253,0.3);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #58a6ff;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #58a6ff; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card p, .card li { color: #b1bac4; line-height: 1.8; }
+        .card ul { padding-left: 20px; margin-top: 10px; }
+        .card li { margin-bottom: 6px; }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(56,139,253,0.08), rgba(188,140,255,0.08));
+            border-left: 4px solid #58a6ff;
+            padding: 18px 22px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .highlight-box strong { color: #58a6ff; }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .stat-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label { color: #8b949e; font-size: 0.85em; margin-top: 4px; }
+        .score-bar {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .score-label {
+            min-width: 90px;
+            font-size: 0.9em;
+            color: #8b949e;
+        }
+        .score-track {
+            flex: 1;
+            height: 10px;
+            background: #21262d;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s ease;
+        }
+        .score-value {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .func { color: #d2a8ff; }
+        .code-block .import { color: #f0883e; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th {
+            background: #21262d;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #21262d;
+            font-size: 0.9em;
+            color: #b1bac4;
+        }
+        tr:hover td { background: rgba(56,139,253,0.04); }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        .tag-blue { background: rgba(56,139,253,0.15); color: #58a6ff; }
+        .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+        .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+        .tag-orange { background: rgba(210,153,34,0.15); color: #d29922; }
+        .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+        .badge-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.82em;
+            font-weight: 500;
+        }
+        .badge-py { background: #1e3a5f; color: #4b8bbe; }
+        .badge-mit { background: #1e3f2f; color: #3fb950; }
+        .badge-oss { background: #3b2e5a; color: #bc8cff; }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Forge</h1>
+            <div class="subtitle">Self-Hosted LLM Tool-Calling 的可靠性层</div>
+            <div class="meta-bar">
+                <span class="meta-item">antoinezambelli/forge</span>
+                <span class="meta-item">1,470+ Stars</span>
+                <span class="meta-item">MIT License</span>
+                <span class="meta-item">Python 3.12+</span>
+                <span class="meta-item">ACM CAIS 2026 论文</span>
+            </div>
+            <div class="badge-row" style="justify-content: center; margin-top: 16px;">
+                <span class="badge badge-py">Python</span>
+                <span class="badge badge-mit">MIT</span>
+                <span class="badge badge-oss">Open Source</span>
+            </div>
+        </div>
+
+        <!-- 核心亮点 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f525;</span> 核心亮点</h2>
+            <div class="highlight-box">
+                <strong>8B 参数本地模型，53% → 99% 准确率</strong> — Forge 通过 Guardrails 机制（救援解析、重试引导、步骤强制）和上下文管理（VRAM 感知预算、分层压缩），将一个 8B 本地模型在多步 Agentic 工作流基准测试中的表现从 53% 提升到 99%，无需任何微调。
+            </div>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value">53%→99%</div>
+                    <div class="stat-label">Agentic 任务准确率提升</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">8B</div>
+                    <div class="stat-label">目标模型参数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">86.5%</div>
+                    <div class="stat-label">最佳配置综合得分</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">26</div>
+                    <div class="stat-label">评测场景覆盖</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目简介 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f4d6;</span> 项目简介</h2>
+            <p>Forge 是一个 Python 框架（PyPI 包名 <code style="color:#79c0ff; background:#161b22; padding:2px 6px; border-radius:4px;">forge-guardrails</code>），专门为<strong style="color:#58a6ff;">自托管本地 LLM</strong> 的工具调用（Tool-Calling）和多步 Agentic 工作流提供可靠性保障。</p>
+            <p style="margin-top:12px;">在本地模型上构建 AI Agent 是当今热门趋势，但小模型（如 8B 参数量）在多步工具调用任务中经常出错——格式错误、跳过必要步骤、生成无效参数。Forge 通过一套可组合的 Guardrails 中间件解决这些问题，让小模型也能胜任生产级 Agent 任务。</p>
+            <p style="margin-top:12px;">项目由 <strong>Antoine Zambelli</strong>（德州仪器 AI 总监）创建，附带论文已发表于 <strong>ACM CAIS 2026</strong> 会议，目前在 GitHub 上获得 1,470+ Stars。</p>
+        </div>
+
+        <!-- 三种使用方式 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f6e0;</span> 三种使用方式</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>方式</th>
+                        <th>说明</th>
+                        <th>适用场景</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="tag tag-blue">WorkflowRunner</span></td>
+                        <td>定义工具、选择后端、运行结构化 Agent 循环。Forge 管理完整生命周期：系统提示、工具执行、上下文压缩、Guardrails</td>
+                        <td>直接基于 Forge 构建 Agent 应用</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-purple">Guardrails 中间件</span></td>
+                        <td>在自有的编排循环中使用 Forge 的可靠性栈。你控制循环；Forge 验证响应、修复错误工具调用、强制执行必要步骤</td>
+                        <td>已有编排框架，仅需 Guardrails 能力</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag tag-green">Proxy Server</span></td>
+                        <td>OpenAI 兼容的代理服务器（<code style="color:#79c0ff;">python -m forge.proxy</code>），位于客户端和本地模型服务器之间，透明应用 Guardrails</td>
+                        <td>opencode、Continue、aider 等第三方客户端</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f528;</span> 技术架构与特点</h2>
+            <ul>
+                <li><strong style="color:#f0883e;">Guardrails 机制</strong>
+                    <ul>
+                        <li><strong>响应验证器（ResponseValidator）</strong>：验证模型输出的工具调用格式和参数有效性</li>
+                        <li><strong>救援解析（Rescue Parsing）</strong>：自动修复格式错误的工具调用，而非直接丢弃</li>
+                        <li><strong>重试引导（Retry Nudges）</strong>：逐步升级的提示，引导模型纠正错误行为</li>
+                        <li><strong>步骤强制（StepEnforcer）</strong>：确保 Agent 执行完所有必要步骤</li>
+                    </ul>
+                </li>
+                <li style="margin-top:10px;"><strong style="color:#58a6ff;">上下文管理</strong>
+                    <ul>
+                        <li><strong>VRAM 感知预算</strong>：根据硬件自动分配上下文窗口大小</li>
+                        <li><strong>分层压缩（TieredCompact）</strong>：智能压缩历史消息，保留关键信息</li>
+                        <li><strong>滑动窗口（SlidingWindow）</strong>：简单的滑动窗口策略</li>
+                    </ul>
+                </li>
+                <li style="margin-top:10px;"><strong style="color:#bc8cff;">多后端支持</strong></li>
+            </ul>
+            <table style="margin-top:12px;">
+                <thead>
+                    <tr><th>后端</th><th>优势</th><th>原生 Function Calling</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Ollama</td><td>最易上手，内置模型管理</td><td>支持</td></tr>
+                    <tr><td>llama-server</td><td>最佳性能，完全控制</td><td>支持（需 --jinja）</td></tr>
+                    <tr><td>Llamafile</td><td>单二进制，零依赖</td><td>不支持（Prompt注入）</td></tr>
+                    <tr><td>Anthropic</td><td>前沿基线，混合工作流</td><td>支持</td></tr>
+                </tbody>
+            </table>
+            <ul style="margin-top:12px;">
+                <li><strong style="color:#3fb950;">SlotWorker</strong>：为多 Agent 架构提供优先级队列式的 GPU 槽位共享，支持自动抢占</li>
+                <li><strong style="color:#f778ba;">合成 respond 工具</strong>：Proxy 模式自动注入 <code style="color:#79c0ff;">respond</code> 工具，让小模型始终在工具调用模式下工作，避免文本/工具调用模式切换混乱</li>
+            </ul>
+        </div>
+
+        <!-- 代码示例 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f4bb;</span> 快速上手</h2>
+            <p style="margin-bottom:12px;"><strong>安装：</strong></p>
+            <div class="code-block">
+<span class="comment"># 核心安装</span>
+pip install forge-guardrails
+
+<span class="comment"># 加 Anthropic 客户端</span>
+pip install <span class="string">"forge-guardrails[anthropic]"</span>
+            </div>
+            <p style="margin: 16px 0 12px;"><strong>最小工作流示例：</strong></p>
+            <div class="code-block">
+<span class="import">import</span> asyncio
+<span class="import">from</span> pydantic <span class="import">import</span> BaseModel, Field
+<span class="import">from</span> forge <span class="import">import</span> (
+    Workflow, ToolDef, ToolSpec,
+    WorkflowRunner, OllamaClient,
+    ContextManager, TieredCompact,
+)
+
+<span class="keyword">def</span> <span class="func">get_weather</span>(city: str) -> str:
+    <span class="keyword">return</span> <span class="string">f"72 F and sunny in {city}"</span>
+
+<span class="keyword">class</span> <span class="func">GetWeatherParams</span>(BaseModel):
+    city: str = Field(description=<span class="string">"City name"</span>)
+
+workflow = Workflow(
+    name=<span class="string">"weather"</span>,
+    description=<span class="string">"Look up weather for a city."</span>,
+    tools={
+        <span class="string">"get_weather"</span>: ToolDef(
+            spec=ToolSpec(
+                name=<span class="string">"get_weather"</span>,
+                description=<span class="string">"Get current weather"</span>,
+                parameters=GetWeatherParams,
+            ),
+            callable=get_weather,
+        ),
+    },
+    required_steps=[],
+    terminal_tool=<span class="string">"get_weather"</span>,
+    system_prompt_template=<span class="string">"You are a helpful assistant."</span>,
+)
+
+<span class="keyword">async def</span> <span class="func">main</span>():
+    client = OllamaClient(model=<span class="string">"ministral-3:8b-instruct-2512-q4_K_M"</span>)
+    ctx = ContextManager(strategy=TieredCompact(keep_recent=2), budget_tokens=8192)
+    runner = WorkflowRunner(client=client, context_manager=ctx)
+    <span class="keyword">await</span> runner.run(workflow, <span class="string">"What's the weather in Paris?"</span>)
+
+asyncio.run(main())
+            </div>
+            <p style="margin: 16px 0 12px;"><strong>Proxy 模式（零代码集成）：</strong></p>
+            <div class="code-block">
+<span class="comment"># 外部模式 — 你管理 llama-server，Forge 代理它</span>
+python -m forge.proxy --backend-url http://localhost:8080 --port 8081
+
+<span class="comment"># 托管模式 — Forge 启动 llama-server 和代理</span>
+python -m forge.proxy --backend llamaserver --gguf path/to/model.gguf --port 8081
+            </div>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f680;</span> 为什么火（Trending 原因）</h2>
+            <ul>
+                <li><strong style="color:#f85149;">突破性成果</strong>：8B 模型 + Guardrails 达到 99% 准确率，这是极具话题性的成果。"前沿模型无 Guardrails 输给带 Guardrails 的小模型，差距高达 50%"</li>
+                <li><strong style="color:#58a6ff;">学术背书</strong>：论文被 ACM CAIS 2026 接收并展示（5月26-29日），提供了严谨的技术验证</li>
+                <li><strong style="color:#bc8cff;">解决真实痛点</strong>：本地模型做 Agent 是当下开发者最大的痛点之一——小模型工具调用不稳定是普遍问题</li>
+                <li><strong style="color:#3fb950;">Hacker News 爆火</strong>：667+ 点赞、240+ 评论，登上首页引发广泛讨论</li>
+                <li><strong style="color:#d29922;">时机精准</strong>：在 Local LLM 和 AI Agent 两大热点交汇处，恰好满足了社区需求</li>
+                <li><strong style="color:#f0883e;">零微调方案</strong>：不需要训练或微调模型，纯工程方法实现性能飞跃，降低了采用门槛</li>
+            </ul>
+        </div>
+
+        <!-- 同类项目对比 -->
+        <div class="card">
+            <h2><span class="icon">&#x2696;</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>定位</th>
+                        <th>自托管</th>
+                        <th>Guardrails</th>
+                        <th>工具调用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong style="color:#58a6ff;">Forge</strong></td>
+                        <td>自托管 LLM 工具调用可靠性层</td>
+                        <td>核心优势</td>
+                        <td>深度内置</td>
+                        <td>核心功能</td>
+                    </tr>
+                    <tr>
+                        <td>LangChain / LangGraph</td>
+                        <td>通用 Agent 编排框架</td>
+                        <td>支持</td>
+                        <td>基础</td>
+                        <td>支持</td>
+                    </tr>
+                    <tr>
+                        <td>LlamaIndex</td>
+                        <td>RAG + 数据索引</td>
+                        <td>支持</td>
+                        <td>有限</td>
+                        <td>支持</td>
+                    </tr>
+                    <tr>
+                        <td>Guardrails AI</td>
+                        <td>通用 LLM 输入输出验证</td>
+                        <td>支持</td>
+                        <td>核心功能</td>
+                        <td>不专注</td>
+                    </tr>
+                    <tr>
+                        <td>CrewAI</td>
+                        <td>多 Agent 协作</td>
+                        <td>部分</td>
+                        <td>基础</td>
+                        <td>支持</td>
+                    </tr>
+                    <tr>
+                        <td>OpenAI Agents SDK</td>
+                        <td>云端 Agent 框架</td>
+                        <td>不支持</td>
+                        <td>内置</td>
+                        <td>核心功能</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top:16px;">
+                <strong>核心差异</strong>：Forge 不是又一个 Agent 框架，而是专注于解决"小模型工具调用不可靠"这一具体问题的可靠性中间件。它可以与现有编排框架配合使用，也可以独立运行。
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f3af;</span> 应用场景</h2>
+            <ul>
+                <li><strong>本地化 AI Agent</strong>：在无网络或数据隐私要求下，用 8B 模型运行可靠的多步 Agent 任务</li>
+                <li><strong>边缘部署</strong>：树莓派、Jetson 等设备上的 Agent 推理</li>
+                <li><strong>成本优化</strong>：用免费本地模型替代付费 API，Forge 弥补可靠性差距</li>
+                <li><strong>IDE 集成</strong>：通过 Proxy 模式让 Continue、aider 等工具使用本地模型时更可靠</li>
+                <li><strong>多 Agent 架构</strong>：用 SlotWorker 在单 GPU 上运行多个专业 Agent</li>
+                <li><strong>语音助手 / CLI 聊天</strong>：长对话会话中的可靠工具调用</li>
+            </ul>
+        </div>
+
+        <!-- 适合谁 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f465;</span> 适合谁使用</h2>
+            <table>
+                <thead>
+                    <tr><th>用户类型</th><th>适合度</th><th>原因</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>本地 LLM 开发者</td>
+                        <td><span class="tag tag-green">强烈推荐</span></td>
+                        <td>直接解决本地模型工具调用不稳定的痛点</td>
+                    </tr>
+                    <tr>
+                        <td>AI Agent 构建者</td>
+                        <td><span class="tag tag-green">强烈推荐</span></td>
+                        <td>作为可靠性中间件嵌入现有 Agent 系统</td>
+                    </tr>
+                    <tr>
+                        <td>边缘/IoT 开发者</td>
+                        <td><span class="tag tag-blue">推荐</span></td>
+                        <td>VRAM 感知上下文管理适合资源受限环境</td>
+                    </tr>
+                    <tr>
+                        <td>IDE 工具用户</td>
+                        <td><span class="tag tag-blue">推荐</span></td>
+                        <td>Proxy 模式零代码集成，即插即用</td>
+                    </tr>
+                    <tr>
+                        <td>云端 API 用户</td>
+                        <td><span class="tag tag-orange">一般</span></td>
+                        <td>已有原生 Function Calling 的模型可能收益有限</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="card">
+            <h2><span class="icon">&#x2b50;</span> 综合评分</h2>
+            <div class="score-bar">
+                <span class="score-label">创新性</span>
+                <div class="score-track">
+                    <div class="score-fill" style="width:92%; background: linear-gradient(90deg, #58a6ff, #bc8cff);"></div>
+                </div>
+                <span class="score-value" style="color:#bc8cff;">9.2</span>
+            </div>
+            <div class="score-bar">
+                <span class="score-label">代码质量</span>
+                <div class="score-track">
+                    <div class="score-fill" style="width:90%; background: linear-gradient(90deg, #3fb950, #58a6ff);"></div>
+                </div>
+                <span class="score-value" style="color:#58a6ff;">9.0</span>
+            </div>
+            <div class="score-bar">
+                <span class="score-label">实用性</span>
+                <div class="score-track">
+                    <div class="score-fill" style="width:88%; background: linear-gradient(90deg, #d29922, #3fb950);"></div>
+                </div>
+                <span class="score-value" style="color:#3fb950;">8.8</span>
+            </div>
+            <div class="score-bar">
+                <span class="score-label">文档完善度</span>
+                <div class="score-track">
+                    <div class="score-fill" style="width:91%; background: linear-gradient(90deg, #f0883e, #d29922);"></div>
+                </div>
+                <span class="score-value" style="color:#d29922;">9.1</span>
+            </div>
+            <div class="score-bar">
+                <span class="score-label">社区活跃度</span>
+                <div class="score-track">
+                    <div class="score-fill" style="width:82%; background: linear-gradient(90deg, #f778ba, #f85149);"></div>
+                </div>
+                <span class="score-value" style="color:#f778ba;">8.2</span>
+            </div>
+            <div style="text-align:center; margin-top:24px; padding:16px; background:#0d1117; border-radius:10px; border:1px solid #30363d;">
+                <span style="color:#8b949e; font-size:0.9em;">综合评分</span>
+                <div style="font-size:2.5em; font-weight:700; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">9.1 / 10</div>
+            </div>
+        </div>
+
+        <!-- 项目信息 -->
+        <div class="card">
+            <h2><span class="icon">&#x1f4ca;</span> 项目信息</h2>
+            <table>
+                <tbody>
+                    <tr><td style="color:#8b949e; width:140px;">仓库地址</td><td><a href="https://github.com/antoinezambelli/forge" style="color:#58a6ff;">github.com/antoinezambelli/forge</a></td></tr>
+                    <tr><td style="color:#8b949e;">PyPI 包</td><td><code style="color:#79c0ff;">forge-guardrails</code> (v0.4.2)</td></tr>
+                    <tr><td style="color:#8b949e;">许可证</td><td>MIT</td></tr>
+                    <tr><td style="color:#8b949e;">作者</td><td>Antoine Zambelli (德州仪器 AI 总监)</td></tr>
+                    <tr><td style="color:#8b949e;">语言</td><td>Python 3.12+</td></tr>
+                    <tr><td style="color:#8b949e;">论文</td><td>ACM CAIS 2026 — DOI: 10.1145/3786335.3813193</td></tr>
+                    <tr><td style="color:#8b949e;">推荐模型</td><td>Ministral-3 8B Instruct Q8 (llama-server)</td></tr>
+                    <tr><td style="color:#8b949e;">测试覆盖</td><td>865 单元测试 + 26 场景评估套件</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>分析日期：2026-05-22 | 由 AI 自动分析生成 | Powered by Claude Code</p>
+            <p style="margin-top:8px;">
+                <a href="https://github.com/antoinezambelli/forge">GitHub</a> &bull;
+                <a href="https://news.ycombinator.com/item?id=48192383">Hacker News</a> &bull;
+                <a href="https://pypi.org/project/forge-guardrails/">PyPI</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
