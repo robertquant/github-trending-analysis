@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>notebooklm-py - GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hero-content { position: relative; z-index: 1; }
+        .hero h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+        .hero .subtitle {
+            font-size: 1.2em;
+            color: #8b949e;
+            max-width: 700px;
+            margin: 0 auto 20px;
+        }
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-stars { background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+        .badge-lang { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-license { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
+        .badge-trending { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            margin: 20px 0;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            border-color: #58a6ff;
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.1);
+        }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 { font-size: 1.15em; color: #58a6ff; margin: 18px 0 10px; }
+        .card p { margin: 8px 0; color: #b1bac4; }
+        .card ul { padding-left: 20px; margin: 8px 0; }
+        .card li { margin: 6px 0; color: #b1bac4; }
+        .card li strong { color: #e6edf3; }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .score-value {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-item .score-label { font-size: 0.85em; color: #8b949e; margin-top: 4px; }
+        .score-bar {
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            transition: width 1s ease;
+        }
+        .overall-score {
+            text-align: center;
+            padding: 24px;
+            margin-top: 16px;
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(188, 140, 255, 0.1));
+            border-radius: 12px;
+            border: 1px solid rgba(88, 166, 255, 0.2);
+        }
+        .overall-score .big-score {
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f778ba, #bc8cff, #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .overall-score .score-text { color: #8b949e; font-size: 1.1em; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #21262d; }
+        th { background: #0d1117; color: #58a6ff; font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: #b1bac4; font-size: 0.95em; }
+        tr:hover td { background: rgba(88, 166, 255, 0.05); }
+
+        /* Code */
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        .inline-code {
+            background: rgba(88, 166, 255, 0.15);
+            color: #79c0ff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+        .comment { color: #6e7681; }
+        .string { color: #a5d6ff; }
+        .keyword { color: #ff7b72; }
+        .func { color: #d2a8ff; }
+
+        /* Comparison */
+        .compare-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 12px 0; }
+        .compare-item {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 12px;
+            padding: 14px;
+            background: #0d1117;
+            border-radius: 8px;
+            border: 1px solid #21262d;
+        }
+        .compare-item .name { font-weight: 700; color: #e6edf3; align-self: center; }
+        .compare-item .desc { color: #8b949e; font-size: 0.92em; }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(251, 191, 36, 0.1));
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 10px;
+            padding: 18px;
+            margin: 16px 0;
+        }
+        .highlight-box.warning {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        /* Why Trending */
+        .trending-reasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 12px 0; }
+        .trending-reason {
+            padding: 16px;
+            background: #0d1117;
+            border-radius: 8px;
+            border-left: 3px solid #bc8cff;
+        }
+        .trending-reason .reason-title { font-weight: 700; color: #e6edf3; margin-bottom: 6px; }
+        .trending-reason .reason-desc { color: #8b949e; font-size: 0.9em; }
+
+        /* Feature Grid */
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 12px 0; }
+        .feature-item {
+            padding: 16px;
+            background: #0d1117;
+            border-radius: 8px;
+            border: 1px solid #21262d;
+        }
+        .feature-item .feat-icon { font-size: 1.5em; margin-bottom: 8px; }
+        .feature-item .feat-title { font-weight: 700; color: #e6edf3; margin-bottom: 4px; }
+        .feature-item .feat-desc { color: #8b949e; font-size: 0.9em; }
+
+        /* Steps */
+        .steps { counter-reset: step; }
+        .step {
+            counter-increment: step;
+            padding: 16px 16px 16px 60px;
+            position: relative;
+            margin: 10px 0;
+            background: #0d1117;
+            border-radius: 8px;
+            border: 1px solid #21262d;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+            color: #0d1117;
+        }
+        .step code { display: block; margin-top: 8px; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8em; }
+            .container { padding: 12px; }
+            .card { padding: 18px; }
+            .compare-item { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="hero-content">
+            <h1>notebooklm-py</h1>
+            <p class="subtitle">Google NotebookLM 的非官方 Python API 与 AI Agent 技能 —— 释放 NotebookLM 的全部编程能力</p>
+            <div class="badges">
+                <span class="badge badge-stars">⭐ 12,385+ Stars</span>
+                <span class="badge badge-lang">🐍 Python 3.10+</span>
+                <span class="badge badge-license">📄 MIT License</span>
+                <span class="badge badge-trending">🔥 24h 爆款</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 项目简介 -->
+        <div class="card">
+            <h2><span class="icon">📖</span> 项目简介与核心功能</h2>
+            <p><strong>notebooklm-py</strong> 是由 <a href="https://github.com/teng-lin" style="color:#58a6ff;">teng-lin</a> 开发的非官方 Python 库，通过逆向工程 Google NotebookLM 的未公开 RPC API，为开发者提供 <strong>完整的编程接口</strong> 来操控 NotebookLM 的所有功能。</p>
+
+            <div class="highlight-box">
+                <strong>核心亮点：</strong>不仅实现了 Web UI 的全部功能，更暴露了 Web UI 不具备的高级能力，如批量下载、结构化导出、PPTX 幻灯片、思维导图 JSON 提取等。
+            </div>
+
+            <h3>三大使用方式</h3>
+            <table>
+                <thead>
+                    <tr><th>方式</th><th>适用场景</th><th>入口</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>Python API</strong></td><td>应用集成、异步工作流、自定义管道</td><td><span class="inline-code">from notebooklm import NotebookLMClient</span></td></tr>
+                    <tr><td><strong>CLI</strong></td><td>Shell 脚本、快速任务、CI/CD 自动化</td><td><span class="inline-code">notebooklm &lt;command&gt;</span></td></tr>
+                    <tr><td><strong>Agent 集成</strong></td><td>Claude Code、Codex、LLM Agent 自然语言自动化</td><td><span class="inline-code">npx skills add teng-lin/notebooklm-py</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 功能全景 -->
+        <div class="card">
+            <h2><span class="icon">⚡</span> 功能全景</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feat-icon">📚</div>
+                    <div class="feat-title">笔记本管理</div>
+                    <div class="feat-desc">创建、列表、重命名、删除笔记本；支持多种来源导入</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">📎</div>
+                    <div class="feat-title">来源管理</div>
+                    <div class="feat-desc">URL、YouTube、PDF、文本、Markdown、Word、EPUB、音频、视频、图片、Google Drive</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">🎙️</div>
+                    <div class="feat-title">音频概览</div>
+                    <div class="feat-desc">4种格式（深度、简报、评论、辩论）、3种长度、50+语言，下载 MP3/MP4</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">🎬</div>
+                    <div class="feat-title">视频概览</div>
+                    <div class="feat-desc">3种格式（讲解、简报、电影感）、9种视觉风格，下载 MP4</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">📝</div>
+                    <div class="feat-title">内容生成</div>
+                    <div class="feat-desc">幻灯片、信息图、测验、闪卡、报告、数据表、思维导图</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">🔍</div>
+                    <div class="feat-title">研究代理</div>
+                    <div class="feat-desc">Web 和 Drive 研究代理（快速/深度模式），自动导入来源</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">💬</div>
+                    <div class="feat-title">智能对话</div>
+                    <div class="feat-desc">基于来源的问答、对话历史、自定义人设、保存到笔记</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feat-icon">📥</div>
+                    <div class="feat-title">下载与导出</div>
+                    <div class="feat-desc">MP3/MP4/PDF/PNG/CSV/JSON/Markdown 多格式，支持 Google Docs/Sheets</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="card">
+            <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+            <ul>
+                <li><strong>逆向工程 API：</strong>通过捕获和分析 NotebookLM 的内部 RPC 调用，实现了对未公开接口的完整封装</li>
+                <li><strong>异步架构：</strong>基于 <span class="inline-code">asyncio</span> 的异步设计，支持高效并发操作</li>
+                <li><strong>认证机制：</strong>通过 Playwright 浏览器自动化获取 Google 认证 Cookie，支持多账户切换和浏览器 Cookie 导入</li>
+                <li><strong>三端统一：</strong>Python API / CLI / Agent Skill 共享同一核心引擎</li>
+                <li><strong>跨平台：</strong>macOS（主要开发平台）、Linux、Windows 全支持，CI 全平台测试</li>
+                <li><strong>Agent 技能生态：</strong>内置 Claude Code Skill、Codex AGENTS.md、<span class="inline-code">npx skills</span> 发现支持</li>
+            </ul>
+            <pre><code><span class="comment"># 核心架构概览</span>
+<span class="keyword">import</span> asyncio
+<span class="keyword">from</span> notebooklm <span class="keyword">import</span> NotebookLMClient
+
+<span class="keyword">async def</span> <span class="func">main</span>():
+    <span class="keyword">async with</span> <span class="keyword">await</span> NotebookLMClient.from_storage() <span class="keyword">as</span> client:
+        nb = <span class="keyword">await</span> client.notebooks.create(<span class="string">"Research"</span>)
+        <span class="keyword">await</span> client.sources.add_url(nb.id, <span class="string">"https://example.com"</span>)
+        result = <span class="keyword">await</span> client.chat.ask(nb.id, <span class="string">"Summarize this"</span>)
+        <span class="keyword">await</span> client.artifacts.generate_audio(nb.id)
+
+asyncio.run(main())</code></pre>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="card">
+            <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+            <div class="trending-reasons">
+                <div class="trending-reason">
+                    <div class="reason-title">填补官方 API 空白</div>
+                    <div class="reason-desc">Google NotebookLM 没有公开 API，开发者一直被 Web UI 限制。这个项目直接解锁了全部编程能力</div>
+                </div>
+                <div class="trending-reason">
+                    <div class="reason-title">超越 Web UI</div>
+                    <div class="reason-desc">不仅复刻了全部功能，还暴露了 Web UI 不支持的能力：批量下载、PPTX 导出、思维导图 JSON、结构化测验导出</div>
+                </div>
+                <div class="trending-reason">
+                    <div class="reason-title">AI Agent 原生支持</div>
+                    <div class="reason-desc">内置 Claude Code Skill 和 Codex 支持，让 AI 代理直接操控 NotebookLM，踩中了 Agent 热潮</div>
+                </div>
+                <div class="trending-reason">
+                    <div class="reason-title">病毒式传播</div>
+                    <div class="reason-desc">24 小时内获得 12,385 Stars，在 Reddit、LinkedIn、Threads、Instagram 全面引爆</div>
+                </div>
+                <div class="trending-reason">
+                    <div class="reason-title">NotebookLM 热度飙升</div>
+                    <div class="reason-desc">Google NotebookLM 本身正在快速增长，音频播客功能爆红，市场对编程接口的需求极强</div>
+                </div>
+                <div class="trending-reason">
+                    <div class="reason-title">文档与体验出色</div>
+                    <div class="reason-desc">覆盖 6 种用户角色的安装指南、完整的 CLI/API 文档、16 分钟演示视频压缩到 30 秒的 asciinema</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="card">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+            <table>
+                <thead>
+                    <tr><th>场景</th><th>说明</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>研究自动化</strong></td><td>批量导入来源，运行研究查询，提取洞察</td><td>学术论文批量摘要、竞品分析</td></tr>
+                    <tr><td><strong>内容工厂</strong></td><td>从文档自动生成播客、视频、幻灯片</td><td>每周技术报告 → 自动生成播客</td></tr>
+                    <tr><td><strong>教育工具</strong></td><td>生成测验、闪卡、学习指南</td><td>教材 → 互动测验 + 闪卡 + 思维导图</td></tr>
+                    <tr><td><strong>AI Agent 编排</strong></td><td>让 Claude Code / Codex 直接操控 NotebookLM</td><td>自动研究 → 生成报告 → 导出</td></tr>
+                    <tr><td><strong>知识管理</strong></td><td>程序化管理笔记、来源、分享权限</td><td>团队知识库自动更新与分发</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 同类对比 -->
+        <div class="card">
+            <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+            <div class="compare-grid">
+                <div class="compare-item">
+                    <div class="name">notebooklm-py<br><span style="color:#4ade80;font-size:0.8em;">本项目</span></div>
+                    <div class="desc">✅ 全功能覆盖 | ✅ Python API + CLI + Agent | ✅ 超越 Web UI | ✅ 跨平台 | ✅ MIT 开源</div>
+                </div>
+                <div class="compare-item">
+                    <div class="name">NotebookLlama<br><span style="color:#8b949e;font-size:0.8em;">Meta 开源</span></div>
+                    <div class="desc">仅支持 PDF→播客管道，功能范围极窄，基于 Llama 模型，不是 NotebookLM 的 API 封装</div>
+                </div>
+                <div class="compare-item">
+                    <div class="name">NotebookLM 企业 API<br><span style="color:#8b949e;font-size:0.8em;">Google 官方</span></div>
+                    <div class="desc">功能有限，仅面向大型组织企业用户，无公开文档，普通开发者无法使用</div>
+                </div>
+                <div class="compare-item">
+                    <div class="name">浏览器自动化脚本<br><span style="color:#8b949e;font-size:0.8em;">社区方案</span></div>
+                    <div class="desc">使用 Selenium/Puppeteer 模拟操作，脆弱易断，功能有限，无结构化 API</div>
+                </div>
+                <div class="compare-item">
+                    <div class="name">自建 RAG 系统<br><span style="color:#8b949e;font-size:0.8em;">Gemini API</span></div>
+                    <div class="desc">需从零构建，缺少 NotebookLM 的音频生成、幻灯片、测验等内容生成能力</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 适合谁 -->
+        <div class="card">
+            <h2><span class="icon">👥</span> 适合谁使用</h2>
+            <table>
+                <thead>
+                    <tr><th>用户类型</th><th>推荐度</th><th>理由</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>🔧 AI/ML 开发者</td><td>⭐⭐⭐⭐⭐</td><td>API 集成到自定义管道，Agent 技能扩展能力边界</td></tr>
+                    <tr><td>📝 研究人员</td><td>⭐⭐⭐⭐⭐</td><td>批量研究自动化，论文摘要，洞察提取</td></tr>
+                    <tr><td>🎓 教育工作者</td><td>⭐⭐⭐⭐⭐</td><td>一键生成测验、闪卡、学习指南、思维导图</td></tr>
+                    <tr><td>🎙️ 内容创作者</td><td>⭐⭐⭐⭐</td><td>从文档自动生成播客、视频、幻灯片</td></tr>
+                    <tr><td>🤖 Agent 开发者</td><td>⭐⭐⭐⭐⭐</td><td>内置 Claude Code/Codex 技能，直接纳入 Agent 工作流</td></tr>
+                    <tr><td>📊 产品经理</td><td>⭐⭐⭐</td><td>CLI 快速上手，但需要基本命令行能力</td></tr>
+                </tbody>
+            </table>
+            <div class="highlight-box warning">
+                <strong>⚠️ 注意：</strong>本库使用 Google 未公开 API，可能随时变更。适合原型、研究和个人项目，不建议用于关键生产环境。
+            </div>
+        </div>
+
+        <!-- 快速上手 -->
+        <div class="card">
+            <h2><span class="icon">🚀</span> 快速上手指南</h2>
+            <div class="steps">
+                <div class="step">
+                    <strong>安装库与浏览器</strong>
+                    <pre><code><span class="comment"># 安装核心库 + Playwright</span>
+pip install <span class="string">"notebooklm-py[browser]"</span>
+playwright install chromium</code></pre>
+                </div>
+                <div class="step">
+                    <strong>登录 Google 账户</strong>
+                    <pre><code><span class="comment"># 打开浏览器进行 Google 登录</span>
+notebooklm login
+
+<span class="comment"># 验证认证状态</span>
+notebooklm auth check --test --json</code></pre>
+                </div>
+                <div class="step">
+                    <strong>创建笔记本并添加来源</strong>
+                    <pre><code>notebooklm create <span class="string">"My Research"</span>
+notebooklm use &lt;notebook_id&gt;
+notebooklm source add <span class="string">"https://en.wikipedia.org/wiki/Artificial_intelligence"</span>
+notebooklm source add <span class="string">"./paper.pdf"</span></code></pre>
+                </div>
+                <div class="step">
+                    <strong>对话与生成内容</strong>
+                    <pre><code><span class="comment"># 与来源对话</span>
+notebooklm ask <span class="string">"What are the key themes?"</span>
+
+<span class="comment"># 生成播客音频</span>
+notebooklm generate audio <span class="string">"make it engaging"</span> --wait
+
+<span class="comment"># 生成测验</span>
+notebooklm generate quiz --difficulty hard
+
+<span class="comment"># 生成思维导图</span>
+notebooklm generate mind-map</code></pre>
+                </div>
+                <div class="step">
+                    <strong>下载生成的制品</strong>
+                    <pre><code>notebooklm download audio ./podcast.mp3
+notebooklm download quiz --format markdown ./quiz.md
+notebooklm download mind-map ./mindmap.json</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="card">
+            <h2><span class="icon">📊</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-value">9.0</div>
+                    <div class="score-label">创新性</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">8.5</div>
+                    <div class="score-label">代码质量</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">9.5</div>
+                    <div class="score-label">实用性</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">9.0</div>
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">9.5</div>
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+                </div>
+            </div>
+            <div class="overall-score">
+                <div class="big-score">9.1</div>
+                <div class="score-text">/ 10 综合评分 · 极力推荐</div>
+            </div>
+            <p style="text-align:center;color:#8b949e;margin-top:12px;font-size:0.9em;">
+                创新性：逆向工程未公开 API，暴露超越 Web UI 的能力 | 代码质量：异步架构、跨平台 CI、6种用户角色安装指南 | 实用性：填补 Google 官方 API 空白，Agent 生态集成 | 文档：覆盖所有使用方式的完整文档 | 社区：24h 12K+ Stars，社交媒体病毒传播
+            </p>
+        </div>
+
+        <!-- 链接 -->
+        <div class="card">
+            <h2><span class="icon">🔗</span> 相关链接</h2>
+            <table>
+                <thead><tr><th>资源</th><th>链接</th></tr></thead>
+                <tbody>
+                    <tr><td>GitHub 仓库</td><td><a href="https://github.com/teng-lin/notebooklm-py" style="color:#58a6ff;">github.com/teng-lin/notebooklm-py</a></td></tr>
+                    <tr><td>PyPI</td><td><a href="https://pypi.org/project/notebooklm-py/" style="color:#58a6ff;">pypi.org/project/notebooklm-py</a></td></tr>
+                    <tr><td>Medium 文章</td><td><a href="https://medium.com/@tentenco/notebooklm-py-the-cli-tool-that-unlocks-google-notebooklm-1de7106fd7ca" style="color:#58a6ff;">NotebookLM-py: The CLI Tool That Unlocks Google NotebookLM</a></td></tr>
+                    <tr><td>Reddit 讨论</td><td><a href="https://www.reddit.com/r/notebooklm/comments/1qbopkm/" style="color:#58a6ff;">r/notebooklm 社区讨论</a></td></tr>
+                    <tr><td>TrendShift</td><td><a href="https://trendshift.io/repositories/19116" style="color:#58a6ff;">trendshift.io 趋势追踪</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>📊 GitHub Trending 深度分析 | 2026-05-22 | Powered by Claude Code AI</p>
+        <p style="margin-top:6px;">teng-lin/notebooklm-py · MIT License</p>
+    </div>
+</body>
+</html>
