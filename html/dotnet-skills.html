@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: dotnet/skills — .NET AI 编程代理技能库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; }
+        .header .badges { margin-top: 18px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-lang { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+        .badge-stars { background: #e3b34133; color: #e3b341; border: 1px solid #e3b34155; }
+        .badge-license { background: #3fb95033; color: #3fb950; border: 1px solid #3fb95055; }
+        .badge-org { background: #bc8cff33; color: #bc8cff; border: 1px solid #bc8cff55; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin: 24px 0;
+        }
+        .card h2 {
+            font-size: 1.5em;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+        }
+        .card h3 {
+            color: #58a6ff;
+            margin: 18px 0 10px;
+            font-size: 1.15em;
+        }
+        .card p { margin: 8px 0; color: #b1bac4; }
+        .card ul { padding-left: 22px; margin: 8px 0; }
+        .card li { margin: 6px 0; color: #b1bac4; }
+        .card li::marker { color: #58a6ff; }
+
+        /* Plugin Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+        th {
+            background: #1f6feb22;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #1f6feb44;
+        }
+        td {
+            padding: 11px 16px;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        tr:hover td { background: #161b2280; }
+        code {
+            background: #1f6feb22;
+            color: #79c0ff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+
+        /* Score Section */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .label { color: #8b949e; font-size: 0.85em; margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-bar {
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #1f6feb, #bc8cff);
+        }
+
+        /* Comparison */
+        .compare-table th:first-child { width: 22%; }
+
+        /* Code Block */
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88em;
+            color: #c9d1d9;
+        }
+        .comment { color: #8b949e; }
+        .cmd { color: #79c0ff; }
+
+        /* Tags */
+        .tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+        .tag {
+            background: #21262d;
+            color: #8b949e;
+            padding: 4px 12px;
+            border-radius: 14px;
+            font-size: 0.82em;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 30px;
+        }
+
+        /* Why Trending */
+        .reason-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin: 14px 0;
+        }
+        .reason-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .reason-card .icon { font-size: 1.5em; margin-bottom: 8px; }
+        .reason-card .title { color: #58a6ff; font-weight: 600; margin-bottom: 6px; }
+        .reason-card .desc { color: #8b949e; font-size: 0.9em; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 30px; margin: 14px 0; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px; top: 0; bottom: 0;
+            width: 2px;
+            background: #21262d;
+        }
+        .timeline-item {
+            position: relative;
+            margin: 16px 0;
+            padding-left: 16px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px; top: 8px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #58a6ff;
+            border: 2px solid #0d1117;
+        }
+        .timeline-item .time { color: #58a6ff; font-size: 0.85em; font-weight: 600; }
+        .timeline-item .event { color: #b1bac4; margin-top: 4px; }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .scores-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>dotnet/skills</h1>
+    <p class="subtitle">.NET 官方团队推出的 AI 编程代理技能库 — 让 AI 编码助手真正懂 .NET</p>
+    <div class="badges">
+        <span class="badge badge-org">Microsoft Official</span>
+        <span class="badge badge-lang">C#</span>
+        <span class="badge badge-stars">~2,450 Stars</span>
+        <span class="badge badge-license">MIT License</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2>项目简介与核心功能</h2>
+        <p><strong>dotnet/skills</strong> 是 Microsoft .NET 官方团队于 2026 年 3 月开源的项目，旨在为 AI 编程代理（如 GitHub Copilot、Claude Code、Cursor、Codex CLI）提供 .NET 和 C# 领域的专业知识包。</p>
+        <p>每一个"技能"（Skill）是一个结构化的知识包，包含意图识别、任务特定上下文和支持文件，使 AI 代理能够在处理 .NET 任务时做出更精准的决策，减少试错和幻觉。</p>
+
+        <h3>包含的 12 个官方插件</h3>
+        <table>
+            <thead>
+                <tr><th>插件</th><th>功能描述</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>dotnet</code></td><td>核心 .NET 技能集合，处理常见 .NET 编码任务</td></tr>
+                <tr><td><code>dotnet-data</code></td><td>数据访问与 Entity Framework 相关技能</td></tr>
+                <tr><td><code>dotnet-diag</code></td><td>性能调查、调试和事件分析技能</td></tr>
+                <tr><td><code>dotnet-msbuild</code></td><td>MSBuild 构建：故障诊断、性能优化、代码质量、现代化</td></tr>
+                <tr><td><code>dotnet-nuget</code></td><td>NuGet 包管理：依赖管理和现代化</td></tr>
+                <tr><td><code>dotnet-upgrade</code></td><td>.NET 项目迁移升级：框架版本、语言特性、兼容性</td></tr>
+                <tr><td><code>dotnet-maui</code></td><td>.NET MAUI 开发：环境配置、诊断和故障排除</td></tr>
+                <tr><td><code>dotnet-ai</code></td><td>AI/ML 技能：LLM 集成、Agentic 工作流、RAG、MCP、ML.NET</td></tr>
+                <tr><td><code>dotnet-template-engine</code></td><td>模板发现、项目脚手架、模板创作</td></tr>
+                <tr><td><code>dotnet-test</code></td><td>测试运行、诊断、迁移：MSTest 工作流</td></tr>
+                <tr><td><code>dotnet-aspnet</code></td><td>ASP.NET Core：中间件、端点、实时通信、API 模式</td></tr>
+                <tr><td><code>dotnet11</code></td><td>.NET 11 新 API 和语言特性技能</td></tr>
+            </tbody>
+        </table>
+
+        <div class="tags">
+            <span class="tag">AI Agent Skills</span>
+            <span class="tag">.NET / C#</span>
+            <span class="tag">Copilot</span>
+            <span class="tag">Claude Code</span>
+            <span class="tag">Cursor</span>
+            <span class="tag">Codex CLI</span>
+            <span class="tag">Agent Skills Standard</span>
+        </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="card">
+        <h2>技术架构与特点</h2>
+
+        <h3>基于 Agent Skills 开放标准</h3>
+        <p>项目遵循 <strong>agentskills.io</strong> 开放标准，技能以 <code>SKILL.md</code> 文件格式组织，包含结构化的知识描述、工作流指引和最佳实践。这种轻量级格式让任何支持该标准的 AI 编码代理都能直接消费。</p>
+
+        <h3>插件化架构</h3>
+        <p>采用 Marketplace 插件市场模式，每个插件聚焦一个 .NET 子领域（如数据访问、构建系统、测试等），用户可按需安装。支持多平台接入：</p>
+        <ul>
+            <li><strong>Copilot CLI / Claude Code</strong> — 通过 <code>/plugin</code> 命令安装</li>
+            <li><strong>VS Code</strong> — Preview 支持，Copilot Chat 中输入 <code>/plugins</code></li>
+            <li><strong>Cursor</strong> — 内置 Marketplace 支持</li>
+            <li><strong>Codex CLI</strong> — 使用 <code>skill-installer</code> 工具安装</li>
+        </ul>
+
+        <h3>持续集成与质量保障</h3>
+        <p>项目配备自动化流水线，每夜构建（nightly build），并通过 Dashboard 展示各插件的准确性和效率评分趋势。GitHub Actions 驱动的 CI/CD 确保技能内容持续更新。</p>
+
+        <h3>关键设计决策</h3>
+        <ul>
+            <li><strong>知识即代码</strong> — 技能以 Markdown 文件存储，版本可控、可审查</li>
+            <li><strong>领域边界清晰</strong> — 12 个插件各司其职，避免知识交叉污染</li>
+            <li><strong>MIT 开源</strong> — 企业可自由使用、修改和贡献</li>
+            <li><strong>官方背书</strong> — 由实际发布 .NET 的团队维护，确保知识的权威性</li>
+        </ul>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2>应用场景</h2>
+        <table>
+            <thead>
+                <tr><th>场景</th><th>使用的插件</th><th>效果</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>.NET Framework 迁移到 .NET 10</td><td><code>dotnet-upgrade</code></td><td>AI 代理准确识别迁移路径和破坏性变更</td></tr>
+                <tr><td>Entity Framework 数据访问层开发</td><td><code>dotnet-data</code></td><td>生成符合最佳实践的 EF Core 代码</td></tr>
+                <tr><td>MSBuild 构建故障排查</td><td><code>dotnet-msbuild</code></td><td>快速定位构建错误根因</td></tr>
+                <tr><td>ASP.NET Core API 开发</td><td><code>dotnet-aspnet</code></td><td>遵循官方推荐的中间件和端点模式</td></tr>
+                <tr><td>在 .NET 中集成 AI/LLM</td><td><code>dotnet-ai</code></td><td>正确选择技术栈，实现 RAG/Agentic 工作流</td></tr>
+                <tr><td>.NET MAUI 跨平台开发</td><td><code>dotnet-maui</code></td><td>环境配置和常见问题诊断</td></tr>
+                <tr><td>性能分析和事件调查</td><td><code>dotnet-diag</code></td><td>使用正确的诊断工具和分析方法</td></tr>
+                <tr><td>单元测试编写与迁移</td><td><code>dotnet-test</code></td><td>MSTest 最佳实践和测试平台检测</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2>为什么火 (Trending 原因)</h2>
+        <div class="reason-grid">
+            <div class="reason-card">
+                <div class="title">官方团队出品</div>
+                <div class="desc">由实际发布 .NET 的 Microsoft 团队维护，知识权威性无可替代。社区评价："Your coding agent doesn't know .NET conventions. The .NET team just fixed that!"</div>
+            </div>
+            <div class="reason-card">
+                <div class="title">AI 编码的刚需</div>
+                <div class="desc">当前 AI 编码代理在 .NET 领域容易产生幻觉和过时代码。这个项目直接解决了核心痛点——让 AI 真正理解 .NET 约定和最佳实践。</div>
+            </div>
+            <div class="reason-card">
+                <div class="title">开放标准生态</div>
+                <div class="desc">遵循 agentskills.io 开放标准，不绑定单一平台。支持 Copilot、Claude Code、Cursor、Codex 等所有主流 AI 编码工具。</div>
+            </div>
+            <div class="reason-card">
+                <div class="title">时机精准</div>
+                <div class="desc">2026 年是 AI Agent 大爆发的一年。Agent Skills 生态在 2025 年底快速成熟，.NET 作为主流企业开发框架，官方入场引发巨大关注。</div>
+            </div>
+            <div class="reason-card">
+                <div class="title">覆盖全面</div>
+                <div class="desc">12 个插件覆盖 .NET 生态几乎所有核心领域——从基础编码、数据访问、构建系统到 AI 集成和 .NET 11 新特性。</div>
+            </div>
+            <div class="reason-card">
+                <div class="title">社区热情</div>
+                <div class="desc">开源后迅速获得 ~2,450 Stars 和 ~193 Forks，Uno Platform 等社区项目已开始贡献插件，YouTube 教程涌现。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2>同类项目对比</h2>
+        <table class="compare-table">
+            <thead>
+                <tr><th>维度</th><th>dotnet/skills</th><th>anthropics/skills</th><th>flutter/skills</th><th>addyosmani/agent-skills</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>维护方</strong></td><td>Microsoft .NET 团队</td><td>Anthropic 官方</td><td>Flutter 团队</td><td>社区个人</td></tr>
+                <tr><td><strong>领域</strong></td><td>.NET / C# 专用</td><td>Claude 通用</td><td>Flutter 专用</td><td>前端通用</td></tr>
+                <tr><td><strong>插件数</strong></td><td>12 个官方插件</td><td>数十个技能</td><td>Flutter 专项</td><td>聚合收集</td></tr>
+                <tr><td><strong>标准</strong></td><td>agentskills.io</td><td>Claude Skills</td><td>agentskills.io</td><td>混合</td></tr>
+                <tr><td><strong>平台支持</strong></td><td>Copilot/Claude/Cursor/Codex</td><td>主要是 Claude Code</td><td>多平台</td><td>主要是 Claude</td></tr>
+                <tr><td><strong>质量把控</strong></td><td>官方团队审核 + 自动评分</td><td>官方维护</td><td>官方维护</td><td>社区策展</td></tr>
+                <tr><td><strong>许可证</strong></td><td>MIT</td><td>MIT</td><td>开源</td><td>MIT</td></tr>
+                <tr><td><strong>上线时间</strong></td><td>2026 年 3 月</td><td>2025 年 10 月</td><td>2026 年</td><td>2025 年</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top:12px;"><strong>独特优势：</strong>dotnet/skills 是唯一由 .NET 发布团队直接维护的技能库，知识权威性和时效性（支持 .NET 11 预览特性）是其他项目无法复制的。</p>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2>适合谁使用</h2>
+        <table>
+            <thead>
+                <tr><th>用户类型</th><th>推荐度</th><th>原因</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>.NET / C# 后端开发者</td><td>★★★★★</td><td>直接受益者，让 AI 编码助手产出更高质量的 .NET 代码</td></tr>
+                <tr><td>企业 .NET 团队</td><td>★★★★★</td><td>统一团队 AI 编码标准，减少低级错误</td></tr>
+                <tr><td>.NET Framework 迁移者</td><td>★★★★★</td><td>upgrade 插件精准指导迁移路径</td></tr>
+                <tr><td>AI 应用开发者 (.NET)</td><td>★★★★☆</td><td>dotnet-ai 插件覆盖 LLM 集成、RAG、MCP 等</td></tr>
+                <tr><td>全栈开发者 (部分使用 .NET)</td><td>★★★★☆</td><td>按需安装特定插件即可</td></tr>
+                <tr><td>非 .NET 开发者</td><td>★☆☆☆☆</td><td>领域特定，非 .NET 项目无直接价值</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2>快速上手指南</h2>
+
+        <h3>方式一：Claude Code / Copilot CLI</h3>
+        <pre><span class="comment"># 1. 添加 Marketplace</span>
+<span class="cmd">/plugin marketplace add dotnet/skills</span>
+
+<span class="comment"># 2. 安装所需插件（如核心 .NET + ASP.NET）</span>
+<span class="cmd">/plugin install dotnet@dotnet-agent-skills</span>
+<span class="cmd">/plugin install dotnet-aspnet@dotnet-agent-skills</span>
+
+<span class="comment"># 3. 重启加载插件</span>
+
+<span class="comment"># 4. 更新插件（可选）</span>
+<span class="cmd">/plugin update dotnet@dotnet-agent-skills</span></pre>
+
+        <h3>方式二：Cursor IDE</h3>
+        <pre><span class="comment"># 1. 打开 Cursor Marketplace 面板</span>
+<span class="comment"># 2. 搜索 ".NET" 或浏览 cursor.com/marketplace</span>
+<span class="comment"># 3. 一键安装所需插件</span></pre>
+
+        <h3>方式三：Codex CLI</h3>
+        <pre><span class="cmd">skill-installer install https://github.com/dotnet/skills/tree/main/plugins/dotnet/skills/&lt;skill-name&gt;</span></pre>
+
+        <h3>推荐起步插件组合</h3>
+        <table>
+            <thead>
+                <tr><th>开发场景</th><th>推荐安装</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>通用 .NET 开发</td><td><code>dotnet</code> + <code>dotnet-test</code></td></tr>
+                <tr><td>Web API 开发</td><td>+ <code>dotnet-aspnet</code> + <code>dotnet-data</code></td></tr>
+                <tr><td>项目迁移</td><td>+ <code>dotnet-upgrade</code> + <code>dotnet-nuget</code></td></tr>
+                <tr><td>AI 集成</td><td>+ <code>dotnet-ai</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Score -->
+    <div class="card">
+        <h2>综合评分</h2>
+        <div class="scores-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value">9.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value">8.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:20px; padding:16px; background:#0d1117; border-radius:10px; border:1px solid #21262d;">
+            <span style="color:#8b949e; font-size:0.9em;">综合评分</span>
+            <div style="font-size:2.8em; font-weight:800; background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">8.8 / 10</div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+        <h2>项目时间线</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="time">2025 年 10 月</div>
+                <div class="event">Anthropic 推出 Claude Skills，Agent Skills 概念兴起</div>
+            </div>
+            <div class="timeline-item">
+                <div class="time">2026 年 3 月 9 日</div>
+                <div class="event">Microsoft .NET 团队正式开源 dotnet/skills，发布 10 个初始插件</div>
+            </div>
+            <div class="timeline-item">
+                <div class="time">2026 年 4-5 月</div>
+                <div class="event">社区贡献涌现，插件扩展至 12 个，新增 dotnet11 和 dotnet-template-engine</div>
+            </div>
+            <div class="timeline-item">
+                <div class="time">2026 年 5 月</div>
+                <div class="event">登上 GitHub Trending，~2,450 Stars，成为 AI Agent Skills 生态标杆项目</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resources -->
+    <div class="card">
+        <h2>参考资源</h2>
+        <ul>
+            <li><a href="https://github.com/dotnet/skills" style="color:#58a6ff">GitHub 仓库: dotnet/skills</a></li>
+            <li><a href="https://devblogs.microsoft.com/dotnet/extend-your-coding-agent-with-dotnet-skills/" style="color:#58a6ff">官方博客: Extend your coding agent with .NET Skills</a></li>
+            <li><a href="https://agentskills.io" style="color:#58a6ff">Agent Skills 开放标准</a></li>
+            <li><a href="https://dotnet.github.io/skills/" style="color:#58a6ff">Dashboard: 准确性和效率评分</a></li>
+            <li><a href="https://platform.uno/articles/dotnet-agent-skills-ai-coding-agets/" style="color:#58a6ff">Uno Platform: .NET Agent Skills 解析</a></li>
+        </ul>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>Generated on 2026-05-23 | GitHub Trending Daily Analysis</p>
+</div>
+
+</body>
+</html>
