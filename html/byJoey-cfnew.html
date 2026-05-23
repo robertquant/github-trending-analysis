@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: byJoey/cfnew - Cloudflare Workers 代理工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+        }
+        .header .meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #8b949e;
+            font-size: 0.95em;
+        }
+        .header .meta .icon { font-size: 1.1em; }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .tag {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .tag-blue { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+        .tag-purple { background: #8957e533; color: #bc8cff; border: 1px solid #8957e555; }
+        .tag-green { background: #23863633; color: #3fb950; border: 1px solid #23863655; }
+        .tag-orange { background: #d2992233; color: #d29922; border: 1px solid #d2992255; }
+        .tag-red { background: #da363333; color: #f85149; border: 1px solid #da363355; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.15em;
+            color: #58a6ff;
+            margin: 20px 0 10px;
+        }
+        .card p { margin-bottom: 12px; color: #c9d1d9; }
+        .card ul { padding-left: 22px; margin-bottom: 12px; }
+        .card li { margin-bottom: 8px; color: #c9d1d9; }
+        .card li strong { color: #e6edf3; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 18px;
+            margin-top: 15px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .feature-item:hover {
+            transform: translateY(-2px);
+            border-color: #58a6ff44;
+        }
+        .feature-item .fi-title {
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+        .feature-item .fi-desc { color: #8b949e; font-size: 0.93em; }
+
+        /* Code */
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+        .inline-code {
+            background: #1f6feb22;
+            color: #58a6ff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.93em;
+        }
+        th {
+            background: #161b22;
+            color: #e6edf3;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+        tr:hover td { background: #161b2266; }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .score-label {
+            color: #8b949e;
+            font-size: 0.88em;
+            margin-bottom: 8px;
+        }
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-item .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+        .s-blue { color: #58a6ff; }
+        .s-purple { color: #bc8cff; }
+        .s-green { color: #3fb950; }
+        .s-orange { color: #d29922; }
+        .s-red { color: #f85149; }
+        .bar-blue { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+        .bar-purple { background: linear-gradient(90deg, #8957e5, #bc8cff); }
+        .bar-green { background: linear-gradient(90deg, #238636, #3fb950); }
+        .bar-orange { background: linear-gradient(90deg, #9e6a03, #d29922); }
+        .bar-red { background: linear-gradient(90deg, #da3633, #f85149); }
+
+        /* Comparison */
+        .compare-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 600;
+        }
+        .badge-best { background: #23863633; color: #3fb950; }
+        .badge-good { background: #1f6feb33; color: #58a6ff; }
+        .badge-ok { background: #d2992233; color: #d29922; }
+
+        /* Alert */
+        .alert {
+            background: #d2992215;
+            border: 1px solid #d2992244;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 15px 0;
+            color: #d29922;
+        }
+        .alert strong { color: #e3b341; }
+
+        /* Steps */
+        .steps { counter-reset: step; }
+        .step {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+            min-height: 36px;
+        }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #1f6feb, #58a6ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            color: #fff;
+        }
+        .step-title {
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 4px;
+        }
+        .step-desc { color: #8b949e; font-size: 0.93em; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.88em;
+            border-top: 1px solid #21262d;
+            margin-top: 30px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .header .meta { gap: 12px; }
+            table { font-size: 0.85em; }
+            th, td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>byJoey/cfnew</h1>
+    <p class="subtitle">基于 Cloudflare Workers 的多功能代理部署工具</p>
+    <div class="meta">
+        <span><span class="icon">&#9733;</span> ~13.3k Stars</span>
+        <span><span class="icon">&#9281;</span> ~6.5k Forks</span>
+        <span>v2.9.6</span>
+        <span>2026-05-23 分析</span>
+    </div>
+    <div class="tags">
+        <span class="tag tag-blue">Cloudflare Workers</span>
+        <span class="tag tag-purple">VLESS</span>
+        <span class="tag tag-green">Trojan</span>
+        <span class="tag tag-orange">XHTTP</span>
+        <span class="tag tag-red">代理工具</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">&#128196;</span> 项目简介与核心功能</h2>
+        <p><strong>CFnew</strong> 是一个基于 Cloudflare Workers/Pages 平台的多功能代理部署工具，由开发者 byJoey 创建并维护。该项目从经典的 <code class="inline-code">zizifn/edgetunnel</code> 改进而来，在继承原有能力的基础上，大幅扩展了协议支持、管理功能和用户体验。</p>
+        <p>CFnew 的核心理念是<strong>零成本部署、图形化管理、多协议共存</strong>。用户只需一个 Cloudflare 免费账号，即可在几分钟内部署一个支持 VLESS、Trojan、XHTTP 等协议的代理服务，并通过浏览器中的图形界面进行所有配置管理。</p>
+
+        <h3>核心功能一览</h3>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="fi-title">&#128274; 多协议支持</div>
+                <div class="fi-desc">同时启用 VLESS、Trojan、XHTTP 多个协议，客户端自动识别适配</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#127912; 图形化管理面板</div>
+                <div class="fi-desc">基于 KV 存储的可视化配置界面，修改后立即生效，无需重新部署</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128640; 内置延迟测试</div>
+                <div class="fi-desc">集成 IP 延迟测试工具，自动获取机场码，支持地区筛选和排序</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128279; 自定义路径</div>
+                <div class="fi-desc">告别 UUID 路径，支持自定义多级路径，灵活配置</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#127760; 多客户端兼容</div>
+                <div class="fi-desc">支持 CLASH、SURGE、SING-BOX、Shadowrocket 等 10+ 客户端，根据 User-Agent 自动返回格式</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128300; API 动态管理</div>
+                <div class="fi-desc">RESTful API 管理，支持批量添加/删除优选 IP，无需改代码</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128272; ECH 加密握手</div>
+                <div class="fi-desc">支持 Encrypted Client Hello，自动获取最新 ECH 配置，增强隐私保护</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#127760; 多语言支持</div>
+                <div class="fi-desc">支持中文和波斯语，根据浏览器语言自动切换，RTL 布局适配</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">&#9881;</span> 技术架构与特点</h2>
+
+        <h3>架构概览</h3>
+        <p>CFnew 运行在 Cloudflare Workers 的边缘计算平台上，利用 Cloudflare 全球 CDN 网络实现低延迟的代理转发。整体架构由以下几个核心部分组成：</p>
+        <table>
+            <thead>
+                <tr><th>组件</th><th>技术</th><th>作用</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Worker 主程序</td><td>JavaScript / Cloudflare Workers Runtime</td><td>处理代理协议解析和流量转发</td></tr>
+                <tr><td>KV 存储</td><td>Cloudflare KV Namespace</td><td>持久化配置数据，支持图形化管理</td></tr>
+                <tr><td>配置面板</td><td>HTML/CSS/JS（内嵌）</td><td>Web 端可视化管理界面</td></tr>
+                <tr><td>优选引擎</td><td>Workers Cron Trigger</td><td>每 15 分钟自动优选 IP</td></tr>
+                <tr><td>API 层</td><td>RESTful API</td><td>外部程序动态管理优选 IP 列表</td></tr>
+                <tr><td>订阅生成</td><td>动态模板引擎</td><td>根据客户端类型自动生成订阅配置</td></tr>
+            </tbody>
+        </table>
+
+        <h3>关键技术特点</h3>
+        <ul>
+            <li><strong>零服务器成本</strong> — 完全运行在 Cloudflare 免费套餐上，每天 10 万次免费请求</li>
+            <li><strong>KV 配置热更新</strong> — 使用 Cloudflare KV 存储配置，5 小时内存缓存，减少 99% 以上 KV 读取量</li>
+            <li><strong>无效请求拦截</strong> — 非法路径直接返回 404，不再触发 KV 读取，提升性能和安全性</li>
+            <li><strong>Path 参数覆盖</strong> — 在分享链接的 path 里直接写参数，无需为每个节点单独部署 Worker</li>
+            <li><strong>智能地区匹配</strong> — 自动检测 Worker 所在地区，优先选择同地区的 ProxyIP</li>
+            <li><strong>兼容 Xray-core v26.3.27</strong> — 保持与最新 Xray 核心的兼容性</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">&#127919;</span> 应用场景</h2>
+        <table>
+            <thead>
+                <tr><th>场景</th><th>描述</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>个人网络加速</strong></td><td>利用 Cloudflare 全球 CDN 节点加速网络访问，适合个人学习研究</td></tr>
+                <tr><td><strong>访问 AI 服务</strong></td><td>用于访问 ChatGPT、Claude 等 AI 服务（部分区域受限）</td></tr>
+                <tr><td><strong>开发者工具</strong></td><td>访问 GitHub、Google 搜索、Stack Overflow 等开发资源</td></tr>
+                <tr><td><strong>学习 Cloudflare Workers</strong></td><td>作为学习边缘计算和 Workers 开发的实战项目</td></tr>
+                <tr><td><strong>多协议代理研究</strong></td><td>了解 VLESS、Trojan、XHTTP 等现代代理协议的实现原理</td></tr>
+            </tbody>
+        </table>
+
+        <div class="alert">
+            <strong>&#9888;&#65039; 重要提醒：</strong>Cloudflare 已更新服务条款，限制将 Workers/Pages 用于 VPN 或代理相关服务。部署前请仔细阅读 Cloudflare 的最新 ToS，了解相关风险和政策约束。
+        </div>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="icon">&#128293;</span> 为什么火（Trending 原因分析）</h2>
+        <ul>
+            <li><strong>零成本解决方案</strong> — Cloudflare 免费套餐即部署，无需购买 VPS，在当前经济环境下极具吸引力</li>
+            <li><strong>持续快速迭代</strong> — 从 v2.7 到 v2.9.6 短时间内多次更新，每次都带来实质性功能提升</li>
+            <li><strong>极致的用户体验</strong> — 图形化管理面板是同类项目中的显著差异化优势，大幅降低了使用门槛</li>
+            <li><strong>中文社区驱动</strong> — 完善的中文文档、Telegram 交流群、YouTube 视频教程形成了活跃的社区生态</li>
+            <li><strong>多协议共存</strong> — 支持 VLESS + Trojan + XHTTP 同时启用，满足不同场景需求</li>
+            <li><strong>ECH 前沿技术</strong> — 较早支持 Encrypted Client Hello 功能，紧跟网络安全前沿</li>
+            <li><strong>API 生态</strong> — RESTful API 支持动态管理，配合优选工具形成完整工具链</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2><span class="icon">&#128200;</span> 同类项目对比</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>byJoey/cfnew</th>
+                    <th>cmliu/edgetunnel</th>
+                    <th>zizifn/edgetunnel</th>
+                    <th>eooce/Cloudflare-proxy</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Stars</td>
+                    <td><strong>~13.3k</strong></td>
+                    <td>~8k+</td>
+                    <td>~6k+</td>
+                    <td>~3k+</td>
+                </tr>
+                <tr>
+                    <td>图形化管理</td>
+                    <td><span class="compare-badge badge-best">&#10003; 完整面板</span></td>
+                    <td><span class="compare-badge badge-good">&#10003; WebUI</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007; 无</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007; 无</span></td>
+                </tr>
+                <tr>
+                    <td>协议支持</td>
+                    <td>VLESS + Trojan + XHTTP</td>
+                    <td>VLESS + Trojan + SS</td>
+                    <td>VLESS</td>
+                    <td>VLESS + Trojan</td>
+                </tr>
+                <tr>
+                    <td>延迟测试</td>
+                    <td><span class="compare-badge badge-best">&#10003; 内置</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                </tr>
+                <tr>
+                    <td>API 管理</td>
+                    <td><span class="compare-badge badge-best">&#10003; RESTful</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                </tr>
+                <tr>
+                    <td>ECH 支持</td>
+                    <td><span class="compare-badge badge-best">&#10003;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                    <td><span class="compare-badge badge-ok">&#10007;</span></td>
+                </tr>
+                <tr>
+                    <td>多语言</td>
+                    <td>中文 + 波斯语</td>
+                    <td>中文</td>
+                    <td>英文</td>
+                    <td>英文</td>
+                </tr>
+                <tr>
+                    <td>更新频率</td>
+                    <td>非常活跃</td>
+                    <td>活跃</td>
+                    <td>低</td>
+                    <td>一般</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>CFnew 在功能完整度、用户体验和技术前沿性方面明显领先同类项目，尤其是图形化管理面板、内置延迟测试和 ECH 支持三大特色功能，是其他项目尚未实现的差异化优势。</p>
+    </div>
+
+    <!-- 适合谁使用 -->
+    <div class="card">
+        <h2><span class="icon">&#128101;</span> 适合谁使用</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="fi-title">&#127891; 技术学习者</div>
+                <div class="fi-desc">对边缘计算、Cloudflare Workers、网络协议感兴趣，想通过实战项目学习</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128187; 开发者</div>
+                <div class="fi-desc">需要访问 GitHub、Google、Stack Overflow 等开发工具和资源的程序员</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128218; AI 研究者</div>
+                <div class="fi-desc">需要访问 ChatGPT、Claude 等 AI 服务的学术研究人员</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">&#128274; 网络安全研究者</div>
+                <div class="fi-desc">研究现代代理协议、ECH、TLS 等网络安全技术的安全研究人员</div>
+            </div>
+        </div>
+        <div class="alert">
+            <strong>前提条件：</strong>需要有一个 Cloudflare 账号（免费即可），基本的网络知识，以及兼容的客户端软件。请确保遵守当地法律法规和 Cloudflare 服务条款。
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">&#128640;</span> 快速上手指南</h2>
+
+        <h3>Worker 部署方式</h3>
+        <div class="steps">
+            <div class="step">
+                <div class="step-title">注册 Cloudflare 账号</div>
+                <div class="step-desc">访问 cloudflare.com 注册免费账号</div>
+            </div>
+            <div class="step">
+                <div class="step-title">创建 Worker</div>
+                <div class="step-desc">进入 Workers 和 Pages → 创建 Worker → 上传 CFnew 的 worker.js 文件</div>
+            </div>
+            <div class="step">
+                <div class="step-title">设置环境变量</div>
+                <div class="step-desc">在 Worker 设置中添加 <code class="inline-code">u</code>（你的 UUID）作为必需变量</div>
+            </div>
+            <div class="step">
+                <div class="step-title">配置兼容日期</div>
+                <div class="step-desc">设置 → 运行时 → 兼容性日期选择 <code class="inline-code">2026-01-20</code></div>
+            </div>
+            <div class="step">
+                <div class="step-title">创建 KV 命名空间（推荐）</div>
+                <div class="step-desc">在 Workers 中创建 KV 命名空间，绑定环境变量 <code class="inline-code">C</code>，启用图形化管理</div>
+            </div>
+            <div class="step">
+                <div class="step-title">访问管理面板</div>
+                <div class="step-desc">访问 <code class="inline-code">https://你的worker.workers.dev/{UUID}</code> 进行图形化配置</div>
+            </div>
+        </div>
+
+        <h3>基础环境变量配置</h3>
+        <pre><code># 必需变量
+u = 你的UUID
+
+# 可选变量
+d = /mypath          # 自定义订阅路径
+p = 1.1.1.1:443      # ProxyIP 地址
+wk = SG              # Worker 地区代码
+ev = yes             # 启用 VLESS（默认启用）
+et = yes             # 启用 Trojan
+ex = yes             # 启用 XHTTP
+ech = yes            # 启用 ECH</code></pre>
+
+        <h3>客户端订阅</h3>
+        <p>在支持订阅的客户端中添加订阅地址：</p>
+        <pre><code>https://你的worker.workers.dev/{UUID或自定义路径}</code></pre>
+        <p>支持的客户端会根据 User-Agent 自动返回对应格式的配置文件。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">&#11088;</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value s-purple">8.0</div>
+                <div class="score-bar"><div class="score-bar-fill bar-purple" style="width: 80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value s-blue">7.0</div>
+                <div class="score-bar"><div class="score-bar-fill bar-blue" style="width: 70%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value s-green">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill bar-green" style="width: 85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value s-orange">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill bar-orange" style="width: 85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value s-green">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill bar-green" style="width: 90%"></div></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 25px; padding: 15px; background: #161b22; border-radius: 10px; border: 1px solid #21262d;">
+            <span style="color: #8b949e; font-size: 0.9em;">综合评分</span>
+            <div style="font-size: 3em; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">8.2</div>
+            <span style="color: #8b949e; font-size: 0.85em;">/ 10.0</span>
+        </div>
+
+        <h3>评分说明</h3>
+        <table>
+            <thead><tr><th>维度</th><th>评分</th><th>理由</th></tr></thead>
+            <tbody>
+                <tr><td><strong>创新性 8.0</strong></td><td>图形化管理面板、内置延迟测试、API 管理在同类项目中属首创；ECH 前沿技术支持加分</td></tr>
+                <tr><td><strong>代码质量 7.0</strong></td><td>功能完整但代码为单文件 Worker 脚本，模块化程度有限；KV 缓存优化做得不错</td></tr>
+                <tr><td><strong>实用性 8.5</strong></td><td>零成本部署、多协议支持、10+ 客户端兼容，实际使用体验优秀</td></tr>
+                <tr><td><strong>文档完善度 8.5</strong></td><td>中文 README 详尽，配有 YouTube 视频教程、Telegram 群组、博客教程，多语言支持</td></tr>
+                <tr><td><strong>社区活跃度 9.0</strong></td><td>13.3k Stars、频繁更新、活跃的 Telegram 社区、多个配套工具项目</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 相关资源 -->
+    <div class="card">
+        <h2><span class="icon">&#128279;</span> 相关资源</h2>
+        <table>
+            <thead><tr><th>资源</th><th>链接</th></tr></thead>
+            <tbody>
+                <tr><td>GitHub 仓库</td><td><a href="https://github.com/byJoey/cfnew" style="color: #58a6ff;">github.com/byJoey/cfnew</a></td></tr>
+                <tr><td>优选工具</td><td><a href="https://github.com/byJoey/yx-tools/releases" style="color: #58a6ff;">github.com/byJoey/yx-tools</a></td></tr>
+                <tr><td>更新仓库</td><td><a href="https://github.com/byJoey/cfnewup" style="color: #58a6ff;">github.com/byJoey/cfnewup</a></td></tr>
+                <tr><td>文字教程</td><td><a href="https://joeyblog.net/yuanchuang/1146.html" style="color: #58a6ff;">joeyblog.net</a></td></tr>
+                <tr><td>Workers 视频教程</td><td><a href="https://www.youtube.com/watch?v=aYzTr8FafN4" style="color: #58a6ff;">YouTube</a></td></tr>
+                <tr><td>Pages 视频教程</td><td><a href="https://www.youtube.com/watch?v=JhVxJChDL-E" style="color: #58a6ff;">YouTube</a></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>&#129302; AI 深度分析报告 | 由 Claude Code 自动生成 | 2026-05-23</p>
+    <p style="margin-top: 8px;">
+        <a href="https://github.com/byJoey/cfnew">GitHub</a> &middot;
+        <a href="https://github.com/trending">Trending</a>
+    </p>
+</div>
+
+</body>
+</html>
