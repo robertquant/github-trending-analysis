@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>karpathy/nn-zero-to-hero - 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+        }
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #8b949e;
+        }
+        .header .meta span strong { color: #58a6ff; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 {
+            color: #f0883e;
+            margin: 16px 0 8px;
+            font-size: 1.1em;
+        }
+        .card p, .card li { color: #c9d1d9; margin-bottom: 8px; }
+        .card ul { padding-left: 20px; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.92em;
+        }
+        th {
+            background: #21262d;
+            color: #58a6ff;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+        }
+        tr:hover { background: #1c2128; }
+
+        /* Code */
+        code {
+            background: #1c2128;
+            border: 1px solid #30363d;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.88em;
+            color: #79c0ff;
+        }
+        pre {
+            background: #1c2128;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+
+        /* Score section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .label { color: #8b949e; font-size: 0.85em; margin-bottom: 6px; }
+        .score-item .value { font-size: 1.5em; font-weight: bold; }
+        .score-item .value.excellent { color: #3fb950; }
+        .score-item .value.good { color: #58a6ff; }
+        .score-total {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+        .score-total .value { font-size: 2em; color: #f0883e; }
+
+        /* Stars */
+        .stars { color: #f0883e; letter-spacing: 2px; }
+
+        /* Tag chips */
+        .tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+        .tag {
+            background: #1c2128;
+            border: 1px solid #30363d;
+            padding: 3px 12px;
+            border-radius: 16px;
+            font-size: 0.82em;
+            color: #8b949e;
+        }
+        .tag.highlight { color: #58a6ff; border-color: #1f6feb; }
+
+        /* Lecture timeline */
+        .timeline { position: relative; padding-left: 24px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #58a6ff, #bc8cff, #f778ba);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 16px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 8px;
+            width: 10px;
+            height: 10px;
+            background: #58a6ff;
+            border-radius: 50%;
+            border: 2px solid #0d1117;
+        }
+        .timeline-item .lec-num {
+            color: #58a6ff;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .timeline-item .lec-title {
+            color: #e6edf3;
+            font-weight: 600;
+        }
+        .timeline-item .lec-desc {
+            color: #8b949e;
+            font-size: 0.9em;
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: 1fr 1fr; }
+            table { font-size: 0.82em; }
+            th, td { padding: 8px 10px; }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>karpathy/nn-zero-to-hero</h1>
+    <p class="subtitle">Neural Networks: Zero to Hero — 从零到英雄的神经网络之旅</p>
+    <div class="meta">
+        <span>👤 <strong>Andrej Karpathy</strong></span>
+        <span>⭐ <strong>12k+ Stars</strong></span>
+        <span>📜 <strong>MIT License</strong></span>
+        <span>🐍 <strong>Python / Jupyter</strong></span>
+        <span>📅 <strong>分析于 2026-05-23</strong></span>
+    </div>
+    <div class="tags" style="justify-content:center; margin-top:14px;">
+        <span class="tag highlight">深度学习</span>
+        <span class="tag highlight">神经网络</span>
+        <span class="tag">PyTorch</span>
+        <span class="tag">GPT</span>
+        <span class="tag">Transformer</span>
+        <span class="tag">教育课程</span>
+        <span class="tag">自然语言处理</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2>📖 项目简介</h2>
+        <p><strong>Neural Networks: Zero to Hero</strong> 是由 <strong>Andrej Karpathy</strong>（前特斯拉AI总监、OpenAI联合创始成员）创建的<strong>免费深度学习课程</strong>。通过一系列 YouTube 视频，带你从零开始手写代码实现神经网络——从最基础的微积分概念出发，一步步构建到完整的 GPT 模型。</p>
+        <p>这不是一门"使用框架"的课程，而是一门"理解框架"的课程。每个概念都通过实际编码来理解，让你真正掌握神经网络的底层原理。</p>
+        <h3>核心亮点</h3>
+        <ul>
+            <li>🎬 8 个精心制作的 YouTube 视频讲座</li>
+            <li>📓 配套 Jupyter Notebook 可直接运行</li>
+            <li>🔧 从 micrograd 到完整 GPT 的渐进式学习</li>
+            <li>💡 每节课配有独立练习题</li>
+            <li>🆓 完全免费，MIT 开源协议</li>
+        </ul>
+    </div>
+
+    <!-- 课程结构 -->
+    <div class="card">
+        <h2>📚 课程结构</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 1</div>
+                <div class="lec-title">micrograd — 反向传播入门</div>
+                <div class="lec-desc">从零手写自动微分引擎，理解反向传播的核心机制。只需基础 Python 和高中微积分记忆。</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 2</div>
+                <div class="lec-title">makemore — 语言建模入门</div>
+                <div class="lec-desc">实现二元字符级语言模型，介绍 PyTorch Tensor 的使用和语言建模框架。</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 3</div>
+                <div class="lec-title">makemore Part 2 — MLP</div>
+                <div class="lec-desc">多层感知机实现，学习率调优、超参数、训练/验证/测试集划分、欠拟合/过拟合。</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 4</div>
+                <div class="lec-title">makemore Part 3 — 激活与梯度、BatchNorm</div>
+                <div class="lec-desc">深入前向/反向传播统计，理解训练深层网络的脆弱性，引入 Batch Normalization。</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 5</div>
+                <div class="lec-title">Backprop Ninja — 手动反向传播</div>
+                <div class="lec-desc">不使用 PyTorch autograd，手动通过整个计算图反向传播梯度。成为反向传播忍者！</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 6</div>
+                <div class="lec-title">WaveNet — 构建深层架构</div>
+                <div class="lec-desc">引入类似 DeepMind WaveNet (2016) 的树状层次结构，深入理解 torch.nn 内部机制。</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 7</div>
+                <div class="lec-title">🔥 从零构建 GPT</div>
+                <div class="lec-desc">基于 "Attention is All You Need" 论文，实现 GPT-2/GPT-3 架构。课程高潮部分！</div>
+            </div>
+            <div class="timeline-item">
+                <div class="lec-num">Lecture 8</div>
+                <div class="lec-title">GPT Tokenizer — BPE 分词器</div>
+                <div class="lec-desc">从零实现 GPT 系列的 Byte Pair Encoding 分词器，揭示 LLM 中 tokenization 的奥秘。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2>🔧 技术架构与特点</h2>
+        <table>
+            <tr><th>维度</th><th>详情</th></tr>
+            <tr><td>核心语言</td><td>Python</td></tr>
+            <tr><td>深度学习框架</td><td>PyTorch</td></tr>
+            <tr><td>教学工具</td><td>Jupyter Notebook + YouTube</td></tr>
+            <tr><td>辅助项目</td><td>micrograd, makemore, minBPE</td></tr>
+            <tr><td>数学要求</td><td>基础微积分（导数概念）</td></tr>
+            <tr><td>编程要求</td><td>基础 Python 即可</td></tr>
+        </table>
+        <h3>教学特色</h3>
+        <ul>
+            <li><strong>纯手工构建</strong> — 不依赖高级框架封装，从底层理解每个组件的工作原理</li>
+            <li><strong>代码驱动</strong> — 每个概念都通过编写实际可运行的代码来理解</li>
+            <li><strong>渐进式难度</strong> — 从标量级微积分自然过渡到完整的 Transformer 架构</li>
+            <li><strong>"Spelled-out" 风格</strong> — 不跳步骤、不假设知识，完全透明地讲解每个细节</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2>🔥 为什么火 (Trending 原因)</h2>
+        <table>
+            <tr><th>因素</th><th>详细分析</th></tr>
+            <tr><td>👤 作者影响力</td><td>Karpathy 是 AI 领域最有影响力的教育者之一，前 Tesla AI 总监、OpenAI 联合创始成员</td></tr>
+            <tr><td>🌊 AI 热潮</td><td>随着 ChatGPT 等工具普及，理解底层原理的需求急剧增长</td></tr>
+            <tr><td>🎯 独特教学</td><td>"Spelled-out"风格在众多教程中独树一帜，学习者体验极佳</td></tr>
+            <tr><td>💰 免费高质量</td><td>相比上千美元的付费课程，质量毫不逊色甚至更优</td></tr>
+            <tr><td>🛠️ 实用产出</td><td>最终课程产出是实际可运行的 GPT 模型</td></tr>
+            <tr><td>👥 社区效应</td><td>Reddit/HN/Medium 上大量学习笔记和心得，形成正反馈循环</td></tr>
+            <tr><td>⏰ 持续价值</td><td>AI 快速发展使基础原理理解变得更重要，课程价值随时间递增</td></tr>
+        </table>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="card">
+        <h2>⚖️ 同类项目对比</h2>
+        <table>
+            <tr><th>项目</th><th>教学风格</th><th>深度</th><th>适合人群</th></tr>
+            <tr>
+                <td><strong>nn-zero-to-hero</strong></td>
+                <td>从零手写，代码驱动</td>
+                <td>⭐⭐⭐⭐⭐</td>
+                <td>想深入理解底层原理的学习者</td>
+            </tr>
+            <tr>
+                <td>rasbt/LLMs-from-scratch</td>
+                <td>书籍式，系统全面</td>
+                <td>⭐⭐⭐⭐⭐</td>
+                <td>喜欢系统化学习的学习者</td>
+            </tr>
+            <tr>
+                <td>fast.ai</td>
+                <td>自顶向下，先实用后原理</td>
+                <td>⭐⭐⭐⭐</td>
+                <td>想快速上手的实践者</td>
+            </tr>
+            <tr>
+                <td>d2l.ai</td>
+                <td>学术教材风格</td>
+                <td>⭐⭐⭐⭐</td>
+                <td>学生和研究者</td>
+            </tr>
+            <tr>
+                <td>Andrew Ng - Deep Learning</td>
+                <td>理论为主，数学推导</td>
+                <td>⭐⭐⭐⭐</td>
+                <td>偏理论的系统性学习者</td>
+            </tr>
+            <tr>
+                <td>Google ML Crash Course</td>
+                <td>快速入门</td>
+                <td>⭐⭐⭐</td>
+                <td>想快速了解 ML 的初学者</td>
+            </tr>
+        </table>
+        <p style="color:#8b949e; margin-top:12px; font-style:italic;">
+            nn-zero-to-hero 在"从零构建"和"实用产出"之间取得了最佳平衡，是理解神经网络内部工作机制最直观的途径。
+        </p>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2>👥 适合谁使用</h2>
+        <table>
+            <tr><th>人群</th><th>适合度</th><th>说明</th></tr>
+            <tr><td>Python 开发者想学 AI</td><td><span class="stars">★★★★★</span></td><td>只需基础 Python 和一些微积分记忆</td></tr>
+            <tr><td>ML 工程师想深入底层</td><td><span class="stars">★★★★★</span></td><td>补充 autograd 之外的直觉理解</td></tr>
+            <tr><td>CS 学生</td><td><span class="stars">★★★★★</span></td><td>最理想的深度学习入门课程</td></tr>
+            <tr><td>AI 研究者</td><td><span class="stars">★★★★☆</span></td><td>温故知新，重新审视基础概念</td></tr>
+            <tr><td>完全零基础非程序员</td><td><span class="stars">★★★☆☆</span></td><td>需先学习 Python 基础</td></tr>
+            <tr><td>寻找生产框架教程</td><td><span class="stars">★★☆☆☆</span></td><td>本课程侧重原理而非工程实践</td></tr>
+        </table>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2>🚀 快速上手指南</h2>
+        <h3>前置要求</h3>
+        <ul>
+            <li>基础 Python 编程知识</li>
+            <li>高中水平的微积分回忆（导数概念）</li>
+        </ul>
+        <h3>安装环境</h3>
+<pre><code># 安装依赖
+pip install torch jupyter numpy matplotlib
+
+# 克隆仓库
+git clone https://github.com/karpathy/nn-zero-to-hero.git
+cd nn-zero-to-hero</code></pre>
+        <h3>开始学习</h3>
+<pre><code># 打开 YouTube 播放列表
+# https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ
+
+# 跟随 Lecture 1 开始
+jupyter notebook lectures/micrograd/</code></pre>
+        <h3>推荐学习节奏</h3>
+        <table>
+            <tr><th>阶段</th><th>内容</th><th>建议时长</th></tr>
+            <tr><td>基础</td><td>Lecture 1-3 (micrograd + makemore)</td><td>1-2 周</td></tr>
+            <tr><td>进阶</td><td>Lecture 4-6 (深层网络 + WaveNet)</td><td>2-3 周</td></tr>
+            <tr><td>高潮</td><td>Lecture 7 (构建 GPT)</td><td>1 周</td></tr>
+            <tr><td>补充</td><td>Lecture 8 (Tokenizer)</td><td>1 周</td></tr>
+        </table>
+        <p style="color:#f0883e; margin-top:12px;">💡 每节课建议先看视频，再独立完成练习，遇到困难时回看视频中的解答。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2>⭐ 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value excellent">5.0</div>
+                <div class="stars">★★★★★</div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value excellent">5.0</div>
+                <div class="stars">★★★★★</div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value good">4.5</div>
+                <div class="stars">★★★★☆</div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value good">4.0</div>
+                <div class="stars">★★★★☆</div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value excellent">5.0</div>
+                <div class="stars">★★★★★</div>
+            </div>
+        </div>
+        <div class="score-total">
+            <div class="label" style="color:#8b949e; margin-bottom:8px;">综合评分</div>
+            <div class="value">4.8 / 5.0 ⭐</div>
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="card" style="border-image: linear-gradient(135deg, #58a6ff, #bc8cff) 1; border-width: 1px; border-style: solid;">
+        <h2>📝 总结</h2>
+        <p>karpathy/nn-zero-to-hero 是目前<strong style="color:#58a6ff;">最优秀的深度学习入门课程之一</strong>。Karpathy 以其独特的 "spelled-out" 教学风格，将复杂的神经网络概念拆解为可理解的代码步骤。</p>
+        <p>无论你是 AI 新手还是经验丰富的工程师想要深入理解底层原理，这门课程都是<strong style="color:#f0883e;">不可多得的学习资源</strong>。在 AI 技术飞速发展的今天，理解这些基础原理比以往任何时候都更加重要。</p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>GitHub Trending Deep Analysis · Generated on 2026-05-23</p>
+    <p>数据来源: <a href="https://github.com/karpathy/nn-zero-to-hero" style="color:#58a6ff;">GitHub</a></p>
+</div>
+
+</body>
+</html>
