@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinceptTerminal - 开源金融终端 | GitHub Trending 深度分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.hero{text-align:center;padding:50px 20px 40px;background:linear-gradient(135deg,rgba(13,17,23,0.95),rgba(22,27,34,0.98));border-bottom:1px solid #30363d;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(56,139,253,0.06) 0%,transparent 60%);animation:pulse 8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.hero h1{font-size:2.6em;background:linear-gradient(135deg,#58a6ff,#3fb950,#d2a8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;position:relative}
+.hero .subtitle{color:#8b949e;font-size:1.15em;margin-bottom:20px}
+.hero .meta{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:15px}
+.badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.82em;font-weight:600;border:1px solid #30363d;background:rgba(56,139,253,0.08);color:#58a6ff}
+.badge-green{background:rgba(63,185,80,0.1);color:#3fb950;border-color:rgba(63,185,80,0.3)}
+.badge-purple{background:rgba(210,168,255,0.1);color:#d2a8ff;border-color:rgba(210,168,255,0.3)}
+.badge-orange{background:rgba(210,153,34,0.1);color:#d29922;border-color:rgba(210,153,34,0.3)}
+.section{margin:30px 0}
+.section h2{font-size:1.6em;color:#f0f6fc;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #21262d;display:flex;align-items:center;gap:10px}
+.section h2 .icon{font-size:1.1em}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;margin-bottom:16px;transition:border-color 0.3s}
+.card:hover{border-color:#58a6ff}
+.card h3{color:#58a6ff;font-size:1.15em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card p,.card li{color:#8b949e;font-size:0.95em}
+.card ul{padding-left:20px;margin-top:8px}
+.card ul li{margin-bottom:5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.highlight{color:#3fb950;font-weight:600}
+.warning{color:#d29922;font-weight:600}
+.danger{color:#f85149;font-weight:600}
+table{width:100%;border-collapse:collapse;margin:12px 0;background:#0d1117;border-radius:8px;overflow:hidden;border:1px solid #30363d}
+th{background:#161b22;color:#f0f6fc;padding:12px 16px;text-align:left;font-weight:600;font-size:0.9em;border-bottom:2px solid #30363d}
+td{padding:10px 16px;border-bottom:1px solid #21262d;color:#8b949e;font-size:0.9em}
+tr:hover td{background:rgba(56,139,253,0.04)}
+.score-bar{display:flex;align-items:center;gap:12px;margin:8px 0}
+.score-bar .label{min-width:100px;color:#8b949e;font-size:0.9em}
+.score-bar .bar{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
+.score-bar .bar .fill{height:100%;border-radius:4px;transition:width 1s ease}
+.score-bar .value{min-width:50px;text-align:right;font-weight:700;font-size:0.95em}
+.fill-blue{background:linear-gradient(90deg,#1f6feb,#58a6ff)}
+.fill-green{background:linear-gradient(90deg,#238636,#3fb950)}
+.fill-purple{background:linear-gradient(90deg,#8957e5,#d2a8ff)}
+.fill-orange{background:linear-gradient(90deg,#9e6a03,#d29922)}
+.fill-cyan{background:linear-gradient(90deg,#1b6c85,#39d2e0)}
+.overall-score{text-align:center;padding:30px;margin:20px 0;background:linear-gradient(135deg,#161b22,#0d1117);border:2px solid #30363d;border-radius:16px}
+.overall-score .big{font-size:3.2em;font-weight:800;background:linear-gradient(135deg,#58a6ff,#d2a8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overall-score .label{color:#8b949e;font-size:1.1em;margin-top:4px}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-family:'Fira Code',Consolas,monospace;font-size:0.88em;line-height:1.6;color:#c9d1d9;margin:12px 0}
+code{background:rgba(56,139,253,0.1);color:#58a6ff;padding:2px 6px;border-radius:4px;font-family:'Fira Code',Consolas,monospace;font-size:0.88em}
+pre code{background:none;color:inherit;padding:0}
+.tag-group{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tag{padding:4px 12px;border-radius:16px;font-size:0.8em;font-weight:600;border:1px solid}
+.tag-blue{color:#58a6ff;border-color:rgba(56,139,253,0.3);background:rgba(56,139,253,0.08)}
+.tag-green{color:#3fb950;border-color:rgba(63,185,80,0.3);background:rgba(63,185,80,0.08)}
+.tag-purple{color:#d2a8ff;border-color:rgba(210,168,255,0.3);background:rgba(210,168,255,0.08)}
+.tag-orange{color:#d29922;border-color:rgba(210,153,34,0.3);background:rgba(210,153,34,0.08)}
+.trending-reasons{counter-reset:reason}
+.trending-reasons .reason{counter-increment:reason;padding:14px 16px;margin:8px 0;background:#0d1117;border-radius:8px;border-left:3px solid #58a6ff;display:flex;align-items:flex-start;gap:12px}
+.trending-reasons .reason::before{content:counter(reason);background:linear-gradient(135deg,#1f6feb,#58a6ff);color:#fff;min-width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85em;flex-shrink:0}
+.trending-reasons .reason strong{color:#f0f6fc}
+.footer{text-align:center;padding:30px 0;color:#484f58;font-size:0.85em;border-top:1px solid #21262d;margin-top:40px}
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:2px;margin:16px 0;background:#30363d;border-radius:8px;overflow:hidden;border:1px solid #30363d}
+.compare-cell{background:#0d1117;padding:10px 12px;text-align:center}
+.compare-cell.header{background:#161b22;font-weight:700;color:#f0f6fc;font-size:0.85em}
+.compare-cell.highlight-cell{background:rgba(63,185,80,0.06);color:#3fb950;font-weight:600}
+@media(max-width:768px){
+.hero h1{font-size:1.8em}
+.grid{grid-template-columns:1fr}
+.container{padding:12px}
+.hero{padding:30px 12px 25px}
+.compare-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="hero">
+<h1>FinceptTerminal</h1>
+<div class="subtitle">开源金融终端 — Bloomberg Terminal 的免费替代品</div>
+<div class="meta">
+<span class="badge">C++20 / Qt6 / Python</span>
+<span class="badge badge-green">v4.0.3</span>
+<span class="badge badge-purple">AGPL-3.0 + 商业许可</span>
+<span class="badge badge-orange">37 AI 代理</span>
+</div>
+<div class="meta" style="margin-top:10px">
+<a href="https://github.com/Fincept-Corporation/FinceptTerminal" style="color:#58a6ff;text-decoration:none;font-size:0.95em">GitHub Repo →</a>
+</div>
+</div>
+
+<div class="container">
+
+<!-- 项目简介 -->
+<div class="section">
+<h2><span class="icon">📋</span> 项目简介</h2>
+<div class="card">
+<p>FinceptTerminal 是一个专业级开源金融分析平台，定位为 <span class="highlight">Bloomberg Terminal 的免费替代品</span>（Bloomberg 年费约 $24,000-$27,000）。采用 C++20 + Qt6 原生开发，内嵌 Python 进行分析计算，提供单一原生二进制文件，无需 Electron/Web 运行时。</p>
+<div class="tag-group" style="margin-top:16px">
+<span class="tag tag-blue">金融分析</span>
+<span class="tag tag-blue">投资研究</span>
+<span class="tag tag-green">AI 代理</span>
+<span class="tag tag-green">量化交易</span>
+<span class="tag tag-purple">实时数据</span>
+<span class="tag tag-purple">地缘政治</span>
+<span class="tag tag-orange">多券商集成</span>
+</div>
+</div>
+</div>
+
+<!-- 核心功能 -->
+<div class="section">
+<h2><span class="icon">⚡</span> 核心功能</h2>
+<div class="grid">
+<div class="card">
+<h3>📊 多资产分析</h3>
+<ul>
+<li>DCF 估值模型</li>
+<li>投资组合优化</li>
+<li>风险指标（VaR、Sharpe Ratio）</li>
+<li>衍生品定价</li>
+<li>覆盖股票/债券/衍生品/另类投资</li>
+</ul>
+</div>
+<div class="card">
+<h3>🤖 37 个 AI 智能代理</h3>
+<ul>
+<li>投资大师模拟：巴菲特、格雷厄姆、彼得·林奇等</li>
+<li>宏观经济框架分析</li>
+<li>地缘政治分析与国际关系映射</li>
+<li>支持本地 LLM（Ollama）及多云提供商</li>
+</ul>
+</div>
+<div class="card">
+<h3>🔌 100+ 数据连接器</h3>
+<ul>
+<li>DBnomics / Polygon / Kraken</li>
+<li>Yahoo Finance / FRED / IMF</li>
+<li>世界银行 / AkShare</li>
+<li>Adanos 市场情绪数据（可选）</li>
+</ul>
+</div>
+<div class="card">
+<h3>💹 实时交易</h3>
+<ul>
+<li>加密货币实时 WebSocket</li>
+<li>算法交易引擎</li>
+<li>模拟交易环境</li>
+<li><strong>16 家券商</strong>集成（IBKR、Alpaca 等）</li>
+</ul>
+</div>
+<div class="card">
+<h3>📈 QuantLib 量化套件</h3>
+<ul>
+<li>18 个量化分析模块</li>
+<li>定价 / 风险 / 波动率</li>
+<li>随机过程 / 固定收益</li>
+<li>蒙特卡洛模拟</li>
+</ul>
+</div>
+<div class="card">
+<h3>🌐 全球情报</h3>
+<ul>
+<li>海事追踪（AIS 船舶数据）</li>
+<li>地缘政治分析</li>
+<li>关系映射</li>
+<li>卫星数据集成</li>
+</ul>
+</div>
+<div class="card">
+<h3>🔧 可视化工作流</h3>
+<ul>
+<li>节点编辑器构建自动化管道</li>
+<li>MCP 工具集成</li>
+<li>拖拽式分析流程</li>
+</ul>
+</div>
+<div class="card">
+<h3>🧪 AI 量化实验室</h3>
+<ul>
+<li>机器学习模型</li>
+<li>因子发现</li>
+<li>高频交易策略</li>
+<li>强化学习交易</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+<h2><span class="icon">🏗️</span> 技术架构</h2>
+<div class="card">
+<table>
+<tr><th>组件</th><th>技术</th><th>说明</th></tr>
+<tr><td><code>核心语言</code></td><td>C++20</td><td>高性能原生应用</td></tr>
+<tr><td><code>UI 框架</code></td><td>Qt 6.8.3</td><td>跨平台 GUI</td></tr>
+<tr><td><code>分析引擎</code></td><td>Python 3.11.9</td><td>嵌入式 Python 解释器</td></tr>
+<tr><td><code>构建系统</code></td><td>CMake 3.27.7 + Ninja 1.11.1</td><td>精确版本锁定</td></tr>
+<tr><td><code>量化库</code></td><td>QuantLib</td><td>专业金融计算</td></tr>
+<tr><td><code>分发方式</code></td><td>单一原生二进制</td><td>无 Electron / 无 Web 运行时</td></tr>
+</table>
+<p style="margin-top:12px"><span class="highlight">架构亮点</span>：原生 C++ 性能 + 嵌入式 Python 灵活性 + 跨平台单二进制分发，是目前开源金融终端中技术栈最先进的方案。</p>
+</div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+<h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+<div class="trending-reasons">
+<div class="reason"><strong>Bloomberg 替代品定位</strong> — 以 $0 对比 $24,000+/年的 Bloomberg 订阅，极具话题性和吸引力</div>
+<div class="reason"><strong>技术栈惊艳</strong> — C++20 + Qt6 原生应用（非 Electron），在开源金融领域独一无二</div>
+<div class="reason"><strong>功能极其丰富</strong> — 37 个 AI 代理、100+ 数据源、16 家券商、18 个量化模块，远超同类</div>
+<div class="reason"><strong>v4.0 重大版本发布</strong> — 完全重写的 v4 标志着项目进入成熟阶段</div>
+<div class="reason"><strong>Hacker News 热议</strong> — Show HN 帖子引发开发者社区广泛讨论和关注</div>
+<div class="reason"><strong>AI + 金融的交叉领域</strong> — 当前最热门的两个技术方向完美结合</div>
+<div class="reason"><strong>媒体传播力强</strong> — YouTube 评测、Medium 文章、"开源 Bloomberg 杀手"标题极具传播性</div>
+</div>
+</div>
+
+<!-- 同类对比 -->
+<div class="section">
+<h2><span class="icon">⚖️</span> 同类项目对比</h2>
+<div class="card">
+<table>
+<tr>
+<th>项目</th><th>类型</th><th>价格</th><th>技术栈</th><th>AI 支持</th><th>交易功能</th>
+</tr>
+<tr style="background:rgba(63,185,80,0.05)">
+<td><strong>FinceptTerminal</strong></td><td>桌面终端</td><td class="highlight">免费</td><td>C++20/Qt6</td><td class="highlight">37个AI代理</td><td class="highlight">16家券商</td>
+</tr>
+<tr><td>Bloomberg Terminal</td><td>专业终端</td><td>~$27,000/年</td><td>专有</td><td>有限</td><td>广泛</td></tr>
+<tr><td>OpenBB</td><td>Web/桌面</td><td>免费（MIT）</td><td>Python/React</td><td>有限</td><td>无</td></tr>
+<tr><td>TradingView</td><td>Web平台</td><td>免费~$60/月</td><td>Web</td><td>基础</td><td>部分券商</td></tr>
+<tr><td>QuantConnect</td><td>量化平台</td><td>免费~付费</td><td>Python/C#</td><td>无</td><td>部分</td></tr>
+</table>
+<p style="margin-top:12px"><span class="highlight">FinceptTerminal 优势</span>：原生性能最强、AI 代理最多、数据源最广、唯一集成地缘政治分析<br>
+<span class="warning">劣势</span>：AGPL-3.0 商业限制、社区相对较新、券商偏向印度市场</p>
+</div>
+</div>
+
+<!-- 适合谁 -->
+<div class="section">
+<h2><span class="icon">👥</span> 适合谁使用</h2>
+<div class="grid">
+<div class="card">
+<h3>👤 个人投资者/交易者</h3>
+<p>免费获取专业级分析工具，替代昂贵商业终端</p>
+</div>
+<div class="card">
+<h3>📊 量化分析师</h3>
+<p>QuantLib 集成 + AI 量化实验室 + Python 嵌入式环境</p>
+</div>
+<div class="card">
+<h3>🎓 金融专业学生/教授</h3>
+<p>大学许可计划，课堂使用的专业级工具</p>
+</div>
+<div class="card">
+<h3>💻 金融科技开发者</h3>
+<p>开源贡献，C++/Python 技术栈二次开发</p>
+</div>
+</div>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+<h2><span class="icon">🚀</span> 快速上手</h2>
+<div class="card">
+<h3>方式一：下载安装包（推荐）</h3>
+<p>从 <a href="https://github.com/Fincept-Corporation/FinceptTerminal/releases" style="color:#58a6ff">GitHub Releases</a> 下载对应平台安装包</p>
+<table>
+<tr><th>平台</th><th>文件</th></tr>
+<tr><td>Windows x64</td><td><code>FinceptTerminal-Windows-x64-setup.exe</code></td></tr>
+<tr><td>Linux x64</td><td><code>FinceptTerminal-Linux-x64.run</code></td></tr>
+<tr><td>macOS ARM</td><td><code>FinceptTerminal-macOS-arm64.dmg</code></td></tr>
+</table>
+</div>
+<div class="card">
+<h3>方式二：一键构建</h3>
+<pre><code>git clone https://github.com/Fincept-Corporation/FinceptTerminal.git
+cd FinceptTerminal
+chmod +x setup.sh && ./setup.sh</code></pre>
+</div>
+<div class="card">
+<h3>方式三：Docker</h3>
+<pre><code>git clone https://github.com/Fincept-Corporation/FinceptTerminal.git
+cd FinceptTerminal
+docker build -t fincept-terminal .
+docker run --rm -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix fincept-terminal</code></pre>
+</div>
+<div class="card" style="border-color:rgba(210,153,34,0.3)">
+<h3>⚠️ 依赖版本（精确要求）</h3>
+<p>CMake <code>3.27.7</code> · Ninja <code>1.11.1</code> · Qt <code>6.8.3</code> · Python <code>3.11.9</code> · C++20 编译器</p>
+</div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+<h2><span class="icon">⭐</span> 综合评分</h2>
+<div class="card">
+<div class="score-bar">
+<span class="label">创新性</span>
+<div class="bar"><div class="fill fill-blue" style="width:90%"></div></div>
+<span class="value" style="color:#58a6ff">9/10</span>
+</div>
+<div class="score-bar">
+<span class="label">代码质量</span>
+<div class="bar"><div class="fill fill-green" style="width:80%"></div></div>
+<span class="value" style="color:#3fb950">8/10</span>
+</div>
+<div class="score-bar">
+<span class="label">实用性</span>
+<div class="bar"><div class="fill fill-purple" style="width:90%"></div></div>
+<span class="value" style="color:#d2a8ff">9/10</span>
+</div>
+<div class="score-bar">
+<span class="label">文档完善度</span>
+<div class="bar"><div class="fill fill-orange" style="width:80%"></div></div>
+<span class="value" style="color:#d29922">8/10</span>
+</div>
+<div class="score-bar">
+<span class="label">社区活跃度</span>
+<div class="bar"><div class="fill fill-cyan" style="width:70%"></div></div>
+<span class="value" style="color:#39d2e0">7/10</span>
+</div>
+</div>
+<div class="overall-score">
+<div class="big">8.2</div>
+<div class="label">综合评分 / 10</div>
+</div>
+</div>
+
+<!-- 注意事项 -->
+<div class="section">
+<h2><span class="icon">⚠️</span> 注意事项</h2>
+<div class="card" style="border-color:rgba(248,81,73,0.3)">
+<ul>
+<li><span class="warning">许可限制</span>：AGPL-3.0 对商业使用有限制，企业需购买商业许可</li>
+<li><span class="warning">依赖版本严格</span>：必须使用精确版本（Qt 6.8.3、Python 3.11.9 等）</li>
+<li><span class="warning">社区代币</span>：项目有 pump.fun 代币，需注意加密货币投资风险</li>
+<li><span class="warning">券商偏向</span>：16 家券商中多数为印度券商，国际券商支持有限</li>
+</ul>
+</div>
+</div>
+
+<div class="footer">
+<p>📅 分析日期: 2026-05-23 · 数据来源: GitHub / Hacker News / Medium / YouTube</p>
+<p style="margin-top:6px;font-style:italic;color:#484f58">"你的思维是唯一的限制。数据不是。" — FinceptTerminal</p>
+</div>
+
+</div>
+</body>
+</html>
