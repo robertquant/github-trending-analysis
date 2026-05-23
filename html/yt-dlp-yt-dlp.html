@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>yt-dlp/yt-dlp 深度分析报告</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-purple: #bc8cff;
+    --accent-orange: #f0883e;
+    --accent-red: #f85149;
+    --accent-yellow: #d29922;
+    --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+    --gradient-2: linear-gradient(135deg, #3fb950, #58a6ff);
+    --gradient-3: linear-gradient(135deg, #f0883e, #f85149);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    padding: 40px 20px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 30px;
+  }
+  .header h1 {
+    font-size: 2.5em;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .header .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+  }
+  .meta-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .meta-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-item .icon { font-size: 1.1em; }
+  .section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .section h2 {
+    font-size: 1.5em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h2 .emoji { font-size: 1.3em; }
+  .section h3 {
+    font-size: 1.2em;
+    color: var(--accent-blue);
+    margin: 18px 0 10px;
+  }
+  .section p { margin-bottom: 12px; color: var(--text-secondary); }
+  .section p strong { color: var(--text-primary); }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .tag {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.85em;
+    color: var(--accent-blue);
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .feature-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .feature-card h4 {
+    color: var(--accent-green);
+    margin-bottom: 8px;
+    font-size: 1em;
+  }
+  .feature-card p {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  .score-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+  .score-table th, .score-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .score-table th {
+    color: var(--accent-purple);
+    font-weight: 600;
+  }
+  .score-table td:last-child { font-weight: 700; }
+  .score-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 120px;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .code-block {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+  .code-block .comment { color: #8b949e; }
+  .code-block .cmd { color: var(--accent-green); }
+  .code-block .flag { color: var(--accent-orange); }
+  .code-block .url { color: var(--accent-blue); }
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+  .comparison-table th, .comparison-table td {
+    padding: 10px 14px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    font-size: 0.9em;
+  }
+  .comparison-table th {
+    background: var(--bg-tertiary);
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+  .comparison-table td:first-child { text-align: left; font-weight: 600; }
+  .highlight { color: var(--accent-green); font-weight: 700; }
+  .warning { color: var(--accent-yellow); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+  .badge-green { background: rgba(63,185,80,0.2); color: var(--accent-green); }
+  .badge-blue { background: rgba(88,166,255,0.2); color: var(--accent-blue); }
+  .badge-orange { background: rgba(240,136,62,0.2); color: var(--accent-orange); }
+  .badge-red { background: rgba(248,81,73,0.2); color: var(--accent-red); }
+  .step-list { counter-reset: step; }
+  .step-item {
+    counter-increment: step;
+    padding: 12px 12px 12px 50px;
+    position: relative;
+    margin-bottom: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+  }
+  .step-item::before {
+    content: counter(step);
+    position: absolute;
+    left: 14px;
+    top: 12px;
+    background: var(--gradient-1);
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85em;
+  }
+  .step-item code {
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'SF Mono', monospace;
+    font-size: 0.88em;
+    color: var(--accent-green);
+  }
+  .total-score {
+    text-align: center;
+    padding: 24px;
+    margin-top: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+  .total-score .number {
+    font-size: 3em;
+    font-weight: 800;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .total-score .label {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+  }
+  ul { margin: 10px 0; padding-left: 20px; }
+  ul li { margin-bottom: 6px; color: var(--text-secondary); }
+  ul li strong { color: var(--text-primary); }
+  .footer {
+    text-align: center;
+    padding: 30px 0 10px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    border-top: 1px solid var(--border-color);
+    margin-top: 30px;
+  }
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .header h1 { font-size: 1.8em; }
+    .section { padding: 18px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .meta-bar { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>yt-dlp/yt-dlp</h1>
+  <p class="subtitle">功能丰富的命令行音视频下载工具 — 互联网视频下载的终极瑞士军刀</p>
+  <div class="meta-bar">
+    <div class="meta-item"><span class="icon">⭐</span> 164,000 Stars</div>
+    <div class="meta-item"><span class="icon">🍴</span> 13,800 Forks</div>
+    <div class="meta-item"><span class="icon">📝</span> 23,825 Commits</div>
+    <div class="meta-item"><span class="icon">📅</span> Latest: 2026.03.17</div>
+    <div class="meta-item"><span class="icon">📜</span> Unlicense</div>
+  </div>
+  <div class="tag-list" style="justify-content:center;margin-top:16px;">
+    <span class="tag">Python</span><span class="tag">CLI</span><span class="tag">YouTube</span>
+    <span class="tag">Video Downloader</span><span class="tag">SponsorBlock</span><span class="tag">FFmpeg</span>
+    <span class="tag">Plugin System</span><span class="tag">Cross-Platform</span>
+  </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="section">
+  <h2><span class="emoji">📖</span> 项目简介与核心功能</h2>
+  <p><strong>yt-dlp</strong> 是一个功能极其丰富的命令行音视频下载工具，支持 <strong>数千个网站</strong>。它是经典项目 <strong>youtube-dl</strong> 的继任者（基于已停止维护的 youtube-dlc 分支），已成为互联网视频下载领域的绝对标准。</p>
+  <p>项目由社区驱动，拥有数百名贡献者，持续快速迭代。从 YouTube、Bilibili、Twitch 到 Twitter/X、TikTok 等几乎所有主流视频平台，yt-dlp 都能胜任下载任务。</p>
+
+  <h3>核心功能亮点</h3>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>🎬 多站点支持</h4>
+      <p>支持数千个视频网站，包括 YouTube、Bilibili、Twitch、Twitter/X、TikTok、Vimeo、Niconico 等主流平台</p>
+    </div>
+    <div class="feature-card">
+      <h4>🎯 SponsorBlock 集成</h4>
+      <p>可自动标记/移除 YouTube 视频中的赞助片段、片头、片尾等段落，实现无广告观看</p>
+    </div>
+    <div class="feature-card">
+      <h4>🔄 智能格式选择</h4>
+      <p>支持 -S 参数按分辨率、编码器、比特率等灵活排序，比 youtube-dl 的 -f 更直观强大</p>
+    </div>
+    <div class="feature-card">
+      <h4>🍪 浏览器 Cookie 导入</h4>
+      <p>自动从 Chrome、Firefox、Edge 等主流浏览器提取 Cookie，解决需要登录的视频下载问题</p>
+    </div>
+    <div class="feature-card">
+      <h4>⚡ 并发下载</h4>
+      <p>支持 -N 参数多线程并发下载 DASH/HLS 分片，大幅提升下载速度</p>
+    </div>
+    <div class="feature-card">
+      <h4>🔌 插件系统</h4>
+      <p>支持第三方 Extractor 和 PostProcessor 插件，无限扩展功能</p>
+    </div>
+    <div class="feature-card">
+      <h4>📺 直播流支持</h4>
+      <p>支持从直播开始处下载（--live-from-start），支持 YouTube、Twitch 等平台</p>
+    </div>
+    <div class="feature-card">
+      <h4>🛡️ TLS 指纹伪装</h4>
+      <p>通过 curl_cffi 模拟真实浏览器的 TLS 指纹，绕过反爬虫检测</p>
+    </div>
+  </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+  <h2><span class="emoji">🏗️</span> 技术架构与特点</h2>
+  <h3>技术栈</h3>
+  <table class="score-table">
+    <tr><th>组件</th><th>技术</th><th>说明</th></tr>
+    <tr><td><strong>核心语言</strong></td><td>Python 3.10+</td><td>仅支持 CPython 3.10+ 和 PyPy 3.11+</td></tr>
+    <tr><td><strong>媒体处理</strong></td><td>FFmpeg / FFprobe</td><td>视频音频合并、格式转换、后处理的核心依赖</td></tr>
+    <tr><td><strong>JS 运行时</strong></td><td>Deno (推荐) / Node.js / Bun</td><td>用于运行 yt-dlp-ejs，支持 YouTube 完整功能</td></tr>
+    <tr><td><strong>网络库</strong></td><td>requests / urllib</td><td>支持 HTTPS 代理、持久连接、WebSocket</td></tr>
+    <tr><td><strong>打包</strong></td><td>PyInstaller / zipimport</td><td>提供独立可执行文件和平台无关二进制</td></tr>
+    <tr><td><strong>许可证</strong></td><td>Unlicense</td><td>公共领域授权，极其宽松</td></tr>
+  </table>
+
+  <h3>架构亮点</h3>
+  <ul>
+    <li><strong>Extractor 模式</strong>：每个网站对应一个独立的 Extractor 类，解耦清晰，易于维护和扩展</li>
+    <li><strong>三频道发布</strong>：stable（月更）→ nightly（日更）→ master（每次推送），用户可按需选择更新频率</li>
+    <li><strong>配置文件层级</strong>：支持 Main → Portable → Home → User → System 五层配置加载</li>
+    <li><strong>输出模板引擎</strong>：支持字段遍历、算术运算、日期格式化、正则匹配等高级模板语法</li>
+    <li><strong>Python API 嵌入</strong>：可通过 <code>from yt_dlp import YoutubeDL</code> 直接嵌入 Python 项目</li>
+  </ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+  <h2><span class="emoji">💡</span> 应用场景</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>📹 离线观看</h4>
+      <p>下载视频到本地，无需网络即可观看，特别适合通勤、旅行等场景</p>
+    </div>
+    <div class="feature-card">
+      <h4>🎵 音乐收藏</h4>
+      <p>使用 -x 参数提取音频，配合 --audio-format 可转为 MP3/AAC/FLAC 等格式</p>
+    </div>
+    <div class="feature-card">
+      <h4>📚 教程归档</h4>
+      <p>批量下载在线课程、教程视频，配合 --download-archive 避免重复下载</p>
+    </div>
+    <div class="feature-card">
+      <h4>🎬 剪辑素材</h4>
+      <p>使用 --download-sections 按时间范围下载视频片段，作为视频剪辑素材</p>
+    </div>
+    <div class="feature-card">
+      <h4>📡 直播录制</h4>
+      <p>使用 --live-from-start 录制直播从头开始，支持 YouTube/Twitch</p>
+    </div>
+    <div class="feature-card">
+      <h4>🤖 自动化集成</h4>
+      <p>通过 Python API 或 CLI 集成到自动化工作流中，如定时下载播客</p>
+    </div>
+  </div>
+</div>
+
+<!-- 为什么火 -->
+<div class="section">
+  <h2><span class="emoji">🔥</span> 为什么火（Trending 原因）</h2>
+  <ul>
+    <li><strong>Chrome 广告拦截限制</strong>：2024-2025 年 Chrome 逐步限制 Manifest V2 广告拦截器，用户转向 yt-dlp 下载无广告视频</li>
+    <li><strong>YouTube 持续对抗</strong>：YouTube 不断加强反下载措施（"Sign in to confirm you're not a bot"），yt-dlp 社区快速响应修复，这种猫鼠游戏推高了关注度</li>
+    <li><strong>youtube-dl 的完全替代</strong>：youtube-dl 已基本停止维护，yt-dlp 成为唯一活跃的替代品</li>
+    <li><strong>功能持续进化</strong>：SponsorBlock、TLS 伪装、插件系统、PO Token 等新功能不断加入</li>
+    <li><strong>Web UI 出现</strong>：社区开发 Web UI 包装器，降低了非技术用户的使用门槛</li>
+    <li><strong>Hacker News 热议</strong>：社区讨论"是否应降低 yt-dlp 的可访问性"引发广泛关注，反映其影响力之大</li>
+  </ul>
+</div>
+
+<!-- 同类对比 -->
+<div class="section">
+  <h2><span class="emoji">⚖️</span> 同类项目对比</h2>
+  <table class="comparison-table">
+    <tr>
+      <th>特性</th>
+      <th class="highlight">yt-dlp</th>
+      <th>youtube-dl</th>
+      <th>gallery-dl</th>
+      <th>lux / annie</th>
+    </tr>
+    <tr>
+      <td>支持站点数</td>
+      <td class="highlight">数千+</td>
+      <td>数百</td>
+      <td>数百（图片为主）</td>
+      <td>约 80+</td>
+    </tr>
+    <tr>
+      <td>语言</td>
+      <td>Python</td>
+      <td>Python</td>
+      <td>Python</td>
+      <td>Go</td>
+    </tr>
+    <tr>
+      <td>Stars</td>
+      <td class="highlight">164k</td>
+      <td>133k</td>
+      <td>12k</td>
+      <td>27k</td>
+    </tr>
+    <tr>
+      <td>维护状态</td>
+      <td><span class="badge badge-green">活跃</span></td>
+      <td><span class="badge badge-red">几乎停滞</span></td>
+      <td><span class="badge badge-green">活跃</span></td>
+      <td><span class="badge badge-orange">低频更新</span></td>
+    </tr>
+    <tr>
+      <td>SponsorBlock</td>
+      <td class="highlight">✅</td>
+      <td>❌</td>
+      <td>N/A</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Cookie 导入</td>
+      <td class="highlight">✅ 多浏览器</td>
+      <td>有限支持</td>
+      <td>✅</td>
+      <td>有限</td>
+    </tr>
+    <tr>
+      <td>插件系统</td>
+      <td class="highlight">✅</td>
+      <td>❌</td>
+      <td>有限</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>直播录制</td>
+      <td class="highlight">✅ 从头开始</td>
+      <td>基础支持</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>格式排序</td>
+      <td class="highlight">-S 高级排序</td>
+      <td>-f 基础</td>
+      <td>基础</td>
+      <td>基础</td>
+    </tr>
+  </table>
+  <p><strong>结论</strong>：yt-dlp 在功能丰富度、社区活跃度、站点覆盖面上全面碾压同类项目，是当之无愧的行业标杆。</p>
+</div>
+
+<!-- 适合谁使用 -->
+<div class="section">
+  <h2><span class="emoji">👥</span> 适合谁使用</h2>
+  <ul>
+    <li><strong>普通用户</strong>：想离线观看 YouTube/Bilibili 视频的人，一条命令即可完成</li>
+    <li><strong>音乐爱好者</strong>：下载 MV 或音乐视频并提取为 MP3/FLAC 音频文件</li>
+    <li><strong>内容创作者</strong>：下载素材视频、参考视频，配合 ffmpeg 进行二次创作</li>
+    <li><strong>开发者</strong>：通过 Python API 嵌入到自己的项目中，实现自动化视频处理</li>
+    <li><strong>教育工作者/学生</strong>：批量下载课程视频、讲座录像，离线学习</li>
+    <li><strong>播客听众</strong>：定时下载播客节目的音频内容</li>
+    <li><strong>隐私关注者</strong>：下载后离线观看，避免被追踪和个性化广告</li>
+  </ul>
+</div>
+
+<!-- 快速上手 -->
+<div class="section">
+  <h2><span class="emoji">🚀</span> 快速上手指南</h2>
+
+  <h3>安装</h3>
+  <div class="code-block">
+<span class="comment"># Windows (推荐)</span>
+<span class="cmd">winget</span> install yt-dlp
+
+<span class="comment"># macOS</span>
+<span class="cmd">brew</span> install yt-dlp
+
+<span class="comment"># Linux / pip 通用</span>
+<span class="cmd">pip</span> install -U <span class="flag">"yt-dlp[default]"</span>
+
+<span class="comment"># 使用官方二进制（推荐）</span>
+<span class="cmd">curl</span> -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp
+<span class="cmd">chmod</span> a+rx ~/.local/bin/yt-dlp
+  </div>
+
+  <h3>常用命令</h3>
+  <div class="code-block">
+<span class="comment"># 下载最佳质量视频（默认行为）</span>
+<span class="cmd">yt-dlp</span> <span class="url">"https://www.youtube.com/watch?v=VIDEO_ID"</span>
+
+<span class="comment"># 仅提取音频为 MP3</span>
+<span class="cmd">yt-dlp</span> <span class="flag">-x --audio-format mp3</span> <span class="url">"URL"</span>
+
+<span class="comment"># 使用预设快速下载（mp3/aac/mp4/mkv）</span>
+<span class="cmd">yt-dlp</span> <span class="flag">-t mp3</span> <span class="url">"URL"</span>
+
+<span class="comment"># 下载最高 720p 的视频</span>
+<span class="cmd">yt-dlp</span> <span class="flag">-S res:720</span> <span class="url">"URL"</span>
+
+<span class="comment"># 从浏览器导入 Cookie（下载需登录的视频）</span>
+<span class="cmd">yt-dlp</span> <span class="flag">--cookies-from-browser chrome</span> <span class="url">"URL"</span>
+
+<span class="comment"># 移除赞助片段</span>
+<span class="cmd">yt-dlp</span> <span class="flag">--sponsorblock-remove all</span> <span class="url">"URL"</span>
+
+<span class="comment"># 下载播放列表，按上传年份分类</span>
+<span class="cmd">yt-dlp</span> <span class="flag">-o "%(upload_date>%Y)s/%(title)s.%(ext)s"</span> <span class="url">"PLAYLIST_URL"</span>
+
+<span class="comment"># 并发下载 8 个分片</span>
+<span class="cmd">yt-dlp</span> <span class="flag">-N 8</span> <span class="url">"URL"</span>
+
+<span class="comment"># 下载直播从头开始</span>
+<span class="cmd">yt-dlp</span> <span class="flag">--live-from-start</span> <span class="url">"LIVE_URL"</span>
+
+<span class="comment"># 更新到 nightly 频道（推荐）</span>
+<span class="cmd">yt-dlp</span> <span class="flag">--update-to nightly</span>
+  </div>
+
+  <h3>Python API 嵌入</h3>
+  <div class="code-block">
+<span class="cmd">from</span> yt_dlp <span class="cmd">import</span> YoutubeDL
+
+URLS = [<span class="url">'https://www.youtube.com/watch?v=BaW_jenozKc'</span>]
+
+<span class="cmd">with</span> YoutubeDL({<span class="flag">'format'</span>: <span class="flag">'mp3'</span>}) <span class="cmd">as</span> ydl:
+    ydl.download(URLS)
+  </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+  <h2><span class="emoji">📊</span> 综合评分</h2>
+  <table class="score-table">
+    <tr>
+      <th>维度</th>
+      <th>评分</th>
+      <th>条形图</th>
+      <th>说明</th>
+    </tr>
+    <tr>
+      <td><strong>创新性</strong></td>
+      <td>8.0/10</td>
+      <td><div class="score-bar"><div class="score-bar-fill" style="width:80%;background:var(--gradient-1);"></div></div></td>
+      <td>SponsorBlock 集成、插件系统、TLS 伪装等创新功能；但核心模式继承自 youtube-dl</td>
+    </tr>
+    <tr>
+      <td><strong>代码质量</strong></td>
+      <td>9.0/10</td>
+      <td><div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--gradient-2);"></div></div></td>
+      <td>23,000+ commits，Extractor 架构清晰，插件机制优雅，测试覆盖良好</td>
+    </tr>
+    <tr>
+      <td><strong>实用性</strong></td>
+      <td>10/10</td>
+      <td><div class="score-bar"><div class="score-bar-fill" style="width:100%;background:var(--gradient-2);"></div></div></td>
+      <td>几乎任何人都有视频下载需求，支持数千站点，跨平台，几乎万能</td>
+    </tr>
+    <tr>
+      <td><strong>文档完善度</strong></td>
+      <td>9.5/10</td>
+      <td><div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--gradient-1);"></div></div></td>
+      <td>README 极其详尽，Wiki 丰富，CLI help 完善，Python API 有完整示例</td>
+    </tr>
+    <tr>
+      <td><strong>社区活跃度</strong></td>
+      <td>9.5/10</td>
+      <td><div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--gradient-2);"></div></div></td>
+      <td>164k Stars，1.9k Issues，590 PRs，数百贡献者，Reddit/Discord 社区活跃</td>
+    </tr>
+  </table>
+
+  <div class="total-score">
+    <div class="number">9.2</div>
+    <div class="label">综合评分 / 10</div>
+    <p style="margin-top:12px;font-size:0.95em;">🏆 <strong>顶级开源项目</strong> — 视频下载领域的绝对王者，功能、社区、文档全面领先</p>
+  </div>
+</div>
+
+<div class="footer">
+  <p>📅 分析日期：2026-05-23 | 🤖 由 AI 深度分析生成</p>
+  <p>📎 项目地址：<a href="https://github.com/yt-dlp/yt-dlp" style="color:var(--accent-blue);">github.com/yt-dlp/yt-dlp</a></p>
+</div>
+
+</body>
+</html>
