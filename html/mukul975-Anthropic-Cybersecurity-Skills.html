@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析 | Anthropic-Cybersecurity-Skills</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2128;
+    --bg-card-hover: #22272e;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-purple: #bc8cff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-cyan: #39d2c0;
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    padding: 50px 20px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(88,166,255,0.08) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+  .header h1 {
+    font-size: 2.5em;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .header .subtitle {
+    font-size: 1.15em;
+    color: var(--text-secondary);
+    position: relative;
+  }
+  .meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px 0;
+    position: relative;
+  }
+  .meta-tag {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.88em;
+    color: var(--accent-blue);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-tag .icon { font-size: 1em; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover {
+    border-color: var(--accent-blue);
+    background: var(--bg-card-hover);
+    box-shadow: 0 0 30px rgba(88,166,255,0.08);
+  }
+  .card h2 {
+    font-size: 1.45em;
+    margin-bottom: 16px;
+    padding-left: 14px;
+    border-left: 4px solid;
+    position: relative;
+  }
+  .card-intro h2 { border-left-color: var(--accent-blue); }
+  .card-arch h2 { border-left-color: var(--accent-purple); }
+  .card-scene h2 { border-left-color: var(--accent-green); }
+  .card-trend h2 { border-left-color: var(--accent-orange); }
+  .card-compare h2 { border-left-color: var(--accent-cyan); }
+  .card-who h2 { border-left-color: var(--accent-red); }
+  .card-quick h2 { border-left-color: var(--accent-blue); }
+  .card-score h2 { border-left-color: var(--accent-purple); }
+  .card p, .card li { color: var(--text-secondary); font-size: 0.95em; }
+  .card strong { color: var(--text-primary); }
+  .card ul, .card ol { padding-left: 20px; margin: 10px 0; }
+  .card li { margin-bottom: 6px; }
+  .highlight-box {
+    background: rgba(88,166,255,0.08);
+    border: 1px solid rgba(88,166,255,0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 14px 0;
+    font-size: 0.93em;
+  }
+  .highlight-box.green {
+    background: rgba(63,185,80,0.08);
+    border-color: rgba(63,185,80,0.2);
+  }
+  .highlight-box.orange {
+    background: rgba(210,153,34,0.08);
+    border-color: rgba(210,153,34,0.2);
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin: 14px 0;
+  }
+  .grid-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .grid-item h4 {
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+    font-size: 0.95em;
+  }
+  .grid-item p { font-size: 0.88em; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--bg-secondary);
+    color: var(--accent-blue);
+    font-weight: 600;
+    font-size: 0.88em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td { color: var(--text-secondary); }
+  tr:hover td { background: rgba(88,166,255,0.04); color: var(--text-primary); }
+  pre {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+  code {
+    background: rgba(88,166,255,0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 0.88em;
+    color: var(--accent-blue);
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .score-item {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .score-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .score-item:nth-child(1)::before { background: var(--gradient-1); }
+  .score-item:nth-child(2)::before { background: var(--gradient-2); }
+  .score-item:nth-child(3)::before { background: var(--gradient-3); }
+  .score-item:nth-child(4)::before { background: var(--gradient-4); }
+  .score-item:nth-child(5)::before { background: var(--gradient-5); }
+  .score-value {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin: 8px 0;
+  }
+  .score-item:nth-child(1) .score-value { color: #bc8cff; }
+  .score-item:nth-child(2) .score-value { color: #f85149; }
+  .score-item:nth-child(3) .score-value { color: #58a6ff; }
+  .score-item:nth-child(4) .score-value { color: #3fb950; }
+  .score-item:nth-child(5) .score-value { color: #d29922; }
+  .score-label { font-size: 0.85em; color: var(--text-secondary); margin-top: 4px; }
+  .score-bar {
+    height: 4px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+  .score-item:nth-child(1) .score-bar-fill { background: var(--gradient-1); }
+  .score-item:nth-child(2) .score-bar-fill { background: var(--gradient-2); }
+  .score-item:nth-child(3) .score-bar-fill { background: var(--gradient-3); }
+  .score-item:nth-child(4) .score-bar-fill { background: var(--gradient-4); }
+  .score-item:nth-child(5) .score-bar-fill { background: var(--gradient-5); }
+  .total-score {
+    text-align: center;
+    margin: 24px 0 8px;
+    padding: 24px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .total-score .number {
+    font-size: 3em;
+    font-weight: 700;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.78em;
+    font-weight: 600;
+  }
+  .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+  .badge-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+  .badge-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--gradient-1);
+    color: white;
+    font-size: 0.82em;
+    font-weight: 700;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .step { display: flex; align-items: flex-start; margin-bottom: 14px; }
+  .step-content { flex: 1; }
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 1.6em; }
+    .card { padding: 18px; }
+    .score-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Anthropic-Cybersecurity-Skills</h1>
+  <p class="subtitle">754 个结构化网络安全技能 · 让 AI Agent 拥有高级安全分析师的能力</p>
+</div>
+
+<div class="meta-bar">
+  <span class="meta-tag"><span class="icon">📁</span> mukul975/Anthropic-Cybersecurity-Skills</span>
+  <span class="meta-tag"><span class="icon">⭐</span> GitHub Trending</span>
+  <span class="meta-tag"><span class="icon">📅</span> 2026-05-24 分析</span>
+  <span class="meta-tag"><span class="icon">📜</span> Apache 2.0</span>
+  <span class="meta-tag"><span class="icon">🛡️</span> 网络安全</span>
+</div>
+
+<!-- 项目简介 -->
+<div class="card card-intro">
+  <h2>📌 项目简介与核心功能</h2>
+  <p><strong>Anthropic-Cybersecurity-Skills</strong> 是一个专为 AI Agent 打造的结构化网络安全知识库，由社区开发者 <strong>Mahipal Jangra (mukul975)</strong> 创建和维护。它包含 <strong>754 个精心设计的网络安全技能</strong>，覆盖 <strong>26 个安全领域</strong>，每个技能都遵循 <code>agentskills.io</code> 开放标准。</p>
+
+  <div class="highlight-box">
+    <strong>核心价值：</strong>全球网络安全人才缺口在 2024 年达到 480 万（ISC2 数据）。这个项目旨在通过为 AI Agent 提供结构化的高级分析师级别知识，帮助弥合这一差距——让 AI 从"通用助手"变为"专业安全分析师"。
+  </div>
+
+  <h3 style="margin-top:20px; color:var(--accent-cyan);">核心特性</h3>
+  <div class="grid-2">
+    <div class="grid-item">
+      <h4>🔑 五大框架全覆盖</h4>
+      <p>每个技能映射到 MITRE ATT&CK v18、NIST CSF 2.0、MITRE ATLAS v5.4、MITRE D3FEND v1.3、NIST AI RMF 1.0 五大行业标准框架</p>
+    </div>
+    <div class="grid-item">
+      <h4>🧠 渐进式知识加载</h4>
+      <p>Frontmatter 扫描仅 ~30 tokens/技能，完整加载 500-2000 tokens，Agent 可一次性搜索全部 754 个技能</p>
+    </div>
+    <div class="grid-item">
+      <h4>🔌 20+ 平台兼容</h4>
+      <p>即插即用支持 Claude Code、GitHub Copilot、Cursor、Gemini CLI、Codex CLI 等 20+ AI 编程平台</p>
+    </div>
+    <div class="grid-item">
+      <h4>📊 ATT&CK 全战术覆盖</h4>
+      <p>覆盖 MITRE ATT&CK 全部 14 个战术、200+ 技术，附带 Navigator 层文件用于可视化映射</p>
+    </div>
+  </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="card card-arch">
+  <h2>🏗️ 技术架构与特点</h2>
+
+  <h3 style="color:var(--accent-purple); margin-bottom:12px;">技能标准结构</h3>
+  <pre><code>skills/performing-memory-forensics-with-volatility3/
+├── SKILL.md              ← 技能定义（YAML Frontmatter + Markdown）
+├── references/
+│   ├── standards.md      ← MITRE ATT&CK, ATLAS, D3FEND, NIST 映射
+│   └── workflows.md      ← 深度技术流程参考
+├── scripts/
+│   └── process.py        ← 实用辅助脚本
+└── assets/
+    └── template.md       ← 报告模板和检查清单</code></pre>
+
+  <h3 style="color:var(--accent-purple); margin:18px 0 12px;">YAML Frontmatter 示例</h3>
+  <pre><code>---
+name: performing-memory-forensics-with-volatility3
+description: >-
+  Analyze memory dumps to extract running processes, network connections,
+  injected code, and malware artifacts using the Volatility3 framework.
+domain: cybersecurity
+subdomain: digital-forensics
+tags: [forensics, memory-analysis, volatility3, incident-response, dfir]
+atlas_techniques: [AML.T0047]
+d3fend_techniques: [D3-MA, D3-PSMD]
+nist_ai_rmf: [MEASURE-2.6]
+nist_csf: [DE.CM-01, RS.AN-03]
+version: "1.2"
+author: mukul975
+license: Apache-2.0
+---</code></pre>
+
+  <h3 style="color:var(--accent-purple); margin:18px 0 12px;">架构亮点</h3>
+  <table>
+    <tr><th>特点</th><th>说明</th></tr>
+    <tr><td><strong>渐进式披露</strong></td><td>30 tokens 扫描 → 500-2000 tokens 完整加载，不会撑爆上下文窗口</td></tr>
+    <tr><td><strong>标准化结构</strong></td><td>每个技能统一包含 When to Use → Prerequisites → Workflow → Verification 四段式</td></tr>
+    <tr><td><strong>多框架映射</strong></td><td>单一技能同时满足 5 个合规框架的审计需求</td></tr>
+    <tr><td><strong>实战导向</strong></td><td>包含可执行脚本、报告模板和工具参考，非纯理论</td></tr>
+    <tr><td><strong>NPX 一键安装</strong></td><td><code>npx skills add mukul975/Anthropic-Cybersecurity-Skills</code> 即可使用</td></tr>
+  </table>
+</div>
+
+<!-- 应用场景 -->
+<div class="card card-scene">
+  <h2>🎯 应用场景</h2>
+  <div class="grid-2">
+    <div class="grid-item">
+      <h4>🔍 威胁狩猎</h4>
+      <p>AI Agent 使用假设驱动的狩猎技能，检测无文件恶意软件、LotL 攻击、横向移动等高级威胁</p>
+    </div>
+    <div class="grid-item">
+      <h4>🔬 数字取证</h4>
+      <p>自动执行内存取证（Volatility3）、磁盘镜像、时间线重建等 DFIR 工作流</p>
+    </div>
+    <div class="grid-item">
+      <h4>☁️ 云安全审计</h4>
+      <p>跨 AWS/Azure/GCP 三大云平台的 CSPM、加固和云取证技能</p>
+    </div>
+    <div class="grid-item">
+      <h4>🛡️ SOC 运营</h4>
+      <p>SIEM 关联分析、告警分流、事件响应 Playbook、升级工作流</p>
+    </div>
+    <div class="grid-item">
+      <h4>🎯 渗透测试</h4>
+      <p>网络、Web、云、移动和无线渗透测试的结构化流程</p>
+    </div>
+    <div class="grid-item">
+      <h4>📋 合规审计</h4>
+      <p>自动映射到 NIST CSF 2.0 和 AI RMF，简化合规报告生成</p>
+    </div>
+  </div>
+</div>
+
+<!-- Trending 原因 -->
+<div class="card card-trend">
+  <h2>🔥 为什么火（Trending 原因分析）</h2>
+
+  <div class="highlight-box orange">
+    <strong>关键背景：</strong>Agent Skills 是 2025-2026 年 AI 领域最热门的新范式之一。F5 Networks、Sysdig、Backslash Security 等行业巨头都在讨论这一标准。本项目是这个趋势下安全领域最完整的实现。
+  </div>
+
+  <table>
+    <tr><th>驱动因素</th><th>详细分析</th></tr>
+    <tr>
+      <td><strong>AI Agent 时代来临</strong></td>
+      <td>随着 Claude Code、Codex CLI、Gemini CLI 等 Agent 平台爆发，为 Agent 注入专业知识成为刚需。本项目精准切入了这个时间窗口</td>
+    </tr>
+    <tr>
+      <td><strong>网络安全人才荒</strong></td>
+      <td>全球 480 万网络安全岗位空缺（ISC2 2024），企业急需 AI 辅助弥补人力不足</td>
+    </tr>
+    <tr>
+      <td><strong>前所未有的框架覆盖</strong></td>
+      <td>唯一一个将每个技能同时映射到 5 大安全框架的开源项目，合规价值极高</td>
+    </tr>
+    <tr>
+      <td><strong>agentskills.io 生态</strong></td>
+      <td>被 awesome-agent-skills、awesome-ai-security、SkillsLLM 等多个知名索引收录</td>
+    </tr>
+    <tr>
+      <td><strong>实战 vs 理论差异化</strong></td>
+      <td>不是脚本集合或检查清单，而是编码了高级分析师实际决策流程的结构化知识库</td>
+    </tr>
+    <tr>
+      <td><strong>Colorado AI 法案效应</strong></td>
+      <td>2026 年 2 月生效的 Colorado AI Act 为遵循 NIST AI RMF 的组织提供法律安全港，AI 安全合规需求激增</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 同类对比 -->
+<div class="card card-compare">
+  <h2>⚔️ 同类项目对比</h2>
+  <table>
+    <tr>
+      <th>项目</th>
+      <th>技能数</th>
+      <th>框架映射</th>
+      <th>平台兼容</th>
+      <th>特色</th>
+    </tr>
+    <tr>
+      <td><strong>Anthropic-Cybersecurity-Skills</strong></td>
+      <td>754</td>
+      <td>5 大框架</td>
+      <td>20+</td>
+      <td>唯一 5 框架全覆盖的安全技能库</td>
+    </tr>
+    <tr>
+      <td>addyosmani/agent-skills</td>
+      <td>通用</td>
+      <td>无</td>
+      <td>多平台</td>
+      <td>通用 AI 技能，非安全专精</td>
+    </tr>
+    <tr>
+      <td>browserbase/skills</td>
+      <td>浏览器</td>
+      <td>无</td>
+      <td>多平台</td>
+      <td>聚焦浏览器自动化</td>
+    </tr>
+    <tr>
+      <td>inference.sh 技能库</td>
+      <td>250+</td>
+      <td>无</td>
+      <td>自有平台</td>
+      <td>广度优先，深度不足</td>
+    </tr>
+    <tr>
+      <td>MITRE ATT&CK Navigator</td>
+      <td>—</td>
+      <td>ATT&CK</td>
+      <td>Web</td>
+      <td>纯映射可视化工具，非技能库</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box green">
+    <strong>竞争优势：</strong>在 Agent Skills 生态中，这是唯一专注于网络安全领域、并且同时覆盖 5 大安全框架的技能库。其 754 个技能的规模远超同类安全项目，渐进式加载架构也使其在 Agent 场景中性能优异。
+  </div>
+</div>
+
+<!-- 适合谁 -->
+<div class="card card-who">
+  <h2>👥 适合谁使用</h2>
+  <div class="grid-2">
+    <div class="grid-item">
+      <h4>🛡️ 安全运营工程师</h4>
+      <p>将 Claude Code / Cursor 等 AI 工具用于日常 SOC 运营、事件响应、威胁狩猎。可快速获得专家级别的操作指导。</p>
+    </div>
+    <div class="grid-item">
+      <h4>🏢 企业安全团队</h4>
+      <p>需要同时满足 MITRE ATT&CK、NIST CSF 2.0、AI RMF 等合规要求的组织，可以大幅简化审计映射工作。</p>
+    </div>
+    <div class="grid-item">
+      <h4>🤖 AI/Agent 开发者</h4>
+      <p>构建安全领域 AI Agent 的开发者，可以直接将此技能库作为 Agent 的专业知识层，无需从零构建。</p>
+    </div>
+    <div class="grid-item">
+      <h4>🎓 安全学习者</h4>
+      <p>网络安全初学者可通过 AI Agent + 此技能库获得手把手的实战指导，每个技能都有完整的 Workflow 和 Verification。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 快速上手 -->
+<div class="card card-quick">
+  <h2>🚀 快速上手指南</h2>
+
+  <h3 style="color:var(--accent-blue); margin-bottom:14px;">安装方式</h3>
+  <pre><code># 方式一：NPX 一键安装（推荐）
+npx skills add mukul975/Anthropic-Cybersecurity-Skills
+
+# 方式二：Git 克隆
+git clone https://github.com/mukul975/Anthropic-Cybersecurity-Skills.git
+cd Anthropic-Cybersecurity-Skills</code></pre>
+
+  <h3 style="color:var(--accent-blue); margin:18px 0 14px;">在 Claude Code 中使用</h3>
+  <div class="step">
+    <span class="step-number">1</span>
+    <div class="step-content">
+      <strong>安装技能库</strong><br>
+      <code>npx skills add mukul975/Anthropic-Cybersecurity-Skills</code>
+    </div>
+  </div>
+  <div class="step">
+    <span class="step-number">2</span>
+    <div class="step-content">
+      <strong>在对话中直接使用</strong><br>
+      向 Claude 提出安全分析需求，Agent 会自动扫描匹配的技能并执行结构化工作流。
+    </div>
+  </div>
+  <div class="step">
+    <span class="step-number">3</span>
+    <div class="step-content">
+      <strong>示例 Prompt</strong>
+    </div>
+  </div>
+  <pre><code># 示例：内存取证分析
+"分析这个内存转储文件中的凭据窃取痕迹"
+
+# 示例：威胁狩猎
+"使用假设驱动的方法，在日志中搜索可能的横向移动行为"
+
+# 示例：云安全审计
+"审查 AWS 环境的安全配置，检查是否符合 NIST CSF 2.0"</code></pre>
+
+  <h3 style="color:var(--accent-blue); margin:18px 0 14px;">贡献新技能</h3>
+  <pre><code># 1. Fork 并克隆仓库
+git clone https://github.com/YOUR-USERNAME/Anthropic-Cybersecurity-Skills.git
+
+# 2. 创建新技能（参考 CONTRIBUTING.md 模板）
+mkdir -p skills/your-skill-name
+# 编辑 SKILL.md, 添加 references/ 等
+
+# 3. 提交 PR
+git add . && git commit -m "Add skill: your-skill-name"
+# 在 GitHub 上创建 Pull Request</code></pre>
+</div>
+
+<!-- 综合评分 -->
+<div class="card card-score">
+  <h2>📊 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="score-value">9.0</div>
+      <div class="score-label">创新性</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-value">8.5</div>
+      <div class="score-label">代码质量</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:85%"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-value">9.5</div>
+      <div class="score-label">实用性</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-value">9.0</div>
+      <div class="score-label">文档完善度</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="score-value">8.5</div>
+      <div class="score-label">社区活跃度</div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:85%"></div></div>
+    </div>
+  </div>
+  <div class="total-score">
+    <div class="number">8.9 / 10</div>
+    <div class="score-label" style="margin-top:8px;">综合评分 · 强烈推荐</div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:16px;">
+    <strong>评分理由：</strong>
+    创新性极高——在 AI Agent 安全领域开创性地将 5 大框架统一映射；实用性突出——解决了网络安全人才短缺的刚需问题；文档质量优秀——README 结构清晰，包含完整的框架说明、使用示例和贡献指南；社区增长势头强劲——已被多个 awesome 列表和技能市场收录。唯一不足是作为社区项目，目前贡献者基数还需进一步扩大。
+  </div>
+</div>
+
+<div class="footer">
+  <p>🤖 AI 深度分析报告 · 由 Claude Code 自动生成 · 2026-05-24</p>
+  <p style="margin-top:6px;">
+    <a href="https://github.com/mukul975/Anthropic-Cybersecurity-Skills" style="color:var(--accent-blue); text-decoration:none;">GitHub 仓库</a>
+    ·
+    <a href="https://agentskills.io" style="color:var(--accent-blue); text-decoration:none;">agentskills.io</a>
+  </p>
+</div>
+
+</body>
+</html>
