@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presenton - AI演示文稿生成器 | GitHub Trending 深度分析</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2129;
+            --bg-code: #0d1117;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
+            --gradient-2: linear-gradient(135deg, #3fb950, #39d2c0);
+            --gradient-3: linear-gradient(135deg, #d29922, #f85149);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 2rem 1rem;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+        .badge.blue { color: var(--accent-blue); border-color: #1f6feb44; }
+        .badge.green { color: var(--accent-green); border-color: #23863544; }
+        .badge.purple { color: var(--accent-purple); border-color: #8957e544; }
+        .badge.orange { color: var(--accent-orange); border-color: #9e6a0344; }
+        .badge.cyan { color: var(--accent-cyan); border-color: #1b9e8f44; }
+
+        /* Section */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .icon { font-size: 1.3rem; }
+        .section p { color: var(--text-secondary); margin-bottom: 0.75rem; }
+        .section ul { padding-left: 1.5rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+        .section li { margin-bottom: 0.4rem; }
+
+        /* Feature cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+        .feature-card:hover { border-color: var(--accent-blue); }
+        .feature-card h3 {
+            font-size: 1rem;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+        .feature-card p { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+
+        /* Score table */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .score-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .score-item .label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .score-item .value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        .score-item .bar {
+            margin-top: 0.5rem;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+        .score-blue .value { color: var(--accent-blue); }
+        .score-blue .bar-fill { background: var(--accent-blue); }
+        .score-purple .value { color: var(--accent-purple); }
+        .score-purple .bar-fill { background: var(--accent-purple); }
+        .score-green .value { color: var(--accent-green); }
+        .score-green .bar-fill { background: var(--accent-green); }
+        .score-orange .value { color: var(--accent-orange); }
+        .score-orange .bar-fill { background: var(--accent-orange); }
+        .score-cyan .value { color: var(--accent-cyan); }
+        .score-cyan .bar-fill { background: var(--accent-cyan); }
+
+        /* Comparison table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--accent-blue);
+            font-weight: 600;
+            background: var(--bg-card);
+        }
+        td { color: var(--text-secondary); }
+        tr:hover td { background: var(--bg-card); }
+
+        /* Code block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+        }
+        .code-comment { color: #8b949e; }
+        .code-string { color: #a5d6ff; }
+        .code-keyword { color: #ff7b72; }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin-top: 1rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.7rem;
+            top: 0.4rem;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-secondary);
+        }
+        .timeline-item h4 {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+        }
+        .timeline-item p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .footer a { color: var(--accent-blue); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body { padding: 1rem 0.5rem; }
+            .header h1 { font-size: 1.8rem; }
+            .section { padding: 1.25rem; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Presenton</h1>
+            <p class="subtitle">开源 AI 演示文稿生成器 &amp; API — Gamma / Beautiful AI / Decktopus 的开源替代品</p>
+            <div class="badges">
+                <span class="badge blue">&#9733; ~5,900 Stars</span>
+                <span class="badge green">Apache 2.0</span>
+                <span class="badge purple">TypeScript / Python</span>
+                <span class="badge orange">Docker / Desktop</span>
+                <span class="badge cyan">Trending #1</span>
+            </div>
+        </div>
+
+        <!-- Section: Overview -->
+        <div class="section">
+            <h2><span class="icon">&#128196;</span> 项目简介 &amp; 核心功能</h2>
+            <p>Presenton 是一款完全开源的 AI 演示文稿生成工具，支持通过自然语言提示词或上传文档自动生成专业的 PPT 演示文稿。项目定位为 <strong>Gamma、Beautiful AI、Decktopus</strong> 的开源替代品，最大特色是<strong>无 SaaS 锁定、无强制订阅、完全掌控模型和数据</strong>。</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>&#127919; AI 演示文稿生成</h3>
+                    <p>从自然语言提示词或上传文档（PDF、Word 等）自动生成完整演示文稿，支持自定义幻灯片数量、语言、语调和模板。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#127912; 自定义模板 &amp; 布局</h3>
+                    <p>使用 HTML + Tailwind CSS 创建无限自定义设计模板，支持从现有 PowerPoint 文档逆向生成 AI 模板。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128274; 完全本地化 / 自托管</h3>
+                    <p>通过 Docker 一键部署或使用桌面应用（Mac/Windows/Linux），所有数据处理在本地完成，零隐私风险。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#129302; 多模型支持 (BYOK)</h3>
+                    <p>支持 OpenAI、Gemini、Anthropic、Azure、Bedrock、Fireworks、Together、Ollama、LM Studio 等十余种 LLM 提供商。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128640; 演示文稿生成 API</h3>
+                    <p>内置 RESTful API 服务，支持通过 HTTP Basic Auth 认证调用，可集成到自动化工作流中批量生成演示文稿。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128230; PPTX &amp; PDF 导出</h3>
+                    <p>生成的演示文稿可直接导出为完全可编辑的 PPTX（PowerPoint）或 PDF 格式，兼容 Office 生态。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Architecture -->
+        <div class="section">
+            <h2><span class="icon">&#9881;</span> 技术架构 &amp; 特点</h2>
+            <p>Presenton 采用 <strong>Next.js (前端) + FastAPI (后端) + Electron (桌面封装)</strong> 的三层架构，容器化部署基于 Docker。</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>层级</th>
+                        <th>技术栈</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>前端 UI</td>
+                        <td>Next.js + React + Tailwind CSS</td>
+                        <td>幻灯片编辑器，实时预览，模板管理</td>
+                    </tr>
+                    <tr>
+                        <td>后端 API</td>
+                        <td>Python FastAPI + SQLAlchemy</td>
+                        <td>LLM 调度、文档解析、演示文稿生成引擎</td>
+                    </tr>
+                    <tr>
+                        <td>桌面封装</td>
+                        <td>Electron</td>
+                        <td>原生桌面应用，支持离线使用</td>
+                    </tr>
+                    <tr>
+                        <td>AI 记忆</td>
+                        <td>Mem0 OSS + Qdrant + FastEmbed</td>
+                        <td>按演示文稿级别的 AI 上下文记忆</td>
+                    </tr>
+                    <tr>
+                        <td>文档解析</td>
+                        <td>LiteParse (OCR)</td>
+                        <td>PDF/Word 文档解析和内容提取</td>
+                    </tr>
+                    <tr>
+                        <td>图像生成</td>
+                        <td>DALL-E 3 / Gemini Flash / Pexels / Pixabay / ComfyUI</td>
+                        <td>多源图像生成和素材集成</td>
+                    </tr>
+                    <tr>
+                        <td>本地模型</td>
+                        <td>Ollama / LM Studio</td>
+                        <td>完全离线运行，GPU 加速支持</td>
+                    </tr>
+                    <tr>
+                        <td>MCP 协议</td>
+                        <td>Built-in MCP Server</td>
+                        <td>支持 Model Context Protocol 远程调用</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section: Use Cases -->
+        <div class="section">
+            <h2><span class="icon">&#127919;</span> 应用场景</h2>
+            <ul>
+                <li><strong>企业内部培训</strong> — 快速将培训文档转化为交互式演示文稿</li>
+                <li><strong>产品路演 &amp; 融资展示</strong> — 从产品描述自动生成专业 Pitch Deck</li>
+                <li><strong>学术报告</strong> — 将研究论文或数据报告转为可视化演示</li>
+                <li><strong>自动化批量生成</strong> — 通过 API 集成到 CI/CD 或数据管道，定期生成报告型演示文稿</li>
+                <li><strong>教育内容创作</strong> — 教师从课程大纲一键生成课件</li>
+                <li><strong>销售 &amp; 营销团队</strong> — 从 CRM 数据自动生成客户定制化演示</li>
+            </ul>
+        </div>
+
+        <!-- Section: Why Trending -->
+        <div class="section">
+            <h2><span class="icon">&#128293;</span> 为什么火（Trending 原因）</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>1. 填补开源 AI 演示工具空白</h4>
+                    <p>此前 AI 演示工具市场被 Gamma、Beautiful AI、Tome 等 SaaS 产品垄断，缺乏高质量的开源替代。Presenton 以 Apache 2.0 许可证填补了这一空白。</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>2. BYOK 模式击中隐私敏感用户痛点</h4>
+                    <p>支持自托管 + Ollama 本地模型，企业和个人无需将数据发送到第三方 SaaS，在数据合规和隐私方面极具吸引力。</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>3. 多模型支持降低使用门槛</h4>
+                    <p>支持十余种 LLM 提供商（包括 ChatGPT 登录直连），用户无需切换工具即可使用自己已有的 API Key 或免费账号。</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>4. API-first 设计满足企业集成需求</h4>
+                    <p>内置 REST API + MCP Server，可轻松集成到自动化工作流中，这是同类 SaaS 工具不提供的。</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>5. 社区驱动的模板生态</h4>
+                    <p>自定义模板使用 HTML + Tailwind CSS，开发者可以在一小时内创建精美模板，形成模板社区飞轮效应。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Comparison -->
+        <div class="section">
+            <h2><span class="icon">&#9878;</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>Presenton</th>
+                        <th>Gamma</th>
+                        <th>Beautiful AI</th>
+                        <th>Marp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>开源</td>
+                        <td style="color:#3fb950;">&#10004; Apache 2.0</td>
+                        <td style="color:#f85149;">&#10008; 商业 SaaS</td>
+                        <td style="color:#f85149;">&#10008; 商业 SaaS</td>
+                        <td style="color:#3fb950;">&#10004; MIT</td>
+                    </tr>
+                    <tr>
+                        <td>自托管</td>
+                        <td style="color:#3fb950;">&#10004; Docker / Desktop</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                        <td style="color:#3fb950;">&#10004; 本地 CLI</td>
+                    </tr>
+                    <tr>
+                        <td>AI 生成</td>
+                        <td style="color:#3fb950;">&#10004; 多模型</td>
+                        <td style="color:#3fb950;">&#10004; 内置 AI</td>
+                        <td style="color:#3fb950;">&#10004; DesignerBot</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>PPTX 导出</td>
+                        <td style="color:#3fb950;">&#10004; 完全可编辑</td>
+                        <td style="color:#d29922;">~ 有限</td>
+                        <td style="color:#3fb950;">&#10004;</td>
+                        <td style="color:#3fb950;">&#10004;</td>
+                    </tr>
+                    <tr>
+                        <td>API 接口</td>
+                        <td style="color:#3fb950;">&#10004; REST API + MCP</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                        <td style="color:#d29922;">~ 企业版</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>本地模型</td>
+                        <td style="color:#3fb950;">&#10004; Ollama / LM Studio</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                        <td style="color:#f85149;">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>自定义模板</td>
+                        <td style="color:#3fb950;">&#10004; HTML+Tailwind</td>
+                        <td style="color:#d29922;">~ 有限</td>
+                        <td style="color:#3fb950;">&#10004; 品牌模板</td>
+                        <td style="color:#3fb950;">&#10004; Markdown+CSS</td>
+                    </tr>
+                    <tr>
+                        <td>价格</td>
+                        <td style="color:#3fb950;">免费 (仅付 API 费)</td>
+                        <td>免费版受限 / Pro $10/月</td>
+                        <td>Pro $12/月</td>
+                        <td style="color:#3fb950;">免费</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section: Who Should Use -->
+        <div class="section">
+            <h2><span class="icon">&#128100;</span> 适合谁使用</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>&#128187; 开发者 &amp; 工程师</h3>
+                    <p>需要 API 集成到自动化流程、喜欢命令行和 Docker 部署方式的技术用户。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#127970; 企业 IT 团队</h3>
+                    <p>需要自托管 AI 工具、数据不出内网的企业。支持 SSO 认证和批量部署。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128218; 教育工作者</h3>
+                    <p>需要快速将课程资料转化为课件的老师和培训师。免费且本地运行。</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128200; 数据分析师</h3>
+                    <p>需要定期将数据报告生成演示文稿的分析师。支持 CSV 文件导入和 API 批量生成。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Quick Start -->
+        <div class="section">
+            <h2><span class="icon">&#9889;</span> 快速上手指南</h2>
+            <p style="margin-bottom:1rem;"><strong>方式一：Docker 一键启动（推荐）</strong></p>
+            <div class="code-block"><span class="code-comment"># 拉取并运行 Presenton</span>
+docker run -it --name presenton -p 5000:80 \
+  -v <span class="code-string">"./app_data:/app_data"</span> \
+  ghcr.io/presenton/presenton:latest
+
+<span class="code-comment"># 使用 OpenAI 模型</span>
+docker run -it --name presenton -p 5000:80 \
+  -e <span class="code-string">LLM="openai"</span> \
+  -e <span class="code-string">OPENAI_API_KEY="sk-xxx"</span> \
+  -e <span class="code-string">IMAGE_PROVIDER="dall-e-3"</span> \
+  -v <span class="code-string">"./app_data:/app_data"</span> \
+  ghcr.io/presenton/presenton:latest
+
+<span class="code-comment"># 使用 Ollama 本地模型（完全离线）</span>
+docker run -it --name presenton -p 5000:80 \
+  -e <span class="code-string">LLM="ollama"</span> \
+  -e <span class="code-string">OLLAMA_MODEL="llama3.2:3b"</span> \
+  -v <span class="code-string">"./app_data:/app_data"</span> \
+  ghcr.io/presenton/presenton:latest</div>
+
+            <p style="margin-top:1.5rem;margin-bottom:1rem;"><strong>方式二：API 调用生成演示文稿</strong></p>
+            <div class="code-block">curl -u admin:password \
+  -X POST http://localhost:5000/api/v1/ppt/presentation/generate \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d <span class="code-string">'{
+    "content": "AI 技术在金融领域的应用",
+    "n_slides": 8,
+    "language": "Chinese",
+    "template": "general",
+    "export_as": "pptx"
+  }'</span>
+
+<span class="code-comment"># 返回结果</span>
+{
+  <span class="code-string">"presentation_id"</span>: <span class="code-string">"d3000f96-..."</span>,
+  <span class="code-string">"path"</span>: <span class="code-string">"/app_data/.../AI_技术在金融领域的应用.pptx"</span>,
+  <span class="code-string">"edit_path"</span>: <span class="code-string">"/presentation?id=d3000f96-..."</span>
+}</div>
+
+            <p style="margin-top:1.5rem;margin-bottom:1rem;"><strong>方式三：桌面应用</strong></p>
+            <div class="code-block"><span class="code-comment"># 克隆仓库并安装依赖</span>
+git clone https://github.com/presenton/presenton.git
+cd presenton/electron
+npm run setup:env
+
+<span class="code-comment"># 开发模式运行</span>
+npm run dev</div>
+        </div>
+
+        <!-- Section: Scores -->
+        <div class="section">
+            <h2><span class="icon">&#127942;</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item score-purple">
+                    <div class="label">创新性</div>
+                    <div class="value">8.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+                </div>
+                <div class="score-item score-blue">
+                    <div class="label">代码质量</div>
+                    <div class="value">8.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:80%"></div></div>
+                </div>
+                <div class="score-item score-green">
+                    <div class="label">实用性</div>
+                    <div class="value">9.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item score-orange">
+                    <div class="label">文档完善度</div>
+                    <div class="value">9.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item score-cyan">
+                    <div class="label">社区活跃度</div>
+                    <div class="value">8.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:1.5rem;">
+                <span style="font-size:1.5rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">综合评分: 8.6 / 10</span>
+            </div>
+        </div>
+
+        <!-- Section: Summary -->
+        <div class="section">
+            <h2><span class="icon">&#128161;</span> 分析总结</h2>
+            <p>Presenton 是目前 GitHub 上最成熟的开源 AI 演示文稿生成项目。它精准切中了市场痛点：<strong>AI 演示工具市场缺乏高质量开源替代品</strong>。通过 BYOK（自带密钥）模式和多模型支持，它为用户提供了前所未有的灵活性。</p>
+            <p>项目的核心竞争力在于：1）<strong>完全开源免费</strong>（Apache 2.0），2）<strong>多部署方式</strong>（Docker / 桌面 / API），3）<strong>多模型支持</strong>（从 OpenAI 到 Ollama 本地模型），4）<strong>企业级 API</strong>（REST + MCP）。文档质量极高，部署指南覆盖了所有主流云平台和模型提供商。</p>
+            <p>适合对数据隐私有要求的企业、需要批量生成演示文稿的自动化场景，以及希望摆脱 SaaS 订阅的个人用户。随着模板生态的成熟，Presenton 有潜力成为 AI 演示工具领域的 "Stable Diffusion"。</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>GitHub: <a href="https://github.com/presenton/presenton" target="_blank">presenton/presenton</a> | 官网: <a href="https://presenton.ai" target="_blank">presenton.ai</a></p>
+            <p style="margin-top:0.5rem;">&#129302; 由 AI 自动分析生成 | Powered by Claude Code | 2026-05-24</p>
+        </div>
+    </div>
+</body>
+</html>
