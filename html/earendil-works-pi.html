@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析 | earendil-works/pi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+        }
+        .header h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            font-size: 1.1em;
+            color: #8b949e;
+            margin-bottom: 20px;
+        }
+        .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid #30363d;
+            background: #161b22;
+        }
+        .badge-stars { color: #e3b341; border-color: #e3b34144; }
+        .badge-forks { color: #58a6ff; border-color: #58a6ff44; }
+        .badge-lang { color: #bc8cff; border-color: #bc8cff44; }
+        .badge-org { color: #f778ba; border-color: #f778ba44; }
+        .badge-license { color: #7ee787; border-color: #7ee78744; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #388bfd55; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.1em;
+            color: #58a6ff;
+            margin: 18px 0 10px;
+        }
+        .card p, .card li { color: #b1bac4; line-height: 1.8; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 6px; }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .label { font-size: 0.85em; color: #8b949e; margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-item .bar-bg {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9em;
+        }
+        .data-table th {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 2px solid #21262d;
+            font-weight: 600;
+        }
+        .data-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        .data-table tr:hover td { background: #1c2128; }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            background: #1c2128;
+            color: #8b949e;
+            margin: 1px 2px;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 14px 0;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.88em;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+        .code-comment { color: #8b949e; }
+        .code-cmd { color: #79c0ff; }
+        .code-string { color: #a5d6ff; }
+
+        /* Quick Start Steps */
+        .steps { counter-reset: step; }
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .step-num {
+            min-width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            color: #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95em;
+            flex-shrink: 0;
+        }
+        .step-content h4 { color: #e6edf3; margin-bottom: 4px; }
+        .step-content p { color: #8b949e; font-size: 0.92em; }
+
+        /* Trending Reason */
+        .trend-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .trend-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .trend-card .trend-icon { font-size: 1.5em; margin-bottom: 8px; }
+        .trend-card .trend-title { font-weight: 600; color: #e6edf3; margin-bottom: 6px; }
+        .trend-card .trend-desc { color: #8b949e; font-size: 0.9em; }
+
+        /* Audience */
+        .audience-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .audience-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .audience-item .audience-emoji { font-size: 2em; margin-bottom: 8px; }
+        .audience-item .audience-name { font-weight: 600; color: #e6edf3; margin-bottom: 4px; }
+        .audience-item .audience-desc { color: #8b949e; font-size: 0.85em; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 20px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 12px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .data-table { font-size: 0.8em; }
+            .data-table th, .data-table td { padding: 8px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <h1>earendil-works/pi</h1>
+        <p class="subtitle">极简主义 AI 编码代理工具包 | Unix 哲学驱动的多模型 Agent 引擎</p>
+        <div class="badges">
+            <span class="badge badge-stars">&#9733; 53.8k Stars</span>
+            <span class="badge badge-forks">&#128278; 6.4k Forks</span>
+            <span class="badge badge-lang">TypeScript</span>
+            <span class="badge badge-org">Earendil Works</span>
+            <span class="badge badge-license">MIT License</span>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">&#128218;</span> 项目简介与核心功能</h2>
+        <p>Pi 是一个开源 AI Agent 工具包（Agent Harness），由 <strong>Mario Zechner</strong>（badlogic）创建，2026 年 5 月从 <code>badlogic/pi-mono</code> 迁移至 <code>earendil-works/pi</code> 组织。项目秉持 <strong>Unix 哲学</strong>：每个组件做好一件事，通过组合产生强大能力。</p>
+
+        <h3>核心组件</h3>
+        <table class="data-table">
+            <thead>
+                <tr><th>包名</th><th>功能</th><th>定位</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>pi-coding-agent</code></td>
+                    <td>交互式编码代理 CLI</td>
+                    <td><span class="tag">核心</span></td>
+                </tr>
+                <tr>
+                    <td><code>pi-agent-core</code></td>
+                    <td>Agent 运行时（工具调用 + 状态管理）</td>
+                    <td><span class="tag">引擎</span></td>
+                </tr>
+                <tr>
+                    <td><code>pi-ai</code></td>
+                    <td>统一多提供商 LLM API</td>
+                    <td><span class="tag">核心</span></td>
+                </tr>
+                <tr>
+                    <td><code>pi-tui</code></td>
+                    <td>终端 UI 库（差分渲染）</td>
+                    <td><span class="tag">界面</span></td>
+                </tr>
+                <tr>
+                    <td><code>pi-chat</code></td>
+                    <td>Slack/Discord/Telegram 聊天机器人</td>
+                    <td><span class="tag">集成</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>核心亮点</h3>
+        <ul>
+            <li><strong>统一 LLM API</strong> — 一套 API 无缝切换 OpenAI、Anthropic、Google、本地模型（vLLM/MLX），无需改代码</li>
+            <li><strong>自扩展设计</strong> — TypeScript 插件 API，可编写自定义工具和扩展</li>
+            <li><strong>本地模型优先</strong> — 原生支持 vLLM Pod 和 Apple Silicon (MLX-Swift)，离线可用</li>
+            <li><strong>供应链安全</strong> — 依赖精确锁定、shrinkwrap、npm audit 签名验证、CI 审计</li>
+            <li><strong>OSS 会话共享</strong> — <code>pi-share-hf</code> 将编码会话发布至 HuggingFace，帮助改进 Agent</li>
+        </ul>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">&#9881;</span> 技术架构与特点</h2>
+
+        <h3>架构分层</h3>
+        <div class="code-block">
+<span class="code-comment">┌─────────────────────────────────────────┐</span>
+<span class="code-comment">│        pi-coding-agent (CLI 层)          │</span>
+<span class="code-comment">│  交互式终端、用户输入、命令处理           │</span>
+<span class="code-comment">├─────────────────────────────────────────┤</span>
+<span class="code-comment">│        pi-agent-core (运行时层)          │</span>
+<span class="code-comment">│  Agent Loop、工具调用、状态管理           │</span>
+<span class="code-comment">│  扩展加载、事件系统                       │</span>
+<span class="code-comment">├─────────────────────────────────────────┤</span>
+<span class="code-comment">│           pi-ai (LLM 抽象层)             │</span>
+<span class="code-comment">│  统一 API：OpenAI / Anthropic / Google    │</span>
+<span class="code-comment">│  本地模型：vLLM / MLX / Ollama           │</span>
+<span class="code-comment">├─────────────────────────────────────────┤</span>
+<span class="code-comment">│           pi-tui (渲染层)                │</span>
+<span class="code-comment">│  差分渲染、Markdown 流式输出              │</span>
+<span class="code-comment">└─────────────────────────────────────────┘</span>
+        </div>
+
+        <h3>关键技术特点</h3>
+        <ul>
+            <li><strong>TypeScript 全栈</strong> — 统一语言，类型安全，Node.js/Bun 双运行时支持</li>
+            <li><strong>Monorepo 架构</strong> — npm workspaces，统一构建和测试</li>
+            <li><strong>差分渲染引擎</strong> — pi-tui 实现终端高效增量更新，流畅展示 Agent 思考过程</li>
+            <li><strong>Agent Loop</strong> — 处理用户消息 → 执行工具调用 → 反馈结果的完整编排循环</li>
+            <li><strong>安全供应链</strong> — 依赖精确版本锁定、pre-commit 钩子、npm audit 签名、shrinkwrap 生成</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">&#127919;</span> 应用场景</h2>
+        <ul>
+            <li><strong>日常编码助手</strong> — 终端内交互式 AI 编码，支持多文件编辑、Git 操作、代码审查</li>
+            <li><strong>本地/离线开发</strong> — 搭配 vLLM 或 MLX 在本地运行模型，数据不出本机</li>
+            <li><strong>团队 ChatOps</strong> — 通过 pi-chat 桥接 Slack/Discord/Telegram，实现自动化工作流</li>
+            <li><strong>AI Agent 研究</strong> — 基于 pi-agent-core 构建自定义 Agent，研究工具调用和推理策略</li>
+            <li><strong>多模型对比</strong> — 通过统一 API 快速切换不同 LLM 提供商，对比效果</li>
+            <li><strong>开源协作</strong> — 使用 pi-share-hf 共享编码会话，贡献真实 Agent 使用数据</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="icon">&#128293;</span> 为什么 Trending</h2>
+        <div class="trend-cards">
+            <div class="trend-card">
+                <div class="trend-icon">&#127759;</div>
+                <div class="trend-title">项目迁移引爆关注</div>
+                <div class="trend-desc">2026 年 5 月从 badlogic/pi-mono 迁移至 earendil-works/pi 组织，迁移本身引发大量讨论和 Star 增长</div>
+            </div>
+            <div class="trend-card">
+                <div class="trend-icon">&#128640;</div>
+                <div class="trend-title">Unix 哲学回归</div>
+                <div class="trend-desc">在 Agent 工具纷纷走向重型平台化时，Pi 坚持极简 Unix 风格，"一个工具做好一件事"的理念引起开发者共鸣</div>
+            </div>
+            <div class="trend-card">
+                <div class="trend-icon">&#127751;</div>
+                <div class="trend-title">本地模型支持领先</div>
+                <div class="trend-desc">Reddit 社区高度评价其本地 LLM 支持："Pi 让本地模型从勉强可用变成了不需要云端"——r/LocalLLaMA</div>
+            </div>
+            <div class="trend-card">
+                <div class="trend-icon">&#128272;</div>
+                <div class="trend-title">供应链安全标杆</div>
+                <div class="trend-desc">精确依赖锁定、npm audit 签名验证、CI 自动审计——在 AI Agent 领域的安全实践远超同类项目</div>
+            </div>
+            <div class="trend-card">
+                <div class="trend-icon">&#128640;</div>
+                <div class="trend-title">生态快速扩张</div>
+                <div class="trend-desc">OpenClaw 基于 Pi 构建；扩展生态（review、tutorial、chat、oh-my-pi）快速成长</div>
+            </div>
+            <div class="trend-card">
+                <div class="trend-icon">&#128218;</div>
+                <div class="trend-title">Armin Ronacher 背书</div>
+                <div class="trend-desc">Flask 作者 Armin Ronacher 撰文称 Pi 是"软件开发的未来一瞥"，引发社区广泛关注</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="card">
+        <h2><span class="icon">&#9878;</span> 同类项目对比</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th style="color: #7ee787;">Pi</th>
+                    <th>Claude Code</th>
+                    <th>Cursor</th>
+                    <th>Aider</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>定位</td>
+                    <td style="color: #7ee787;">Unix 风格 CLI Agent</td>
+                    <td>终端原生 Agent</td>
+                    <td>AI IDE</td>
+                    <td>CLI 配对编程</td>
+                </tr>
+                <tr>
+                    <td>多模型支持</td>
+                    <td style="color: #7ee787;">OpenAI/Anthropic/Google/本地</td>
+                    <td>Claude 专属</td>
+                    <td>多模型（API Key）</td>
+                    <td>OpenAI/Anthropic</td>
+                </tr>
+                <tr>
+                    <td>本地模型</td>
+                    <td style="color: #7ee787;">vLLM / MLX / Ollama 原生</td>
+                    <td>不支持</td>
+                    <td>有限支持</td>
+                    <td>通过 API 代理</td>
+                </tr>
+                <tr>
+                    <td>扩展系统</td>
+                    <td style="color: #7ee787;">TypeScript 插件 API</td>
+                    <td>无官方插件</td>
+                    <td>Extensions</td>
+                    <td>Limited</td>
+                </tr>
+                <tr>
+                    <td>开源</td>
+                    <td style="color: #7ee787;">MIT</td>
+                    <td>闭源</td>
+                    <td>闭源</td>
+                    <td>Apache 2.0</td>
+                </tr>
+                <tr>
+                    <td>供应链安全</td>
+                    <td style="color: #7ee787;">精确锁定 + 签名审计</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                    <td>标准</td>
+                </tr>
+                <tr>
+                    <td>学习曲线</td>
+                    <td style="color: #7ee787;">中等</td>
+                    <td>低</td>
+                    <td>低</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td>Stars</td>
+                    <td style="color: #7ee787;">53.8k</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                    <td>~30k</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 14px; color: #8b949e; font-size: 0.9em;">
+            <strong>一句话总结</strong>：Cursor 赢在 IDE 体验，Claude Code 赢在推理质量，Pi 赢在 Unix 哲学和本地模型自由。
+        </p>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">&#128101;</span> 适合谁使用</h2>
+        <div class="audience-list">
+            <div class="audience-item">
+                <div class="audience-emoji">&#128187;</div>
+                <div class="audience-name">终端爱好者</div>
+                <div class="audience-desc">喜欢在终端工作，偏好 CLI 而非 IDE</div>
+            </div>
+            <div class="audience-item">
+                <div class="audience-emoji">&#128274;</div>
+                <div class="audience-name">隐私优先开发者</div>
+                <div class="audience-desc">需要在本地运行模型，数据不能离开本机</div>
+            </div>
+            <div class="audience-item">
+                <div class="audience-emoji">&#128300;</div>
+                <div class="audience-name">AI Agent 研究者</div>
+                <div class="audience-desc">需要构建自定义 Agent 或研究 LLM 工具调用</div>
+            </div>
+            <div class="audience-item">
+                <div class="audience-emoji">&#127760;</div>
+                <div class="audience-name">多模型使用者</div>
+                <div class="audience-desc">需要在多个 LLM 提供商间灵活切换</div>
+            </div>
+            <div class="audience-item">
+                <div class="audience-emoji">&#128736;</div>
+                <div class="audience-name">扩展开发者</div>
+                <div class="audience-desc">想为编码 Agent 编写自定义工具和插件</div>
+            </div>
+            <div class="audience-item">
+                <div class="audience-emoji">&#128013;</div>
+                <div class="audience-name">开源贡献者</div>
+                <div class="audience-desc">MIT 开源，欢迎贡献，有清晰的 AGENTS.md 规范</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">&#9889;</span> 快速上手指南</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>安装 Pi</h4>
+                    <p>通过 npm 全局安装编码代理</p>
+                    <div class="code-block"><span class="code-cmd">npm install -g</span> @earendil-works/pi-coding-agent</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>配置 API Key</h4>
+                    <p>设置至少一个 LLM 提供商的密钥（支持 OpenAI、Anthropic、Google 等）</p>
+                    <div class="code-block"><span class="code-cmd">export</span> ANTHROPIC_API_KEY=<span class="code-string">"sk-..."</span>
+<span class="code-cmd">export</span> OPENAI_API_KEY=<span class="code-string">"sk-..."</span></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>启动 Agent</h4>
+                    <p>在项目目录中启动交互式编码代理</p>
+                    <div class="code-block"><span class="code-cmd">cd</span> your-project
+<span class="code-cmd">pi</span></div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>安装扩展（可选）</h4>
+                    <p>添加代码审查、教程等扩展功能</p>
+                    <div class="code-block"><span class="code-cmd">pi install</span> npm:@earendil-works/pi-review
+<span class="code-cmd">pi install</span> npm:@earendil-works/pi-tutorial</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <h4>从源码构建（开发者）</h4>
+                    <p>克隆仓库并本地构建</p>
+                    <div class="code-block"><span class="code-cmd">git clone</span> https://github.com/earendil-works/pi.git
+<span class="code-cmd">cd</span> pi
+<span class="code-cmd">npm install</span> --ignore-scripts
+<span class="code-cmd">npm run</span> build
+./pi-test.sh  <span class="code-comment"># 从源码运行</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">&#11088;</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value">8.5</div>
+                <div class="bar-bg"><div class="bar-fill" style="width: 85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value">9.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value">9.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value">8.0</div>
+                <div class="bar-bg"><div class="bar-fill" style="width: 80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value">9.5</div>
+                <div class="bar-bg"><div class="bar-fill" style="width: 95%"></div></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid #21262d;">
+            <span style="font-size: 0.9em; color: #8b949e;">综合评分</span><br>
+            <span style="font-size: 2.8em; font-weight: 800; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">8.8</span>
+            <span style="font-size: 1.2em; color: #8b949e;"> / 10</span>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>分析日期：2026-05-25 | 数据来源：<a href="https://github.com/earendil-works/pi" target="_blank">GitHub</a> | <a href="https://pi.dev" target="_blank">pi.dev</a></p>
+    <p style="margin-top: 8px;">由 AI 自动分析生成 | Powered by Claude Code</p>
+</div>
+
+</body>
+</html>
