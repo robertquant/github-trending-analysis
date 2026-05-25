@@ -1,521 +1,603 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Understand-Anything 深度分析 | GitHub Trending</title>
-<style>
-  :root {
-    --bg: #0d1117;
-    --card-bg: #161b22;
-    --border: #30363d;
-    --text: #c9d1d9;
-    --text-secondary: #8b949e;
-    --accent: #58a6ff;
-    --accent-green: #3fb950;
-    --accent-purple: #bc8cff;
-    --accent-orange: #f0883e;
-    --accent-pink: #f778ba;
-    --accent-yellow: #e3b341;
-    --gradient-1: linear-gradient(135deg, #58a6ff, #bc8cff);
-    --gradient-2: linear-gradient(135deg, #3fb950, #58a6ff);
-    --gradient-3: linear-gradient(135deg, #f0883e, #f778ba);
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.7;
-    padding: 20px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .header {
-    text-align: center;
-    padding: 40px 20px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 30px;
-  }
-  .header h1 {
-    font-size: 2.4em;
-    background: var(--gradient-1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 10px;
-  }
-  .header .subtitle {
-    color: var(--text-secondary);
-    font-size: 1.1em;
-  }
-  .header .meta {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 15px;
-    flex-wrap: wrap;
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.85em;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-  }
-  .badge .icon { font-size: 1.1em; }
-  .section {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px;
-    margin-bottom: 24px;
-  }
-  .section h2 {
-    font-size: 1.4em;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-  .section h2 .icon { margin-right: 8px; }
-  .gradient-text-green { background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .gradient-text-blue { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .gradient-text-orange { background: var(--gradient-3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .section p { margin-bottom: 12px; color: var(--text); }
-  .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
-  }
-  .feature-card {
-    background: rgba(88, 166, 255, 0.05);
-    border: 1px solid rgba(88, 166, 255, 0.15);
-    border-radius: 10px;
-    padding: 18px;
-  }
-  .feature-card h3 {
-    color: var(--accent);
-    font-size: 1.05em;
-    margin-bottom: 8px;
-  }
-  .feature-card p {
-    color: var(--text-secondary);
-    font-size: 0.92em;
-    margin-bottom: 0;
-  }
-  .code-block {
-    background: #0d1117;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin: 12px 0;
-    overflow-x: auto;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 0.88em;
-    line-height: 1.6;
-  }
-  .code-block .prompt { color: var(--accent-green); }
-  .code-block .comment { color: var(--text-secondary); }
-  .code-block .cmd { color: var(--accent); }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 12px 0;
-  }
-  th, td {
-    padding: 10px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  th {
-    background: rgba(88, 166, 255, 0.1);
-    color: var(--accent);
-    font-weight: 600;
-    font-size: 0.92em;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  td { color: var(--text); font-size: 0.93em; }
-  tr:hover td { background: rgba(88, 166, 255, 0.03); }
-  .score-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
-    margin-top: 16px;
-  }
-  .score-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px;
-    text-align: center;
-  }
-  .score-card .label {
-    color: var(--text-secondary);
-    font-size: 0.85em;
-    margin-bottom: 8px;
-  }
-  .score-card .value {
-    font-size: 2em;
-    font-weight: 700;
-  }
-  .score-card .bar {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border);
-    margin-top: 10px;
-    overflow: hidden;
-  }
-  .score-card .bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.6s ease;
-  }
-  .s9 { color: var(--accent-green); }
-  .s8 { color: var(--accent); }
-  .s7 { color: var(--accent-orange); }
-  .bar-9 { background: var(--accent-green); }
-  .bar-8 { background: var(--accent); }
-  .bar-7 { background: var(--accent-orange); }
-  .agent-table { margin-top: 12px; }
-  .agent-table td:first-child {
-    font-family: 'SF Mono', monospace;
-    color: var(--accent-purple);
-    font-size: 0.9em;
-  }
-  .compare-row { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-  .compare-item {
-    flex: 1;
-    min-width: 200px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-  }
-  .compare-item h4 { color: var(--accent); margin-bottom: 8px; }
-  .compare-item p { color: var(--text-secondary); font-size: 0.9em; }
-  .compare-item .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.78em;
-    margin-top: 8px;
-  }
-  .tag-commercial { background: rgba(240, 136, 62, 0.15); color: var(--accent-orange); }
-  .tag-opensource { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
-  .highlight-box {
-    background: linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(188, 140, 255, 0.08));
-    border-left: 3px solid var(--accent);
-    border-radius: 0 10px 10px 0;
-    padding: 18px 22px;
-    margin: 16px 0;
-  }
-  .highlight-box p { margin-bottom: 0; }
-  .scenario-list {
-    list-style: none;
-    padding: 0;
-  }
-  .scenario-list li {
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  .scenario-list li:last-child { border-bottom: none; }
-  .scenario-list .emoji { font-size: 1.2em; flex-shrink: 0; }
-  .scenario-list .text strong { color: var(--accent); }
-  .footer {
-    text-align: center;
-    padding: 30px 20px;
-    color: var(--text-secondary);
-    font-size: 0.85em;
-    border-top: 1px solid var(--border);
-    margin-top: 30px;
-  }
-  @media (max-width: 600px) {
-    body { padding: 10px; }
-    .header h1 { font-size: 1.6em; }
-    .section { padding: 18px; }
-    .feature-grid { grid-template-columns: 1fr; }
-    .score-container { grid-template-columns: 1fr 1fr; }
-    .compare-row { flex-direction: column; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understand-Anything 深度分析 | GitHub Trending</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            border-bottom: 1px solid #21262d;
+            margin-bottom: 2.5rem;
+        }
+        .hero h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.6rem;
+        }
+        .hero .tagline {
+            font-size: 1.1rem;
+            color: #8b949e;
+            font-style: italic;
+        }
+        .meta-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.2rem;
+            font-size: 0.9rem;
+        }
+        .meta-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .meta-item .label { color: #8b949e; }
+        .meta-item .value { color: #58a6ff; font-weight: 600; }
+
+        /* Score Overview */
+        .score-overview {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 2.5rem;
+        }
+        .score-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.2rem 0.8rem;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .score-card:hover { transform: translateY(-3px); border-color: #58a6ff; }
+        .score-card .score-title { font-size: 0.75rem; color: #8b949e; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .score-card .score-value { font-size: 1.8rem; font-weight: 700; }
+        .score-card .score-bar { width: 100%; height: 4px; background: #21262d; border-radius: 2px; margin-top: 0.6rem; overflow: hidden; }
+        .score-card .score-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+        .s-blue .score-value { color: #58a6ff; }
+        .s-blue .score-fill { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
+        .s-purple .score-value { color: #bc8cff; }
+        .s-purple .score-fill { background: linear-gradient(90deg, #bc8cff, #d2a8ff); }
+        .s-green .score-value { color: #3fb950; }
+        .s-green .score-fill { background: linear-gradient(90deg, #3fb950, #56d364); }
+        .s-orange .score-value { color: #d29922; }
+        .s-orange .score-fill { background: linear-gradient(90deg, #d29922, #e3b341); }
+        .s-pink .score-value { color: #f778ba; }
+        .s-pink .score-fill { background: linear-gradient(90deg, #f778ba, #ff9bce); }
+
+        /* Section Cards */
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        .section:hover { border-color: #484f58; }
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .icon { font-size: 1.3rem; }
+        .section p, .section li { color: #b1bac4; font-size: 0.95rem; }
+        .section ul { padding-left: 1.2rem; }
+        .section li { margin-bottom: 0.5rem; }
+        .section li::marker { color: #58a6ff; }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.08), rgba(188,140,255,0.08));
+            border-left: 3px solid #58a6ff;
+            padding: 1rem 1.2rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+        .highlight-box p { color: #c9d1d9; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .feature-item .fi-title { color: #58a6ff; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .feature-item .fi-desc { color: #8b949e; font-size: 0.85rem; }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        th {
+            background: #21262d;
+            color: #c9d1d9;
+            padding: 0.7rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        th:first-child { border-radius: 8px 0 0 0; }
+        th:last-child { border-radius: 0 8px 0 0; }
+        td {
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        tr:hover td { background: rgba(88,166,255,0.04); }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .badge-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+        .badge-blue { background: rgba(88,166,255,0.15); color: #58a6ff; }
+        .badge-orange { background: rgba(210,153,34,0.15); color: #d29922; }
+        .badge-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .code-block code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .cmd { color: #79c0ff; }
+
+        /* Who Section */
+        .who-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        .who-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .who-card .who-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .who-card .who-title { color: #c9d1d9; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .who-card .who-desc { color: #8b949e; font-size: 0.8rem; }
+
+        /* Architecture Diagram */
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.2rem 0;
+        }
+        .arch-node {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            color: #c9d1d9;
+            text-align: center;
+        }
+        .arch-node.primary { border-color: #58a6ff; color: #58a6ff; }
+        .arch-arrow { color: #484f58; font-size: 1.2rem; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid #21262d;
+            margin-top: 2rem;
+            color: #484f58;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .hero h1 { font-size: 1.6rem; }
+            .score-overview { grid-template-columns: repeat(3, 1fr); }
+            .feature-grid, .who-grid { grid-template-columns: 1fr; }
+            .meta-row { gap: 0.5rem; }
+        }
+        @media (max-width: 480px) {
+            .score-overview { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <h1>Understand-Anything</h1>
+            <div class="tagline">"Graphs that teach &gt; graphs that impress"</div>
+            <div class="meta-row">
+                <div class="meta-item"><span class="label">Author</span><span class="value">Yuxiang Lin (Lum1104)</span></div>
+                <div class="meta-item"><span class="label">Stars</span><span class="value">~22.5k</span></div>
+                <div class="meta-item"><span class="label">License</span><span class="value">MIT</span></div>
+                <div class="meta-item"><span class="label">Date</span><span class="value">2026-05-26</span></div>
+            </div>
+        </div>
 
-<div class="header">
-  <h1>Understand-Anything</h1>
-  <div class="subtitle">将任意代码库转化为可交互的知识图谱</div>
-  <div class="meta">
-    <span class="badge"><span class="icon">⭐</span> 15.1k+ Stars</span>
-    <span class="badge"><span class="icon">📜</span> MIT License</span>
-    <span class="badge"><span class="icon">🔧</span> Claude Code Plugin</span>
-    <span class="badge"><span class="icon">📅</span> 2026-05-22 分析</span>
-  </div>
-</div>
+        <!-- Score Overview -->
+        <div class="score-overview">
+            <div class="score-card s-purple">
+                <div class="score-title">创新性</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-card s-blue">
+                <div class="score-title">代码质量</div>
+                <div class="score-value">8.5</div>
+                <div class="score-bar"><div class="score-fill" style="width:85%"></div></div>
+            </div>
+            <div class="score-card s-green">
+                <div class="score-title">实用性</div>
+                <div class="score-value">9.5</div>
+                <div class="score-bar"><div class="score-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-card s-orange">
+                <div class="score-title">文档完善度</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-card s-pink">
+                <div class="score-title">社区活跃度</div>
+                <div class="score-value">9.0</div>
+                <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+            </div>
+        </div>
 
-<!-- 项目简介 -->
-<div class="section">
-  <h2><span class="icon">📖</span><span class="gradient-text-blue">项目简介与核心功能</span></h2>
-  <p><strong>Understand-Anything</strong> 是由 <strong>Yuxiang Lin (Lum1104)</strong> 开发的开源工具，核心理念是 <em>"Graphs that teach &gt; graphs that impress"</em>——图谱的价值在于教学，而非炫技。</p>
-  <p>它使用多 Agent 流水线分析你的项目，提取每个文件、函数、类和依赖关系，构建一个完整的知识图谱，并提供可交互的 Web Dashboard 让你可视化浏览、搜索和提问。</p>
+        <!-- Project Overview -->
+        <div class="section">
+            <h2><span class="icon">📋</span> 项目简介</h2>
+            <p><strong>Understand-Anything</strong> 是一个将任意代码库、知识库或文档转化为<strong>交互式知识图谱</strong>的开源工具。它通过多智能体（Multi-Agent）流水线扫描项目，提取每个文件、函数、类和依赖关系，构建可探索、可搜索、可交互的知识图谱，并提供可视化 Dashboard。</p>
+            <div class="highlight-box">
+                <p><strong>核心定位：</strong>解决开发者面对庞大代码库时"无从下手"的痛点，让理解代码像浏览地图一样直观。支持 Claude Code、Cursor、VS Code Copilot、Codex、Gemini CLI 等 14+ 主流 AI 编程平台。</p>
+            </div>
+        </div>
 
-  <div class="highlight-box">
-    <p><strong>一句话总结：</strong>你刚加入一个 20 万行代码的团队，不知道从哪开始？Understand-Anything 帮你一键生成整个代码库的交互式知识图谱，让你从全局视角理解架构。</p>
-  </div>
+        <!-- Core Features -->
+        <div class="section">
+            <h2><span class="icon">✨</span> 核心功能</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="fi-title">🗺️ 结构化图谱</div>
+                    <div class="fi-desc">将代码库可视化为交互式知识图谱，每个文件、函数、类都是可点击、可搜索的节点</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">🏢 业务逻辑视图</div>
+                    <div class="fi-desc">Domain View 展示代码如何映射到真实业务流程——领域、流程、步骤一目了然</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">🧭 引导式导览</div>
+                    <div class="fi-desc">自动生成按依赖关系排序的架构导览，以正确的顺序学习代码库</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">🔍 语义搜索</div>
+                    <div class="fi-desc">支持模糊搜索和语义搜索，"哪些部分处理认证？"即可获取相关结果</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">📊 Diff 影响分析</div>
+                    <div class="fi-desc">提交前查看代码变更对系统的影响范围，理解变更的涟漪效应</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">🎭 个性化适配</div>
+                    <div class="fi-desc">Dashboard 根据用户角色（初级开发者、PM、高级用户）调整详细程度</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">🏗️ 分层可视化</div>
+                    <div class="fi-desc">按架构层自动分组——API、Service、Data、UI、Utility，配有颜色编码图例</div>
+                </div>
+                <div class="feature-item">
+                    <div class="fi-title">📚 知识库分析</div>
+                    <div class="fi-desc">支持分析 Karpathy 模式的 LLM Wiki，提取实体、声明和隐含关系</div>
+                </div>
+            </div>
+        </div>
 
-  <div class="feature-grid">
-    <div class="feature-card">
-      <h3>🧭 结构图谱探索</h3>
-      <p>将代码库渲染为交互式知识图谱，每个文件、函数、类都是可点击、可搜索的节点</p>
-    </div>
-    <div class="feature-card">
-      <h3>🏢 业务逻辑映射</h3>
-      <p>Domain 视图展示代码如何映射到真实业务流程——域、流、步骤一目了然</p>
-    </div>
-    <div class="feature-card">
-      <h3>📚 知识库分析</h3>
-      <p>支持 Karpathy 模式的 LLM Wiki，提取实体、声明和隐含关系</p>
-    </div>
-    <div class="feature-card">
-      <h3>🧭 引导式巡览</h3>
-      <p>自动生成架构巡览，按依赖顺序排列，让你以正确的顺序学习代码库</p>
-    </div>
-    <div class="feature-card">
-      <h3>🔍 模糊 + 语义搜索</h3>
-      <p>支持按名称或按含义搜索，例如"哪些部分处理认证？"</p>
-    </div>
-    <div class="feature-card">
-      <h3>📊 Diff 影响分析</h3>
-      <p>提交前查看变更影响范围，理解代码修改在整个系统中的连锁反应</p>
-    </div>
-    <div class="feature-card">
-      <h3>🎭 角色自适应 UI</h3>
-      <p>Dashboard 根据用户角色（初级开发者、PM、高级用户）调整详情层级</p>
-    </div>
-    <div class="feature-card">
-      <h3>🏗️ 分层可视化</h3>
-      <p>自动按架构层（API、Service、Data、UI、Utility）分组，颜色编码</p>
-    </div>
-  </div>
-</div>
+        <!-- Technical Architecture -->
+        <div class="section">
+            <h2><span class="icon">🏗️</span> 技术架构</h2>
+            <p>Understand-Anything 采用 <strong>Tree-sitter + LLM 混合架构</strong>，让静态分析和 LLM 各自发挥所长：</p>
+            <div class="arch-flow">
+                <div class="arch-node primary">源代码</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">Tree-sitter<br><small>确定性解析</small></div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">Multi-Agent<br><small>并行分析</small></div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node primary">知识图谱 JSON</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">交互式<br>Dashboard</div>
+            </div>
 
-<!-- 技术架构 -->
-<div class="section">
-  <h2><span class="icon">🏗️</span><span class="gradient-text-green">技术架构与特点</span></h2>
-  <p>Understand-Anything 的核心是一个 <strong>6 Agent 协作流水线</strong>，结合 LLM 智能与静态分析，实现代码理解的自动化。</p>
+            <h3 style="margin-top:1.2rem; font-size:1rem; color:#58a6ff;">Multi-Agent Pipeline</h3>
+            <table>
+                <thead>
+                    <tr><th>Agent</th><th>职责</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><span class="badge badge-blue">project-scanner</span></td><td>发现文件，检测语言和框架</td></tr>
+                    <tr><td><span class="badge badge-green">file-analyzer</span></td><td>提取函数、类、导入关系，生成图谱节点和边</td></tr>
+                    <tr><td><span class="badge badge-purple">architecture-analyzer</span></td><td>识别架构分层</td></tr>
+                    <tr><td><span class="badge badge-orange">tour-builder</span></td><td>生成引导式学习导览</td></tr>
+                    <tr><td><span class="badge badge-blue">graph-reviewer</span></td><td>验证图谱完整性和引用完整性</td></tr>
+                    <tr><td><span class="badge badge-green">domain-analyzer</span></td><td>提取业务领域、流程和步骤</td></tr>
+                    <tr><td><span class="badge badge-purple">article-analyzer</span></td><td>从 Wiki 文章中提取实体和隐含关系</td></tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top:1rem;">
+                <p><strong>设计亮点：</strong>Tree-sitter 保证结构分析的确定性（相同代码始终生成相同的边），LLM 负责语义理解（文件的用途、架构层分配、业务领域映射），两者互补且可增量更新。</p>
+            </div>
+        </div>
 
-  <table class="agent-table">
-    <thead>
-      <tr><th>Agent</th><th>职责</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>project-scanner</td><td>发现文件、检测语言和框架</td></tr>
-      <tr><td>file-analyzer</td><td>提取函数、类、导入；生成图谱节点和边</td></tr>
-      <tr><td>architecture-analyzer</td><td>识别架构分层</td></tr>
-      <tr><td>tour-builder</td><td>生成引导式学习巡览</td></tr>
-      <tr><td>graph-reviewer</td><td>验证图谱完整性和引用完整性</td></tr>
-      <tr><td>domain-analyzer</td><td>提取业务域、流程和步骤</td></tr>
-    </tbody>
-  </table>
+        <!-- Application Scenarios -->
+        <div class="section">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+            <ul>
+                <li><strong>新人入职</strong> — 加入新团队面对 20 万行代码，快速理解整体架构和核心模块</li>
+                <li><strong>开源贡献</strong> — 浏览大型开源项目前，先生成知识图谱把握全局</li>
+                <li><strong>代码审查</strong> — PR Review 前用 Diff Impact Analysis 理解变更影响范围</li>
+                <li><strong>遗留代码重构</strong> — 可视化老旧系统的依赖关系，制定安全重构策略</li>
+                <li><strong>技术文档</strong> — Docs-as-Code 实践，图谱 JSON 直接提交到 Git，团队共享</li>
+                <li><strong>知识管理</strong> — 分析 LLM Wiki / 知识库，发现概念间的隐含关联</li>
+            </ul>
+        </div>
 
-  <p style="margin-top:16px;"><strong>关键技术特点：</strong></p>
-  <ul style="padding-left: 20px; color: var(--text-secondary);">
-    <li>文件分析器并行运行（最多 5 个并发，每批 20-30 个文件）</li>
-    <li>支持增量更新——仅重新分析上次运行后变更的文件</li>
-    <li>输出为纯 JSON，可提交到 Git 仓库供团队共享</li>
-    <li>支持 12 种编程模式（泛型、闭包、装饰器等）的上下文解释</li>
-    <li>多语言支持：en, zh, zh-TW, ja, ko, ru</li>
-  </ul>
-</div>
+        <!-- Why Trending -->
+        <div class="section">
+            <h2><span class="icon">🔥</span> 为什么火 (Trending 原因)</h2>
+            <ul>
+                <li><strong>痛点精准</strong> — 每个开发者都经历过面对陌生代码库的无力感，这个工具直击要害</li>
+                <li><strong>AI 编程浪潮</strong> — 乘着 AI Coding Assistant（Claude Code、Cursor、Copilot）爆发的东风，作为"理解层"填补生态空白</li>
+                <li><strong>多平台覆盖</strong> — 支持 14+ 主流编程平台（Claude Code、Cursor、Copilot、Codex、Gemini CLI 等），受众极广</li>
+                <li><strong>可视化叙事</strong> — "图谱教学 > 图谱炫技" 的理念引发共鸣，不是花哨的演示，而是真正的理解工具</li>
+                <li><strong>社区传播</strong> — Better Stack YouTube 频道制作教程，DEV.to、Hacker News 广泛讨论</li>
+                <li><strong>增量更新</strong> — 支持增量分析（只重分析变更文件）和 post-commit hook，实用性强</li>
+            </ul>
+        </div>
 
-<!-- 应用场景 -->
-<div class="section">
-  <h2><span class="icon">🎯</span><span class="gradient-text-orange">应用场景</span></h2>
-  <ul class="scenario-list">
-    <li><span class="emoji">🆕</span><span class="text"><strong>新人入职 Onboarding</strong> — 加入新团队时快速理解 20 万行代码库的架构和依赖关系</span></li>
-    <li><span class="emoji">🔍</span><span class="text"><strong>代码审查 Code Review</strong> — PR 审查时可视化查看变更影响的范围和连锁反应</span></li>
-    <li><span class="emoji">📖</span><span class="text"><strong>文档即代码 Docs-as-Code</strong> — 将知识图谱 JSON 提交到仓库，团队自动获得可浏览的文档</span></li>
-    <li><span class="emoji">🏗️</span><span class="text"><strong>遗留系统理解 Legacy</strong> — 面对缺乏文档的老项目，快速生成架构视图和依赖图</span></li>
-    <li><span class="emoji">📚</span><span class="text"><strong>知识库探索 Wiki</strong> — 将 Karpathy 模式的 LLM Wiki 转化为可导航的知识图谱</span></li>
-    <li><span class="emoji">🎓</span><span class="text"><strong>教学与学习</strong> — 开源项目维护者为贡献者提供可视化的项目导览</span></li>
-  </ul>
-</div>
+        <!-- Comparison -->
+        <div class="section">
+            <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>核心技术</th>
+                        <th>知识图谱</th>
+                        <th>多平台</th>
+                        <th>交互式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Understand-Anything</strong></td>
+                        <td>Tree-sitter + LLM</td>
+                        <td><span class="badge badge-green">✅</span></td>
+                        <td><span class="badge badge-green">14+</span></td>
+                        <td><span class="badge badge-green">✅ Dashboard</span></td>
+                    </tr>
+                    <tr>
+                        <td>SourceTrail (已归档)</td>
+                        <td>静态分析</td>
+                        <td><span class="badge badge-green">✅</span></td>
+                        <td><span class="badge badge-orange">桌面端</span></td>
+                        <td><span class="badge badge-green">✅</span></td>
+                    </tr>
+                    <tr>
+                        <td>CodeSee</td>
+                        <td>Code-to-Map</td>
+                        <td><span class="badge badge-green">✅</span></td>
+                        <td><span class="badge badge-orange">VS Code</span></td>
+                        <td><span class="badge badge-green">✅</span></td>
+                    </tr>
+                    <tr>
+                        <td>Glean Code Intelligence</td>
+                        <td>Code Intelligence</td>
+                        <td><span class="badge badge-orange">搜索</span></td>
+                        <td><span class="badge badge-orange">Web</span></td>
+                        <td><span class="badge badge-orange">搜索</span></td>
+                    </tr>
+                    <tr>
+                        <td>repo2txt / gptme</td>
+                        <td>文本化 + LLM</td>
+                        <td><span class="badge badge-orange">无</span></td>
+                        <td><span class="badge badge-green">CLI</span></td>
+                        <td><span class="badge badge-orange">无</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top:1rem;">
+                <p><strong>核心优势：</strong>Understand-Anything 是目前唯一将 Tree-sitter 确定性解析、LLM 语义理解、交互式知识图谱、多平台支持融为一体的开源项目。</p>
+            </div>
+        </div>
 
-<!-- 为什么火 -->
-<div class="section">
-  <h2><span class="icon">🔥</span><span class="gradient-text-blue">为什么火（Trending 原因）</span></h2>
-  <div class="feature-grid">
-    <div class="feature-card">
-      <h3>痛点精准</h3>
-      <p>每个开发者都经历过"面对庞大代码库不知所措"的困境，这个工具直击核心痛点</p>
+        <!-- Who Should Use -->
+        <div class="section">
+            <h2><span class="icon">👥</span> 适合谁使用</h2>
+            <div class="who-grid">
+                <div class="who-card">
+                    <div class="who-icon">🧑‍💻</div>
+                    <div class="who-title">新入职开发者</div>
+                    <div class="who-desc">快速理解陌生代码库的全貌，缩短上手时间</div>
+                </div>
+                <div class="who-card">
+                    <div class="who-icon">🏗️</div>
+                    <div class="who-title">技术负责人</div>
+                    <div class="who-desc">用图谱做代码审查、架构决策和团队知识传递</div>
+                </div>
+                <div class="who-card">
+                    <div class="who-icon">🌐</div>
+                    <div class="who-title">开源贡献者</div>
+                    <div class="who-desc">贡献前先理解大型开源项目的架构和依赖关系</div>
+                </div>
+                <div class="who-card">
+                    <div class="who-icon">📋</div>
+                    <div class="who-title">产品经理</div>
+                    <div class="who-desc">通过 Domain View 理解代码映射的业务流程</div>
+                </div>
+                <div class="who-card">
+                    <div class="who-icon">🔧</div>
+                    <div class="who-title">遗留系统维护者</div>
+                    <div class="who-desc">可视化老旧代码依赖，制定安全重构策略</div>
+                </div>
+                <div class="who-card">
+                    <div class="who-icon">🤖</div>
+                    <div class="who-title">AI 工具用户</div>
+                    <div class="who-desc">使用 Claude Code / Cursor / Copilot 的开发者</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="section">
+            <h2><span class="icon">🚀</span> 快速上手</h2>
+
+            <p style="margin-bottom:0.8rem; color:#8b949e;">方式一：Claude Code 原生安装</p>
+            <div class="code-block">
+                <code>
+<span class="comment"># 从 Plugin Marketplace 安装</span><br>
+<span class="cmd">/plugin marketplace add Lum1104/Understand-Anything</span><br>
+<span class="cmd">/plugin install understand-anything</span>
+                </code>
+            </div>
+
+            <p style="margin-bottom:0.8rem; color:#8b949e;">方式二：一行命令安装（支持 Codex / Gemini CLI / Cursor 等）</p>
+            <div class="code-block">
+                <code>
+<span class="comment"># macOS / Linux</span><br>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/Lum1104/Understand-Anything/main/install.sh | bash</span><br>
+<br>
+<span class="comment"># Windows (PowerShell)</span><br>
+<span class="cmd">iwr -useb https://raw.githubusercontent.com/Lum1104/Understand-Anything/main/install.ps1 | iex</span>
+                </code>
+            </div>
+
+            <p style="margin-bottom:0.8rem; color:#8b949e;">使用示例</p>
+            <div class="code-block">
+                <code>
+<span class="comment"># 分析代码库，生成交互式知识图谱</span><br>
+<span class="cmd">/understand</span><br>
+<br>
+<span class="comment"># 生成中文内容</span><br>
+<span class="cmd">/understand --language zh</span><br>
+<br>
+<span class="comment"># 提问：支付流程怎么运作？</span><br>
+<span class="cmd">/understand-chat 支付流程怎么运作？</span><br>
+<br>
+<span class="comment"># 分析代码变更的影响</span><br>
+<span class="cmd">/understand-diff</span><br>
+<br>
+<span class="comment"># 生成入职指南</span><br>
+<span class="cmd">/understand-onboard</span><br>
+<br>
+<span class="comment"># 提取业务领域知识</span><br>
+<span class="cmd">/understand-domain</span>
+                </code>
+            </div>
+        </div>
+
+        <!-- Score Summary -->
+        <div class="section">
+            <h2><span class="icon">📊</span> 综合评分详情</h2>
+            <table>
+                <thead>
+                    <tr><th>维度</th><th>评分</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-purple">创新性</span></td>
+                        <td><strong>9.0 / 10</strong></td>
+                        <td>Tree-sitter + LLM 混合架构设计精妙，Multi-Agent 流水线分工明确，知识图谱 + 交互式 Dashboard 组合新颖</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-blue">代码质量</span></td>
+                        <td><strong>8.5 / 10</strong></td>
+                        <td>模块化程度高，Agent 职责分离清晰，支持并行分析和增量更新，但部分核心逻辑耦合度可优化</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-green">实用性</span></td>
+                        <td><strong>9.5 / 10</strong></td>
+                        <td>解决真实痛点（代码理解），支持 14+ 平台，增量更新 + post-commit hook 使其可持续集成，JSON 图谱可团队共享</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-orange">文档完善度</span></td>
+                        <td><strong>9.0 / 10</strong></td>
+                        <td>README 结构清晰，多语言文档（6 种语言），Quick Start 指引明确，Live Demo 可直接体验</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-pink">社区活跃度</span></td>
+                        <td><strong>9.0 / 10</strong></td>
+                        <td>~22.5k Stars，Discord 社区活跃，Hacker News / DEV.to 讨论，Better Stack 视频教程，持续更新</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align:center; margin-top:1.2rem;">
+                <span style="font-size:1.8rem; font-weight:700; background:linear-gradient(135deg,#58a6ff,#bc8cff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+                    综合评分：9.0 / 10
+                </span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>📊 GitHub Trending 深度分析 | 2026-05-26 | Powered by Claude Code</p>
+            <p style="margin-top:0.3rem;">
+                <a href="https://github.com/Lum1104/Understand-Anything" style="color:#58a6ff; text-decoration:none;">GitHub 仓库</a>
+                &nbsp;·&nbsp;
+                <a href="https://understand-anything.com" style="color:#58a6ff; text-decoration:none;">官网</a>
+            </p>
+        </div>
     </div>
-    <div class="feature-card">
-      <h3>AI Coding 生态红利</h3>
-      <p>兼容 Claude Code、Cursor、Copilot、Gemini CLI 等主流 AI 编程工具，受益于 AI Coding 浪潮</p>
-    </div>
-    <div class="feature-card">
-      <h3>Hacker News 出圈</h3>
-      <p>登上 Hacker News 首页，引发关于"LLM + 结构化图谱能否理解代码"的技术讨论</p>
-    </div>
-    <div class="feature-card">
-      <h3>多平台战略</h3>
-      <p>支持 14+ 编程平台（Claude Code、Codex、Cursor、Copilot、Gemini CLI、VS Code 等），最大化覆盖面</p>
-    </div>
-    <div class="feature-card">
-      <h3>设计哲学打动人</h3>
-      <p>"Graphs that teach &gt; graphs that impress" — 强调实用性而非炫技，赢得开发者好感</p>
-    </div>
-    <div class="feature-card">
-      <h3>极佳的文档和体验</h3>
-      <p>提供 Live Demo、多语言 README、一键安装脚本，降低体验门槛</p>
-    </div>
-  </div>
-</div>
-
-<!-- 同类对比 -->
-<div class="section">
-  <h2><span class="icon">⚖️</span><span class="gradient-text-green">同类项目对比</span></h2>
-  <table>
-    <thead>
-      <tr><th>工具</th><th>类型</th><th>核心能力</th><th>优势</th><th>劣势</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Understand-Anything</strong></td>
-        <td>开源</td>
-        <td>交互式知识图谱 + 多 Agent 分析</td>
-        <td>多平台兼容、可视化极强、开源免费</td>
-        <td>依赖 LLM API、大型项目分析耗时</td>
-      </tr>
-      <tr>
-        <td><strong>Sourcegraph</strong></td>
-        <td>商业</td>
-        <td>代码搜索 + AI 代码理解 (Cody)</td>
-        <td>企业级规模、成熟的代码搜索</td>
-        <td>商业产品、重型部署、无知识图谱可视化</td>
-      </tr>
-      <tr>
-        <td><strong>CodeGraph (FalkorDB)</strong></td>
-        <td>开源/商业</td>
-        <td>基于图数据库的代码图谱</td>
-        <td>图查询能力强、依赖专业图数据库</td>
-        <td>需要额外基础设施、可视化较传统</td>
-      </tr>
-      <tr>
-        <td><strong>colbymchenry/codegraph</strong></td>
-        <td>开源</td>
-        <td>代码关系图谱可视化</td>
-        <td>轻量级、专注代码关系</td>
-        <td>功能单一、缺乏语义理解</td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="highlight-box">
-    <p><strong>Understand-Anything 的差异化优势：</strong>它不只是一个代码可视化工具——它结合了 LLM 的语义理解能力和结构化图谱的可视化优势，同时提供了引导式巡览、影响分析、业务域映射等高级功能，并且兼容几乎所有主流 AI 编程平台。</p>
-  </div>
-</div>
-
-<!-- 适合谁 -->
-<div class="section">
-  <h2><span class="icon">👥</span><span class="gradient-text-orange">适合谁使用</span></h2>
-  <table>
-    <thead><tr><th>角色</th><th>使用方式</th><th>收益</th></tr></thead>
-    <tbody>
-      <tr><td>🧑‍💻 新入职开发者</td><td>运行 /understand 生成图谱 + /understand-onboard</td><td>数小时内理解整个代码库架构</td></tr>
-      <tr><td>🏗️ 技术负责人 / 架构师</td><td>Diff 影响分析 + 架构分层可视化</td><td>Code Review 时全面评估变更影响</td></tr>
-      <tr><td>📋 项目经理 / PM</td><td>角色自适应 UI（PM 模式）</td><td>从业务视角理解技术实现</td></tr>
-      <tr><td>🎓 开源贡献者</td><td>浏览项目的已提交知识图谱</td><td>快速上手大型开源项目</td></tr>
-      <tr><td>📚 知识工作者</td><td>/understand-knowledge 分析 Wiki</td><td>将文字知识库转化为可视化知识网络</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- 快速上手 -->
-<div class="section">
-  <h2><span class="icon">🚀</span><span class="gradient-text-blue">快速上手指南</span></h2>
-
-  <p><strong>方式一：Claude Code 原生安装</strong></p>
-  <div class="code-block">
-    <span class="comment"># 从 Plugin Marketplace 安装</span><br>
-    <span class="prompt">/plugin marketplace add Lum1104/Understand-Anything</span><br>
-    <span class="prompt">/plugin install understand-anything</span>
-  </div>
-
-  <p><strong>方式二：一键安装脚本（Codex / Gemini CLI / Cursor 等）</strong></p>
-  <div class="code-block">
-    <span class="comment"># macOS / Linux</span><br>
-    <span class="cmd">curl</span> -fsSL https://raw.githubusercontent.com/Lum1104/Understand-Anything/main/install.sh | bash<br><br>
-    <span class="comment"># Windows (PowerShell)</span><br>
-    <span class="cmd">iwr</span> -useb https://raw.githubusercontent.com/Lum1104/Understand-Anything/main/install.ps1 | iex
-  </div>
-
-  <p><strong>开始分析：</strong></p>
-  <div class="code-block">
-    <span class="comment"># 分析当前代码库（生成中文内容）</span><br>
-    <span class="prompt">/understand --language zh</span><br><br>
-    <span class="comment"># 提问关于代码库的问题</span><br>
-    <span class="prompt">/understand-chat</span> 支付流程是怎么工作的？<br><br>
-    <span class="comment"># 分析当前变更的影响范围</span><br>
-    <span class="prompt">/understand-diff</span><br><br>
-    <span class="comment"># 深入了解特定文件</span><br>
-    <span class="prompt">/understand-explain</span> src/auth/login.ts<br><br>
-    <span class="comment"># 生成新人入职指南</span><br>
-    <span class="prompt">/understand-onboard</span>
-  </div>
-</div>
-
-<!-- 综合评分 -->
-<div class="section">
-  <h2><span class="icon">📊</span><span class="gradient-text-green">综合评分</span></h2>
-  <div class="score-container">
-    <div class="score-card">
-      <div class="label">创新性</div>
-      <div class="value s9">9.0</div>
-      <div class="bar"><div class="bar-fill bar-9" style="width:90%"></div></div>
-    </div>
-    <div class="score-card">
-      <div class="label">代码质量</div>
-      <div class="value s8">8.5</div>
-      <div class="bar"><div class="bar-fill bar-8" style="width:85%"></div></div>
-    </div>
-    <div class="score-card">
-      <div class="label">实用性</div>
-      <div class="value s9">9.5</div>
-      <div class="bar"><div class="bar-fill bar-9" style="width:95%"></div></div>
-    </div>
-    <div class="score-card">
-      <div class="label">文档完善度</div>
-      <div class="value s9">9.0</div>
-      <div class="bar"><div class="bar-fill bar-9" style="width:90%"></div></div>
-    </div>
-    <div class="score-card">
-      <div class="label">社区活跃度</div>
-      <div class="value s8">8.5</div>
-      <div class="bar"><div class="bar-fill bar-8" style="width:85%"></div></div>
-    </div>
-  </div>
-  <div style="text-align: center; margin-top: 24px; padding: 18px; background: linear-gradient(135deg, rgba(88,166,255,0.08), rgba(188,140,255,0.08)); border-radius: 10px;">
-    <div style="color: var(--text-secondary); font-size: 0.9em;">综合评分</div>
-    <div style="font-size: 2.8em; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">8.9 / 10</div>
-    <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 4px;">强烈推荐 ⭐</div>
-  </div>
-</div>
-
-<div class="footer">
-  <p>🤖 由 AI 自动分析生成 | Powered by Claude Code | 2026-05-22</p>
-  <p style="margin-top: 8px;">
-    <a href="https://github.com/Lum1104/Understand-Anything" style="color: var(--accent); text-decoration: none;">GitHub 仓库</a> ·
-    <a href="https://understand-anything.com/" style="color: var(--accent); text-decoration: none;">官方网站</a> ·
-    <a href="https://news.ycombinator.com/item?id=47977470" style="color: var(--accent); text-decoration: none;">Hacker News 讨论</a>
-  </p>
-</div>
-
 </body>
 </html>
