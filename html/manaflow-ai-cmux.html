@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cmux - AI 编程终端深度分析</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2333;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent2: #7ee787;
+            --accent3: #d2a8ff;
+            --accent4: #ffa657;
+            --gradient1: linear-gradient(135deg, #58a6ff, #d2a8ff);
+            --gradient2: linear-gradient(135deg, #7ee787, #58a6ff);
+            --gradient3: linear-gradient(135deg, #ffa657, #ff7b72);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: radial-gradient(ellipse at center top, #1a2332 0%, var(--bg) 70%);
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            background: rgba(88,166,255,0.15);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            border: 1px solid rgba(88,166,255,0.3);
+        }
+        .hero h1 {
+            font-size: 2.8em;
+            background: var(--gradient1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 24px;
+        }
+        .hero-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .hero-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .hero-links a:hover { border-color: var(--accent); background: var(--bg-card-hover); }
+
+        /* Stats bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 32px 0;
+        }
+        .stat-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.6em;
+            font-weight: 700;
+            background: var(--gradient2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: rgba(88,166,255,0.4); }
+        .card h2 {
+            font-size: 1.35em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.05em;
+            color: var(--accent);
+            margin: 16px 0 8px;
+        }
+        .card p { color: var(--text-secondary); margin-bottom: 12px; }
+        .card ul { padding-left: 20px; color: var(--text-secondary); margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+        .feature-item {
+            background: rgba(88,166,255,0.06);
+            border: 1px solid rgba(88,166,255,0.15);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .feature-item .fi-title {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 6px;
+            font-size: 0.95em;
+        }
+        .feature-item .fi-desc { font-size: 0.88em; color: var(--text-secondary); }
+
+        /* Comparison table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: rgba(88,166,255,0.1);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        tr:hover td { background: rgba(88,166,255,0.04); }
+        td { color: var(--text-secondary); }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 16px;
+            background: rgba(210,168,255,0.06);
+            border: 1px solid rgba(210,168,255,0.15);
+            border-radius: 8px;
+        }
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: var(--gradient1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-item .score-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .score-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--gradient2);
+        }
+
+        /* Code block */
+        .code-block {
+            background: #010409;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.88em;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #7ee787; }
+        .code-block .flag { color: #ffa657; }
+
+        /* Quick start steps */
+        .steps {
+            counter-reset: step;
+            margin-top: 12px;
+        }
+        .step {
+            counter-increment: step;
+            padding: 14px 14px 14px 56px;
+            position: relative;
+            margin-bottom: 10px;
+            background: rgba(126,231,135,0.05);
+            border: 1px solid rgba(126,231,135,0.12);
+            border-radius: 8px;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--gradient2);
+            color: #0d1117;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .step strong { color: var(--accent2); }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 2px;
+        }
+        .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .tag-green { background: rgba(126,231,135,0.15); color: var(--accent2); }
+        .tag-purple { background: rgba(210,168,255,0.15); color: var(--accent3); }
+        .tag-orange { background: rgba(255,166,87,0.15); color: var(--accent4); }
+
+        /* Trending reasons */
+        .reason-list { list-style: none; padding: 0; }
+        .reason-list li {
+            padding: 10px 16px;
+            margin-bottom: 8px;
+            background: rgba(255,166,87,0.06);
+            border-left: 3px solid var(--accent4);
+            border-radius: 0 6px 6px 0;
+            color: var(--text-secondary);
+        }
+        .reason-list li strong { color: var(--accent4); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8em; }
+            .container { padding: 12px; }
+            .card { padding: 18px; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-badge">GitHub Trending #1 - Developer Tools</div>
+    <h1>manaflow-ai/cmux</h1>
+    <p class="subtitle">基于 Ghostty 的 macOS 原生终端，专为 AI 编程 Agent 打造——垂直标签页、智能通知、内置浏览器，一站式管理多个 AI 编码会话</p>
+    <div class="hero-links">
+        <a href="https://github.com/manaflow-ai/cmux" target="_blank">GitHub 仓库</a>
+        <a href="https://cmux.com" target="_blank">官网</a>
+        <a href="https://manaflow.com" target="_blank">Manaflow</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value">18.1k+</div>
+            <div class="stat-label">GitHub Stars</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">1.4k+</div>
+            <div class="stat-label">Forks</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">98</div>
+            <div class="stat-label">Contributors</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">Swift</div>
+            <div class="stat-label">主要语言</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">GPL-3.0</div>
+            <div class="stat-label">开源协议</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">v0.64.3</div>
+            <div class="stat-label">最新版本</div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <h2><span class="icon">📋</span> 项目简介与核心功能</h2>
+        <p><strong>cmux</strong> 是由 <strong>Manaflow</strong>（Y Combinator 孵化的两人创业公司）开发的开源 macOS 终端模拟器。它基于 <strong>Ghostty</strong>（由 Mitchell Hashimoto 创建的高性能终端）构建，使用 Swift/AppKit 原生开发，<strong>非 Electron</strong>，启动快、内存占用低。</p>
+        <p>cmux 的核心定位是<strong>为同时运行多个 AI 编程 Agent 的开发者</strong>提供高效的多会话管理方案。当开发者同时运行 10+ 个 Claude Code / Codex 会话时，cmux 能让每个会话的状态一目了然。</p>
+
+        <h3>核心功能</h3>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="fi-title">通知环（Notification Rings）</div>
+                <div class="fi-desc">Agent 等待输入时，对应窗格显示蓝色光环，侧边栏标签高亮。快捷键 Cmd+Shift+U 跳转到最近未读。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">垂直 + 水平标签页</div>
+                <div class="fi-desc">侧边栏显示 Git 分支、关联 PR 状态/编号、工作目录、监听端口和最新通知文本。支持水平和垂直分屏。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">内置浏览器</div>
+                <div class="fi-desc">从 agent-browser 移植的可编程浏览器 API。Agent 可获取可访问性树、点击元素、填写表单、执行 JS。可与终端并排显示。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">SSH 集成</div>
+                <div class="fi-desc">cmux ssh user@remote 创建远程工作区。浏览器窗格通过远程网络路由，localhost 直接可用。支持拖拽图片上传（scp）。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">Claude Code Teams</div>
+                <div class="fi-desc">cmux claude-teams 一键启动 Claude Code 的 teammate 模式。队友以原生分屏形式出现，无需 tmux。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">会话恢复</div>
+                <div class="fi-desc">退出时自动保存会话状态。重新打开恢复窗口布局、工作目录、滚动历史和浏览器 URL。支持 Claude Code、Codex、Gemini 等 15+ 种 Agent 的自动恢复。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+
+        <h3>技术栈</h3>
+        <p>
+            <span class="tag tag-blue">Swift</span>
+            <span class="tag tag-green">AppKit</span>
+            <span class="tag tag-purple">libghostty</span>
+            <span class="tag tag-orange">Sparkle (自动更新)</span>
+            <span class="tag tag-blue">GPU 加速渲染</span>
+        </p>
+
+        <h3>架构特点</h3>
+        <ul>
+            <li><strong>原生 macOS 应用</strong> — 使用 Swift + AppKit 而非 Electron/Tauri，启动快、内存占用低</li>
+            <li><strong>基于 libghostty</strong> — 复用 Ghostty 的终端渲染引擎，GPU 加速，性能优秀</li>
+            <li><strong>兼容 Ghostty 配置</strong> — 自动读取 <code>~/.config/ghostty/config</code>，迁移零成本</li>
+            <li><strong>CLI + Socket API</strong> — 全面可编程，可创建工作区、分屏、发送按键、自动化浏览器</li>
+            <li><strong>OSC 通知协议</strong> — 支持终端序列 OSC 9/99/777，通过 <code>cmux notify</code> CLI 集成 Agent hooks</li>
+            <li><strong>Sparkle 自动更新</strong> — 安装一次，后续自动更新</li>
+        </ul>
+
+        <h3>兼容的 AI 编程工具</h3>
+        <p>
+            <span class="tag tag-green">Claude Code</span>
+            <span class="tag tag-green">Codex</span>
+            <span class="tag tag-blue">OpenCode</span>
+            <span class="tag tag-blue">Gemini CLI</span>
+            <span class="tag tag-purple">Kiro</span>
+            <span class="tag tag-purple">Aider</span>
+            <span class="tag tag-orange">Grok</span>
+            <span class="tag tag-orange">Pi</span>
+            <span class="tag tag-blue">Amp</span>
+            <span class="tag tag-blue">Cursor CLI</span>
+            <span class="tag tag-green">Rovo Dev</span>
+            <span class="tag tag-green">Copilot</span>
+        </p>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>多 Agent 并行开发</strong> — 同时运行多个 Claude Code / Codex 会话，每个处理不同任务（前端、后端、测试），通过通知系统精准知道哪个 Agent 需要响应</li>
+            <li><strong>Code Review 工作流</strong> — 在分屏中同时运行代码审查 Agent 和开发 Agent，侧边栏查看 PR 状态</li>
+            <li><strong>远程开发</strong> — 通过 SSH 连接远程服务器，浏览器窗格通过远程网络路由，无需额外端口转发</li>
+            <li><strong>团队协作</strong> — 使用 Claude Code Teams 模式，让多个 AI Agent 作为队友协作开发</li>
+            <li><strong>Web 自动化测试</strong> — 内置浏览器可与开发服务器交互，Agent 直接点击、填表、验证 UI</li>
+            <li><strong>CI/CD 监控</strong> — 在分屏中运行部署脚本，通知系统在需要人工介入时提醒</li>
+        </ul>
+    </div>
+
+    <!-- Why Trending -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+        <ul class="reason-list">
+            <li><strong>AI 编程的刚需痛点：</strong>当开发者同时运行 10+ 个 AI Agent 时，原生终端的通知管理几乎是空白。cmux 精准切入这个痛点。</li>
+            <li><strong>Ghostty 生态加持：</strong>Mitchell Hashimoto（HashiCorp 创始人）创建的 Ghostty 本身就是热门项目，cmux 在其基础上构建，自然获得关注。</li>
+            <li><strong>原生性能优势：</strong>与 Electron/Tauri 方案形成鲜明对比。Swift + AppKit 原生开发打动了注重性能的开发者。</li>
+            <li><strong>两个月破万 Star：</strong>增长速度惊人，社区讨论和口碑传播效应明显。</li>
+            <li><strong>YC 背景：</strong>Manaflow 是 Y Combinator 孵化项目，有一定曝光度。</li>
+            <li><strong>"原语而非方案"的哲学：</strong>cmux 不规定使用方式，而是提供可组合的基础设施，让开发者自己构建工作流。这种理念深受资深开发者认可。</li>
+            <li><strong>Agent 生态爆发：</strong>Claude Code、Codex、Gemini CLI 等 Agent 工具在 2025 年爆发式增长，cmux 正好提供了管理这些工具的最佳终端环境。</li>
+        </ul>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>cmux</th>
+                    <th>Ghostty</th>
+                    <th>iTerm2</th>
+                    <th>Warp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>AI Agent 通知</td>
+                    <td style="color:#7ee787;font-weight:600">✅ 专属通知系统</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>⚠️ 有限</td>
+                </tr>
+                <tr>
+                    <td>垂直标签页 + 元数据</td>
+                    <td style="color:#7ee787;font-weight:600">✅ Git/PR/端口</td>
+                    <td>❌</td>
+                    <td>⚠️ 基本标签</td>
+                    <td>⚠️ 基本标签</td>
+                </tr>
+                <tr>
+                    <td>内置浏览器</td>
+                    <td style="color:#7ee787;font-weight:600">✅ 可编程 API</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>Agent 会话恢复</td>
+                    <td style="color:#7ee787;font-weight:600">✅ 15+ Agent</td>
+                    <td>❌</td>
+                    <td>⚠️ 基本恢复</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>SSH 增强</td>
+                    <td style="color:#7ee787;font-weight:600">✅ 浏览器路由</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>技术栈</td>
+                    <td>Swift/AppKit</td>
+                    <td>Zig</td>
+                    <td>Objective-C</td>
+                    <td>Rust + Electron</td>
+                </tr>
+                <tr>
+                    <td>平台</td>
+                    <td>macOS</td>
+                    <td>macOS/Linux</td>
+                    <td>macOS</td>
+                    <td>macOS/Linux/Win</td>
+                </tr>
+                <tr>
+                    <td>开源协议</td>
+                    <td>GPL-3.0</td>
+                    <td>MIT</td>
+                    <td>GPL-2.0</td>
+                    <td>BSL → GPL</td>
+                </tr>
+                <tr>
+                    <td>AI 原生设计</td>
+                    <td style="color:#7ee787;font-weight:600">⭐⭐⭐⭐⭐</td>
+                    <td>⭐</td>
+                    <td>⭐</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="fi-title">重度 AI 编程用户</div>
+                <div class="fi-desc">每天同时运行 3+ 个 Claude Code / Codex 会话的开发者。cmux 的通知系统和多会话管理是为此场景量身定制的。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">macOS 原生终端用户</div>
+                <div class="fi-desc">已经在使用 Ghostty 或追求原生性能的 macOS 开发者。cmux 兼容现有 Ghostty 配置，迁移无成本。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">远程开发者</div>
+                <div class="fi-desc">需要 SSH 到远程服务器进行开发的用户。cmux 的 SSH 增强功能（浏览器路由、拖拽上传）能显著提升效率。</div>
+            </div>
+            <div class="feature-item">
+                <div class="fi-title">工具定制爱好者</div>
+                <div class="fi-desc">喜欢通过 CLI 和 API 定制工作流的开发者。cmux 的 Socket API 和脚本能力允许构建个性化的 Agent 管理方案。</div>
+            </div>
+        </div>
+        <p style="margin-top:12px"><strong>⚠️ 不适合：</strong>Linux/Windows 用户（目前仅支持 macOS）、不需要多会话管理的轻度终端用户。</p>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <div class="steps">
+            <div class="step">
+                <strong>安装 cmux</strong><br>
+                推荐使用 Homebrew 安装：
+                <div class="code-block"><span class="cmd">brew</span> tap manaflow-ai/cmux
+<span class="cmd">brew</span> install <span class="flag">--cask</span> cmux</div>
+                或从 <a href="https://github.com/manaflow-ai/cmux/releases" style="color:var(--accent)">GitHub Releases</a> 下载 DMG 安装。
+            </div>
+            <div class="step">
+                <strong>首次启动</strong><br>
+                macOS 可能提示"无法验证开发者"，点击"打开"即可。cmux 会自动读取现有的 Ghostty 配置（主题、字体、颜色）。
+            </div>
+            <div class="step">
+                <strong>设置 Agent Hooks</strong><br>
+                安装通知钩子，让 AI Agent 的通知与 cmux 集成：
+                <div class="code-block"><span class="comment"># 安装所有已检测到的 Agent hooks</span>
+<span class="cmd">cmux</span> hooks setup
+
+<span class="comment"># 或指定特定 Agent</span>
+<span class="cmd">cmux</span> hooks setup codex
+<span class="cmd">cmux</span> hooks setup <span class="flag">--agent</span> opencode</div>
+            </div>
+            <div class="step">
+                <strong>开始多会话开发</strong><br>
+                <div class="code-block"><span class="comment"># 在不同工作区启动多个 Agent</span>
+<span class="cmd">cmux</span> <span class="comment"># 打开 cmux，⌘N 创建新工作区</span>
+
+<span class="comment"># 或一键启动 Claude Code Teams</span>
+<span class="cmd">cmux</span> claude-teams
+
+<span class="comment"># SSH 到远程服务器</span>
+<span class="cmd">cmux</span> ssh user@remote</div>
+            </div>
+            <div class="step">
+                <strong>使用通知系统</strong><br>
+                当 Agent 等待输入时：<br>
+                • 蓝色光环出现在对应窗格<br>
+                • 侧边栏标签高亮<br>
+                • 按 <code>⌘⇧U</code> 跳转到最近未读<br>
+                • 按 <code>⌘I</code> 打开通知面板查看所有通知
+            </div>
+        </div>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-value">9.0</div>
+                <div class="score-label">创新性</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">8.5</div>
+                <div class="score-label">代码质量</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.5</div>
+                <div class="score-label">实用性</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">8.0</div>
+                <div class="score-label">文档完善度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.0</div>
+                <div class="score-label">社区活跃度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div>
+            </div>
+        </div>
+        <p style="margin-top:16px;text-align:center;font-size:0.95em;">
+            <strong>综合评分：8.8 / 10</strong> — AI 编程工具链中极具价值的终端基础设施
+        </p>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+        <h2><span class="icon">📝</span> 总结</h2>
+        <p>cmux 是当前 AI 编程生态中<strong>定位最精准的终端工具</strong>。它没有试图做一个"万能终端"，而是聚焦于"让同时管理多个 AI Agent 不再痛苦"这一个核心问题。基于 Ghostty 的高性能渲染引擎、原生 Swift 开发、通知系统、内置浏览器和 CLI/Socket API 的组合，构成了一套<strong>可组合的原语</strong>而非锁定的方案。两个月破万 Star 的增长速度证明了市场对这种工具的强烈需求。如果你是一个 macOS 上的重度 AI 编程用户，cmux 几乎是目前的不二之选。</p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>分析日期：2026-05-25 | 数据来源：GitHub、TrendShift、DEV Community</p>
+    <p>GitHub Trending 每日深度分析 — 由 AI 自动生成</p>
+</div>
+
+</body>
+</html>
