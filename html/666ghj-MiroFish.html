@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish 深度分析报告 | GitHub Trending</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-card-hover: #222d3f;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-title: linear-gradient(90deg, #58a6ff, #bc8cff, #f778ba);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+        .header .badge {
+            display: inline-block;
+            background: var(--gradient-2);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: var(--gradient-title);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .header .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+        .header .meta span strong {
+            color: var(--text-primary);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: background 0.2s;
+        }
+        .card:hover { background: var(--bg-card-hover); }
+        .card h2 {
+            font-size: 1.35em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .card p, .card li { color: var(--text-secondary); }
+        .card ul { padding-left: 20px; }
+        .card ul li { margin-bottom: 8px; }
+        .card ul li strong { color: var(--text-primary); }
+
+        /* Gradient icons */
+        .icon-blue { background: var(--gradient-1); }
+        .icon-green { background: linear-gradient(135deg, #3fb950, #00d4aa); }
+        .icon-orange { background: linear-gradient(135deg, #d29922, #f97316); }
+        .icon-red { background: var(--gradient-2); }
+        .icon-cyan { background: var(--gradient-3); }
+        .icon-purple { background: linear-gradient(135deg, #a371f7, #6e40c9); }
+
+        /* Score cards */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 16px;
+            text-align: center;
+        }
+        .score-card .score-label {
+            font-size: 0.82em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .score-card .score-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-card .score-bar {
+            margin-top: 10px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .score-card .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 16px;
+            font-size: 0.92em;
+        }
+        .comparison-table th {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .comparison-table th:first-child { border-radius: 8px 0 0 0; }
+        .comparison-table th:last-child { border-radius: 0 8px 0 0; }
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .comparison-table tr:hover td { background: rgba(88,166,255,0.05); }
+        .comparison-table td:first-child { color: var(--text-primary); font-weight: 500; }
+
+        /* Code block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-top: 12px;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.88em;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #6e7681; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .string { color: #a5d6ff; }
+
+        /* Tags */
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.82em;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+        }
+        .tag-blue { border-color: #1f6feb33; color: var(--accent-blue); background: #1f6feb15; }
+        .tag-green { border-color: #23863633; color: var(--accent-green); background: #23863615; }
+        .tag-purple { border-color: #8957e533; color: var(--accent-purple); background: #8957e515; }
+        .tag-orange { border-color: #9e6a0333; color: var(--accent-orange); background: #9e6a0315; }
+
+        /* Highlights */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.08), rgba(188,140,255,0.08));
+            border-left: 3px solid var(--accent-blue);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .highlight-box p { color: var(--text-primary); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 20px 16px; }
+            .header h1 { font-size: 1.7em; }
+            .card { padding: 20px; }
+            .scores-grid { grid-template-columns: repeat(2, 1fr); }
+            .comparison-table { font-size: 0.82em; }
+            .comparison-table th, .comparison-table td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="badge">GITHUB TRENDING #1</div>
+            <h1>MiroFish</h1>
+            <p class="subtitle">简洁通用的群体智能引擎，预测万物<br><em>A Simple and Universal Swarm Intelligence Engine, Predicting Anything</em></p>
+            <div class="meta">
+                <span><strong>&#9733; 61.4K</strong> Stars</span>
+                <span><strong>Python + Vue 3</strong></span>
+                <span><strong>AGPL-3.0</strong></span>
+                <span>作者: <strong>BaiFu (666ghj)</strong></span>
+            </div>
+            <div class="tag-list" style="justify-content: center; margin-top: 16px;">
+                <span class="tag tag-blue">Multi-Agent</span>
+                <span class="tag tag-green">Swarm Intelligence</span>
+                <span class="tag tag-purple">GraphRAG</span>
+                <span class="tag tag-orange">Prediction Engine</span>
+                <span class="tag tag-blue">LLM</span>
+                <span class="tag tag-green">Simulation</span>
+            </div>
+        </header>
+
+        <!-- 项目简介 -->
+        <section class="card">
+            <h2><span class="icon icon-blue">&#128218;</span> 项目简介与核心功能</h2>
+            <p>MiroFish 是一个基于多智能体（Multi-Agent）技术的下一代 AI 预测引擎。它从现实世界中提取种子信息（如突发新闻、政策草案、金融信号或小说文本），自动构建一个高保真的平行数字世界。在这个世界中，数千个拥有独立个性、长期记忆和行为逻辑的智能体自由交互并进行社会演化。</p>
+            <div class="highlight-box">
+                <p><strong>核心理念：</strong>在数字沙盒中预演未来，通过无数次模拟赢得决策。</p>
+            </div>
+            <p style="margin-top:12px;">你只需要：上传种子材料（数据分析报告或有趣的小说故事），用自然语言描述预测需求。MiroFish 将返回：一份详细的预测报告和一个可深度交互的高保真数字世界。</p>
+        </section>
+
+        <!-- 技术架构 -->
+        <section class="card">
+            <h2><span class="icon icon-green">&#9881;</span> 技术架构与特点</h2>
+            <ul>
+                <li><strong>多智能体社会模拟：</strong>创建数千个具有独立人格、长期记忆和行为逻辑的 AI Agent，模拟真实社会的复杂交互</li>
+                <li><strong>GraphRAG 图谱构建：</strong>基于图结构的检索增强生成，构建知识图谱支持复杂推理</li>
+                <li><strong>种子信息提取：</strong>从新闻、政策、金融信号等真实数据中提取关键信息作为模拟输入</li>
+                <li><strong>双平台并行模拟：</strong>支持同时在多个维度进行并行预测，提高预测准确度</li>
+                <li><strong>上帝视角变量注入：</strong>动态注入变量，精确推导未来轨迹</li>
+                <li><strong>ReportAgent 深度交互：</strong>丰富的工具集支持与模拟环境的深度交互</li>
+                <li><strong>OASIS 引擎驱动：</strong>底层基于 CAMEL-AI 团队的 OASIS（Open Agent Social Interaction Simulations）框架</li>
+            </ul>
+            <div class="tag-list">
+                <span class="tag">Python 3.11+</span>
+                <span class="tag">Vue 3</span>
+                <span class="tag">Node.js 18+</span>
+                <span class="tag">LLM API (OpenAI格式)</span>
+                <span class="tag">Zep Cloud</span>
+                <span class="tag">Docker</span>
+            </div>
+        </section>
+
+        <!-- 应用场景 -->
+        <section class="card">
+            <h2><span class="icon icon-orange">&#127919;</span> 应用场景</h2>
+            <ul>
+                <li><strong>宏观层面 — 决策者预演实验室：</strong>零风险测试政策、公关策略，辅助政府和企业决策</li>
+                <li><strong>微观层面 — 个人创意沙盒：</strong>推演小说结局、探索想象力场景，一切皆可模拟</li>
+                <li><strong>舆情预测：</strong>基于真实新闻事件模拟公众舆论走向（如武汉大学舆情模拟）</li>
+                <li><strong>文学创作：</strong>推演经典文学的遗失结局（如红楼梦后40回模拟）</li>
+                <li><strong>金融预测：</strong>基于市场信号模拟市场走势</li>
+                <li><strong>政治新闻预测：</strong>模拟政策变化对社会的影响</li>
+            </ul>
+        </section>
+
+        <!-- 为什么火 -->
+        <section class="card">
+            <h2><span class="icon icon-red">&#128293;</span> 为什么火（Trending 原因）</h2>
+            <ul>
+                <li><strong>概念极具颠覆性：</strong>"预测万物"的愿景打破了传统预测工具的局限性，群体智能涌现的理念非常前沿</li>
+                <li><strong>传奇故事加持：</strong>作者 BaiFu 是一名大四学生，仅用约 10 天时间"vibe coded"出了这个项目</li>
+                <li><strong>资本追捧：</strong>上线 24 小时内即获得陈天桥（盛大集团创始人）3000 万人民币投资，引发全网热议</li>
+                <li><strong>登顶 GitHub 全球 Trending：</strong>超越 OpenAI、Google、Microsoft 等巨头项目，霸榜 #1</li>
+                <li><strong>实际演示震撼：</strong>武汉大学舆情模拟、红楼梦遗失结局推演等 Demo 直观展示了项目潜力</li>
+                <li><strong>时机精准：</strong>Multi-Agent 是当前 AI 最热门的方向之一，项目切中了行业痛点</li>
+            </ul>
+        </section>
+
+        <!-- 同类项目对比 -->
+        <section class="card">
+            <h2><span class="icon icon-cyan">&#9878;</span> 同类项目对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>核心定位</th>
+                        <th>技术路线</th>
+                        <th>适用场景</th>
+                        <th>独特优势</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>MiroFish</td>
+                        <td>群体智能预测引擎</td>
+                        <td>Multi-Agent + GraphRAG</td>
+                        <td>舆情/金融/文学预测</td>
+                        <td>通用预测，上帝视角交互</td>
+                    </tr>
+                    <tr>
+                        <td>Generative Agents (Stanford)</td>
+                        <td>社会行为模拟</td>
+                        <td>LLM + 记忆架构</td>
+                        <td>学术研究</td>
+                        <td>学术验证，论文支撑</td>
+                    </tr>
+                    <tr>
+                        <td>AgentSociety</td>
+                        <td>大规模社会模拟</td>
+                        <td>Multi-Agent</td>
+                        <td>社会科学研究</td>
+                        <td>大规模社会网络模拟</td>
+                    </tr>
+                    <tr>
+                        <td>ChatDev</td>
+                        <td>虚拟软件公司</td>
+                        <td>Multi-Agent 协作</td>
+                        <td>软件开发自动化</td>
+                        <td>聚焦软件开发流程</td>
+                    </tr>
+                    <tr>
+                        <td>MetaGPT</td>
+                        <td>多智能体框架</td>
+                        <td>SOP 驱动 Multi-Agent</td>
+                        <td>通用任务协作</td>
+                        <td>角色扮演 + SOP</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 适合谁使用 -->
+        <section class="card">
+            <h2><span class="icon icon-purple">&#128100;</span> 适合谁使用</h2>
+            <ul>
+                <li><strong>AI 研究者：</strong>探索多智能体社会模拟和群体智能涌现的前沿实验平台</li>
+                <li><strong>数据分析师/决策者：</strong>需要预测舆情走向、政策影响的政府和企业人员</li>
+                <li><strong>金融从业者：</strong>需要多维度模拟市场走势的量化分析师</li>
+                <li><strong>创作者/作家：</strong>希望用 AI 推演故事走向、探索创意可能性的文学创作者</li>
+                <li><strong>开源爱好者：</strong>对 Multi-Agent 技术感兴趣的开发者，可基于此进行二次开发</li>
+            </ul>
+        </section>
+
+        <!-- 快速上手 -->
+        <section class="card">
+            <h2><span class="icon icon-blue">&#128640;</span> 快速上手指南</h2>
+            <p style="margin-bottom:12px;">前置条件：Node.js 18+, Python 3.11-3.12, uv 包管理器</p>
+            <div class="code-block">
+<span class="comment"># 1. 克隆项目</span>
+git clone https://github.com/666ghj/MiroFish.git
+cd MiroFish
+
+<span class="comment"># 2. 配置环境变量</span>
+cp .env.example .env
+<span class="comment"># 编辑 .env 填入 LLM API Key 和 Zep API Key</span>
+
+<span class="comment"># 3. 一键安装依赖</span>
+npm run setup:all
+
+<span class="comment"># 4. 启动服务</span>
+npm run dev
+
+<span class="comment"># 或使用 Docker 部署</span>
+docker compose up -d
+            </div>
+            <p style="margin-top:12px; font-size: 0.9em; color: var(--text-muted);">
+                前端访问 http://localhost:3000，后端 API http://localhost:5001<br>
+                推荐使用阿里云通义千问 qwen-plus 模型，支持任何 OpenAI SDK 格式的 LLM API
+            </p>
+        </section>
+
+        <!-- 综合评分 -->
+        <section class="card">
+            <h2><span class="icon icon-green">&#11088;</span> 综合评分</h2>
+            <div class="scores-grid">
+                <div class="score-card">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value" style="color: var(--accent-blue);">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%; background: var(--gradient-1);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value" style="color: var(--accent-green);">7.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 75%; background: linear-gradient(135deg, #3fb950, #00d4aa);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value" style="color: var(--accent-orange);">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: linear-gradient(135deg, #d29922, #f97316);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value" style="color: var(--accent-purple);">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: linear-gradient(135deg, #a371f7, #6e40c9);"></div></div>
+                </div>
+                <div class="score-card">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value" style="color: var(--accent-red);">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--gradient-2);"></div></div>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px;">
+                <p><strong>总评：42.5 / 50</strong> — MiroFish 在创新性上表现卓越，"预测万物"的理念在当前 AI 领域独树一帜。作为大四学生的 10 天作品，代码质量和文档水平令人印象深刻。盛大集团的投资背书和 61K+ Stars 证明了社区的高度认可。项目潜力巨大，值得持续关注。</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>分析日期：2026-05-25 | 数据来源：GitHub、WebSearch | 由 AI 深度分析生成</p>
+            <p style="margin-top: 8px;">
+                <a href="https://github.com/666ghj/MiroFish" style="color: var(--accent-blue); text-decoration: none;">GitHub 仓库</a> &middot;
+                <a href="https://zhuanlan.zhihu.com/p/2016788410640135889" style="color: var(--accent-blue); text-decoration: none;">深度技术解析</a> &middot;
+                <a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" style="color: var(--accent-blue); text-decoration: none;">视频演示</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
