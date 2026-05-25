@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frigate NVR - 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(56, 139, 253, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(63, 185, 80, 0.06) 0%, transparent 50%);
+            animation: headerGlow 15s ease-in-out infinite;
+        }
+        @keyframes headerGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-2%, 1%); }
+        }
+        .header-content { position: relative; z-index: 1; }
+        .header h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #58a6ff, #3fb950, #58a6ff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            margin-bottom: 10px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .header .subtitle {
+            font-size: 1.3em;
+            color: #8b949e;
+            margin-bottom: 8px;
+        }
+        .header .tagline {
+            font-size: 1em;
+            color: #6e7681;
+            font-style: italic;
+        }
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+            border: 1px solid #21262d;
+            background: #161b22;
+            transition: all 0.3s;
+        }
+        .badge:hover { border-color: #388bfd; transform: translateY(-2px); }
+        .badge .icon { font-size: 1.1em; }
+        .badge-stars { color: #e3b341; }
+        .badge-forks { color: #3fb950; }
+        .badge-license { color: #58a6ff; }
+        .badge-lang { color: #bc8cff; }
+        .badge-version { color: #f78166; }
+
+        /* Navigation */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #21262d;
+            padding: 0 20px;
+        }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .nav-inner::-webkit-scrollbar { display: none; }
+        .nav a {
+            color: #8b949e;
+            text-decoration: none;
+            padding: 12px 16px;
+            white-space: nowrap;
+            font-size: 0.9em;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .nav a:hover { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 24px 0;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .emoji { font-size: 1.2em; }
+        .card h3 {
+            font-size: 1.15em;
+            color: #58a6ff;
+            margin: 18px 0 10px;
+        }
+        .card p { margin-bottom: 12px; color: #b1bac4; }
+        .card ul, .card ol { padding-left: 24px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; color: #b1bac4; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .stat-item {
+            background: linear-gradient(135deg, #161b22, #1c2129);
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-item:hover {
+            transform: translateY(-4px);
+            border-color: #388bfd;
+            box-shadow: 0 8px 30px rgba(56, 139, 253, 0.1);
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #3fb950);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.85em;
+            color: #8b949e;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .feature-item:hover {
+            border-color: #3fb950;
+            box-shadow: 0 4px 20px rgba(63, 185, 80, 0.08);
+        }
+        .feature-item .feature-icon { font-size: 1.5em; margin-bottom: 10px; }
+        .feature-item h4 { color: #e6edf3; margin-bottom: 8px; font-size: 1.05em; }
+        .feature-item p { color: #8b949e; font-size: 0.9em; margin: 0; }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 16px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #21262d;
+        }
+        .comparison-table th {
+            background: linear-gradient(135deg, #1c2129, #21262d);
+            padding: 14px 18px;
+            text-align: left;
+            font-weight: 600;
+            color: #e6edf3;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .comparison-table td {
+            padding: 12px 18px;
+            border-top: 1px solid #21262d;
+            color: #b1bac4;
+            font-size: 0.92em;
+        }
+        .comparison-table tr:hover td { background: rgba(56, 139, 253, 0.04); }
+        .comparison-table .highlight { color: #3fb950; font-weight: 600; }
+        .comparison-table .dim { color: #6e7681; }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .score-bar {
+            width: 100%;
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            margin: 12px 0 8px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1.5s ease;
+        }
+        .score-fill.s9 { background: linear-gradient(90deg, #3fb950, #58a6ff); width: 90%; }
+        .score-fill.s85 { background: linear-gradient(90deg, #3fb950, #58a6ff); width: 85%; }
+        .score-fill.s8 { background: linear-gradient(90deg, #58a6ff, #bc8cff); width: 80%; }
+        .score-fill.s75 { background: linear-gradient(90deg, #58a6ff, #bc8cff); width: 75%; }
+        .score-fill.s95 { background: linear-gradient(90deg, #3fb950, #e3b341); width: 95%; }
+        .score-value { font-size: 1.8em; font-weight: 700; color: #e6edf3; }
+        .score-label { font-size: 0.85em; color: #8b949e; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+        .code-block pre {
+            font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: #e6edf3;
+        }
+        .code-block .lang-tag {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.75em;
+            color: #6e7681;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .code-block .comment { color: #6e7681; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .property { color: #d2a8ff; }
+        .code-block .value { color: #79c0ff; }
+
+        /* Tech Stack Tags */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .tech-tag {
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            border: 1px solid;
+        }
+        .tech-tag.python { background: rgba(55, 118, 171, 0.15); border-color: #3776ab; color: #79c0ff; }
+        .tech-tag.typescript { background: rgba(49, 120, 198, 0.15); border-color: #3178c6; color: #58a6ff; }
+        .tech-tag.cpp { background: rgba(0, 89, 156, 0.15); border-color: #00599c; color: #79c0ff; }
+        .tech-tag.docker { background: rgba(36, 150, 237, 0.15); border-color: #2496ed; color: #58a6ff; }
+        .tech-tag.tensorflow { background: rgba(255, 112, 67, 0.15); border-color: #ff7043; color: #f78166; }
+        .tech-tag.opencv { background: rgba(0, 136, 204, 0.15); border-color: #0088cc; color: #58a6ff; }
+        .tech-tag.mqtt { background: rgba(97, 72, 159, 0.15); border-color: #6148a0; color: #bc8cff; }
+        .tech-tag.go2rtc { background: rgba(63, 185, 80, 0.15); border-color: #3fb950; color: #3fb950; }
+        .tech-tag.onnx { background: rgba(0, 94, 184, 0.15); border-color: #005eb8; color: #58a6ff; }
+        .tech-tag.webrtc { background: rgba(255, 138, 0, 0.15); border-color: #ff8a00; color: #f78166; }
+
+        /* Alert */
+        .alert {
+            background: rgba(56, 139, 253, 0.08);
+            border: 1px solid rgba(56, 139, 253, 0.3);
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 16px 0;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; }
+        .alert-content { color: #b1bac4; font-size: 0.92em; }
+        .alert-content strong { color: #58a6ff; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid #21262d;
+            color: #6e7681;
+            font-size: 0.85em;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .container { padding: 12px; }
+            .card { padding: 20px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .comparison-table { font-size: 0.85em; }
+            .comparison-table th, .comparison-table td { padding: 8px 10px; }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card, .stat-item, .feature-item, .score-item {
+            animation: fadeInUp 0.6s ease backwards;
+        }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.2s; }
+        .card:nth-child(4) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-content">
+        <h1>Frigate NVR</h1>
+        <div class="subtitle">开源 AI 智能网络视频录像机</div>
+        <div class="tagline">NVR with Realtime Local Object Detection for IP Cameras</div>
+        <div class="badges">
+            <span class="badge badge-stars"><span class="icon">&#9733;</span> 32,891 Stars</span>
+            <span class="badge badge-forks"><span class="icon">&#1027;</span> 3,182 Forks</span>
+            <span class="badge badge-license">MIT License</span>
+            <span class="badge badge-lang">TypeScript / Python / C++</span>
+            <span class="badge badge-version">v0.17.x</span>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="#overview">项目概览</a>
+        <a href="#features">核心功能</a>
+        <a href="#architecture">技术架构</a>
+        <a href="#scenarios">应用场景</a>
+        <a href="#trending">为何爆火</a>
+        <a href="#comparison">竞品对比</a>
+        <a href="#scores">综合评分</a>
+        <a href="#quickstart">快速上手</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Overview -->
+    <div class="card" id="overview">
+        <h2><span class="emoji">&#128065;</span> 项目概览</h2>
+        <p><strong>Frigate</strong> 是一个完整的、本地运行的<strong>网络视频录像机（NVR）</strong>，专为 <strong>Home Assistant</strong> 设计，具备实时 AI 物体检测能力。它利用 <strong>OpenCV</strong> 和 <strong>TensorFlow</strong> 对 IP 摄像头的视频流进行本地实时物体检测，所有数据处理均在本地完成，无需将视频流发送到云端，充分保障用户隐私。</p>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">32.9K</div>
+                <div class="stat-label">GitHub Stars</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">3.2K</div>
+                <div class="stat-label">Forks</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">2019</div>
+                <div class="stat-label">创建年份</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">v0.17</div>
+                <div class="stat-label">最新版本</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">128</div>
+                <div class="stat-label">Open Issues</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">MIT</div>
+                <div class="stat-label">开源协议</div>
+            </div>
+        </div>
+
+        <div class="tech-tags">
+            <span class="tech-tag typescript">TypeScript</span>
+            <span class="tech-tag python">Python</span>
+            <span class="tech-tag cpp">C++</span>
+            <span class="tech-tag docker">Docker</span>
+            <span class="tech-tag tensorflow">TensorFlow</span>
+            <span class="tech-tag opencv">OpenCV</span>
+            <span class="tech-tag mqtt">MQTT</span>
+            <span class="tech-tag go2rtc">go2rtc</span>
+            <span class="tech-tag onnx">ONNX</span>
+            <span class="tech-tag webrtc">WebRTC</span>
+        </div>
+
+        <div class="alert">
+            <span class="alert-icon">&#9888;&#65039;</span>
+            <div class="alert-content">
+                <strong>项目亮点：</strong>Frigate 是目前最成熟的开源 AI-NVR 方案，与 Home Assistant 深度集成，支持 Google Coral TPU、NVIDIA GPU、AMD ROCm 等多种硬件加速，社区极其活跃，在智能家居/安防领域处于绝对领先地位。
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="card" id="features">
+        <h2><span class="emoji">&#9889;</span> 核心功能</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">&#127909;</div>
+                <h4>实时 AI 物体检测</h4>
+                <p>使用 TensorFlow / ONNX 模型进行本地实时物体检测，支持人、车、动物等多种目标识别，所有处理完全本地化。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#127919;</div>
+                <h4>智能区域监控</h4>
+                <p>内置遮罩和区域编辑器，可精确定义监控区域，只在需要的区域触发检测，大幅降低误报和资源消耗。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128187;</div>
+                <h4>多硬件加速</h4>
+                <p>支持 Google Coral Edge TPU、NVIDIA GPU (TensorRT)、AMD GPU (ROCm)、Intel 等，AI 加速器以极低开销实现高 FPS。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#127760;</div>
+                <h4>WebRTC 低延迟直播</h4>
+                <p>内置 go2rtc 支持 WebRTC 和 MSE 低延迟实时视频流，RTSP 重流减少对摄像头的直连数。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128203;</div>
+                <h4>24/7 录制 + 事件录制</h4>
+                <p>支持全天候连续录制和基于检测事件的智能录制，灵活配置存储策略，自动管理磁盘空间。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128279;</div>
+                <h4>Home Assistant 深度集成</h4>
+                <p>作为 Home Assistant 自定义组件运行，MQTT 通信实现与智能家居系统的无缝联动和自动化。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#129302;</div>
+                <h4>GenAI 摘要 (v0.17)</h4>
+                <p>最新版本引入 GenAI 驱动的事件摘要，使用结构化格式对检测事件进行智能总结。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128247;</div>
+                <h4>PTZ 自动追踪</h4>
+                <p>支持 PTZ 摄像头的自动追踪功能，检测到目标后自动控制云台跟踪，保持目标在画面中。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="card" id="architecture">
+        <h2><span class="emoji">&#127959;</span> 技术架构</h2>
+        <h3>系统架构</h3>
+        <p>Frigate 采用<strong>多进程架构</strong>，将视频解码、运动检测、物体检测和录制等功能分布在独立进程中运行，最大化利用多核 CPU 和专用硬件：</p>
+        <ul>
+            <li><strong>视频输入层：</strong>通过 go2rtc 接入 RTSP/RTMP 等多种视频流协议</li>
+            <li><strong>运动检测层：</strong>使用极低开销的运动检测算法确定需要运行物体检测的区域</li>
+            <li><strong>物体检测层：</strong>TensorFlow / ONNX 模型在独立进程中运行，支持 Coral TPU / GPU 加速</li>
+            <li><strong>录制管理层：</strong>基于检测结果触发录制，管理 24/7 和事件录制</li>
+            <li><strong>通信层：</strong>通过 MQTT 与 Home Assistant 及其他系统集成</li>
+            <li><strong>Web UI 层：</strong>TypeScript 构建的现代 Web 界面，支持实时预览、回放和配置</li>
+        </ul>
+
+        <h3>性能优化策略</h3>
+        <ul>
+            <li><strong>按需检测：</strong>仅在检测到运动时才运行物体检测，大幅节省计算资源</li>
+            <li><strong>区域过滤：</strong>通过遮罩和区域定义，只在感兴趣的区域进行检测</li>
+            <li><strong>多进程并行：</strong>强调实时性，不追求处理每一帧，优先保证实时 FPS</li>
+            <li><strong>硬件加速：</strong>AI 加速器（如 Coral TPU）以极低 CPU 开销实现高性能推理</li>
+            <li><strong>RTSP 重流：</strong>减少与摄像头的直接连接数，降低摄像头负载</li>
+        </ul>
+
+        <h3>部署方式</h3>
+        <div class="code-block">
+            <span class="lang-tag">bash</span>
+<pre><span class="comment"># Docker Compose 部署（推荐）</span>
+<span class="keyword">services:</span>
+  <span class="property">frigate:</span>
+    <span class="property">container_name:</span> <span class="string">frigate</span>
+    <span class="property">image:</span> <span class="string">ghcr.io/blakeblackshear/frigate:stable</span>
+    <span class="property">shm_size:</span> <span class="string">"256mb"</span>
+    <span class="property">volumes:</span>
+      - <span class="string">/path/to/config:/config</span>
+      - <span class="string">/path/to/storage:/media/frigate</span>
+      - <span class="string">/etc/localtime:/etc/localtime:ro</span>
+    <span class="property">ports:</span>
+      - <span class="string">"5000:5000"</span>    <span class="comment"># Web UI</span>
+      - <span class="string">"8554:8554"</span>    <span class="comment"># RTSP</span>
+      - <span class="string">"8555:8555/tcp"</span> <span class="comment"># WebRTC TCP</span>
+      - <span class="string">"8555:8555/udp"</span> <span class="comment"># WebRTC UDP</span></pre>
+        </div>
+    </div>
+
+    <!-- Scenarios -->
+    <div class="card" id="scenarios">
+        <h2><span class="emoji">&#127968;</span> 应用场景</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">&#128163;</div>
+                <h4>家庭安防</h4>
+                <p>通过 IP 摄像头实时监控家庭环境，AI 自动识别人、车辆、动物，仅在检测到目标时触发警报和录制，大幅减少误报。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#127971;</div>
+                <h4>智能家居联动</h4>
+                <p>与 Home Assistant 深度集成，实现"检测到人 -> 开灯 -> 发送通知"等自动化场景，打造智能安防生态。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#127979;</div>
+                <h4>小型商业监控</h4>
+                <p>适用于店铺、仓库、办公室等小型商业场景，低成本的本地 AI 监控方案，无需订阅昂贵的云服务。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128012;</div>
+                <h4>野生动物观测</h4>
+                <p>利用 AI 物体检测能力监控后院或野外的野生动物活动，自动录制和识别动物种类。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128663;</div>
+                <h4>车辆/包裹监控</h4>
+                <p>监控车道、门口等区域，自动检测车辆到达或包裹投递，及时推送通知。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128274;</div>
+                <h4>隐私优先监控</h4>
+                <p>所有视频处理在本地完成，无需上传到云端，适合对隐私有严格要求的场景。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending -->
+    <div class="card" id="trending">
+        <h2><span class="emoji">&#128293;</span> 为何爆火（Trending 原因）</h2>
+        <h3>1. 智能家居生态爆发</h3>
+        <p>Home Assistant 社区近年高速增长，Frigate 作为最佳的 AI-NVR 方案直接受益。越来越多的用户在自建智能家居时选择 Frigate + Coral TPU 的组合。</p>
+        <h3>2. 本地 AI / 隐私优先趋势</h3>
+        <p>在数据隐私意识觉醒的大背景下，Frigate 的"所有处理在本地完成"理念与用户需求高度契合。不依赖云服务意味着零订阅费和零隐私泄露风险。</p>
+        <h3>3. 持续快速迭代</h3>
+        <p>从 v0.15（ONNX GPU 支持）到 v0.16（配置优化）再到 v0.17（GenAI 摘要、多用户角色），每个版本都带来实质性改进，社区活跃度极高。</p>
+        <h3>4. 硬件生态完善</h3>
+        <p>Google Coral TPU 仅需几十美元即可实现出色的推理性能，Raspberry Pi 5 + Coral 的低成本方案降低了入门门槛。</p>
+        <h3>5. 开源社区驱动力强</h3>
+        <p>Reddit r/frigate_nvr 活跃、GitHub Discussions 热闹，用户之间共享配置、摄像头推荐和最佳实践，形成了良性的社区生态。</p>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card" id="comparison">
+        <h2><span class="emoji">&#9878;&#65039;</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>Frigate</th>
+                    <th>Blue Iris</th>
+                    <th>Shinobi</th>
+                    <th>ZoneMinder</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>运行平台</strong></td>
+                    <td class="highlight">Linux / Docker</td>
+                    <td>仅 Windows</td>
+                    <td>Linux / Docker</td>
+                    <td>Linux</td>
+                </tr>
+                <tr>
+                    <td><strong>AI 物体检测</strong></td>
+                    <td class="highlight">优秀 (Coral/GPU)</td>
+                    <td>中等 (需第三方)</td>
+                    <td class="dim">基础/有限</td>
+                    <td class="dim">有限</td>
+                </tr>
+                <tr>
+                    <td><strong>Home Assistant 集成</strong></td>
+                    <td class="highlight">最佳</td>
+                    <td>通过插件</td>
+                    <td>一般</td>
+                    <td>较好</td>
+                </tr>
+                <tr>
+                    <td><strong>资源占用</strong></td>
+                    <td class="highlight">低 (配合 TPU)</td>
+                    <td>高</td>
+                    <td>中等</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td><strong>开源协议</strong></td>
+                    <td class="highlight">MIT (免费)</td>
+                    <td>付费 ($70)</td>
+                    <td>免费 (Pro 付费)</td>
+                    <td>GPL (免费)</td>
+                </tr>
+                <tr>
+                    <td><strong>配置方式</strong></td>
+                    <td>YAML / Web UI</td>
+                    <td>GUI 驱动</td>
+                    <td>Web GUI</td>
+                    <td>Web GUI</td>
+                </tr>
+                <tr>
+                    <td><strong>低延迟直播</strong></td>
+                    <td class="highlight">WebRTC / MSE</td>
+                    <td>有</td>
+                    <td>有</td>
+                    <td>有限</td>
+                </tr>
+                <tr>
+                    <td><strong>PTZ 追踪</strong></td>
+                    <td class="highlight">支持自动追踪</td>
+                    <td>支持</td>
+                    <td>有限</td>
+                    <td>有限</td>
+                </tr>
+                <tr>
+                    <td><strong>社区活跃度</strong></td>
+                    <td class="highlight">极高 (32K+ stars)</td>
+                    <td>高</td>
+                    <td>中等</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td><strong>隐私保护</strong></td>
+                    <td class="highlight">完全本地</td>
+                    <td>本地</td>
+                    <td>本地</td>
+                    <td>本地</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert">
+            <span class="alert-icon">&#128161;</span>
+            <div class="alert-content">
+                <strong>总结：</strong>Frigate 在 AI 检测能力、Home Assistant 集成、资源效率方面具有压倒性优势。Blue Iris 虽然在 Windows 生态中成熟稳定，但付费且仅限 Windows。对于 Linux / Docker 用户和智能家居爱好者，Frigate 是首选方案。
+            </div>
+        </div>
+    </div>
+
+    <!-- Who Should Use -->
+    <div class="card">
+        <h2><span class="emoji">&#129333;</span> 适合谁使用</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">&#127968;</div>
+                <h4>智能家居爱好者</h4>
+                <p>已使用 Home Assistant 的用户，Frigate 是实现 AI 安防监控的最佳搭档，几行配置即可开始。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128187;</div>
+                <h4>自托管 / Homelab 玩家</h4>
+                <p>喜欢自建服务、掌控数据的用户，Docker 一键部署，配合 Proxmox 等虚拟化平台轻松运行。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#128272;</div>
+                <h4>隐私敏感用户</h4>
+                <p>不信任云服务的用户，所有 AI 推理和视频存储都在本地，零数据外泄。</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">&#127793;</div>
+                <h4>低成本方案追求者</h4>
+                <p>树莓派 5 + Coral TPU 总成本不到 200 美元即可搭建专业级 AI 监控系统。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="card" id="quickstart">
+        <h2><span class="emoji">&#128640;</span> 快速上手指南</h2>
+        <h3>Step 1: 准备硬件</h3>
+        <ul>
+            <li>推荐：Intel NUC / 迷你主机 / 树莓派 5 + Google Coral Edge TPU</li>
+            <li>IP 摄像头（支持 RTSP 协议，如 Reolink、Amcrest、Tapo 等）</li>
+        </ul>
+
+        <h3>Step 2: Docker 部署</h3>
+        <div class="code-block">
+            <span class="lang-tag">yaml</span>
+<pre><span class="comment"># docker-compose.yml</span>
+<span class="keyword">services:</span>
+  <span class="property">frigate:</span>
+    <span class="property">container_name:</span> <span class="string">frigate</span>
+    <span class="property">image:</span> <span class="string">ghcr.io/blakeblackshear/frigate:stable</span>
+    <span class="property">shm_size:</span> <span class="string">"256mb"</span>
+    <span class="property">devices:</span>
+      - <span class="string">/dev/bus/usb:/dev/bus/usb</span>  <span class="comment"># Coral TPU</span>
+      - <span class="string">/dev/dri/renderD128:/dev/dri/renderD128</span>  <span class="comment"># Intel GPU</span>
+    <span class="property">volumes:</span>
+      - <span class="string">/path/to/config:/config</span>
+      - <span class="string">/path/to/storage:/media/frigate</span>
+    <span class="property">ports:</span>
+      - <span class="string">"5000:5000"</span>
+      - <span class="string">"8554:8554"</span>
+      - <span class="string">"8555:8555/tcp"</span>
+      - <span class="string">"8555:8555/udp"</span>
+    <span class="property">environment:</span>
+      <span class="property">FRIGATE_RTSP_PASSWORD:</span> <span class="string">"password"</span></pre>
+        </div>
+
+        <h3>Step 3: 配置摄像头</h3>
+        <div class="code-block">
+            <span class="lang-tag">yaml</span>
+<pre><span class="comment"># /config/config.yml</span>
+<span class="keyword">cameras:</span>
+  <span class="property">front_door:</span>  <span class="comment"># 摄像头名称</span>
+    <span class="property">enabled:</span> <span class="value">true</span>
+    <span class="property">ffmpeg:</span>
+      <span class="property">inputs:</span>
+        - <span class="property">path:</span> <span class="string">rtsp://admin:password@192.168.1.100:554/stream1</span>
+          <span class="property">roles:</span>
+            - <span class="string">detect</span>
+            - <span class="string">record</span>
+    <span class="property">detect:</span>
+      <span class="property">enabled:</span> <span class="value">true</span>
+      <span class="property">width:</span> <span class="value">1920</span>
+      <span class="property">height:</span> <span class="value">1080</span>
+    <span class="property">record:</span>
+      <span class="property">enabled:</span> <span class="value">true</span>
+      <span class="property">retain:</span>
+        <span class="property">days:</span> <span class="value">7</span></pre>
+        </div>
+
+        <h3>Step 4: 启动并访问</h3>
+        <div class="code-block">
+            <span class="lang-tag">bash</span>
+<pre><span class="comment"># 启动服务</span>
+docker compose up -d
+
+<span class="comment"># 访问 Web UI</span>
+<span class="comment"># http://localhost:5000</span></pre>
+        </div>
+
+        <h3>Step 5: Home Assistant 集成</h3>
+        <p>在 Home Assistant 中搜索并安装 <strong>Frigate</strong> 集成，通过 MQTT 自动发现摄像头和传感器，即可在 HA 仪表盘中查看实时画面和事件。</p>
+    </div>
+
+    <!-- Scores -->
+    <div class="card" id="scores">
+        <h2><span class="emoji">&#127942;</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-value">9.0</div>
+                <div class="score-label">创新性</div>
+                <div class="score-bar"><div class="score-fill s9"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">8.5</div>
+                <div class="score-label">代码质量</div>
+                <div class="score-bar"><div class="score-fill s85"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.5</div>
+                <div class="score-label">实用性</div>
+                <div class="score-bar"><div class="score-fill s95"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">8.0</div>
+                <div class="score-label">文档完善度</div>
+                <div class="score-bar"><div class="score-fill s8"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.5</div>
+                <div class="score-label">社区活跃度</div>
+                <div class="score-bar"><div class="score-fill s95"></div></div>
+            </div>
+        </div>
+
+        <div class="alert">
+            <span class="alert-icon">&#11088;</span>
+            <div class="alert-content">
+                <strong>综合评分：8.9 / 10</strong> &mdash; Frigate 是开源 AI-NVR 领域的标杆项目。极高的实用性（解决真实需求）、活跃的社区和持续的创新使其成为智能家居安防的必备工具。对于任何有 IP 摄像头和 Home Assistant 的用户来说，Frigate 都值得一试。
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <p>分析日期：2026-05-25 | 数据来源：<a href="https://github.com/blakeblackshear/frigate" target="_blank">GitHub</a> | <a href="https://docs.frigate.video" target="_blank">官方文档</a></p>
+    <p style="margin-top: 8px;">Powered by GitHub Trending Analyzer</p>
+</div>
+
+</body>
+</html>
