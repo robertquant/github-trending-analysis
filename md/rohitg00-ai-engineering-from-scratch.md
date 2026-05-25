@@ -1,150 +1,164 @@
-# 深度分析: rohitg00/ai-engineering-from-scratch
+# AI Engineering from Scratch - 深度分析报告
 
-> 分析日期: 2026-05-21 | Stars: 9.5k | Forks: 1.9k | License: MIT
+> **Learn it. Build it. Ship it for others.**
 
-## 项目简介
+| 信息 | 详情 |
+|------|------|
+| 项目 | [rohitg00/ai-engineering-from-scratch](https://github.com/rohitg00/ai-engineering-from-scratch) |
+| 作者 | Rohit Ghumare (@ghumare64) |
+| Stars | 18k |
+| Forks | 3.1k |
+| License | MIT |
+| 语言 | Python (76%), JavaScript (16%), HTML, CSS, Julia, TypeScript |
+| 官网 | [aiengineeringfromscratch.com](https://aiengineeringfromscratch.com) |
+| Trending | GitHub Trending #2 (2026-05-21, 05-24) |
 
-**AI Engineering from Scratch** 是由 Rohit Ghumare 发起的开源 AI 工程学习课程，口号是 "Learn it. Build it. Ship it for others."
+---
 
-核心理念：84% 的学生已在用 AI 工具，但只有 18% 觉得自己准备好了专业使用。这个课程要填补这个缺口。
+## 项目简介与核心功能
 
-- **435 节课程**、**20 个阶段**、约 **320 小时**学时
-- 支持 **Python / TypeScript / Rust / Julia** 四种语言
-- 每节课从原始数学推导开始，手写实现，再引入生产框架
-- 每节课产出可复用工具：Prompt、Skill、Agent 或 MCP Server
-- MIT 开源，完全免费
+**AI Engineering from Scratch** 是一个史诗级开源 AI 工程课程，覆盖从线性代数到自主多智能体系统的完整知识链。
 
-## 核心功能
+核心理念：**你不是在学习 AI，你是在亲手构建它。**
 
-1. **从零构建的方法论** — 先用纯数学推导算法，手写代码实现，最后才用 PyTorch/sklearn
-2. **可交付的工具产出** — 每节课不只学习，还产出可安装到 Claude/Cursor 的 skill
-3. **渐进式 20 阶段路径** — 数学基础 → ML → 深度学习 → Transformer → LLM → Agent → 多智能体
-4. **AI 代理生态集成** — 内置 `/find-your-level` 水平测试和 `/check-understanding` 阶段测验
-5. **SkillKit 工具链** — 一键安装 373 个 skills 和 99 个 prompts 到 AI 编码代理
+- **435 节课，20 个阶段** — 从数学基础到自主系统，线性递进
+- **四种编程语言** — Python, TypeScript, Rust, Julia
+- **从零构建** — 先用纯数学推导实现算法，再用 PyTorch/sklearn 重做
+- **每节课产出可复用工具** — prompts、skills、agents、MCP servers
+- **完全免费** — MIT 开源许可，可在个人笔记本上运行
 
-## 技术架构
+每节课遵循六步循环：**MOTTO → PROBLEM → CONCEPT → BUILD IT → USE IT → SHIP IT**
 
-### 课程结构（六步法）
+---
 
-每节课遵循：Motto → Problem → Concept → **Build It** → **Use It** → **Ship It**
+## 技术架构与特点
 
-```
-phases/<NN>-<phase-name>/<NN>-<lesson-name>/
-├── code/      # 可运行实现 (Python, TypeScript, Rust, Julia)
-├── docs/
-│   └── en.md  # 课程讲义
-└── outputs/   # 产出的 prompt / skill / agent / MCP server
-```
+### 20 个阶段
 
-### 20 个学习阶段
+| Phase | 主题 | 课时 |
+|-------|------|------|
+| 0 | 环境与工具 | 12 |
+| 1 | 数学基础 | 22 |
+| 2 | ML 基础 | 18 |
+| 3 | 深度学习核心 | 13 |
+| 4 | 计算机视觉 | 28 |
+| 5 | NLP | 29 |
+| 6 | 语音与音频 | 17 |
+| 7 | Transformer 深度解析 | 14 |
+| 8 | 生成式 AI | 14 |
+| 9 | 强化学习 | 12 |
+| 10 | 从零构建 LLM | 22 |
+| 11 | LLM 工程 | 17 |
+| 12 | 多模态 AI | 25 |
+| 13 | 工具与协议 (MCP) | 23 |
+| 14 | Agent 工程 | 42 |
+| 15 | 自主系统 | 22 |
+| 16 | 多智能体与群智 | 25 |
+| 17 | 基础设施与生产 | 28 |
+| 18 | 伦理、安全与对齐 | 30 |
+| 19 | 毕业项目 | 17 |
 
-| Phase | 主题 | 课程数 |
-|-------|------|--------|
-| 0 | Setup & Tooling | 12 |
-| 1 | Math Foundations | 22 |
-| 2 | ML Fundamentals | 18 |
-| 3 | Deep Learning Core | 13 |
-| 4 | Computer Vision | 28 |
-| 5 | NLP Foundations | 29 |
-| 6 | Speech & Audio | 17 |
-| 7 | Transformers Deep Dive | 14 |
-| 8 | Generative AI | 14 |
-| 9 | Reinforcement Learning | 12 |
-| 10 | LLMs from Scratch | 22 |
-| 11 | LLM Engineering | 15 |
-| 12 | Multimodal AI | 25 |
-| 13 | Tools & Protocols (MCP, A2A) | 23 |
-| 14 | Agent Engineering | 42 |
-| 15 | Autonomous Systems | 22 |
-| 16 | Multi-Agent & Swarms | 25 |
-| 17 | Infrastructure & Production | 28 |
-| 18 | Ethics & Alignment | 30 |
-| 19 | Capstone Projects | 17 |
+### 技术亮点
 
-### 技术栈
+- **Agent Workbench** — Phase 14 包含完整的 Agent 工作台，可直接脚手架到任意仓库
+- **MCP 全栈** — Phase 13 覆盖 MCP 协议全部核心概念（含 OAuth 2.1 安全认证）
+- **378 个 Agent Skills + 99 个 Prompts** — 支持 Claude/Cursor/Codex/Hermes 等 AI Agent
+- **自动化校验** — catalog.json + CI + audit_lessons.py 质量保证
+- **自适应学习** — `/find-your-level` 智能定位起始阶段
 
-- Python 80.8% / JavaScript 10.5% / HTML 6.1% / CSS 0.8% / Julia 0.7% / TypeScript 0.7%
-- 配套网站部署在 Vercel
-- GitHub Actions CI 自动校验课程目录一致性
+---
 
 ## 应用场景
 
-| 场景 | 对应阶段 | 说明 |
-|------|---------|------|
-| AI 入门系统学习 | Phase 0-3 | 从环境搭建到神经网络核心 |
-| 计算机视觉工程师 | Phase 4 | CNN → ViT → Diffusion → 3D Vision |
-| NLP / LLM 工程师 | Phase 5, 7, 10, 11 | 词嵌入 → Transformer → RAG → MCP |
-| Agent 开发者 | Phase 14, 16 | Agent Loop → LangGraph → Multi-Agent |
-| AI 基础设施工程师 | Phase 17 | vLLM、SGLang、GPU 调度 |
-| AI 安全研究员 | Phase 18 | RLHF、红队测试、越狱防御 |
+- **自学 AI 工程师** — 从零到生产级 AI 工程师的完整路径（~320 小时）
+- **企业内部培训** — 可 Fork 定制，有专门的 FORKING.md 指南
+- **大学 CS 课程** — MIT 许可，可直接用于教学
+- **面试备考** — 深度理解 Transformer、LLM、Agent 核心原理
+- **AI Agent 开发者** — Phase 14（42 节课）是最全面的 Agent 工程课程之一
+- **MCP 开发者** — Phase 13 覆盖 MCP 全栈（Server/Client/Security/Auth）
+- **AI 基础设施工程师** — Phase 17 覆盖 vLLM/SGLang/K8s/FinOps
 
-## 为什么火（Trending 原因）
+---
 
-1. **精准定位市场缺口** — 84% 使用 AI vs 18% 准备好，直击痛点
-2. **"从零构建"方法论** — 不同于 fast.ai 的自顶向下，自底向上真正理解原理
-3. **每节课产出可复用工具** — 不只是学习，还产出可安装的 skill/prompt/MCP
-4. **覆盖 2026 年前沿** — DeepSeek-V3、EAGLE-3、MCP、A2A 等最新技术
-5. **社区驱动力** — ByteByteGo 推荐、LinkedIn/X 大量分享、55k+ 月访问量
+## 为什么火 (Trending 原因)
+
+1. **AI 教育的 "缺失环节"** — 大多数 AI 教程碎片化，此项目提供了完整线性路径
+2. **2026 AI Agent 爆发** — Phase 14（Agent 工程）+ Phase 16（多智能体）踩中浪潮
+3. **"从零构建" 的硬核魅力** — 先手推数学公式实现算法，再用框架，深度罕见
+4. **实战产物导向** — 435 节课 = 435 个真实工具，不是空洞的作业
+5. **MCP 生态先行者** — 深度集成 MCP 协议，踩中 AI 工具链标准化风口
+6. **社区口碑爆发** — Reddit/LinkedIn/Facebook 病毒式传播，社交媒体热议
+
+---
 
 ## 同类项目对比
 
-| 项目 | Stars | 课程量 | 方法 | 产出物 | 语言 |
-|------|-------|--------|------|--------|------|
-| **ai-engineering-from-scratch** | **9.5k** | **435** | 自底向上 | **Skills+Prompts+MCP** | **4种** |
-| rasbt/LLMs-from-scratch | ~50k | ~30 chapters | 自底向上 | 代码笔记 | Python |
-| microsoft/ai-agents-for-beginners | ~15k | ~10 lessons | 自顶向下 | 示例代码 | Python |
-| fast.ai | ~26k | ~7 courses | 自顶向下 | 代码笔记 | Python |
+| 项目 | 范围 | 深度 | 语言 | Agent/MCP | Stars |
+|------|------|------|------|-----------|-------|
+| **AI Engineering from Scratch** | 全栈 AI（数学→Agent→生产） | 从零推导数学 | Py/TS/Rust/Julia | 67 lessons | 18k |
+| rasbt/LLMs-from-scratch | LLM 构建与训练 | 非常深（仅 LLM） | Python | 无 | 55k+ |
+| karpathy/nn-zero-to-hero | 神经网络基础 | 深（视频为主） | Python | 无 | 13k+ |
+| microsoft/ai-agents-for-beginners | AI Agent 入门 | 入门级 | Python | 有 | 20k+ |
+| dive-into-llms | LLM 综合指南 | 中等（偏科普） | 中文 | 少量 | 18k+ |
 
-**核心差异**: 工具化产出（每个 lesson 都有可安装的 skill/prompt）+ 覆盖广度（数学到 Agent Swarm 完整链路）+ AI 代理生态深度集成。
+**核心差异**: 唯一一个覆盖「数学→ML→DL→LLM→Agent→多智能体→生产→伦理」全链路、且每节课都从零构建的开源课程。
+
+---
 
 ## 适合谁使用
 
-| 背景 | 起始阶段 | 预计学时 |
-|------|---------|---------|
-| 编程 + AI 新手 | Phase 0 | ~306h |
-| 会 Python 的 ML 新手 | Phase 1 | ~270h |
-| 了解 ML 的 DL 新手 | Phase 3 | ~200h |
-| 懂 DL 想学 LLM/Agent | Phase 10 | ~100h |
-| 资深工程师专攻 Agent | Phase 14 | ~60h |
+| 背景 | 推荐起点 | 预计时长 |
+|------|----------|----------|
+| 编程 & AI 新手 | Phase 0 — 环境设置 | ~306 小时 |
+| 会 Python，不了解 ML | Phase 1 — 数学基础 | ~270 小时 |
+| 了解 ML，没学深度学习 | Phase 3 — 深度学习核心 | ~200 小时 |
+| 懂 DL，想学 LLM 和 Agent | Phase 10 — 从零构建 LLM | ~100 小时 |
+| 高级工程师，只学 Agent | Phase 14 — Agent 工程 | ~60 小时 |
 
-## 快速上手
+---
 
-**方式一：在线阅读**（零安装）
-访问 [aiengineeringfromscratch.com](https://aiengineeringfromscratch.com)
+## 快速上手指南
 
-**方式二：克隆运行**
+### 在线阅读（零配置）
+访问 [aiengineeringfromscratch.com](https://aiengineeringfromscratch.com)，直接浏览任意课程。
+
+### 克隆运行
 ```bash
 git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
 cd ai-engineering-from-scratch
 python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py
 ```
 
-**方式三：水平测试**
+### 智能定位（推荐）
+在 Claude/Cursor/Codex 中运行 `/find-your-level`，通过 10 道题智能定位起始阶段。
+
+### 安装 Skills 到 AI Agent
 ```bash
-# 在 Claude / Cursor / Codex 中运行
-/find-your-level              # 10题定位起始阶段
-/check-understanding 3        # 测验 Phase 3 理解度
+npx skills add rohitg00/ai-engineering-from-scratch           # 全部 skills
+npx skills add rohitg00/ai-engineering-from-scratch --phase 14 # 单个 Phase
 ```
 
-**安装 Skills 到 AI 代理**
+### Agent Workbench 脚手架
 ```bash
-python3 scripts/install_skills.py ~/.claude/skills     # 全部安装
-python3 scripts/install_skills.py ./out --phase 14      # 只装 Agent 阶段
-python3 scripts/install_skills.py ./out --tag rag       # 按标签过滤
+python3 scripts/scaffold_workbench.py path/to/your-repo
 ```
-
-## 综合评分
-
-| 维度 | 评分 | 评价 |
-|------|------|------|
-| 创新性 | **9.0/10** | 工具化产出 + AI 代理生态集成是独特卖点 |
-| 代码质量 | **8.8/10** | 标准化结构 + CI 校验 + catalog 自动化 |
-| 实用性 | **9.5/10** | 每节课都有可交付工具，覆盖完整链路 |
-| 文档完善度 | **9.2/10** | README 详尽，每课有讲义，配套网站齐全 |
-| 社区活跃度 | **8.5/10** | 9.5k stars，活跃 PR/Issue，社区持续增长 |
-
-### 综合评分: **9.0 / 10** — 强烈推荐
 
 ---
 
-*数据来源: [GitHub](https://github.com/rohitg00/ai-engineering-from-scratch) | [官方网站](https://aiengineeringfromscratch.com)*
+## 综合评分
+
+| 维度 | 评分 | 说明 |
+|------|------|------|
+| 创新性 | **9.0**/10 | 从零到 Agent 完整路径 + 每节课产出工具 |
+| 代码质量 | **8.5**/10 | CI 自动校验、audit_lessons.py 质量把关 |
+| 实用性 | **9.5**/10 | 435 个真实 artifacts + 17 个毕业项目 |
+| 文档完善度 | **9.5**/10 | 独立网站 + README + 每课 docs/en.md |
+| 社区活跃度 | **9.0**/10 | 18k Stars / 3.1k Forks / 55K+ 月活访客 |
+
+### 综合评分：9.1 / 10
+
+> **顶尖开源 AI 教育项目** — 在广度、深度、实用性和社区生态方面都达到了极高水平。
+
+---
+
+*AI 深度分析报告 | Generated by Claude Code | 2026-05-26*
