@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析 | codecrafters-io/build-your-own-x</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1e2e 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(56, 139, 253, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+        .hero h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: #8b949e;
+            max-width: 700px;
+        }
+        .hero-meta {
+            display: flex;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .hero-meta .num { color: #58a6ff; font-weight: 600; font-size: 16px; }
+
+        /* Score Card */
+        .score-card {
+            background: linear-gradient(135deg, #161b22, #1c2333);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 32px;
+        }
+        .score-card h2 {
+            font-size: 1.4em;
+            color: #e6edf3;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        .score-item:hover { border-color: #388bfd; }
+        .score-item .label { font-size: 13px; color: #8b949e; margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-item .bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #238636, #58a6ff);
+        }
+        .total-score {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #21262d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+        .total-score .ts-label { font-size: 16px; color: #8b949e; }
+        .total-score .ts-value {
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f0883e, #f778ba, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 24px;
+        }
+        .section-card h2 {
+            font-size: 1.4em;
+            color: #e6edf3;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-card h3 {
+            color: #58a6ff;
+            font-size: 1.1em;
+            margin: 20px 0 10px;
+        }
+        .section-card p { color: #c9d1d9; margin-bottom: 12px; }
+        .section-card ul { padding-left: 20px; margin-bottom: 12px; }
+        .section-card li { color: #c9d1d9; margin-bottom: 6px; }
+
+        /* Tech Tags */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .tag {
+            display: inline-block;
+            background: #1c2333;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .tag:hover { background: #30363d; }
+
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .category-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 14px;
+            color: #c9d1d9;
+            transition: all 0.2s;
+        }
+        .category-item:hover {
+            border-color: #388bfd;
+            transform: translateY(-2px);
+        }
+        .category-item .count {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .comparison-table th {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            border-bottom: 2px solid #30363d;
+        }
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #21262d;
+            font-size: 14px;
+        }
+        .comparison-table tr:hover td { background: #1c2333; }
+        .comparison-table .highlight { color: #3fb950; font-weight: 600; }
+
+        /* Quick Start */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+        .code-block code {
+            font-family: 'Fira Code', 'SF Mono', monospace;
+            font-size: 14px;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .cmd { color: #79c0ff; }
+
+        /* Audience Cards */
+        .audience-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .audience-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .audience-card .icon { font-size: 2em; margin-bottom: 10px; }
+        .audience-card h4 { color: #e6edf3; margin-bottom: 6px; }
+        .audience-card p { color: #8b949e; font-size: 14px; }
+
+        /* Quote */
+        .quote-box {
+            background: linear-gradient(135deg, #1c2333, #161b22);
+            border-left: 4px solid #bc8cff;
+            border-radius: 0 12px 12px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+            font-style: italic;
+            color: #bc8cff;
+        }
+        .quote-box .author {
+            font-style: normal;
+            color: #8b949e;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: #484f58;
+            font-size: 13px;
+            padding: 32px 0;
+            border-top: 1px solid #21262d;
+            margin-top: 32px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 32px 24px; }
+            .hero h1 { font-size: 1.8em; }
+            .section-card { padding: 24px 20px; }
+            .score-grid { grid-template-columns: repeat(3, 1fr); }
+            .category-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.5em; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-badge">GitHub Trending #1 Educational</div>
+            <h1>Build Your Own X</h1>
+            <p class="subtitle">Master programming by recreating your favorite technologies from scratch — 一个收录了数百个"从零构建"技术教程的终极编程学习资源库</p>
+            <div class="hero-meta">
+                <span>Stars <span class="num">502K</span></span>
+                <span>Forks <span class="num">47.6K</span></span>
+                <span>Watchers <span class="num">6.7K</span></span>
+                <span>Topics <span class="num">6</span></span>
+                <span>Contributors <span class="num">600+</span></span>
+            </div>
+        </div>
+
+        <!-- Quote -->
+        <div class="quote-box">
+            "What I cannot create, I do not understand."
+            <div class="author">— Richard Feynman（理查德·费曼）</div>
+        </div>
+
+        <!-- Score Card -->
+        <div class="score-card">
+            <h2>综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="label">创新性</div>
+                    <div class="value">9.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">代码质量</div>
+                    <div class="value">8.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">实用性</div>
+                    <div class="value">9.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">文档完善度</div>
+                    <div class="value">8.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:80%"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">社区活跃度</div>
+                    <div class="value">9.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+                </div>
+            </div>
+            <div class="total-score">
+                <span class="ts-label">综合得分</span>
+                <span class="ts-value">9.1 / 10</span>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="section-card">
+            <h2>项目简介与核心功能</h2>
+            <p><strong>codecrafters-io/build-your-own-x</strong> 是 GitHub 上最受欢迎的编程学习资源之一，以惊人的 <strong>502K Stars</strong> 位居 GitHub 史上最高星标项目前五。该项目由 Daniel Stefanovic 发起，现由 CodeCrafters 公司维护。</p>
+            <p>其核心理念来自费曼的名言——<em>"我不能创造的，我就不能理解"</em>。项目汇集了数百个精心编写的分步教程，指导开发者从零开始重新构建各种流行技术，涵盖从操作系统、数据库到编译器、区块链等几乎所有计算机科学核心领域。</p>
+
+            <h3>核心特点</h3>
+            <ul>
+                <li><strong>全技术栈覆盖</strong> — 30+ 技术大类，数百个教程，横跨 20+ 编程语言</li>
+                <li><strong>循序渐进</strong> — 每个教程都是精心编排的分步指南</li>
+                <li><strong>多语言支持</strong> — 同一概念提供 C、C++、Python、Go、Rust、JavaScript 等多种语言实现</li>
+                <li><strong>社区驱动</strong> — 600+ 贡献者持续维护和更新</li>
+                <li><strong>完全免费</strong> — CC0 许可证，公共领域贡献</li>
+            </ul>
+        </div>
+
+        <!-- Tech Categories -->
+        <div class="section-card">
+            <h2>技术架构与分类</h2>
+            <p>项目按技术领域分为以下主要类别，每个类别包含多个不同语言和深度的教程：</p>
+            <div class="category-grid">
+                <div class="category-item">3D 渲染器 <span class="count">10+ 教程</span></div>
+                <div class="category-item">AI 模型 <span class="count">3+ 教程</span></div>
+                <div class="category-item">增强现实 <span class="count">6+ 教程</span></div>
+                <div class="category-item">BitTorrent 客户端 <span class="count">5+ 教程</span></div>
+                <div class="category-item">区块链/加密货币 <span class="count">18+ 教程</span></div>
+                <div class="category-item">机器人 <span class="count">14+ 教程</span></div>
+                <div class="category-item">命令行工具 <span class="count">9+ 教程</span></div>
+                <div class="category-item">数据库 <span class="count">13+ 教程</span></div>
+                <div class="category-item">Docker <span class="count">6+ 教程</span></div>
+                <div class="category-item">模拟器/虚拟机 <span class="count">13+ 教程</span></div>
+                <div class="category-item">前端框架 <span class="count">13+ 教程</span></div>
+                <div class="category-item">游戏 <span class="count">30+ 教程</span></div>
+                <div class="category-item">Git <span class="count">6+ 教程</span></div>
+                <div class="category-item">操作系统 <span class="count">16+ 教程</span></div>
+                <div class="category-item">编程语言 <span class="count">35+ 教程</span></div>
+                <div class="category-item">神经网络 <span class="count">16+ 教程</span></div>
+                <div class="category-item">正则引擎 <span class="count">8+ 教程</span></div>
+                <div class="category-item">搜索引擎 <span class="count">5+ 教程</span></div>
+                <div class="category-item">Shell <span class="count">5+ 教程</span></div>
+                <div class="category-item">文本编辑器 <span class="count">5+ 教程</span></div>
+                <div class="category-item">Web 浏览器 <span class="count">2+ 教程</span></div>
+                <div class="category-item">Web 服务器 <span class="count">10+ 教程</span></div>
+                <div class="category-item">物理引擎 <span class="count">5+ 教程</span></div>
+                <div class="category-item">分布式系统 <span class="count">新增!</span></div>
+            </div>
+
+            <h3>技术标签</h3>
+            <div class="tag-container">
+                <span class="tag">C</span>
+                <span class="tag">C++</span>
+                <span class="tag">Python</span>
+                <span class="tag">Go</span>
+                <span class="tag">Rust</span>
+                <span class="tag">JavaScript</span>
+                <span class="tag">TypeScript</span>
+                <span class="tag">Java</span>
+                <span class="tag">C#</span>
+                <span class="tag">Ruby</span>
+                <span class="tag">Haskell</span>
+                <span class="tag">Kotlin</span>
+                <span class="tag">Scala</span>
+                <span class="tag">Nim</span>
+                <span class="tag">Assembly</span>
+                <span class="tag">OCaml</span>
+                <span class="tag">Shell</span>
+                <span class="tag">Lua</span>
+            </div>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="section-card">
+            <h2>应用场景</h2>
+            <ul>
+                <li><strong>系统编程深入学习</strong> — 构建自己的操作系统、数据库或 Shell，深入理解底层原理</li>
+                <li><strong>编译原理实践</strong> — 通过 35+ 编程语言构建教程，掌握词法分析、语法解析、代码生成</li>
+                <li><strong>网络与分布式系统</strong> — 从 TCP/IP 协议栈到 BitTorrent 客户端，理解网络核心</li>
+                <li><strong>容器化技术入门</strong> — 用 100 行代码构建迷你 Docker，理解 Linux 容器本质</li>
+                <li><strong>前端进阶</strong> — 从零实现 React、Redux、Virtual DOM，真正理解框架原理</li>
+                <li><strong>3D 图形学</strong> — 光线追踪、光栅化渲染器，入门计算机图形学</li>
+                <li><strong>AI/ML 基础</strong> — 手写神经网络、大语言模型、扩散模型</li>
+                <li><strong>面试准备</strong> — 深度理解技术原理，在技术面试中脱颖而出</li>
+            </ul>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="section-card">
+            <h2>为什么火 (Trending 原因)</h2>
+            <ul>
+                <li><strong>知识焦虑时代的解药</strong> — 在 AI 辅助编程盛行的今天，开发者更渴望理解底层原理而非仅仅使用工具</li>
+                <li><strong>费曼学习法的最佳实践</strong> — "自己动手实现"是最有效的深度学习方式</li>
+                <li><strong>502K Stars 的飞轮效应</strong> — GitHub 史上最高星标项目之一，自带传播势能</li>
+                <li><strong>CodeCrafters 平台加持</strong> — 背后的 Y Combinator (YC S22) 公司提供互动编程挑战平台</li>
+                <li><strong>持续更新</strong> — 新增 AI Model（LLM、扩散模型、RAG）等前沿领域教程</li>
+                <li><strong>Vibe Coding 时代呼应</strong> — 新增 build-your-own-x-vibe-coding 分支，适配 AI 辅助编程趋势</li>
+                <li><strong>开发者社区的集体认同</strong> — Reddit、Hacker News 上持续讨论和推荐</li>
+            </ul>
+        </div>
+
+        <!-- Comparison -->
+        <div class="section-card">
+            <h2>同类项目对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>Stars</th>
+                        <th>特点</th>
+                        <th>优势</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="highlight">build-your-own-x</td>
+                        <td>502K</td>
+                        <td>从零构建技术的教程合集</td>
+                        <td>实践性强、多语言、深度高</td>
+                    </tr>
+                    <tr>
+                        <td>sindresorhus/awesome</td>
+                        <td>340K+</td>
+                        <td>各领域精选列表合集</td>
+                        <td>覆盖面最广、分类最细</td>
+                    </tr>
+                    <tr>
+                        <td>jwasham/coding-interview-university</td>
+                        <td>300K+</td>
+                        <td>面试准备完整学习路径</td>
+                        <td>系统化、面向面试</td>
+                    </tr>
+                    <tr>
+                        <td>thealgorithms</td>
+                        <td>200K+</td>
+                        <td>多语言算法与数据结构实现</td>
+                        <td>即拿即用、语言丰富</td>
+                    </tr>
+                    <tr>
+                        <td>ossu/computer-science</td>
+                        <td>170K+</td>
+                        <td>免费 CS 自学课程</td>
+                        <td>学术体系完整</td>
+                    </tr>
+                    <tr>
+                        <td>developer-roadmap</td>
+                        <td>300K+</td>
+                        <td>开发者技术路线图</td>
+                        <td>可视化路径、职业导向</td>
+                    </tr>
+                    <tr>
+                        <td>karpathy/nn-zero-to-hero</td>
+                        <td>120K+</td>
+                        <td>神经网络从零到精通</td>
+                        <td>视频教学、Karpathy 品质</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>独特优势：</strong>build-your-own-x 是唯一一个以"动手构建"为核心方法论的学习资源库，与 awesome-list 的"收集链接"和 roadmap 的"规划路线"形成互补。它填补了从"知道概念"到"真正理解"之间的关键鸿沟。</p>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="section-card">
+            <h2>适合谁使用</h2>
+            <div class="audience-grid">
+                <div class="audience-card">
+                    <div class="icon">🎓</div>
+                    <h4>计算机科学学生</h4>
+                    <p>通过亲手实现操作系统、编译器等来巩固课堂知识，将理论转化为实践能力</p>
+                </div>
+                <div class="audience-card">
+                    <div class="icon">🧑‍💻</div>
+                    <h4>中级开发者</h4>
+                    <p>已经会使用框架但想深入理解底层原理，从"使用者"进化为"理解者"</p>
+                </div>
+                <div class="audience-card">
+                    <div class="icon">🏗️</div>
+                    <h4>高级工程师</h4>
+                    <p>准备系统设计面试，或者需要设计类似系统时寻找灵感和参考架构</p>
+                </div>
+                <div class="audience-card">
+                    <div class="icon">📚</div>
+                    <h4>技术面试准备者</h4>
+                    <p>深度理解数据库、容器、编译器等核心系统，在面试中展现技术深度</p>
+                </div>
+                <div class="audience-card">
+                    <div class="icon">🤖</div>
+                    <h4>AI 时代开发者</h4>
+                    <p>在 AI 辅助编程时代，保持对底层技术的理解力和独立思考能力</p>
+                </div>
+                <div class="audience-card">
+                    <div class="icon">💡</div>
+                    <h4>开源贡献者</h4>
+                    <p>通过提交教程参与高星项目，学习开源社区协作模式</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="section-card">
+            <h2>快速上手指南</h2>
+            <h3>1. 浏览并选择感兴趣的教程</h3>
+            <div class="code-block">
+                <code>
+<span class="comment"># 访问 GitHub 仓库</span>
+<span class="cmd">https://github.com/codecrafters-io/build-your-own-x</span>
+
+<span class="comment"># 或使用第三方 Web 界面浏览（更友好）</span>
+<span class="cmd">https://build-your-own-x.vercel.app/</span>
+                </code>
+            </div>
+
+            <h3>2. 推荐入门路径</h3>
+            <div class="code-block">
+                <code>
+<span class="comment"># 初学者推荐（难度：⭐⭐）</span>
+<span class="string">→ Build your own Web Server</span> (Python/Node.js)
+<span class="string">→ Build your own Bot</span> (Python/Node.js)
+<span class="string">→ Build your own Command-Line Tool</span> (Go/Rust)
+
+<span class="comment"># 进阶推荐（难度：⭐⭐⭐）</span>
+<span class="string">→ Build your own Git</span> (Python/Ruby)
+<span class="string">→ Build your own Database</span> (C/Go)
+<span class="string">→ Build your own Docker</span> (Go/Python)
+
+<span class="comment"># 高级挑战（难度：⭐⭐⭐⭐⭐）</span>
+<span class="string">→ Build your own Operating System</span> (C/Rust)
+<span class="string">→ Build your own Programming Language</span> (多语言)
+<span class="string">→ Build your own Emulator</span> (C/C++)
+                </code>
+            </div>
+
+            <h3>3. 使用 CodeCrafters 平台（交互式挑战）</h3>
+            <div class="code-block">
+                <code>
+<span class="comment"># 注册 CodeCrafters（免费 1 个项目/月）</span>
+<span class="cmd">https://codecrafters.io/</span>
+
+<span class="comment"># 可选的交互式项目</span>
+<span class="string">→ Build your own Redis</span>
+<span class="string">→ Build your own Git</span>
+<span class="string">→ Build your own SQLite</span>
+<span class="string">→ Build your own Docker</span>
+<span class="string">→ Build your own Kafka</span>
+                </code>
+            </div>
+
+            <h3>4. 学习建议</h3>
+            <ul>
+                <li>选择一个与你当前工作或学习相关的方向</li>
+                <li>不要只是跟着教程走 — 尝试自己思考解决方案</li>
+                <li>每完成一个项目，写一篇博客总结你的收获</li>
+                <li>尝试用不同语言实现同一个项目，对比语言特性</li>
+                <li>加入社区讨论，分享你的实现和遇到的问题</li>
+            </ul>
+        </div>
+
+        <!-- Summary -->
+        <div class="section-card">
+            <h2>总结</h2>
+            <p><strong>build-your-own-x</strong> 不仅是一个教程合集，更是一种编程教育哲学的实践。在 AI 生成代码日益普及的今天，理解技术的底层原理变得比以往任何时候都更加重要。这个项目以费曼学习法为核心方法论，为开发者提供了一条从"会用"到"真懂"的清晰路径。</p>
+            <p>502K Stars 的惊人数据证明了全球开发者社区对这一理念的认可。无论你是刚入门的新手还是经验丰富的老将，都能在这个宝库中找到适合自己水平和兴趣的挑战。如果你今年只打算收藏一个 GitHub 仓库，这应该就是它。</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated on 2026-05-25 | GitHub Trending Deep Analysis</p>
+            <p>
+                <a href="https://github.com/codecrafters-io/build-your-own-x" style="color:#58a6ff;text-decoration:none">GitHub Repository</a> |
+                <a href="https://codecrafters.io" style="color:#58a6ff;text-decoration:none">CodeCrafters</a> |
+                <a href="https://build-your-own-x.vercel.app/" style="color:#58a6ff;text-decoration:none">Web App</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
