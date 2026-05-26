@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jellyfin 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #1a2332 100%);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(0, 120, 212, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(136, 55, 233, 0.06) 0%, transparent 50%);
+        }
+        .hero h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #79c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .hero .subtitle {
+            font-size: 1.2em;
+            color: #8b949e;
+            position: relative;
+        }
+        .hero .badges {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-blue { background: rgba(88, 166, 255, 0.15); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); }
+        .badge-purple { background: rgba(188, 140, 255, 0.15); color: #bc8cff; border: 1px solid rgba(188, 140, 255, 0.3); }
+        .badge-green { background: rgba(63, 185, 80, 0.15); color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.3); }
+        .badge-orange { background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.3); }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #388bfd; }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 {
+            color: #79c0ff;
+            font-size: 1.15em;
+            margin: 18px 0 10px;
+        }
+        .card p, .card li { color: #b1bac4; margin-bottom: 8px; }
+        .card ul { padding-left: 20px; }
+        .card li::marker { color: #58a6ff; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-3px); border-color: #58a6ff; }
+        .stat-card .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-card .stat-label { color: #8b949e; font-size: 0.9em; margin-top: 4px; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        th {
+            background: #1c2128;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+        tr:hover td { background: rgba(88, 166, 255, 0.05); }
+
+        /* Code */
+        code {
+            background: #1c2128;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.9em;
+            color: #79c0ff;
+        }
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #b1bac4;
+        }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .score-item .score-label { color: #8b949e; font-size: 0.85em; margin-bottom: 8px; }
+        .score-item .score-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .score-item .score-bar {
+            width: 100%;
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .score-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+        .score-high { color: #3fb950; }
+        .fill-high { background: linear-gradient(90deg, #3fb950, #58a6ff); }
+        .score-mid { color: #d29922; }
+        .fill-mid { background: linear-gradient(90deg, #d29922, #e3b341); }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            background: rgba(88, 166, 255, 0.1);
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.2);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+            margin-top: 30px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8em; }
+            .card { padding: 18px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Jellyfin</h1>
+        <p class="subtitle">The Free Software Media System - 完全免费开源的媒体服务器</p>
+        <div class="badges">
+            <span class="badge badge-blue">GPL-2.0 开源协议</span>
+            <span class="badge badge-purple">C# / .NET 10</span>
+            <span class="badge badge-green">自托管媒体中心</span>
+            <span class="badge badge-orange">GitHub Trending</span>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">56k+</div>
+            <div class="stat-label">GitHub Stars</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">10.11.x</div>
+            <div class="stat-label">最新稳定版</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">51.2%</div>
+            <div class="stat-label">自托管媒体服务器市场份额</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">60+</div>
+            <div class="stat-label">社区插件</div>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2>🎬 项目简介与核心功能</h2>
+        <p><strong>Jellyfin</strong> 是一个完全免费、开源的媒体服务器系统，让你掌控自己的媒体内容管理和串流体验。它是 <strong>Plex</strong> 和 <strong>Emby</strong> 的自由软件替代品，没有任何高级许可证、隐藏收费或付费功能。</p>
+        <h3>核心功能</h3>
+        <ul>
+            <li><strong>媒体管理与串流</strong> — 支持电影、电视剧、音乐、照片的自动元数据抓取、整理和跨设备串流</li>
+            <li><strong>硬件转码</strong> — 支持 GPU 硬件加速（Intel QSV、NVIDIA NVENC、AMD AMF、VAAPI、VideoToolbox）</li>
+            <li><strong>实时 TV 与 DVR</strong> — 支持直播电视和节目录制功能</li>
+            <li><strong>多客户端</strong> — Web、Android、iOS、 Roku、Fire TV、Android TV 等全平台支持</li>
+            <li><strong>字幕支持</strong> — 自动下载字幕，支持多字幕轨道</li>
+            <li><strong>用户与权限管理</strong> — 多用户支持，家长控制，细粒度访问控制</li>
+            <li><strong>插件生态</strong> — 60+ 社区插件，可扩展功能如主题美化、SSO 登录、书签同步等</li>
+        </ul>
+        <div class="tags">
+            <span class="tag">媒体服务器</span>
+            <span class="tag">流媒体</span>
+            <span class="tag">硬件转码</span>
+            <span class="tag">DVR</span>
+            <span class="tag">多平台客户端</span>
+            <span class="tag">开源免费</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2>🏗️ 技术架构与特点</h2>
+        <h3>技术栈</h3>
+        <table>
+            <tr><th>组件</th><th>技术</th></tr>
+            <tr><td>后端服务</td><td>C# / .NET 10（跨平台）</td></tr>
+            <tr><td>Web 前端</td><td>Vue.js（独立 jellyfin-web 仓库）</td></tr>
+            <tr><td>数据库</td><td>EF Core + SQLite（10.11 统一为 jellyfin.db）</td></tr>
+            <tr><td>媒体处理</td><td>FFmpeg / jellyfin-ffmpeg</td></tr>
+            <tr><td>API</td><td>RESTful API（Swagger 文档）</td></tr>
+            <tr><td>容器化</td><td>Docker 官方镜像</td></tr>
+        </table>
+
+        <h3>架构亮点</h3>
+        <ul>
+            <li><strong>10.11 重大重构</strong> — 将遗留的 <code>library.db</code> 合并到统一的 <code>jellyfin.db</code>，完成 EF Core 迁移，这是项目历史上最大的一次数据库架构升级</li>
+            <li><strong>前后端分离</strong> — Web 客户端和服务器可独立部署和开发，前端开发者可使用 webpack 开发服务器</li>
+            <li><strong>跨平台</strong> — 支持 Windows、Linux、macOS、Docker、NAS 等多种部署方式</li>
+            <li><strong>GitHub Codespaces 支持</strong> — 提供开箱即用的云端开发环境</li>
+            <li><strong>插件架构</strong> — 通过 File Transformation 插件机制可在不直接修改文件的情况下扩展 Web 界面</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2>🎯 应用场景</h2>
+        <ul>
+            <li><strong>家庭媒体中心</strong> — 在 NAS 或家用服务器上搭建私人 Netflix，全家人共享影视库</li>
+            <li><strong>个人影音管理</strong> — 高效管理个人收藏的电影、剧集、音乐和照片</li>
+            <li><strong>远程串流</strong> — 在外也能通过手机或浏览器访问家中的媒体库</li>
+            <li><strong>宿舍/小团队共享</strong> — 小范围内共享资源，支持多用户和权限管理</li>
+            <li><strong>直播电视录制</strong> — 配合电视调谐器实现 DVR 功能</li>
+            <li><strong>数据隐私</strong> — 不依赖任何云服务，所有数据完全掌握在自己手中</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2>🔥 为什么火（Trending 原因）</h2>
+        <ul>
+            <li><strong>Plex 令人失望的商业化转向</strong> — Plex 近年来不断增加广告、强制引入云服务、逐步将功能放入付费层，大量用户流失到 Jellyfin</li>
+            <li><strong>10.11 里程碑版本发布</strong> — 完成了 EF Core 重大数据库重构，被官方称为"项目历史上最大和最有影响力的发布之一"</li>
+            <li><strong>市场份额超越 Plex</strong> — 2024 年在自托管媒体服务器市场达到 51.2%，首次超越 Plex</li>
+            <li><strong>活跃的插件生态</strong> — 社区插件在 2026 年持续爆发，MDB List Ratings、Media Bar、SSO 插件等广受欢迎</li>
+            <li><strong>完全免费无套路</strong> — 硬件转码、移动端同步、直播 TV、DVR 全部免费，Plex 对应功能需 Plex Pass</li>
+            <li><strong>隐私保护意识提升</strong> — 越来越多用户重视数据主权，Jellyfin 的无追踪、无遥测理念契合这一趋势</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2>⚔️ 同类项目对比</h2>
+        <table>
+            <tr>
+                <th>特性</th>
+                <th style="color:#3fb950">Jellyfin</th>
+                <th>Plex</th>
+                <th>Emby</th>
+            </tr>
+            <tr>
+                <td>开源</td>
+                <td style="color:#3fb950">✅ 完全开源 (GPL-2.0)</td>
+                <td>❌ 闭源</td>
+                <td>⚠️ 部分开源</td>
+            </tr>
+            <tr>
+                <td>费用</td>
+                <td style="color:#3fb950">完全免费</td>
+                <td>免费 + Plex Pass 付费</td>
+                <td>免费 + Premiere 付费</td>
+            </tr>
+            <tr>
+                <td>硬件转码</td>
+                <td style="color:#3fb950">免费</td>
+                <td>需 Plex Pass</td>
+                <td>需 Premiere</td>
+            </tr>
+            <tr>
+                <td>移动端同步</td>
+                <td style="color:#3fb950">免费</td>
+                <td>需 Plex Pass</td>
+                <td>需 Premiere</td>
+            </tr>
+            <tr>
+                <td>元数据匹配</td>
+                <td>~95% 准确</td>
+                <td style="color:#3fb950">~98% 准确</td>
+                <td>良好</td>
+            </tr>
+            <tr>
+                <td>易用性</td>
+                <td>中等</td>
+                <td style="color:#3fb950">最佳</td>
+                <td>中等</td>
+            </tr>
+            <tr>
+                <td>广告/追踪</td>
+                <td style="color:#3fb950">无</td>
+                <td>有广告和追踪</td>
+                <td>少量</td>
+            </tr>
+            <tr>
+                <td>插件生态</td>
+                <td style="color:#3fb950">最活跃 (60+)</td>
+                <td>丰富但受限</td>
+                <td>较少但精致</td>
+            </tr>
+            <tr>
+                <td>社区活跃度</td>
+                <td style="color:#3fb950">极高</td>
+                <td>高</td>
+                <td>较低</td>
+            </tr>
+        </table>
+        <p><strong>总结：</strong>Plex 胜在易用性和生态打磨，Jellyfin 胜在免费、开放和隐私保护，Emby 介于两者之间。2026 年的趋势明显向 Jellyfin 倾斜。</p>
+    </div>
+
+    <!-- 适合谁使用 -->
+    <div class="card">
+        <h2>👥 适合谁使用</h2>
+        <ul>
+            <li><strong>家庭 NAS 用户</strong> — 有 NAS 或家用服务器，想搭建私人媒体库的人</li>
+            <li><strong>隐私敏感用户</strong> — 不愿让第三方公司接触自己媒体数据的人</li>
+            <li><strong>Plex 逃离者</strong> — 对 Plex 广告化、商业化不满的现有 Plex 用户</li>
+            <li><strong>自托管爱好者 (Homelabber)</strong> — 喜欢搭建和维护自己的服务的技术爱好者</li>
+            <li><strong>开源支持者</strong> — 认同自由软件理念，愿意参与社区贡献的开发者</li>
+            <li><strong>学生/宿舍/小团队</strong> — 需要在小范围内共享媒体资源且不想付费的群体</li>
+        </ul>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2>🚀 快速上手指南</h2>
+        <h3>Docker 部署（推荐）</h3>
+        <pre><code>docker run -d \
+  --name jellyfin \
+  -p 8096:8096 \
+  -v /path/to/config:/config \
+  -v /path/to/cache:/cache \
+  -v /path/to/media:/media \
+  --restart=unless-stopped \
+  jellyfin/jellyfin</code></pre>
+
+        <h3>Docker Compose（生产推荐）</h3>
+        <pre><code>version: '3'
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - /your/media:/media
+    restart: unless-stopped</code></pre>
+
+        <h3>从源码构建</h3>
+        <pre><code># 安装 .NET 10 SDK 和 FFmpeg
+git clone https://github.com/jellyfin/jellyfin.git
+cd jellyfin
+dotnet run --project Jellyfin.Server --webdir /path/to/jellyfin-web/dist</code></pre>
+
+        <h3>访问与初始化</h3>
+        <p>启动后访问 <code>http://localhost:8096</code> 进入设置向导，按提示添加媒体库即可。API 文档位于 <code>http://localhost:8096/api-docs/swagger/index.html</code></p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2>⭐ 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">创新性</div>
+                <div class="score-value score-mid">7.5</div>
+                <div class="score-bar"><div class="score-fill fill-mid" style="width:75%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">代码质量</div>
+                <div class="score-value score-high">8.5</div>
+                <div class="score-bar"><div class="score-fill fill-high" style="width:85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">实用性</div>
+                <div class="score-value score-high">9.5</div>
+                <div class="score-bar"><div class="score-fill fill-high" style="width:95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value score-high">8.0</div>
+                <div class="score-bar"><div class="score-fill fill-high" style="width:80%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value score-high">9.0</div>
+                <div class="score-bar"><div class="score-fill fill-high" style="width:90%"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:24px;">
+            <span style="font-size:1.5em; font-weight:700;" class="score-high">综合评分：8.5 / 10</span>
+            <p style="color:#8b949e; margin-top:8px;">高度成熟的自由软件项目，实用价值极高，社区活力充沛</p>
+        </div>
+    </div>
+
+    <!-- Links -->
+    <div class="card">
+        <h2>🔗 相关链接</h2>
+        <table>
+            <tr><td>GitHub 仓库</td><td><a href="https://github.com/jellyfin/jellyfin" style="color:#58a6ff">github.com/jellyfin/jellyfin</a></td></tr>
+            <tr><td>官方网站</td><td><a href="https://jellyfin.org" style="color:#58a6ff">jellyfin.org</a></td></tr>
+            <tr><td>文档</td><td><a href="https://jellyfin.org/docs/" style="color:#58a6ff">jellyfin.org/docs</a></td></tr>
+            <tr><td>插件生态</td><td><a href="https://github.com/awesome-jellyfin/awesome-jellyfin" style="color:#58a6ff">awesome-jellyfin</a></td></tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>分析日期：2026-05-27 | 数据来源：GitHub, Jellyfin 官方博客, 社区讨论</p>
+    </div>
+</div>
+</body>
+</html>
