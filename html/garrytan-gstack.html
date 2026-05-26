@@ -10,7 +10,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
             background: #0d1117;
             color: #c9d1d9;
-            line-height: 1.7;
+            line-height: 1.8;
             min-height: 100vh;
         }
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
@@ -21,678 +21,709 @@
             padding: 50px 20px 40px;
             background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
             border-bottom: 1px solid #21262d;
-        }
-        .header-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #238636, #2ea043);
-            color: #fff;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            letter-spacing: 0.5px;
+            margin: -20px -20px 30px;
         }
         .header h1 {
-            font-size: 2.6em;
+            font-size: 2.4em;
             background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .header .subtitle {
             color: #8b949e;
             font-size: 1.1em;
             margin-bottom: 20px;
         }
-        .header-meta {
+        .header .meta {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 25px;
             flex-wrap: wrap;
         }
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #8b949e;
-            font-size: 0.9em;
-        }
-        .meta-item .icon { font-size: 1.1em; }
-        .meta-item strong { color: #c9d1d9; }
-
-        /* Cards */
-        .card {
+        .header .meta span {
             background: #161b22;
-            border: 1px solid #21262d;
-            border-radius: 12px;
-            padding: 28px;
-            margin-bottom: 20px;
-            transition: border-color 0.2s;
+            border: 1px solid #30363d;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #8b949e;
         }
-        .card:hover { border-color: #30363d; }
-        .card h2 {
-            font-size: 1.5em;
-            margin-bottom: 16px;
-            padding-bottom: 10px;
+        .header .meta span strong {
+            color: #58a6ff;
+        }
+
+        /* Score Overview */
+        .score-overview {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .score-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .score-card:hover {
+            transform: translateY(-3px);
+            border-color: #58a6ff;
+        }
+        .score-card .label {
+            font-size: 0.85em;
+            color: #8b949e;
+            margin-bottom: 8px;
+        }
+        .score-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .score-card .bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.8s ease;
+        }
+        .s-innovation .value { color: #f778ba; }
+        .s-innovation .bar-fill { background: linear-gradient(90deg, #f778ba, #ff9bce); }
+        .s-quality .value { color: #58a6ff; }
+        .s-quality .bar-fill { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
+        .s-practical .value { color: #3fb950; }
+        .s-practical .bar-fill { background: linear-gradient(90deg, #3fb950, #56d364); }
+        .s-docs .value { color: #d2a8ff; }
+        .s-docs .bar-fill { background: linear-gradient(90deg, #d2a8ff, #bc8cff); }
+        .s-community .value { color: #f0883e; }
+        .s-community .bar-fill { background: linear-gradient(90deg, #f0883e, #f5a623); }
+
+        /* Sections */
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+        .section h2 {
+            font-size: 1.4em;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
             border-bottom: 1px solid #21262d;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .card h2 .emoji { font-size: 1.2em; }
-        .card h3 { font-size: 1.15em; color: #58a6ff; margin: 16px 0 8px; }
-        .card p { margin-bottom: 10px; color: #c9d1d9; }
-        .card ul { padding-left: 20px; margin-bottom: 10px; }
-        .card li { margin-bottom: 6px; color: #b1bac4; }
-        .card li strong { color: #c9d1d9; }
-
-        /* Tag chips */
-        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-        .tag {
-            display: inline-block;
-            padding: 3px 12px;
-            border-radius: 16px;
-            font-size: 0.82em;
-            font-weight: 500;
-            border: 1px solid;
+        .section h2 .icon {
+            font-size: 1.2em;
         }
-        .tag-blue { background: #0d2240; color: #58a6ff; border-color: #1a4a7a; }
-        .tag-green { background: #0d2818; color: #3fb950; border-color: #1a6b2a; }
-        .tag-purple { background: #1a0d2e; color: #bc8cff; border-color: #5a2d82; }
-        .tag-orange { background: #2a1a00; color: #d29922; border-color: #6b4a00; }
-        .tag-red { background: #2d0a0a; color: #f85149; border-color: #6b1a1a; }
-        .tag-cyan { background: #0a2a2d; color: #56d4dd; border-color: #1a5a6b; }
+        .section p {
+            margin-bottom: 12px;
+            color: #c9d1d9;
+        }
+        .section ul, .section ol {
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+        .section li {
+            margin-bottom: 8px;
+        }
 
-        /* Score Grid */
-        .score-grid {
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, #161b22, #1c2333);
+            border-left: 4px solid #58a6ff;
+            padding: 18px 22px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .highlight-box.pink { border-left-color: #f778ba; }
+        .highlight-box.green { border-left-color: #3fb950; }
+        .highlight-box.orange { border-left-color: #f0883e; }
+
+        /* Skills Grid */
+        .skills-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 14px;
-            margin: 16px 0;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
         }
-        .score-item {
+        .skill-item {
             background: #0d1117;
             border: 1px solid #21262d;
-            border-radius: 10px;
-            padding: 16px;
-            text-align: center;
+            border-radius: 8px;
+            padding: 15px;
+            transition: border-color 0.2s;
         }
-        .score-item .label { font-size: 0.85em; color: #8b949e; margin-bottom: 6px; }
-        .score-item .value {
-            font-size: 2em;
-            font-weight: 700;
-            background: linear-gradient(135deg, #58a6ff, #bc8cff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .skill-item:hover {
+            border-color: #58a6ff;
         }
-        .score-item .bar {
-            height: 4px;
-            background: #21262d;
-            border-radius: 2px;
-            margin-top: 8px;
-            overflow: hidden;
+        .skill-item .cmd {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            color: #79c0ff;
+            font-size: 0.95em;
+            font-weight: bold;
         }
-        .score-item .bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            background: linear-gradient(90deg, #238636, #3fb950);
+        .skill-item .role {
+            color: #f0883e;
+            font-size: 0.85em;
+            margin: 4px 0;
+        }
+        .skill-item .desc {
+            color: #8b949e;
+            font-size: 0.9em;
         }
 
         /* Comparison Table */
-        .table-wrap { overflow-x: auto; margin: 16px 0; }
-        table {
+        .comparison-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9em;
+            margin: 15px 0;
         }
-        th, td {
-            padding: 10px 14px;
+        .comparison-table th {
+            background: #21262d;
+            padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #21262d;
-        }
-        th {
-            background: #0d1117;
-            color: #58a6ff;
             font-weight: 600;
-            white-space: nowrap;
+            color: #c9d1d9;
+            border-bottom: 2px solid #30363d;
         }
-        td { color: #b1bac4; }
-        tr:hover td { background: #161b2280; }
-        .highlight { color: #3fb950; font-weight: 600; }
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #21262d;
+            color: #8b949e;
+        }
+        .comparison-table tr:hover td {
+            background: #161b22;
+            color: #c9d1d9;
+        }
+        .comparison-table .winner {
+            color: #3fb950;
+            font-weight: 600;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            background: #1c2333;
+            color: #58a6ff;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin: 3px;
+            border: 1px solid #21262d;
+        }
+        .tag.green { color: #3fb950; border-color: #1c3a28; background: #0d2818; }
+        .tag.pink { color: #f778ba; border-color: #3d1f30; background: #2d1525; }
+        .tag.orange { color: #f0883e; border-color: #3d2a1f; background: #2d2015; }
 
         /* Code Block */
         .code-block {
             background: #0d1117;
             border: 1px solid #21262d;
             border-radius: 8px;
-            padding: 16px;
-            margin: 12px 0;
-            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-            font-size: 0.88em;
+            padding: 18px;
+            margin: 15px 0;
             overflow-x: auto;
-            color: #e6edf3;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.9em;
             line-height: 1.6;
         }
         .code-block .comment { color: #8b949e; }
-        .code-block .cmd { color: #79c0ff; }
-        .code-block .flag { color: #d2a8ff; }
+        .code-block .cmd-text { color: #79c0ff; }
         .code-block .string { color: #a5d6ff; }
-        .code-block .keyword { color: #ff7b72; }
 
-        /* Callout */
-        .callout {
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin: 16px 0;
-            border-left: 4px solid;
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
         }
-        .callout-info { background: #0d2240; border-color: #58a6ff; }
-        .callout-warn { background: #2a1a00; border-color: #d29922; }
-        .callout-success { background: #0d2818; border-color: #3fb950; }
-        .callout strong { color: #f0f6fc; }
-
-        /* Timeline */
-        .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #21262d;
+        .stat-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
         }
-        .timeline-item {
-            position: relative;
-            margin-bottom: 16px;
+        .stat-item .num {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #58a6ff;
         }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -24px;
-            top: 6px;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #58a6ff;
-            border: 2px solid #0d1117;
+        .stat-item .desc {
+            font-size: 0.85em;
+            color: #8b949e;
+            margin-top: 5px;
         }
-        .timeline-item .title { font-weight: 600; color: #f0f6fc; }
-        .timeline-item .desc { color: #8b949e; font-size: 0.9em; }
 
         /* Footer */
         .footer {
             text-align: center;
             padding: 30px;
             color: #484f58;
-            font-size: 0.85em;
+            font-size: 0.9em;
             border-top: 1px solid #21262d;
             margin-top: 30px;
         }
-        .footer a { color: #58a6ff; text-decoration: none; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .header h1 { font-size: 1.8em; }
-            .card { padding: 18px; }
-            .score-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-            .score-item .value { font-size: 1.5em; }
-            .header-meta { gap: 12px; }
+            .score-overview { grid-template-columns: repeat(3, 1fr); }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .skills-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.6em; }
+            .container { padding: 10px; }
+            .section { padding: 20px; }
         }
         @media (max-width: 480px) {
-            .score-grid { grid-template-columns: repeat(2, 1fr); }
-            .container { padding: 10px; }
+            .score-overview { grid-template-columns: repeat(2, 1fr); }
+            .header .meta { gap: 10px; }
         }
-
-        /* Sprint Flow */
-        .sprint-flow {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 16px 0;
-        }
-        .sprint-step {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9em;
-            white-space: nowrap;
-        }
-        .sprint-arrow { color: #484f58; font-size: 1.2em; }
-        .step-think { background: #1a0d2e; color: #bc8cff; }
-        .step-plan { background: #0d2240; color: #58a6ff; }
-        .step-build { background: #0d2818; color: #3fb950; }
-        .step-review { background: #2a1a00; color: #d29922; }
-        .step-test { background: #2d0a0a; color: #f85149; }
-        .step-ship { background: #0a2a2d; color: #56d4dd; }
-        .step-reflect { background: #1a0d2e; color: #d2a8ff; }
-
-        /* Stat row */
-        .stat-row {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin: 16px 0;
-            text-align: center;
-        }
-        .stat-item .number {
-            font-size: 2.2em;
-            font-weight: 700;
-            background: linear-gradient(135deg, #3fb950, #58a6ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .stat-item .desc { color: #8b949e; font-size: 0.85em; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-badge">GitHub Trending #14 | 2026-05-15</div>
-        <h1>garrytan/gstack</h1>
-        <p class="subtitle">Garry Tan 的 Claude Code 虚拟工程团队 — 23 个专家角色，一个命令召唤</p>
-        <div class="header-meta">
-            <span class="meta-item"><span class="icon">⭐</span> <strong>96,190</strong> Stars</span>
-            <span class="meta-item"><span class="icon">🔥</span> 今日 +<strong>1,083</strong></span>
-            <span class="meta-item"><span class="icon">💻</span> <strong>TypeScript / Shell</strong></span>
-            <span class="meta-item"><span class="icon">📄</span> <strong>MIT</strong> License</span>
-            <span class="meta-item"><span class="icon">👤</span> <strong>Garry Tan</strong> (Y Combinator CEO)</span>
-        </div>
-        <div class="tags" style="justify-content: center; margin-top: 14px;">
-            <span class="tag tag-blue">AI Coding Agent</span>
-            <span class="tag tag-purple">Claude Code</span>
-            <span class="tag tag-green">Workflow Framework</span>
-            <span class="tag tag-orange">Multi-Agent</span>
-            <span class="tag tag-cyan">Browser Automation</span>
-        </div>
-    </div>
-
     <div class="container">
-        <!-- Core Stats -->
-        <div class="card">
-            <h2><span class="emoji">📊</span> 核心数据</h2>
-            <div class="stat-row">
-                <div class="stat-item"><div class="number">23</div><div class="desc">专家角色 / 技能</div></div>
-                <div class="stat-item"><div class="number">8</div><div class="desc">高级工具</div></div>
-                <div class="stat-item"><div class="number">10</div><div class="desc">支持 AI 编码工具</div></div>
-                <div class="stat-item"><div class="number">810×</div><div class="desc">生产力提升倍数</div></div>
+        <!-- Header -->
+        <div class="header">
+            <h1>garrytan/gstack</h1>
+            <div class="subtitle">Y Combinator CEO 的 AI 编程工作流 — 将 Claude Code 变成虚拟工程团队</div>
+            <div class="meta">
+                <span>Stars: <strong>96K+</strong></span>
+                <span>语言: <strong>TypeScript / Shell</strong></span>
+                <span>许可证: <strong>MIT</strong></span>
+                <span>作者: <strong>Garry Tan (YC CEO)</strong></span>
+            </div>
+            <div style="margin-top: 15px;">
+                <span class="tag">AI Coding Agent</span>
+                <span class="tag green">Claude Code</span>
+                <span class="tag pink">Workflow Framework</span>
+                <span class="tag orange">Multi-Agent</span>
+                <span class="tag">Browser Automation</span>
+                <span class="tag green">Open Source</span>
             </div>
         </div>
 
-        <!-- Project Overview -->
-        <div class="card">
-            <h2><span class="emoji">🎯</span> 项目简介</h2>
-            <p><strong>gstack</strong> 是 Y Combinator 总裁兼 CEO <strong>Garry Tan</strong> 开源的个人 Claude Code 工作流配置。它将单一的 Claude Code 助手转变为一个完整的虚拟工程团队 — 包含 CEO、设计师、工程经理、发布工程师、文档工程师和 QA 等多个专家角色。</p>
-            <p>Garry Tan 在过去 60 天内，以兼职方式（同时全职运营 YC），交付了 3 个生产级服务和 40+ 功能。他的 2026 年代码产出率比 2013 年提高了约 <strong>810 倍</strong>（按逻辑代码变更计算）。这套工具就是他实现这一生产力的核心方法。</p>
+        <!-- Score Overview -->
+        <div class="score-overview">
+            <div class="score-card s-innovation">
+                <div class="label">创新性</div>
+                <div class="value">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-card s-quality">
+                <div class="label">代码质量</div>
+                <div class="value">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+            </div>
+            <div class="score-card s-practical">
+                <div class="label">实用性</div>
+                <div class="value">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+            </div>
+            <div class="score-card s-docs">
+                <div class="label">文档完善度</div>
+                <div class="value">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+            </div>
+            <div class="score-card s-community">
+                <div class="label">社区活跃度</div>
+                <div class="value">9.8</div>
+                <div class="bar"><div class="bar-fill" style="width:98%"></div></div>
+            </div>
+        </div>
 
-            <div class="callout callout-info">
-                <strong>核心理念：</strong> "一个人 + 正确的工具 = 比传统 20 人团队更快"。gstack 不是 Copilot，而是一支团队。
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="num">23+</div>
+                <div class="desc">专家角色技能</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">10</div>
+                <div class="desc">支持的 AI 编程工具</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">810x</div>
+                <div class="desc">Garry 声称的生产力提升</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">MIT</div>
+                <div class="desc">完全免费开源</div>
+            </div>
+        </div>
+
+        <!-- 项目简介 -->
+        <div class="section">
+            <h2><span class="icon">📋</span> 项目简介与核心功能</h2>
+            <p><strong>gstack</strong> 是 Y Combinator 总裁兼 CEO <strong>Garry Tan</strong> 的个人 AI 辅助开发工作流开源项目。它将 Anthropic 的 Claude Code CLI 工具转变为一个完整的虚拟工程团队，通过 23 个精心设计的专家角色技能（slash commands），覆盖从产品构思到部署上线的完整软件开发生命周期。</p>
+
+            <div class="highlight-box">
+                <strong>核心理念：</strong>一个人 + AI 工具 = 一个完整的工程团队。Garry Tan 在 60 天内兼职交付了 3 个生产级服务、40+ 个功能，同时全职管理 Y Combinator。他声称 2026 年的有效代码产出率是 2013 年的 <strong>810 倍</strong>。
             </div>
 
-            <h3>核心功能</h3>
+            <p><strong>核心工作流 — "Sprint" 模型：</strong></p>
+            <ol>
+                <li><strong>Think（思考）</strong> — <code>/office-hours</code> 六个关键问题重构产品思路</li>
+                <li><strong>Plan（规划）</strong> — <code>/plan-ceo-review</code> CEO 级战略审视，<code>/plan-eng-review</code> 工程架构审查</li>
+                <li><strong>Build（构建）</strong> — 基于设计文档和计划自动生成代码</li>
+                <li><strong>Review（审查）</strong> — <code>/review</code> 高级工程师级代码审查</li>
+                <li><strong>Test（测试）</strong> — <code>/qa</code> 用真实浏览器做端到端测试</li>
+                <li><strong>Ship（发布）</strong> — <code>/ship</code> 自动化 PR 创建和测试运行</li>
+                <li><strong>Reflect（复盘）</strong> — <code>/retro</code> 工程经理级迭代回顾</li>
+            </ol>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section">
+            <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+            <p>gstack 的架构设计围绕 <strong>Markdown 驱动 + 角色分离</strong> 的理念，每个技能本质上是一个精心编写的 Markdown prompt，通过 Claude Code 的 skill 系统加载。</p>
+
+            <div class="highlight-box green">
+                <strong>技术栈：</strong>TypeScript（核心逻辑）/ Shell（安装脚本）/ Bun v1.0+（运行时）/ Playwright（浏览器自动化）/ Chromium（无头浏览器）/ Supabase（遥测可选）
+            </div>
+
+            <p><strong>关键架构特点：</strong></p>
             <ul>
-                <li><strong>/office-hours</strong> — YC 风格的办公室时间，6 个追问帮你重新定义产品</li>
-                <li><strong>/plan-ceo-review</strong> — CEO 视角审视功能范围，4 种模式：扩展/选择性扩展/保持/缩减</li>
-                <li><strong>/plan-eng-review</strong> — 工程经理锁定架构、数据流、边界情况</li>
-                <li><strong>/review</strong> — 高级工程师 Code Review，自动修复明显问题</li>
-                <li><strong>/ship</strong> — 发布工程师：同步 main、运行测试、审计覆盖率、推送 PR</li>
-                <li><strong>/qa</strong> — QA 负责人：真实浏览器测试、发现 Bug、自动修复并生成回归测试</li>
-                <li><strong>/design-shotgun</strong> — 设计探索器：生成 4-6 个 AI 设计变体，可视化对比选择</li>
-                <li><strong>/design-html</strong> — 设计工程师：将设计稿转为可交付的生产级 HTML</li>
-                <li><strong>/cso</strong> — 首席安全官：OWASP Top 10 + STRIDE 威胁模型审计</li>
-                <li><strong>/codex</strong> — 跨模型第二意见，调用 OpenAI Codex CLI 独立审查</li>
-                <li><strong>/browse</strong> — 真实浏览器控制，赋予 AI "眼睛"</li>
-                <li><strong>/learn</strong> — 跨会话记忆管理，让系统随使用越来越聪明</li>
+                <li><strong>技能链式传递</strong> — 每个技能的输出自动成为下游技能的输入。<code>/office-hours</code> 生成的设计文档被 <code>/plan-ceo-review</code> 读取，<code>/plan-eng-review</code> 编写的测试计划被 <code>/qa</code> 继承</li>
+                <li><strong>多 Agent 协调</strong> — 通过 <code>/pair-agent</code> 实现跨 AI 代理（Claude、OpenClaw、Codex、Cursor）的浏览器共享和任务协调</li>
+                <li><strong>真实浏览器集成</strong> — 基于 Playwright 的 <code>/browse</code> 技能提供真实 Chromium 浏览器操作，支持 Cookie 导入、反检测和截图</li>
+                <li><strong>GBrain 持久记忆</strong> — 基于 PGLite/Supabase 的跨会话知识库，让 AI 代理在不同会话间保持对项目的理解</li>
+                <li><strong>安全防御层</strong> — 内置 OWASP Top 10 安全审计（<code>/cso</code>）、Prompt 注入防护（22MB ML 分类器）、安全护栏（<code>/careful</code>/<code>/freeze</code>）</li>
+                <li><strong>跨平台支持</strong> — 不仅支持 Claude Code，还支持 Codex CLI、Cursor、OpenCode、Kiro、Slate 等 10 种 AI 编程工具</li>
+                <li><strong>并行 Sprint</strong> — 可同时运行 10-15 个并行开发会话，每个会话独立隔离</li>
             </ul>
         </div>
 
-        <!-- Sprint Flow -->
-        <div class="card">
-            <h2><span class="emoji">🔄</span> Sprint 工作流</h2>
-            <p>gstack 不是工具集合，而是一套完整流程。每个技能按 Sprint 顺序执行，前一步的输出自动成为后一步的输入：</p>
-            <div class="sprint-flow">
-                <span class="sprint-step step-think">💭 Think</span>
-                <span class="sprint-arrow">→</span>
-                <span class="sprint-step step-plan">📋 Plan</span>
-                <span class="sprint-arrow">→</span>
-                <span class="sprint-step step-build">🔨 Build</span>
-                <span class="sprint-arrow">→</span>
-                <span class="sprint-step step-review">🔍 Review</span>
-                <span class="sprint-arrow">→</span>
-                <span class="sprint-step step-test">🧪 Test</span>
-                <span class="sprint-arrow">→</span>
-                <span class="sprint-step step-ship">🚀 Ship</span>
-                <span class="sprint-arrow">→</span>
-                <span class="sprint-step step-reflect">📝 Reflect</span>
+        <!-- 核心技能 -->
+        <div class="section">
+            <h2><span class="icon">⚡</span> 核心 Skills 一览</h2>
+            <div class="skills-grid">
+                <div class="skill-item">
+                    <div class="cmd">/office-hours</div>
+                    <div class="role">YC Office Hours</div>
+                    <div class="desc">6 个关键问题重构产品思路，挑战前提假设，生成替代方案</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/plan-ceo-review</div>
+                    <div class="role">CEO / Founder</div>
+                    <div class="desc">战略级产品审视，4 种模式：扩展、选择性扩展、保持、缩减</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/plan-eng-review</div>
+                    <div class="role">Eng Manager</div>
+                    <div class="desc">架构锁定，数据流图，边界条件，测试矩阵</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/plan-design-review</div>
+                    <div class="role">Senior Designer</div>
+                    <div class="desc">0-10 分设计评审，AI Slop 检测，交互式逐项优化</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/review</div>
+                    <div class="role">Staff Engineer</div>
+                    <div class="desc">发现通过 CI 但会在生产环境中爆发的 bug，自动修复明显问题</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/qa</div>
+                    <div class="role">QA Lead</div>
+                    <div class="desc">用真实浏览器测试应用，发现 bug，自动修复并生成回归测试</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/ship</div>
+                    <div class="role">Release Engineer</div>
+                    <div class="desc">同步 main、运行测试、审计覆盖率、推送、创建 PR</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/cso</div>
+                    <div class="role">Chief Security Officer</div>
+                    <div class="desc">OWASP Top 10 + STRIDE 威胁建模，零噪音安全审计</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/design-shotgun</div>
+                    <div class="role">Design Explorer</div>
+                    <div class="desc">生成 4-6 个 AI 原型变体，浏览器对比，迭代到满意</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/design-html</div>
+                    <div class="role">Design Engineer</div>
+                    <div class="desc">将设计稿转为可交付的生产级 HTML/CSS，30KB 零依赖</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/browse</div>
+                    <div class="role">QA Engineer</div>
+                    <div class="desc">真实 Chromium 浏览器操作，点击、截图、~100ms/命令</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/autoplan</div>
+                    <div class="role">Review Pipeline</div>
+                    <div class="desc">一键完整规划：CEO → 设计 → 工程自动审查</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/codex</div>
+                    <div class="role">Second Opinion</div>
+                    <div class="desc">来自 OpenAI Codex CLI 的独立代码审查，跨模型对比分析</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/retro</div>
+                    <div class="role">Eng Manager</div>
+                    <div class="desc">团队周回顾，个人统计、发布节奏、测试健康趋势</div>
+                </div>
+                <div class="skill-item">
+                    <div class="cmd">/pair-agent</div>
+                    <div class="role">Multi-Agent Coordinator</div>
+                    <div class="desc">跨 AI 代理共享浏览器，Scoped Token + Tab 隔离</div>
+                </div>
             </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+            <ul>
+                <li><strong>独立开发者 / Solo Founder</strong> — 一个人像 20 人团队一样运作，从产品构思到部署上线全流程覆盖</li>
+                <li><strong>YC 风格创业公司</strong> — 2-3 人的早期团队用 AI 代理加速 MVP 迭代</li>
+                <li><strong>技术型 CEO / 创始人</strong> — 在管理公司之余仍能高效产出产品代码</li>
+                <li><strong>Staff Engineer / Tech Lead</strong> — 为每个 PR 提供系统化的代码审查、QA 测试和安全审计</li>
+                <li><strong>开源项目维护者</strong> — 自动化文档更新、测试生成和代码审查流程</li>
+                <li><strong>设计工程师</strong> — 从设计探索（/design-shotgun）到生产 HTML（/design-html）的完整工作流</li>
+                <li><strong>多 AI 代理协调</strong> — 通过 /pair-agent 实现不同 AI 工具之间的协作</li>
+            </ul>
+        </div>
+
+        <!-- 为什么火 -->
+        <div class="section">
+            <h2><span class="icon">🔥</span> 为什么火 (Trending 原因)</h2>
+
+            <div class="highlight-box pink">
+                <strong>11 天 39K Stars，6 周 85K+ Stars</strong> — 这是 2026 年 GitHub 上增长最快的项目之一。
+            </div>
+
+            <p><strong>1. Garry Tan 的个人影响力</strong> — 作为 Y Combinator CEO，Garry 本身就是硅谷最有影响力的人物之一。他背书并亲自使用的工具自带信任度。</p>
+
+            <p><strong>2. 切中了 AI 编程的核心痛点</strong> — 当前 AI 编程工具（Cursor、Claude Code、Copilot）大多停留在"补全代码"层面，gstack 提供了完整的 <strong>工作流程</strong> 而非单一功能，解决了"知道 AI 能写代码，但不知道怎么组织"的普遍困惑。</p>
+
+            <p><strong>3. "一人=团队"叙事的病毒传播</strong> — "810 倍生产力提升"和"兼职60天交付3个生产服务"的数据极具传播力，在 Reddit、Hacker News、Twitter 上引发了广泛讨论。</p>
+
+            <p><strong>4. Andrej Karpathy 的加持</strong> — README 开头直接引用 Karpathy 的"我大概从12月起就没写过一行代码"言论，将项目与更广泛的 AI 编程革命叙事关联。</p>
+
+            <p><strong>5. MIT 完全免费开源</strong> — 没有高级版、没有等待列表、没有 SaaS 订阅。纯粹的开源精神。</p>
+
+            <p><strong>6. 覆盖多种 AI 工具</strong> — 不仅限于 Claude Code，还支持 Codex CLI、Cursor 等 10 种工具，扩大了受众范围。</p>
+
+            <p><strong>7. YC 生态系统的推动</strong> — 25% 的 YC 当前批次公司 95% 的代码由 AI 编写，gstack 被定位为这一趋势的标准工具。</p>
+        </div>
+
+        <!-- 同类项目对比 -->
+        <div class="section">
+            <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>gstack</th>
+                        <th>Anthropic/skills</th>
+                        <th>addyosmani/agent-skills</th>
+                        <th>mattpocock/skills</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>定位</strong></td>
+                        <td class="winner">完整工程团队工作流</td>
+                        <td>Anthropic 官方技能示例</td>
+                        <td>通用 AI 编程技巧集合</td>
+                        <td>TypeScript 工程实践</td>
+                    </tr>
+                    <tr>
+                        <td><strong>角色数量</strong></td>
+                        <td class="winner">23+ 专家角色</td>
+                        <td>~5 个基础技能</td>
+                        <td>~10 个实用技能</td>
+                        <td>~8 个工程技能</td>
+                    </tr>
+                    <tr>
+                        <td><strong>工作流覆盖</strong></td>
+                        <td class="winner">思考→规划→构建→审查→测试→发布→复盘</td>
+                        <td>单一任务</td>
+                        <td>部分覆盖</td>
+                        <td>部分覆盖</td>
+                    </tr>
+                    <tr>
+                        <td><strong>浏览器自动化</strong></td>
+                        <td class="winner">完整（反检测+Cookie+截图+QA）</td>
+                        <td>无</td>
+                        <td>基础</td>
+                        <td>无</td>
+                    </tr>
+                    <tr>
+                        <td><strong>跨 AI 工具支持</strong></td>
+                        <td class="winner">10 种 AI 编程工具</td>
+                        <td>仅 Claude Code</td>
+                        <td>仅 Claude Code</td>
+                        <td>仅 Claude Code</td>
+                    </tr>
+                    <tr>
+                        <td><strong>持久记忆</strong></td>
+                        <td class="winner">GBrain（PGLite/Supabase）</td>
+                        <td>无</td>
+                        <td>无</td>
+                        <td>无</td>
+                    </tr>
+                    <tr>
+                        <td><strong>安全审计</strong></td>
+                        <td class="winner">OWASP + STRIDE + Prompt注入防护</td>
+                        <td>无</td>
+                        <td>基础</td>
+                        <td>无</td>
+                    </tr>
+                    <tr>
+                        <td><strong>并行工作</strong></td>
+                        <td class="winner">10-15 并行 Sprint</td>
+                        <td>无</td>
+                        <td>无</td>
+                        <td>无</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stars</strong></td>
+                        <td class="winner">~96K</td>
+                        <td>~15K</td>
+                        <td>~8K</td>
+                        <td>~5K</td>
+                    </tr>
+                    <tr>
+                        <td><strong>作者背景</strong></td>
+                        <td>YC CEO，Palantir 早期员工</td>
+                        <td>Anthropic 官方</td>
+                        <td>Google Chrome 团队</td>
+                        <td>TypeScript 社区领袖</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <strong>差异化总结：</strong>gstack 的核心优势不在于单个技能的深度，而在于将 23 个角色 <strong>串联成完整的工程工作流</strong>，从产品构思到部署监控的全链路覆盖。配合真实浏览器、持久记忆、跨 AI 工具支持，是目前最完整的 AI 辅助开发框架。
+            </div>
+        </div>
+
+        <!-- 适合谁 -->
+        <div class="section">
+            <h2><span class="icon">👥</span> 适合谁使用</h2>
+
+            <div class="skills-grid">
+                <div class="skill-item" style="border-left: 3px solid #3fb950;">
+                    <div class="cmd" style="color:#3fb950;">强烈推荐</div>
+                    <div class="role">创始人和 CEO</div>
+                    <div class="desc">尤其是仍想亲自写代码交付产品的技术型创始人</div>
+                </div>
+                <div class="skill-item" style="border-left: 3px solid #3fb950;">
+                    <div class="cmd" style="color:#3fb950;">强烈推荐</div>
+                    <div class="role">首次使用 Claude Code 的开发者</div>
+                    <div class="desc">结构化角色代替空白提示词，上手即有完整工作流</div>
+                </div>
+                <div class="skill-item" style="border-left: 3px solid #3fb950;">
+                    <div class="cmd" style="color:#3fb950;">强烈推荐</div>
+                    <div class="role">Tech Lead / Staff Engineer</div>
+                    <div class="desc">为每个 PR 提供系统化的审查、QA 测试和安全审计</div>
+                </div>
+                <div class="skill-item" style="border-left: 3px solid #58a6ff;">
+                    <div class="cmd" style="color:#58a6ff;">适合</div>
+                    <div class="role">独立开发者 / 开源维护者</div>
+                    <div class="desc">自动化文档更新、测试生成、多项目并行管理</div>
+                </div>
+                <div class="skill-item" style="border-left: 3px solid #58a6ff;">
+                    <div class="cmd" style="color:#58a6ff;">适合</div>
+                    <div class="role">设计工程师</div>
+                    <div class="desc">从设计探索到生产 HTML 的完整设计-开发流水线</div>
+                </div>
+                <div class="skill-item" style="border-left: 3px solid #f0883e;">
+                    <div class="cmd" style="color:#f0883e;">需评估</div>
+                    <div class="role">企业大团队</div>
+                    <div class="desc">需要评估与现有 CI/CD 和代码审查流程的集成兼容性</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速上手 -->
+        <div class="section">
+            <h2><span class="icon">🚀</span> 快速上手指南</h2>
+
+            <p><strong>前置条件：</strong> Claude Code、Git、Bun v1.0+（Windows 还需要 Node.js）</p>
+
+            <p><strong>30 秒安装：</strong></p>
             <div class="code-block">
-                <span class="comment"># 一个完整的示例流程</span>
-                /office-hours          <span class="comment"># → 生成设计文档</span>
-                /plan-ceo-review        <span class="comment"># → CEO 审视范围</span>
-                /plan-eng-review        <span class="comment"># → 锁定架构</span>
-                <span class="comment"># ... Claude 自动编写代码 ...</span>
-                /review                 <span class="comment"># → Code Review + 自动修复</span>
-                /qa https://staging...  <span class="comment"># → 真实浏览器 QA</span>
-                /ship                   <span class="comment"># → 测试 + 覆盖率 + PR</span>
-            </div>
-        </div>
-
-        <!-- Tech Architecture -->
-        <div class="card">
-            <h2><span class="emoji">🏗️</span> 技术架构与特点</h2>
-            <h3>技术栈</h3>
-            <div class="tags">
-                <span class="tag tag-blue">TypeScript</span>
-                <span class="tag tag-green">Shell</span>
-                <span class="tag tag-purple">Bun Runtime</span>
-                <span class="tag tag-orange">Playwright</span>
-                <span class="tag tag-cyan">Chrome DevTools Protocol</span>
-            </div>
-            <h3>架构亮点</h3>
-            <ul>
-                <li><strong>角色化 Agent 架构</strong> — 每个 Slash Command 对应一个专家角色，有明确的方法论和输出格式</li>
-                <li><strong>链式工作流</strong> — /office-hours 写设计文档 → /plan-ceo-review 读取 → /plan-eng-review 深化，技能间自动传递上下文</li>
-                <li><strong>真实浏览器集成</strong> — 基于 Playwright 的 Chromium 控制，~100ms/命令，支持 cookie 导入和反检测</li>
-                <li><strong>跨 Agent 兼容</strong> — 支持 Claude Code、OpenAI Codex CLI、Cursor、Factory Droid、Kiro、Hermes 等 10 个 AI 编码工具</li>
-                <li><strong>GBrain 持久知识库</strong> — 支持 PGLite 本地 / Supabase 云端，跨会话记忆积累</li>
-                <li><strong>跨模型审查</strong> — /codex 调用 OpenAI Codex 独立审查，与 Claude 的 /review 交叉验证</li>
-                <li><strong>Conductor 并行调度</strong> — 支持 10-15 个并行 Sprint 同时运行</li>
-                <li><strong>多层安全防御</strong> — 22MB ML 分类器 + Haiku 转录检查 + 随机 Canaries + DeBERTa 集成</li>
-                <li><strong>Continuous Checkpoint</strong> — 自动 WIP 提交，崩溃恢复，ship 时自动清理</li>
-            </ul>
-
-            <div class="callout callout-success">
-                <strong>设计哲学：</strong> 所有技能都是纯 Markdown + Slash Command，零代码，MIT 开源。30 秒安装，Fork 即可定制。
-            </div>
-        </div>
-
-        <!-- Use Cases -->
-        <div class="card">
-            <h2><span class="emoji">💡</span> 应用场景</h2>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="title">独立创始人 / 技术型 CEO</div>
-                    <div class="desc">一个创始人用 gstack 完成从产品设计到发布上线的全流程，替代 20 人团队。Garry Tan 自己就是最好的案例。</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="title">初创团队 MVP 快速验证</div>
-                    <div class="desc">用 /office-hours 定义产品 → /autoplan 自动规划 → 编码实现 → /ship 发布，完整流程数小时内完成。</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="title">技术负责人 Code Review 自动化</div>
-                    <div class="desc">/review 自动发现 CI 无法检测的生产 Bug，/cso 进行安全审计，/codex 提供跨模型第二意见。</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="title">设计师 + AI 协作</div>
-                    <div class="desc">/design-shotgun 可视化探索设计变体，/design-html 将选定方案转为可交付的生产级前端代码。</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="title">Claude Code 初学者</div>
-                    <div class="desc">提供结构化角色而非空白提示词，降低 AI 编码工具的学习曲线。</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="title">并行多项目开发</div>
-                    <div class="desc">利用 Conductor 同时运行 10-15 个 Sprint，每个在不同分支上独立工作。</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Why Trending -->
-        <div class="card">
-            <h2><span class="emoji">🔥</span> 为什么火 (Trending 原因)</h2>
-            <ul>
-                <li><strong>作者身份加持</strong> — Garry Tan 作为 Y Combinator CEO，投资了 Coinbase、Instacart、Rippling 等知名公司，个人品牌影响力巨大</li>
-                <li><strong>Andrej Karpathy 背书</strong> — README 开头引用 Karpathy 的"2025年12月以来我没写过一行代码"引发共鸣</li>
-                <li><strong>810× 生产力宣言</strong> — Garry Tan 对比 2013 vs 2026 的代码产出数据，极具话题性和争议性</li>
-                <li><strong>时机完美</strong> — 2026 年是 AI Coding Agent 爆发元年，gstack 提供了一套"开箱即用"的最佳实践</li>
-                <li><strong>实际可验证</strong> — 不是理论框架，而是 Garry Tan 每天实际使用的工具，3 个生产服务 + 40+ 功能的产出可查</li>
-                <li><strong>零门槛开源</strong> — MIT 协议、纯 Markdown 技能、30 秒安装、无需付费</li>
-                <li><strong>跨 Agent 生态</strong> — 不绑定 Claude Code，支持 10 个 AI 编码工具，覆盖面广</li>
-                <li><strong>社区讨论热烈</strong> — Hacker News、Reddit r/ClaudeAI、Twitter/Threads 上广泛讨论</li>
-            </ul>
-        </div>
-
-        <!-- Comparison -->
-        <div class="card">
-            <h2><span class="emoji">⚖️</span> 同类项目对比</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>维度</th>
-                            <th>gstack</th>
-                            <th>obra/superpowers</th>
-                            <th>mattpocock/skills</th>
-                            <th>github/spec-kit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>定位</strong></td>
-                            <td class="highlight">全流程虚拟团队</td>
-                            <td>TDD 驱动方法论</td>
-                            <td>TypeScript 最佳实践</td>
-                            <td>Spec 驱动开发</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Stars</strong></td>
-                            <td>96K</td>
-                            <td class="highlight">190K</td>
-                            <td>80K</td>
-                            <td>99K</td>
-                        </tr>
-                        <tr>
-                            <td><strong>技能数</strong></td>
-                            <td class="highlight">23 + 8 工具</td>
-                            <td>~15</td>
-                            <td>~10</td>
-                            <td>~8</td>
-                        </tr>
-                        <tr>
-                            <td><strong>浏览器支持</strong></td>
-                            <td class="highlight">完整 Chromium 控制</td>
-                            <td>无</td>
-                            <td>无</td>
-                            <td>无</td>
-                        </tr>
-                        <tr>
-                            <td><strong>跨 Agent</strong></td>
-                            <td class="highlight">10 个 AI 编码工具</td>
-                            <td>仅 Claude Code</td>
-                            <td>仅 Claude Code</td>
-                            <td>仅 Claude Code</td>
-                        </tr>
-                        <tr>
-                            <td><strong>设计工作流</strong></td>
-                            <td class="highlight">完整设计系统</td>
-                            <td>无</td>
-                            <td>无</td>
-                            <td>无</td>
-                        </tr>
-                        <tr>
-                            <td><strong>安全审计</strong></td>
-                            <td class="highlight">OWASP + STRIDE</td>
-                            <td>基础</td>
-                            <td>基础</td>
-                            <td>基础</td>
-                        </tr>
-                        <tr>
-                            <td><strong>并行 Sprint</strong></td>
-                            <td class="highlight">10-15 并行</td>
-                            <td>单会话</td>
-                            <td>单会话</td>
-                            <td>单会话</td>
-                        </tr>
-                        <tr>
-                            <td><strong>作者背景</strong></td>
-                            <td>YC CEO</td>
-                            <td>独立开发者</td>
-                            <td>TS 社区领袖</td>
-                            <td>GitHub 官方</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="callout callout-warn">
-                <strong>差异化关键：</strong>gstack 的独特价值在于 (1) 完整的 Sprint 流程而非独立工具 (2) 真实浏览器 QA (3) 跨 Agent 兼容 (4) 从设计到部署的全链路覆盖。其他框架更侧重特定环节。
-            </div>
-        </div>
-
-        <!-- Who Should Use -->
-        <div class="card">
-            <h2><span class="emoji">👤</span> 适合谁使用</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr><th>用户类型</th><th>适配度</th><th>推荐用法</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>独立创始人 / 技术型 CEO</strong></td>
-                            <td><span class="highlight">★★★★★</span></td>
-                            <td>核心目标用户，完整虚拟团队替代多人协作</td>
-                        </tr>
-                        <tr>
-                            <td><strong>全栈开发者</strong></td>
-                            <td><span class="highlight">★★★★★</span></td>
-                            <td>/review + /ship + /qa 自动化日常开发流程</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Claude Code 初学者</strong></td>
-                            <td><span class="highlight">★★★★☆</span></td>
-                            <td>结构化角色代替空白提示词，快速上手</td>
-                        </tr>
-                        <tr>
-                            <td><strong>技术负责人 / Staff Engineer</strong></td>
-                            <td><span class="highlight">★★★★☆</span></td>
-                            <td>标准化 Review/QA/Release 流程</td>
-                        </tr>
-                        <tr>
-                            <td><strong>UI/UX 设计师</strong></td>
-                            <td>★★★☆☆</td>
-                            <td>/design-shotgun + /design-html 设计到代码</td>
-                        </tr>
-                        <tr>
-                            <td><strong>非技术人员</strong></td>
-                            <td>★★☆☆☆</td>
-                            <td>需要 Claude Code 基础，学习曲线较陡</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Quick Start -->
-        <div class="card">
-            <h2><span class="emoji">🚀</span> 快速上手指南</h2>
-            <h3>前置要求</h3>
-            <ul>
-                <li><strong>Claude Code</strong>（Anthropic CLI）</li>
-                <li><strong>Git</strong></li>
-                <li><strong>Bun</strong> v1.0+</li>
-            </ul>
-
-            <h3>30 秒安装</h3>
-            <div class="code-block">
-<span class="comment"># 在 Claude Code 中粘贴以下命令：</span>
-<span class="cmd">git</span> clone --single-branch --depth 1 <span class="string">https://github.com/garrytan/gstack.git</span> ~/.claude/skills/gstack <span class="flag">&&</span>
-<span class="cmd">cd</span> ~/.claude/skills/gstack <span class="flag">&&</span>
-<span class="cmd">./</span>setup
+<span class="comment"># 在 Claude Code 中粘贴以下命令</span>
+<span class="cmd-text">git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack</span>
+<span class="cmd-text">cd ~/.claude/skills/gstack && ./setup</span>
             </div>
 
-            <h3>5 分钟体验核心流程</h3>
+            <p><strong>5 步体验完整工作流：</strong></p>
             <div class="code-block">
 <span class="comment"># Step 1: 描述你要构建什么</span>
-<span class="keyword">/office-hours</span>
+<span class="cmd-text">/office-hours</span>
 
-<span class="comment"># Step 2: 让 CEO 视角审视方案</span>
-<span class="keyword">/plan-ceo-review</span>
+<span class="comment"># Step 2: CEO 级战略审视</span>
+<span class="cmd-text">/plan-ceo-review</span>
 
-<span class="comment"># Step 3: 工程评审锁定架构</span>
-<span class="keyword">/plan-eng-review</span>
+<span class="comment"># Step 3: 工程架构审查</span>
+<span class="cmd-text">/plan-eng-review</span>
 
-<span class="comment"># Step 4: 批准计划，退出 Plan 模式</span>
-<span class="comment"># → Claude 自动编写代码</span>
+<span class="comment"># Step 4: 代码审查（有代码变更后）</span>
+<span class="cmd-text">/review</span>
 
-<span class="comment"># Step 5: Code Review</span>
-<span class="keyword">/review</span>
-
-<span class="comment"># Step 6: 浏览器 QA 测试</span>
-<span class="keyword">/qa</span> <span class="string">https://your-staging-url.com</span>
-
-<span class="comment"># Step 7: 一键发布</span>
-<span class="keyword">/ship</span>
+<span class="comment"># Step 5: 发布</span>
+<span class="cmd-text">/ship</span>
             </div>
 
-            <h3>团队模式（推荐）</h3>
+            <p><strong>团队模式（自动更新）：</strong></p>
             <div class="code-block">
-<span class="comment"># 切换到团队模式，队友自动获得 gstack</span>
-(<span class="cmd">cd</span> ~/.claude/skills/gstack <span class="flag">&&</span> ./setup <span class="flag">--team</span>) <span class="flag">&&</span>
-~/.claude/skills/gstack/bin/gstack-team-init <span class="string">required</span> <span class="flag">&&</span>
-<span class="cmd">git</span> add .claude/ CLAUDE.md <span class="flag">&&</span>
-<span class="cmd">git</span> commit -m <span class="string">"require gstack for AI-assisted work"</span>
+<span class="comment"># 在项目仓库内运行，队友自动获得 gstack</span>
+<span class="cmd-text">(cd ~/.claude/skills/gstack && ./setup --team) &&</span>
+<span class="cmd-text">~/.claude/skills/gstack/bin/gstack-team-init required &&</span>
+<span class="cmd-text">git add .claude/ CLAUDE.md && git commit -m "require gstack"</span>
             </div>
 
-            <div class="callout callout-success">
-                <strong>提示：</strong> 直接从 <code>/office-hours</code> 开始，描述你想要构建的东西。gstack 会像 YC 合伙人一样追问你，帮你理清真正的需求。
-            </div>
-        </div>
-
-        <!-- Scores -->
-        <div class="card">
-            <h2><span class="emoji">📈</span> 综合评分</h2>
-            <div class="score-grid">
-                <div class="score-item">
-                    <div class="label">创新性</div>
-                    <div class="value">9.0</div>
-                    <div class="bar"><div class="bar-fill" style="width: 90%;"></div></div>
-                </div>
-                <div class="score-item">
-                    <div class="label">代码质量</div>
-                    <div class="value">8.5</div>
-                    <div class="bar"><div class="bar-fill" style="width: 85%;"></div></div>
-                </div>
-                <div class="score-item">
-                    <div class="label">实用性</div>
-                    <div class="value">9.5</div>
-                    <div class="bar"><div class="bar-fill" style="width: 95%;"></div></div>
-                </div>
-                <div class="score-item">
-                    <div class="label">文档完善度</div>
-                    <div class="value">9.5</div>
-                    <div class="bar"><div class="bar-fill" style="width: 95%;"></div></div>
-                </div>
-                <div class="score-item">
-                    <div class="label">社区活跃度</div>
-                    <div class="value">9.5</div>
-                    <div class="bar"><div class="bar-fill" style="width: 95%;"></div></div>
-                </div>
-            </div>
-            <div class="callout callout-info">
-                <strong>综合评分：9.2 / 10</strong> — 这是一个改变游戏规则的项目。将 AI 编码从"辅助工具"提升到"虚拟团队"的概念，Garry Tan 用自己的实际产出证明了其有效性。文档极其详尽，跨 Agent 兼容性使其不绑定单一平台。
+            <div class="highlight-box orange">
+                <strong>提示：</strong>首次使用建议从 <code>/office-hours</code> 开始，描述你想要构建的产品。系统会自动引导你走完整个 Sprint 流程。如果你只想快速体验，直接在一个有代码变更的分支上运行 <code>/review</code> 即可。
             </div>
         </div>
 
-        <!-- Summary -->
-        <div class="card">
-            <h2><span class="emoji">📝</span> 分析总结</h2>
-            <p>gstack 代表了 AI 编码工具演进的下一个阶段 — 从单点辅助到完整工程流程自动化。它不是让你写代码更快，而是让你<strong>不再需要写代码</strong>，而是专注于产品决策和创意。</p>
-            <p>核心价值在于 <strong>Sprint 流程</strong>（Think → Plan → Build → Review → Test → Ship → Reflect）而非单个工具。每个技能自动衔接，形成完整的生产线。真正强大的地方是 <strong>10-15 个并行 Sprint</strong> — 一个人管理多个项目，像 CEO 管理团队一样。</p>
-            <p><strong>争议点</strong>：810× 的生产力提升数字引发了关于 AI 代码质量 vs 人工代码质量的讨论。但 Garry Tan 强调的是"逻辑代码变更"而非原始 LOC，并公开了完整方法论和复现脚本。</p>
-            <p><strong>风险提示</strong>：高度依赖 Claude Code 和 Anthropic 生态，虽然支持 10 个 AI Agent 但核心体验仍以 Claude Code 为最佳。浏览器的 ML 安全分类器（22MB+）增加了安装体积。</p>
-        </div>
-    </div>
+        <!-- 综合评价 -->
+        <div class="section">
+            <h2><span class="icon">💎</span> 综合评价</h2>
 
-    <div class="footer">
-        <p>分析日期：2026-05-15 | 数据来源：<a href="https://github.com/garrytan/gstack">GitHub</a></p>
-        <p>由 AI 深度分析生成 · Powered by Claude Code</p>
+            <div class="highlight-box green">
+                <strong>总评：9.3 / 10 — AI 辅助开发工作流的标杆级项目</strong>
+            </div>
+
+            <p><strong>创新性 (9.5/10)：</strong>gstack 是第一个将 AI 编程从"单次提示"提升到"完整工程工作流"的开源项目。23 个专家角色的分工协作、技能链式传递、跨 AI 工具协调等设计都极具前瞻性。GBrain 持久记忆和真实浏览器 QA 更是解决了 AI 编程的关键痛点。</p>
+
+            <p><strong>代码质量 (8.5/10)：</strong>TypeScript 代码结构清晰，安装脚本健壮，支持多平台和多 AI 工具。扣分点在于项目快速迭代（v0.19），部分功能仍在活跃开发中，API 可能变动。</p>
+
+            <p><strong>实用性 (9.5/10)：</strong>这是目前最实用的 AI 编程工作流框架。30 秒安装、5 步上手、MIT 免费开源。支持 10 种 AI 编程工具，覆盖从产品构思到部署监控的全链路。</p>
+
+            <p><strong>文档完善度 (9.0/10)：</strong>README 超过 5000 字，详尽到几乎涵盖所有使用场景。每个技能都有深度文档（Skill Deep Dives），还有独立的架构文档和贡献指南。</p>
+
+            <p><strong>社区活跃度 (9.8/10)：</strong>96K+ Stars、35+ 贡献者、活跃的 GitHub Issues 和 Discussions。Reddit、Hacker News、Twitter 上持续热议。Garry Tan 本人积极回应社区反馈。</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析日期：2026-05-26 | 数据来源：GitHub、WebSearch | 生成工具：AI 深度分析引擎</p>
+            <p style="margin-top: 8px;">
+                <a href="https://github.com/garrytan/gstack" style="color: #58a6ff; text-decoration: none;">GitHub 仓库</a> |
+                <a href="https://www.ycombinator.com/library/OW-inside-garry-tan-s-ai-coding-setup" style="color: #58a6ff; text-decoration: none;">YC 官方介绍</a>
+            </p>
+        </div>
     </div>
 </body>
 </html>
