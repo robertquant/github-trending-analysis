@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paperless-ngx 深度分析 | GitHub Trending</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+            padding: 2rem 1rem;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #1a2332 100%);
+            border: 1px solid #30363d;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56,139,253,0.06) 0%, transparent 60%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .hero h1 {
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .hero .subtitle { color: #8b949e; font-size: 1.1rem; position: relative; }
+        .hero .badges { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; position: relative; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-stars { background: rgba(255,166,87,0.15); color: #ffa657; border: 1px solid rgba(255,166,87,0.3); }
+        .badge-lang { background: rgba(56,139,253,0.15); color: #58a6ff; border: 1px solid rgba(56,139,253,0.3); }
+        .badge-category { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+        .badge-trending { background: rgba(188,140,255,0.15); color: #bc8cff; border: 1px solid rgba(188,140,255,0.3); }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: #58a6ff; }
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card h2 .icon { font-size: 1.2rem; }
+        .card p, .card li { color: #b1bac4; }
+        .card ul { padding-left: 1.2rem; margin: 0.5rem 0; }
+        .card li { margin-bottom: 0.4rem; }
+
+        /* Score Table */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .score-item {
+            text-align: center;
+            padding: 1rem;
+            background: #0d1117;
+            border-radius: 10px;
+            border: 1px solid #21262d;
+        }
+        .score-item .label { font-size: 0.85rem; color: #8b949e; margin-bottom: 0.4rem; }
+        .score-item .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .score-s { color: #3fb950; }
+        .score-a { color: #58a6ff; }
+        .score-b { color: #ffa657; }
+
+        /* Feature Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .tag {
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        th {
+            background: #21262d;
+            padding: 0.7rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: #e6edf3;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        tr:hover td { background: rgba(56,139,253,0.04); }
+
+        /* Code Block */
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            overflow-x: auto;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin: 0.8rem 0;
+            color: #e6edf3;
+        }
+        code { color: #79c0ff; }
+        .hl-cmd { color: #ffa657; }
+        .hl-str { color: #a5d6ff; }
+        .hl-cmt { color: #8b949e; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 1.5rem; margin-top: 0.8rem; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #58a6ff, #bc8cff);
+        }
+        .timeline-item {
+            position: relative;
+            padding: 0.5rem 0 1rem 1rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.7rem;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #58a6ff;
+            border: 2px solid #0d1117;
+        }
+        .timeline-item .time { font-size: 0.8rem; color: #8b949e; }
+        .timeline-item .event { color: #c9d1d9; margin-top: 0.15rem; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0 1rem;
+            color: #484f58;
+            font-size: 0.8rem;
+            border-top: 1px solid #21262d;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.6rem; }
+            .card { padding: 1.2rem; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 0.8rem; }
+            th, td { padding: 0.4rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Paperless-ngx</h1>
+        <p class="subtitle">A community-supported supercharged document management system</p>
+        <div class="badges">
+            <span class="badge badge-stars">26,000+ Stars</span>
+            <span class="badge badge-lang">Python / TypeScript</span>
+            <span class="badge badge-category">Self-Hosted / DMS</span>
+            <span class="badge badge-trending">GitHub Trending 2026</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">📄</span> 项目简介与核心功能</h2>
+        <p>Paperless-ngx 是一个社区驱动的开源文档管理系统（DMS），能够将你的纸质文档转化为可搜索的在线档案——正如其名，<strong>less paper</strong>（少纸化）。</p>
+        <p style="margin-top:0.8rem;">它是原版 Paperless 和 Paperless-ng 项目的官方继任者，由一个活跃的社区团队持续维护和推进开发。</p>
+        <div class="tags">
+            <span class="tag">OCR 光学字符识别</span>
+            <span class="tag">全文搜索</span>
+            <span class="tag">自动分类与标签</span>
+            <span class="tag">AI 增强元数据提取</span>
+            <span class="tag">多语言支持（Crowdin）</span>
+            <span class="tag">Docker 一键部署</span>
+            <span class="tag">移动端友好</span>
+            <span class="tag">权限管理</span>
+            <span class="tag">自定义工作流</span>
+            <span class="tag">共享链接（可设过期时间）</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+        <table>
+            <tr><th>层</th><th>技术栈</th></tr>
+            <tr><td>后端</td><td>Python / Django + Django REST Framework</td></tr>
+            <tr><td>前端</td><td>Angular / TypeScript</td></tr>
+            <tr><td>数据库</td><td>SQLite（默认）/ PostgreSQL</td></tr>
+            <tr><td>搜索引擎</td><td>Whoosh（内置）/ Elasticsearch</td></tr>
+            <tr><td>任务队列</td><td>Celery + Redis</td></tr>
+            <tr><td>OCR 引擎</td><td>Tesseract OCR（多语言）</td></tr>
+            <tr><td>AI/ML</td><td>支持本地 LLM 和云端 AI 进行自动分类</td></tr>
+            <tr><td>容器化</td><td>Docker Compose（官方推荐部署方式）</td></tr>
+            <tr><td>CI/CD</td><td>GitHub Actions + Codecov</td></tr>
+            <tr><td>国际化</td><td>Crowdin（社区翻译协作）</td></tr>
+        </table>
+        <div style="margin-top:1rem;">
+            <p><strong>架构亮点：</strong></p>
+            <ul>
+                <li>前后端分离架构，Django REST API + Angular SPA</li>
+                <li>Celery 异步任务处理文档消费管道（OCR → 分类 → 索引）</li>
+                <li>插件化的 AI 后端，支持 OpenAI、Azure、本地 Ollama 等</li>
+                <li>完善的权限系统（多用户 + 组 + 角色控制）</li>
+                <li>Webhook 和 API 支持与外部系统集成</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>个人/家庭文档管理：</strong>银行对账单、税务文件、保险单、收据、合同等纸质文档的数字化归档</li>
+            <li><strong>小型企业文档管理：</strong>发票管理、合同归档、人事档案，替代昂贵的商业 DMS</li>
+            <li><strong>HomeLab 爱好者：</strong>与 Nextcloud、Immich 等自托管服务组成完整的个人云方案</li>
+            <li><strong>合规与审计：</strong>需要长期保存和快速检索文档的场景</li>
+            <li><strong>无纸化办公：</strong>配合网络扫描仪实现自动文档摄取和分类</li>
+        </ul>
+    </div>
+
+    <!-- Trending 原因 -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="time">2026 年 4 月</div>
+                <div class="event">再次登上 GitHub Trending 榜单，保持持续热度</div>
+            </div>
+            <div class="timeline-item">
+                <div class="time">社区生态</div>
+                <div class="event">衍生项目 paperless-ai（AI 自动分类增强）、移动端 App、多种集成插件</div>
+            </div>
+            <div class="timeline-item">
+                <div class="time">功能演进</div>
+                <div class="event">持续加入 AI 增强 OCR、自定义字段、分享链接、工作流自动化等重磅功能</div>
+            </div>
+            <div class="timeline-item">
+                <div class="time">核心驱动力</div>
+                <div class="event"><strong>隐私优先 + 自托管趋势：</strong>全球数据隐私意识增强，用户越来越多地将文档从云存储迁移到自托管方案</div>
+            </div>
+        </div>
+        <p style="margin-top:1rem;"><strong>关键增长因素：</strong></p>
+        <ul>
+            <li>开源自托管 = 数据完全掌控，无第三方订阅费用</li>
+            <li>Docker 一键部署，技术门槛极低</li>
+            <li>AI 增强功能让自动化程度远超同类竞品</li>
+            <li>社区治理成熟，从个人项目发展为团队协作维护</li>
+            <li>被大量 YouTuber 和博主推荐，形成传播飞轮</li>
+        </ul>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="card">
+        <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+        <table>
+            <tr>
+                <th>特性</th>
+                <th style="color:#58a6ff;">Paperless-ngx</th>
+                <th>Mayan EDMS</th>
+                <th>Docspell</th>
+                <th>Teedy</th>
+            </tr>
+            <tr><td>GitHub Stars</td><td><strong>26K+</strong></td><td>~1.6K</td><td>~1.5K</td><td>~1.5K</td></tr>
+            <tr><td>易用性</td><td style="color:#3fb950;">极佳</td><td>中等</td><td>良好</td><td>良好</td></tr>
+            <tr><td>OCR 质量</td><td style="color:#3fb950;">优秀（自动元数据提取）</td><td>良好</td><td>良好</td><td>一般</td></tr>
+            <tr><td>自动标签</td><td style="color:#3fb950;">强（AI 增强）</td><td>手动</td><td>支持</td><td>基础</td></tr>
+            <tr><td>文件夹结构</td><td>无（基于标签）</td><td style="color:#3fb950;">高级目录</td><td>单层目录</td><td>支持</td></tr>
+            <tr><td>Docker 部署</td><td style="color:#3fb950;">极简</td><td>中等</td><td>简单</td><td>简单</td></tr>
+            <tr><td>社区活跃度</td><td style="color:#3fb950;">非常活跃</td><td>下降</td><td>活跃</td><td>低</td></tr>
+            <tr><td>AI/ML 支持</td><td style="color:#3fb950;">本地 + 云端</td><td>无</td><td>基础</td><td>无</td></tr>
+            <tr><td>主语言</td><td>Python</td><td>Python</td><td>Scala</td><td>Java</td></tr>
+        </table>
+        <p style="margin-top:0.8rem;color:#8b949e;font-size:0.88rem;">结论：Paperless-ngx 在易用性、OCR 质量、AI 集成和社区活跃度方面全面领先，是目前自托管文档管理的事实标准。唯一的劣势是不支持传统文件夹结构（采用标签系统替代）。</p>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+        <ul>
+            <li><strong>HomeLab / 自托管爱好者：</strong>拥有 NAS 或家庭服务器的用户，追求隐私优先的文档管理</li>
+            <li><strong>注重隐私的个人用户：</strong>不想将敏感文档上传到 Google Drive、Dropbox 等第三方服务</li>
+            <li><strong>小型企业/工作室：</strong>需要低成本文档管理解决方案，预算有限但有基本技术能力</li>
+            <li><strong>会计师/自由职业者：</strong>需要管理大量发票、收据和税务文件</li>
+            <li><strong>开发者/技术团队：</strong>希望通过 API 集成文档管理到现有工作流</li>
+        </ul>
+        <p style="margin-top:0.8rem;color:#ffa657;"><strong>注意：</strong>项目官方建议切勿在不受信任的主机上运行，因为文档以明文存储。最安全的方式是在本地家庭服务器上运行，并做好备份。</p>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <p><strong>一键安装（推荐）：</strong></p>
+        <pre><span class="hl-cmt"># 官方安装脚本，自动配置 Docker Compose 环境</span>
+<span class="hl-cmd">bash -c</span> <span class="hl-str">"$(curl -L https://raw.githubusercontent.com/paperless-ngx/paperless-ngx/main/install-paperless-ngx.sh)"</span></pre>
+
+        <p><strong>手动 Docker Compose 部署：</strong></p>
+        <pre><span class="hl-cmt"># 1. 克隆仓库</span>
+<span class="hl-cmd">git clone</span> https://github.com/paperless-ngx/paperless-ngx.git
+<span class="hl-cmd">cd</span> paperless-ngx/docker/compose
+
+<span class="hl-cmt"># 2. 复制配置文件并修改</span>
+<span class="hl-cmd">cp</span> docker-compose.env.example docker-compose.env
+<span class="hl-cmd">cp</span> .env.example .env
+
+<span class="hl-cmd">nano</span> docker-compose.env  <span class="hl-cmt"># 编辑配置</span>
+
+<span class="hl-cmt"># 3. 启动服务</span>
+<span class="hl-cmd">docker compose</span> up -d</pre>
+
+        <p><strong>从 Paperless-ng 迁移：</strong></p>
+        <pre><span class="hl-cmt"># 只需替换 Docker 镜像即可无缝升级</span>
+<span class="hl-cmd">docker pull</span> ghcr.io/paperless-ngx/paperless-ngx:latest
+<span class="hl-cmd">docker compose</span> up -d</pre>
+
+        <p style="margin-top:0.8rem;"><strong>在线体验：</strong>DigitalOcean 赞助的演示环境：<code>demo.paperless-ngx.com</code>（用户名/密码：<code>demo</code>/<code>demo</code>）</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value score-a">8.5</div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="value score-a">8.5</div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value score-s">9.5</div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="value score-s">9.0</div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value score-s">9.5</div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:1.5rem;">
+            <span style="font-size:0.9rem;color:#8b949e;">综合评分</span><br>
+            <span style="font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">9.0</span>
+            <span style="font-size:1.2rem;color:#8b949e;"> / 10</span>
+        </div>
+        <p style="margin-top:1rem;text-align:center;color:#8b949e;font-size:0.88rem;">
+            评价：Paperless-ngx 是自托管文档管理领域无可争议的王者级项目。极高的实用性、活跃的社区、优秀的文档和持续的 AI 集成创新使其成为任何想要实现无纸化的用户的首选方案。
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>GitHub Trending Deep Analysis | Analyzed on 2026-05-26</p>
+        <p style="margin-top:0.3rem;">Powered by Claude Code | <a href="https://github.com/paperless-ngx/paperless-ngx" style="color:#58a6ff;text-decoration:none;">paperless-ngx/paperless-ngx</a></p>
+    </div>
+
+</div>
+</body>
+</html>
