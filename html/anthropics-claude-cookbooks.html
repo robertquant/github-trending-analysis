@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>anthropics/claude-cookbooks - GitHub Trending 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 50%, #161b22 100%);
+            border-radius: 16px;
+            border: 1px solid #21262d;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .header .subtitle {
+            color: #8b949e;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .badge-stars { background: #1f1205; color: #e3b341; border: 1px solid #433100; }
+        .badge-today { background: #0d2818; color: #3fb950; border: 1px solid #1b4332; }
+        .badge-lang { background: #0c2d6b; color: #58a6ff; border: 1px solid #1a3a6e; }
+        .badge-owner { background: #2a1530; color: #bc8cff; border: 1px solid #3d2048; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 1.1em;
+        }
+        .card p, .card li { color: #b1bac4; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 8px; }
+
+        /* Overview */
+        .overview-text { font-size: 1.05em; line-height: 1.8; }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .feature-item:hover {
+            transform: translateY(-2px);
+            border-color: #58a6ff;
+        }
+        .feature-item h3 {
+            color: #58a6ff;
+            font-size: 1.05em;
+            margin-bottom: 8px;
+        }
+        .feature-item p { font-size: 0.92em; color: #8b949e; }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-label { font-size: 0.85em; color: #8b949e; margin-bottom: 8px; }
+        .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-bar {
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+        }
+
+        /* Comparison table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.92em;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        th {
+            background: #0d1117;
+            color: #58a6ff;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover td { background: rgba(56, 139, 253, 0.05); }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.82em;
+            font-weight: 500;
+        }
+        .tag-green { background: #0d2818; color: #3fb950; }
+        .tag-blue { background: #0c2d6b; color: #58a6ff; }
+        .tag-yellow { background: #1f1205; color: #e3b341; }
+        .tag-purple { background: #2a1530; color: #bc8cff; }
+
+        /* Code block */
+        pre {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        code {
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9em;
+        }
+        .code-keyword { color: #ff7b72; }
+        .code-string { color: #a5d6ff; }
+        .code-comment { color: #8b949e; font-style: italic; }
+        .code-cmd { color: #79c0ff; }
+
+        /* Quick start steps */
+        .steps { counter-reset: step; margin-top: 16px; }
+        .step {
+            counter-increment: step;
+            position: relative;
+            padding: 16px 16px 16px 56px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+        .step h4 { color: #e6edf3; margin-bottom: 6px; }
+        .step p { font-size: 0.92em; color: #8b949e; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            margin-top: 30px;
+            border-top: 1px solid #21262d;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .feature-grid, .score-grid { grid-template-columns: 1fr; }
+            .header .meta { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>anthropics/claude-cookbooks</h1>
+            <div class="subtitle">Anthropic 官方 Claude 实战代码食谱 — 开发者构建 AI 应用的最佳实践集</div>
+            <div class="meta">
+                <span class="badge badge-owner">🏛️ Anthropic 官方</span>
+                <span class="badge badge-stars">⭐ Trending</span>
+                <span class="badge badge-today">📈 今日热门</span>
+                <span class="badge badge-lang">🐍 Python / Jupyter</span>
+            </div>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1a3a6e;">📋</span> 项目简介与核心功能</h2>
+            <p class="overview-text">
+                <strong>anthropics/claude-cookbooks</strong> 是 Anthropic 官方维护的 Claude API 实战代码食谱集合，提供大量可直接复制使用的代码片段，帮助开发者快速构建基于 Claude 的 AI 应用。2026 年 1 月，该项目的全新版本已在 <a href="https://platform.claude.com/cookbook/" style="color:#58a6ff;">platform.claude.com/cookbook</a> 上线，同时 GitHub 仓库继续作为开源社区贡献的主阵地。
+            </p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>分类与摘要</h3>
+                    <p>文本分类、情感分析、文档摘要等 NLP 基础能力的完整实现示例</p>
+                </div>
+                <div class="feature-item">
+                    <h3>工具调用 (Tool Use)</h3>
+                    <p>客服 Agent、计算器集成、SQL 查询等工具调用模式，扩展 Claude 的能力边界</p>
+                </div>
+                <div class="feature-item">
+                    <h3>RAG 检索增强</h3>
+                    <p>结合 Pinecone 向量数据库、Wikipedia、网页等外部知识源，构建检索增强生成系统</p>
+                </div>
+                <div class="feature-item">
+                    <h3>多模态能力</h3>
+                    <p>图像理解（图表解析、表单提取）、Stable Diffusion 图像生成等视觉能力实战</p>
+                </div>
+                <div class="feature-item">
+                    <h3>高级技术</h3>
+                    <p>子 Agent 协作、PDF 解析、自动化评估、JSON 模式、内容审核、Prompt 缓存</p>
+                </div>
+                <div class="feature-item">
+                    <h3>第三方集成</h3>
+                    <p>Voyage AI 嵌入、AWS 基础设施集成等企业级场景方案</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Architecture -->
+        <div class="card">
+            <h2><span class="icon" style="background:#0d2818;">🏗️</span> 技术架构与特点</h2>
+            <p>项目采用 Jupyter Notebook 格式组织，每个食谱都是独立的可运行 Notebook，开发者可以边学边练。整体架构围绕 Claude API 的核心能力展开：</p>
+            <div class="feature-grid" style="margin-top:16px;">
+                <div class="feature-item">
+                    <h3>Notebook 驱动</h3>
+                    <p>所有食谱以 .ipynb 格式呈现，支持交互式运行和渐进式学习，降低上手门槛</p>
+                </div>
+                <div class="feature-item">
+                    <h3>模块化设计</h3>
+                    <p>每个主题独立成篇，按能力域分类（Classification / Tool Use / Multimodal / Advanced），按需查阅</p>
+                </div>
+                <div class="feature-item">
+                    <h3>可复制代码</h3>
+                    <p>强调 copy-paste 友好，代码片段可直接集成到自己的项目中，无需大规模重构</p>
+                </div>
+                <div class="feature-item">
+                    <h3>registry.yaml 编目</h3>
+                    <p>通过 registry.yaml 统一管理所有食谱的元数据，便于检索和自动化处理</p>
+                </div>
+            </div>
+            <pre><code><span class="code-comment"># 典型的 Claude API 调用示例（来自 Cookbooks）</span>
+<span class="code-keyword">import</span> anthropic
+
+client = anthropic.<span class="code-cmd">Anthropic</span>()
+
+message = client.messages.<span class="code-cmd">create</span>(
+    model=<span class="code-string">"claude-sonnet-4-6"</span>,
+    max_tokens=<span class="code-cmd">1024</span>,
+    tools=[{
+        <span class="code-string">"name"</span>: <span class="code-string">"get_weather"</span>,
+        <span class="code-string">"description"</span>: <span class="code-string">"Get the current weather"</span>,
+        <span class="code-string">"input_schema"</span>: { ... }
+    }],
+    messages=[{
+        <span class="code-string">"role"</span>: <span class="code-string">"user"</span>,
+        <span class="code-string">"content"</span>: <span class="code-string">"What's the weather in SF?"</span>
+    }]
+)</code></pre>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="card">
+            <h2><span class="icon" style="background:#2a1530;">🎯</span> 应用场景</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>企业客服系统</h3>
+                    <p>基于 Tool Use 模式构建智能客服 Agent，支持多轮对话、工单查询、SQL 数据检索</p>
+                </div>
+                <div class="feature-item">
+                    <h3>文档智能处理</h3>
+                    <p>PDF 解析、表单信息提取、合同审核等文档处理自动化场景</p>
+                </div>
+                <div class="feature-item">
+                    <h3>知识库 RAG</h3>
+                    <p>结合向量数据库（Pinecone）构建企业内部知识检索增强系统</p>
+                </div>
+                <div class="feature-item">
+                    <h3>内容安全审核</h3>
+                    <p>使用 Claude 构建内容审核过滤器，实现自动化内容安全管控</p>
+                </div>
+                <div class="feature-item">
+                    <h3>数据可视化理解</h3>
+                    <p>让 AI 解读图表和图形，实现数据报告自动化分析</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Prompt 工程评估</h3>
+                    <p>自动化 Prompt 评估框架，帮助团队系统化地优化提示词效果</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Trending -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1f1205;">🔥</span> 为什么火（Trending 原因）</h2>
+            <ul>
+                <li><strong>AI Agent 生态爆发</strong> — 2026 年是 AI Agent 应用元年，Claude 作为工具调用能力最强的模型之一，其官方 Cookbook 成为开发者入局必备参考</li>
+                <li><strong>官方权威性</strong> — 由 Anthropic 教育团队直接维护，代码质量和最佳实践保证是业内最高水准</li>
+                <li><strong>新平台上线</strong> — 2026 年 1 月在 platform.claude.com/cookbook 全新上线，带动了 GitHub 仓库的二次关注热潮</li>
+                <li><strong>实战导向</strong> — 与纯理论教程不同，Cookbooks 提供的是可直接运行的代码，开发者上手即可用</li>
+                <li><strong>社区驱动增长</strong> — 开放贡献机制让全球开发者参与，内容持续丰富，形成正向循环</li>
+                <li><strong>Claude API 用户激增</strong> — Claude Code 的 81.6K Stars 带动了整个 Anthropic 生态的关注度飙升</li>
+            </ul>
+        </div>
+
+        <!-- Comparison -->
+        <div class="card">
+            <h2><span class="icon" style="background:#0c2d6b;">⚖️</span> 同类项目对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>Claude Cookbooks</th>
+                        <th>OpenAI Cookbook</th>
+                        <th>Gemini API Cookbook</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>维护方</td>
+                        <td><span class="tag tag-purple">Anthropic 官方</span></td>
+                        <td><span class="tag tag-green">OpenAI 官方</span></td>
+                        <td><span class="tag tag-blue">Google 官方</span></td>
+                    </tr>
+                    <tr>
+                        <td>内容深度</td>
+                        <td>中等偏上，侧重实战代码</td>
+                        <td>非常深入，社区贡献丰富</td>
+                        <td>中等，结构化学习路径</td>
+                    </tr>
+                    <tr>
+                        <td>工具调用覆盖</td>
+                        <td><span class="tag tag-green">全面</span> (客服、SQL、计算器)</td>
+                        <td><span class="tag tag-green">全面</span></td>
+                        <td><span class="tag tag-yellow">部分</span></td>
+                    </tr>
+                    <tr>
+                        <td>多模态内容</td>
+                        <td><span class="tag tag-green">丰富</span> (图像理解+生成)</td>
+                        <td><span class="tag tag-green">丰富</span></td>
+                        <td><span class="tag tag-green">丰富</span> (原生多模态)</td>
+                    </tr>
+                    <tr>
+                        <td>社区活跃度</td>
+                        <td><span class="tag tag-yellow">快速增长中</span></td>
+                        <td><span class="tag tag-green">非常活跃</span></td>
+                        <td><span class="tag tag-yellow">活跃</span></td>
+                    </tr>
+                    <tr>
+                        <td>代码格式</td>
+                        <td>Jupyter Notebook</td>
+                        <td>Jupyter Notebook + Markdown</td>
+                        <td>Jupyter Notebook + Python</td>
+                    </tr>
+                    <tr>
+                        <td>在线平台</td>
+                        <td>platform.claude.com/cookbook</td>
+                        <td>developers.openai.com/cookbook</td>
+                        <td>ai.google.dev/gemini-api/cookbook</td>
+                    </tr>
+                    <tr>
+                        <td>适用人群</td>
+                        <td>Claude API 开发者</td>
+                        <td>全栈 AI 开发者</td>
+                        <td>Google 生态开发者</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Who Should Use -->
+        <div class="card">
+            <h2><span class="icon" style="background:#0d2818;">👥</span> 适合谁使用</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>Claude API 初学者</h3>
+                    <p>刚接触 Claude API 的开发者，从基础概念到进阶技巧的系统学习路径</p>
+                </div>
+                <div class="feature-item">
+                    <h3>AI 应用工程师</h3>
+                    <p>正在构建 RAG、Agent、多模态应用的工程师，需要可靠的参考实现</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Prompt 工程师</h3>
+                    <p>希望深入学习 Prompt 缓存、JSON 模式、评估框架等高级技巧的提示词专家</p>
+                </div>
+                <div class="feature-item">
+                    <h3>企业技术决策者</h3>
+                    <p>评估 Claude API 能力边界、规划 AI 集成方案的 CTO 和架构师</p>
+                </div>
+                <div class="feature-item">
+                    <h3>AI 教育工作者</h3>
+                    <p>需要高质量教学材料和代码示例的培训师和讲师</p>
+                </div>
+                <div class="feature-item">
+                    <h3>开源贡献者</h3>
+                    <p>希望参与 Anthropic 生态建设、分享最佳实践的开发者</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2><span class="icon" style="background:#1a3a6e;">🚀</span> 快速上手指南</h2>
+            <div class="steps">
+                <div class="step">
+                    <h4>获取 Claude API Key</h4>
+                    <p>访问 <a href="https://console.anthropic.com/" style="color:#58a6ff;">console.anthropic.com</a> 注册并获取免费 API Key</p>
+                </div>
+                <div class="step">
+                    <h4>克隆仓库</h4>
+                    <pre><code><span class="code-cmd">git</span> clone https://github.com/anthropics/claude-cookbooks.git
+<span class="code-cmd">cd</span> claude-cookbooks</code></pre>
+                </div>
+                <div class="step">
+                    <h4>安装依赖</h4>
+                    <pre><code><span class="code-cmd">pip</span> install anthropic jupyter</code></pre>
+                </div>
+                <div class="step">
+                    <h4>设置环境变量</h4>
+                    <pre><code><span class="code-cmd">export</span> ANTHROPIC_API_KEY=<span class="code-string">"your-api-key-here"</span></code></pre>
+                </div>
+                <div class="step">
+                    <h4>启动 Notebook 学习</h4>
+                    <pre><code><span class="code-cmd">jupyter</span> notebook
+<span class="code-comment"># 推荐从 tool_use/customer_service.ipynb 开始</span></code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scores -->
+        <div class="card">
+            <h2><span class="icon" style="background:#2a1530;">📊</span> 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value">8.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:80%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">代码质量</div>
+                    <div class="score-value">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:90%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value">9.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:95%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">文档完善度</div>
+                    <div class="score-value">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:85%;"></div></div>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:20px; padding:16px; background:#0d1117; border-radius:10px; border:1px solid #21262d;">
+                <span style="color:#8b949e;">综合评分</span>
+                <span style="font-size:2.2em; font-weight:700; margin-left:12px; background:linear-gradient(135deg,#58a6ff,#bc8cff,#f778ba); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">8.7 / 10</span>
+                <span style="color:#3fb950; margin-left:8px;">优秀</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析日期: 2026-05-26 | 数据来源: <a href="https://github.com/anthropics/claude-cookbooks">GitHub</a></p>
+            <p style="margin-top:8px;">由 AI 自动深度分析生成 | Powered by Claude Code</p>
+        </div>
+    </div>
+</body>
+</html>
