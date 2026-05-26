@@ -3,639 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeGraph - GitHub Trending 深度分析</title>
+    <title>CodeGraph 深度分析 | colbymchenry/codegraph</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
             background: #0d1117;
             color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
             line-height: 1.7;
-            overflow-x: hidden;
+            padding: 20px;
         }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-
-        /* Hero */
-        .hero {
-            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
-            border: 1px solid #30363d;
-            border-radius: 16px;
-            padding: 48px 40px;
-            margin-bottom: 32px;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(56, 139, 253, 0.08) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-        .hero-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #238636, #2ea043);
-            color: #fff;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            letter-spacing: 0.5px;
-        }
-        .hero h1 {
-            font-size: 2.4em;
-            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f78166);
+        .container { max-width: 960px; margin: 0 auto; }
+        h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 12px;
-            line-height: 1.2;
+            margin-bottom: 8px;
+            text-align: center;
         }
-        .hero .subtitle {
-            font-size: 1.15em;
+        .subtitle {
+            text-align: center;
             color: #8b949e;
-            max-width: 720px;
-            line-height: 1.6;
+            font-size: 1.1em;
+            margin-bottom: 30px;
         }
-        .hero-meta {
+        .badges {
             display: flex;
+            justify-content: center;
+            gap: 10px;
             flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 24px;
+            margin-bottom: 30px;
         }
-        .meta-item {
-            display: flex;
+        .badge {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.85em;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #8b949e;
+            gap: 6px;
         }
-        .meta-item .icon { font-size: 16px; }
-        .meta-item strong { color: #c9d1d9; }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .stat-card {
+        .badge .icon { font-size: 1.1em; }
+        .badge.stars .icon { color: #e3b341; }
+        .badge.lang .icon { color: #58a6ff; }
+        .badge.license .icon { color: #8b949e; }
+        .badge.trending .icon { color: #f778ba; }
+        .card {
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 12px;
             padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 1.4em;
+            color: #58a6ff;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 10px;
+        }
+        .card h3 {
+            color: #bc8cff;
+            font-size: 1.1em;
+            margin: 16px 0 8px;
+        }
+        .card p, .card li {
+            color: #c9d1d9;
+            margin-bottom: 8px;
+        }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 6px; }
+        .highlight {
+            color: #7ee787;
+            font-weight: 600;
+        }
+        .warn {
+            color: #e3b341;
+            font-weight: 600;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .stat-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 16px;
             text-align: center;
-            transition: transform 0.2s, border-color 0.2s;
         }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            border-color: #58a6ff;
-        }
-        .stat-value {
-            font-size: 2em;
+        .stat-item .value {
+            font-size: 1.8em;
             font-weight: 700;
             background: linear-gradient(135deg, #58a6ff, #bc8cff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .stat-label {
-            font-size: 13px;
+        .stat-item .label {
             color: #8b949e;
+            font-size: 0.85em;
             margin-top: 4px;
         }
-
-        /* Section */
-        .section {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 24px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.92em;
         }
-        .section h2 {
-            font-size: 1.4em;
-            color: #f0f6fc;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
+        th {
+            background: #21262d;
+            color: #58a6ff;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
             border-bottom: 1px solid #21262d;
+        }
+        tr:hover { background: #161b22; }
+        code {
+            background: #1f2937;
+            color: #7ee787;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-size: 0.88em;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #c9d1d9;
+        }
+        .score-bar {
             display: flex;
             align-items: center;
             gap: 10px;
+            margin: 8px 0;
         }
-        .section h2 .emoji { font-size: 1.2em; }
-        .section h3 {
-            color: #58a6ff;
-            font-size: 1.1em;
-            margin: 20px 0 10px;
+        .score-bar .name {
+            width: 100px;
+            color: #8b949e;
+            font-size: 0.9em;
         }
-        .section p { color: #c9d1d9; margin-bottom: 12px; }
-        .section ul { padding-left: 20px; margin-bottom: 12px; }
-        .section li { margin-bottom: 8px; color: #c9d1d9; }
-        .section li strong { color: #f0f6fc; }
-
-        /* Benchmark Table */
-        .benchmark-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-            font-size: 14px;
-        }
-        .benchmark-table th {
+        .score-bar .bar-bg {
+            flex: 1;
+            height: 10px;
             background: #21262d;
-            color: #f0f6fc;
-            padding: 12px 16px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #30363d;
-        }
-        .benchmark-table td {
-            padding: 10px 16px;
-            border-bottom: 1px solid #21262d;
-        }
-        .benchmark-table tr:hover { background: #1c2128; }
-        .highlight-green { color: #3fb950; font-weight: 600; }
-        .highlight-blue { color: #58a6ff; }
-
-        /* Score Bars */
-        .score-item {
-            margin-bottom: 16px;
-        }
-        .score-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-        .score-name { color: #c9d1d9; }
-        .score-value { color: #f0f6fc; font-weight: 600; }
-        .score-bar {
-            height: 8px;
-            background: #21262d;
-            border-radius: 4px;
+            border-radius: 5px;
             overflow: hidden;
         }
-        .score-fill {
+        .score-bar .bar-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: 5px;
             transition: width 0.6s ease;
         }
-        .score-fill.s9 { background: linear-gradient(90deg, #238636, #3fb950); }
-        .score-fill.s8 { background: linear-gradient(90deg, #2ea043, #56d364); }
-        .score-fill.s7 { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
-        .score-fill.s6 { background: linear-gradient(90deg, #d29922, #e3b341); }
-
-        /* Code Block */
-        .code-block {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin: 12px 0;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            overflow-x: auto;
-            color: #c9d1d9;
+        .score-bar .score {
+            width: 40px;
+            text-align: right;
+            font-weight: 700;
+            color: #58a6ff;
         }
-        .code-block .comment { color: #8b949e; }
-        .code-block .cmd { color: #79c0ff; }
-        .code-block .flag { color: #ff7b72; }
-
-        /* Comparison Table */
-        .compare-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin: 16px 0;
+        .trend-reason {
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border: 1px solid rgba(88,166,255,0.3);
+            border-radius: 10px;
+            padding: 18px;
+            margin: 14px 0;
         }
-        .compare-item {
-            display: grid;
-            grid-template-columns: 160px 1fr auto;
-            align-items: center;
-            padding: 12px 16px;
-            background: #0d1117;
-            border: 1px solid #21262d;
-            border-radius: 8px;
-            font-size: 14px;
+        .trend-reason h4 {
+            color: #f778ba;
+            margin-bottom: 8px;
         }
-        .compare-item .name { color: #58a6ff; font-weight: 600; }
-        .compare-item .desc { color: #8b949e; }
-        .compare-item .tag {
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 12px;
+        .compare-table td:first-child {
+            color: #58a6ff;
             font-weight: 600;
         }
-        .tag-green { background: #0d2818; color: #3fb950; }
-        .tag-blue { background: #0d1d35; color: #58a6ff; }
-        .tag-yellow { background: #2a1f00; color: #d29922; }
-
-        /* Feature Tags */
-        .feature-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0;
-        }
-        .feature-tag {
-            background: #21262d;
-            color: #c9d1d9;
-            padding: 5px 14px;
-            border-radius: 16px;
-            font-size: 13px;
-            border: 1px solid #30363d;
-        }
-
-        /* Architecture Diagram */
-        .arch-diagram {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 24px;
-            margin: 16px 0;
-            font-family: monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            color: #8b949e;
-            overflow-x: auto;
-            white-space: pre;
-        }
-
-        /* Footer */
         .footer {
             text-align: center;
-            padding: 32px;
             color: #484f58;
-            font-size: 13px;
+            font-size: 0.85em;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #21262d;
         }
-        .footer a { color: #58a6ff; text-decoration: none; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container { padding: 12px; }
-            .hero { padding: 32px 20px; }
-            .hero h1 { font-size: 1.8em; }
-            .section { padding: 20px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .benchmark-table { font-size: 12px; }
-            .benchmark-table th, .benchmark-table td { padding: 8px 10px; }
-            .compare-item { grid-template-columns: 1fr; gap: 4px; }
+        @media (max-width: 640px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.6em; }
+            .card { padding: 16px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
 <div class="container">
 
-    <!-- Hero -->
-    <div class="hero">
-        <span class="hero-badge">TRENDING ANALYSIS</span>
-        <h1>colbymchenry/codegraph</h1>
-        <p class="subtitle">Pre-indexed code knowledge graph for Claude Code — 通过预构建代码知识图谱，将 AI 编程助手的探索效率提升 10 倍，减少 94% 的工具调用，完全本地运行。</p>
-        <div class="hero-meta">
-            <div class="meta-item"><span class="icon">⭐</span> <strong>2,103</strong> Stars</div>
-            <div class="meta-item"><span class="icon">🔥</span> <strong>+397</strong> Today</div>
-            <div class="meta-item"><span class="icon">💻</span> <strong>TypeScript</strong></div>
-            <div class="meta-item"><span class="icon">📜</span> <strong>MIT</strong></div>
-            <div class="meta-item"><span class="icon">📅</span> <strong>2026-05-17</strong></div>
+<h1>CodeGraph</h1>
+<p class="subtitle">为 AI 编程助手打造的预索引代码知识图谱</p>
+
+<div class="badges">
+    <span class="badge stars"><span class="icon">&#9733;</span> ~14,000+ Stars</span>
+    <span class="badge trending"><span class="icon">&#128293;</span> GitHub Trending #1 (周榜)</span>
+    <span class="badge lang"><span class="icon">&#128187;</span> TypeScript</span>
+    <span class="badge license"><span class="icon">&#9878;</span> MIT License</span>
+</div>
+
+<!-- 项目简介 -->
+<div class="card">
+    <h2>&#128218; 项目简介与核心功能</h2>
+    <p><strong>CodeGraph</strong> 是一个本地优先（local-first）的代码智能系统，它使用 <code>tree-sitter</code> 解析源代码，为你的整个代码库构建一个语义知识图谱。它以 <strong>MCP Server</strong> 的形式运行，为 Claude Code、Cursor、Codex CLI、OpenCode、Hermes Agent 等 AI 编程助手提供高效的代码结构理解能力。</p>
+
+    <h3>核心功能</h3>
+    <ul>
+        <li><strong>智能上下文构建</strong> — 一次工具调用即可返回入口点、相关符号和代码片段，无需昂贵的探索代理</li>
+        <li><strong>全文本搜索</strong> — 基于 FTS5 的即时符号搜索</li>
+        <li><strong>影响分析</strong> — 追踪调用者、被调用者和符号的完整影响范围</li>
+        <li><strong>调用链追踪</strong> — <code>codegraph_trace</code> 工具可追踪两个符号之间的完整调用路径，包括动态分发</li>
+        <li><strong>框架感知路由</strong> — 识别 14+ Web 框架的路由文件，将 URL 模式关联到处理器</li>
+        <li><strong>自动同步</strong> — 使用原生 OS 文件事件监控代码变更，自动增量更新索引</li>
+        <li><strong>19+ 语言支持</strong> — TypeScript、Python、Go、Rust、Java、C#、PHP、Ruby 等</li>
+    </ul>
+</div>
+
+<!-- 性能数据 -->
+<div class="card">
+    <h2>&#128640; 性能基准测试</h2>
+    <p>在 7 个真实开源代码库上测试，比较 Claude Code 使用和不使用 CodeGraph 回答架构问题的表现：</p>
+
+    <div class="stat-grid">
+        <div class="stat-item">
+            <div class="value">35%</div>
+            <div class="label">成本降低</div>
+        </div>
+        <div class="stat-item">
+            <div class="value">57%</div>
+            <div class="label">Token 减少</div>
+        </div>
+        <div class="stat-item">
+            <div class="value">46%</div>
+            <div class="label">速度提升</div>
+        </div>
+        <div class="stat-item">
+            <div class="value">71%</div>
+            <div class="label">工具调用减少</div>
         </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">94%</div>
-            <div class="stat-label">减少工具调用</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">77%</div>
-            <div class="stat-label">探索速度提升</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">19+</div>
-            <div class="stat-label">支持编程语言</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">100%</div>
-            <div class="stat-label">本地运行</div>
-        </div>
+    <table>
+        <thead>
+            <tr>
+                <th>代码库</th>
+                <th>语言</th>
+                <th>成本节省</th>
+                <th>Token 节省</th>
+                <th>工具调用减少</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>VS Code</td><td>TypeScript (~10k 文件)</td><td>26%</td><td>78%</td><td>85%</td></tr>
+            <tr><td>Excalidraw</td><td>TypeScript (~640 文件)</td><td>52%</td><td>90%</td><td>96%</td></tr>
+            <tr><td>Django</td><td>Python (~3k 文件)</td><td>12%</td><td>36%</td><td>53%</td></tr>
+            <tr><td>Tokio</td><td>Rust (~790 文件)</td><td class="highlight">82%</td><td class="highlight">86%</td><td class="highlight">92%</td></tr>
+            <tr><td>Alamofire</td><td>Swift (~110 文件)</td><td>47%</td><td>64%</td><td>83%</td></tr>
+        </tbody>
+    </table>
+    <p style="color:#8b949e; font-size:0.88em;">越大型的代码库，收益越显著。在 Tokio 上节省高达 82% 的成本。</p>
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+    <h2>&#128736;&#65039; 技术架构与特点</h2>
+
+    <h3>架构设计</h3>
+    <pre><code>┌─────────────────────────────────────────┐
+│            AI Coding Agent               │
+│  (Claude Code / Cursor / Codex / ...)    │
+│           直接调用 CodeGraph 工具          │
+│                  │                        │
+└──────────────────┼────────────────────────┘
+                   ▼
+┌─────────────────────────────────────────┐
+│         CodeGraph MCP Server             │
+│  context · trace · explore · callers     │
+│  callees · impact · search · files       │
+│                  │                        │
+│                  ▼                        │
+│      SQLite 知识图谱 (FTS5 全文搜索)      │
+│   symbols · edges · files · routes       │
+└─────────────────────────────────────────┘</code></pre>
+
+    <h3>核心技术栈</h3>
+    <ul>
+        <li><strong>Tree-sitter</strong> — 高性能增量解析器，支持 19+ 语言的 AST 提取</li>
+        <li><strong>SQLite + FTS5</strong> — 本地数据库存储符号、边关系和全文本索引</li>
+        <li><strong>MCP 协议</strong> — Model Context Protocol，标准化的 AI 工具通信协议</li>
+        <li><strong>Node.js (打包运行时)</strong> — 自包含二进制，无需用户安装 Node.js</li>
+        <li><strong>原生文件监控</strong> — FSEvents (macOS) / inotify (Linux) / ReadDirectoryChangesW (Windows)</li>
+    </ul>
+
+    <h3>关键设计特点</h3>
+    <ul>
+        <li><strong>零配置</strong> — 无需配置文件，语言自动检测，开箱即用</li>
+        <li><strong>100% 本地</strong> — 无数据离开机器，无 API Key，无外部服务</li>
+        <li><strong>自包含构建</strong> — 打包 Node 运行时，跨平台 (Windows/macOS/Linux, x64/ARM64)</li>
+        <li><strong>智能排除</strong> — 自动排除 node_modules、dist、build 等目录，遵循 .gitignore</li>
+        <li><strong>库/CLI/MCP 三模式</strong> — 可作为 npm 库、命令行工具或 MCP Server 使用</li>
+    </ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="card">
+    <h2>&#127919; 应用场景</h2>
+    <ul>
+        <li><strong>大型代码库探索</strong> — 在数千个文件的项目中快速定位符号、理解调用关系</li>
+        <li><strong>代码审查准备</strong> — 在修改代码前分析影响范围，了解牵连的测试文件</li>
+        <li><strong>架构理解</strong> — "请求如何从 Controller 到达数据库？" 类问题的即时解答</li>
+        <li><strong>CI/CD 集成</strong> — 使用 <code>codegraph affected</code> 只运行受变更影响的测试</li>
+        <li><strong>新手入职</strong> — 通过知识图谱快速理解陌生代码库的结构</li>
+        <li><strong>跨语言项目</strong> — 单一工具同时索引 Python 后端 + TypeScript 前端</li>
+    </ul>
+</div>
+
+<!-- 为什么火 -->
+<div class="card">
+    <h2>&#128293; 为什么火 (Trending 原因)</h2>
+    <div class="trend-reason">
+        <h4>&#128200; 本周 #1 增长最快项目 (+14,100 Stars)</h4>
+        <p>CodeGraph 解决了 AI 编程助手中一个被广泛忽视但极其痛的问题：<strong>AI Agent 在代码库中"漫游"的高昂成本</strong>。当 Claude Code、Cursor 等工具探索代码库时，它们需要反复调用 grep、glob、Read 等工具，消耗大量 Token 和时间。CodeGraph 用预构建的知识图谱直接消除了这个瓶颈。</p>
     </div>
 
-    <!-- 项目简介 -->
-    <div class="section">
-        <h2><span class="emoji">📖</span> 项目简介与核心功能</h2>
-        <p><strong>CodeGraph</strong> 是一个为 <strong>Claude Code</strong> 设计的本地代码知识图谱系统。它通过 <strong>tree-sitter</strong> 解析源代码，提取符号（函数、类、方法）和关系（调用、导入、继承），构建一个 SQLite 驱动的知识图谱，以 MCP 服务器形式为 Claude Code 提供"即时代码理解"能力。</p>
+    <h3>核心驱动因素</h3>
+    <ul>
+        <li><strong>痛点精准</strong> — 每个 AI 编程助手的重度用户都经历过 Agent "迷路" 的问题</li>
+        <li><strong>数据说话</strong> — 提供了严谨的基准测试：7 个代码库、每种条件 4 次运行、中位数报告</li>
+        <li><strong>生态时机</strong> — MCP 协议正值爆发期，Claude Code 用户基数快速增长</li>
+        <li><strong>零门槛</strong> — 一行命令安装，自动检测并配置已安装的 AI Agent</li>
+        <li><strong>多平台兼容</strong> — 同时支持 Claude Code、Cursor、Codex CLI、OpenCode、Hermes Agent</li>
+        <li><strong>完全本地</strong> — 企业用户无需担心代码泄露，符合安全合规要求</li>
+    </ul>
+</div>
 
-        <h3>核心功能</h3>
-        <ul>
-            <li><strong>智能上下文构建</strong> — 一次工具调用返回入口点、相关符号和代码片段，无需昂贵的探索代理</li>
-            <li><strong>全文搜索</strong> — 基于 FTS5 的即时符号搜索，跨整个代码库查找</li>
-            <li><strong>影响分析</strong> — 追踪调用者、被调用者和符号的完整影响范围</li>
-            <li><strong>实时同步</strong> — 文件监视器使用原生 OS 事件，防抖自动同步，零配置</li>
-            <li><strong>框架感知路由</strong> — 识别 13+ Web 框架的路由文件并链接 URL 到处理器</li>
-            <li><strong>CI 集成</strong> — <code>codegraph affected</code> 命令追踪变更影响的测试文件</li>
-        </ul>
+<!-- 同类对比 -->
+<div class="card">
+    <h2>&#128200; 同类项目对比</h2>
+    <table class="compare-table">
+        <thead>
+            <tr>
+                <th>特性</th>
+                <th>CodeGraph</th>
+                <th>code-review-graph</th>
+                <th>code-graph-mcp</th>
+                <th>Sourcegraph Cody</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>多 Agent 支持</td><td class="highlight">5 个 Agent</td><td>Claude Code</td><td>通用 MCP</td><td>Cody IDE</td></tr>
+            <tr><td>语言支持</td><td class="highlight">19+</td><td>有限</td><td>AST 解析</td><td>广泛</td></tr>
+            <tr><td>本地优先</td><td class="highlight">100%</td><td>100%</td><td>100%</td><td>云端 + 本地</td></tr>
+            <tr><td>框架路由感知</td><td class="highlight">14 框架</td><td>-</td><td>HTTP 路由</td><td>-</td></tr>
+            <tr><td>影响分析</td><td class="highlight">深度追踪</td><td>基础</td><td>调用图</td><td>搜索 + 引用</td></tr>
+            <tr><td>自动同步</td><td class="highlight">OS 原生事件</td><td>手动</td><td>-</td><td>实时</td></tr>
+            <tr><td>安装门槛</td><td class="highlight">一行命令</td><td>需配置</td><td>需配置</td><td>IDE 插件</td></tr>
+            <tr><td>基准测试</td><td class="highlight">公开严谨</td><td>声称 6.8x</td><td>-</td><td>-</td></tr>
+        </tbody>
+    </table>
+    <p style="color:#8b949e; font-size:0.88em;">CodeGraph 在多 Agent 兼容性、框架路由感知、安装体验和基准测试透明度上具有明显优势。</p>
+</div>
 
-        <div class="feature-tags">
-            <span class="feature-tag">tree-sitter 解析</span>
-            <span class="feature-tag">SQLite + FTS5</span>
-            <span class="feature-tag">MCP 协议</span>
-            <span class="feature-tag">文件监视</span>
-            <span class="feature-tag">跨语言</span>
-            <span class="feature-tag">增量索引</span>
-            <span class="feature-tag">零配置</span>
-        </div>
+<!-- 适合谁使用 -->
+<div class="card">
+    <h2>&#129309; 适合谁使用</h2>
+    <ul>
+        <li><strong>AI 编程助手重度用户</strong> — 每天使用 Claude Code / Cursor / Codex 的开发者，尤其是处理大型项目时</li>
+        <li><strong>企业开发团队</strong> — 100% 本地运行，无需担心代码安全和合规问题</li>
+        <li><strong>开源项目维护者</strong> — 快速理解大型代码库，加速 PR 审查</li>
+        <li><strong>全栈开发者</strong> — 单一工具同时索引前端 + 后端 + 多语言项目</li>
+        <li><strong>DevOps / SRE</strong> — 集成 CI 管道，只运行受影响的测试</li>
+    </ul>
+</div>
+
+<!-- 快速上手 -->
+<div class="card">
+    <h2>&#9889; 快速上手指南</h2>
+
+    <h3>1. 安装 (一行命令)</h3>
+    <pre><code># macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+
+# 或使用 npm
+npx @colbymchenry/codegraph</code></pre>
+
+    <h3>2. 初始化项目</h3>
+    <pre><code>cd your-project
+codegraph init -i</code></pre>
+
+    <h3>3. 重启 AI Agent</h3>
+    <pre><code># 重启 Claude Code / Cursor / Codex CLI
+# CodeGraph 会自动检测 .codegraph/ 目录并使用</code></pre>
+
+    <h3>4. 享受高效编码</h3>
+    <p>Agent 会自动使用 CodeGraph 工具，无需手动调用。你可以直接问：</p>
+    <pre><code>"这个项目的路由是怎么组织的？"
+"修改 UserService 会影响哪些文件？"
+"从 API 请求到数据库写入的完整调用链是什么？"</code></pre>
+
+    <h3>手动配置 (可选)</h3>
+    <pre><code># 添加到 ~/.claude.json
+{
+  "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": ["serve", "--mcp"]
+    }
+  }
+}</code></pre>
+</div>
+
+<!-- 综合评分 -->
+<div class="card">
+    <h2>&#11088; 综合评分</h2>
+
+    <div class="score-bar">
+        <span class="name">创新性</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:92%; background: linear-gradient(90deg, #58a6ff, #bc8cff);"></div></div>
+        <span class="score">9.2</span>
+    </div>
+    <div class="score-bar">
+        <span class="name">代码质量</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:88%; background: linear-gradient(90deg, #58a6ff, #bc8cff);"></div></div>
+        <span class="score">8.8</span>
+    </div>
+    <div class="score-bar">
+        <span class="name">实用性</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:95%; background: linear-gradient(90deg, #58a6ff, #bc8cff);"></div></div>
+        <span class="score">9.5</span>
+    </div>
+    <div class="score-bar">
+        <span class="name">文档完善度</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:93%; background: linear-gradient(90deg, #58a6ff, #bc8cff);"></div></div>
+        <span class="score">9.3</span>
+    </div>
+    <div class="score-bar">
+        <span class="name">社区活跃度</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:90%; background: linear-gradient(90deg, #58a6ff, #bc8cff);"></div></div>
+        <span class="score">9.0</span>
     </div>
 
-    <!-- 技术架构 -->
-    <div class="section">
-        <h2><span class="emoji">🏗️</span> 技术架构与特点</h2>
-
-        <div class="arch-diagram">┌─────────────────────────────────────────────────┐
-│                    Claude Code                    │
-│   "Implement user authentication"                │
-│            │                                      │
-│   ┌──────────────┐    ┌──────────────┐           │
-│   │ Explore Agent│    │ Explore Agent│           │
-│   └──────┬───────┘    └──────┬───────┘           │
-└──────────┼───────────────────┼───────────────────┘
-           │                   │
-           ▼                   ▼
-┌─────────────────────────────────────────────────┐
-│            CodeGraph MCP Server                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐        │
-│  │  Search  │ │ Callers  │ │ Context  │        │
-│  │  "auth"  │ │"login()" │ │for task  │        │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘        │
-│       └─────────────┼────────────┘              │
-│                     ▼                            │
-│       ┌──────────────────────┐                   │
-│       │  SQLite Graph DB     │                   │
-│       │  - 符号节点          │                   │
-│       │  - 关系边            │                   │
-│       │  - 即时查询          │                   │
-│       └──────────────────────┘                   │
-└─────────────────────────────────────────────────┘</div>
-
-        <h3>工作流程（4 步）</h3>
-        <ul>
-            <li><strong>1. 提取</strong> — tree-sitter 将源代码解析为 AST，语言特定的查询提取节点和边</li>
-            <li><strong>2. 存储</strong> — 所有数据存入本地 SQLite 数据库（<code>.codegraph/codegraph.db</code>），使用 FTS5 全文搜索</li>
-            <li><strong>3. 解析</strong> — 解析引用关系：函数调用 → 定义、导入 → 源文件、类继承</li>
-            <li><strong>4. 自动同步</strong> — MCP 服务器通过原生 OS 文件事件监视项目，增量同步，防抖 2 秒</li>
-        </ul>
-
-        <h3>技术亮点</h3>
-        <ul>
-            <li><strong>tree-sitter 多语言解析</strong> — 支持 19+ 编程语言，统一的 AST 提取管道</li>
-            <li><strong>SQLite + FTS5</strong> — 零依赖本地存储，毫秒级查询响应</li>
-            <li><strong>MCP 协议集成</strong> — 标准化的模型上下文协议，与 Claude Code 无缝对接</li>
-            <li><strong>原生文件监视</strong> — FSEvents (macOS) / inotify (Linux) / ReadDirectoryChangesW (Windows)</li>
-            <li><strong>框架感知</strong> — 自动识别 Django/Flask/FastAPI/Express/Spring/Rails 等 13 个框架的路由</li>
-        </ul>
+    <div style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #21262d;">
+        <span style="font-size: 1.1em; color: #8b949e;">综合评分</span>
+        <div style="font-size: 2.5em; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">9.2 / 10</div>
+        <span style="color: #7ee787; font-weight: 600;">&#11088; 强烈推荐</span>
     </div>
+</div>
 
-    <!-- 基准测试 -->
-    <div class="section">
-        <h2><span class="emoji">📊</span> 性能基准测试</h2>
-        <p>在 6 个真实代码库上测试，比较 Claude Code 的 Explore 代理在有无 CodeGraph 下的表现：</p>
-
-        <table class="benchmark-table">
-            <thead>
-                <tr>
-                    <th>代码库</th>
-                    <th>有 CG (调用/时间)</th>
-                    <th>无 CG (调用/时间)</th>
-                    <th>改进</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>VS Code</strong> · TypeScript</td>
-                    <td>3 调用, 17s</td>
-                    <td>52 调用, 1m37s</td>
-                    <td><span class="highlight-green">94% · 82%</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Excalidraw</strong> · TypeScript</td>
-                    <td>3 调用, 29s</td>
-                    <td>47 调用, 1m45s</td>
-                    <td><span class="highlight-green">94% · 72%</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Claude Code</strong> · Python+Rust</td>
-                    <td>3 调用, 39s</td>
-                    <td>40 调用, 1m08s</td>
-                    <td><span class="highlight-green">93% · 43%</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Claude Code</strong> · Java</td>
-                    <td>1 调用, 19s</td>
-                    <td>26 调用, 1m22s</td>
-                    <td><span class="highlight-green">96% · 77%</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Alamofire</strong> · Swift</td>
-                    <td>3 调用, 22s</td>
-                    <td>32 调用, 1m39s</td>
-                    <td><span class="highlight-green">91% · 78%</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Swift Compiler</strong> · Swift/C++</td>
-                    <td>6 调用, 35s</td>
-                    <td>37 调用, 2m08s</td>
-                    <td><span class="highlight-green">84% · 73%</span></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <p style="margin-top:16px; color: #8b949e; font-size: 13px;">
-            关键发现：使用 CodeGraph 时，代理<strong style="color:#3fb950;">从未回退到读取文件</strong> — 完全信任图谱结果。Java 代码库仅需 <strong>1 次</strong>调用即完成全部查询。Swift Compiler（25,874 文件, 272,898 节点）在 35 秒内完成复杂跨领域问题解答。
-        </p>
-    </div>
-
-    <!-- 应用场景 -->
-    <div class="section">
-        <h2><span class="emoji">🎯</span> 应用场景</h2>
-        <ul>
-            <li><strong>大型代码库探索</strong> — 面对数万文件的项目，Claude Code 可以直接查询图谱而非逐文件扫描</li>
-            <li><strong>代码审查前的变更影响分析</strong> — 修改某个函数前，快速了解完整的影响半径</li>
-            <li><strong>跨语言代码理解</strong> — Python+Rust 混合项目中，图谱自动跨语言追踪调用链</li>
-            <li><strong>CI/CD 测试选择</strong> — <code>codegraph affected</code> 只运行受变更影响的测试</li>
-            <li><strong>新人入职代码理解</strong> — 通过图谱快速理解项目架构和模块关系</li>
-            <li><strong>API 路由追踪</strong> — 从 URL 到处理器的完整追踪，支持 13 个主流 Web 框架</li>
-        </ul>
-    </div>
-
-    <!-- 为什么火 -->
-    <div class="section">
-        <h2><span class="emoji">🔥</span> 为什么火（Trending 原因）</h2>
-        <ul>
-            <li><strong>AI 编程助手的"记忆"问题</strong> — Claude Code 每次会话都从零开始探索代码库，重复消耗大量 Token。CodeGraph 完美解决了这个核心痛点</li>
-            <li><strong>极致性能数据</strong> — 94% 工具调用减少、77% 速度提升的数据非常有说服力，在社区引发热议（Reddit/HN）</li>
-            <li><strong>100% 本地运行</strong> — 零隐私顾虑、零 API 费用、零外部依赖，企业用户友好</li>
-            <li><strong>一键安装体验</strong> — <code>npx @colbymchenry/codegraph</code> 即可完成全部配置</li>
-            <li><strong>MCP 生态红利</strong> — Claude Code 的 MCP 生态正在爆发，CodeGraph 作为首批高质量 MCP 服务器获得先发优势</li>
-            <li><strong>19+ 语言支持</strong> — 覆盖几乎所有主流编程语言，适用面极广</li>
-            <li><strong>社区验证</strong> — Reddit r/ClaudeAI 热帖、Medium 专题文章、多平台传播形成口碑效应</li>
-        </ul>
-    </div>
-
-    <!-- 同类对比 -->
-    <div class="section">
-        <h2><span class="emoji">⚔️</span> 同类项目对比</h2>
-        <div class="compare-grid">
-            <div class="compare-item">
-                <span class="name">CodeGraph</span>
-                <span class="desc">预构建知识图谱 + MCP 服务器，19+ 语言，框架感知路由</span>
-                <span class="tag tag-green">推荐</span>
-            </div>
-            <div class="compare-item">
-                <span class="name">Code-Review-Graph</span>
-                <span class="desc">专注代码审查场景的持久化图谱，声称 6.8x Token 减少</span>
-                <span class="tag tag-blue">审查专用</span>
-            </div>
-            <div class="compare-item">
-                <span class="name">Graphify</span>
-                <span class="desc">MindStudio 出品，声称 70x Token 节省，受 Karpathy 方法启发</span>
-                <span class="tag tag-yellow">商业化</span>
-            </div>
-            <div class="compare-item">
-                <span class="name">Understand-Anything</span>
-                <span class="desc">多代理管道分析项目并构建文件级知识图谱</span>
-                <span class="tag tag-blue">文件级</span>
-            </div>
-        </div>
-
-        <h3>CodeGraph 的差异化优势</h3>
-        <ul>
-            <li><strong>最全面的语言支持</strong> — 19+ 语言，远超同类项目的 3-5 种</li>
-            <li><strong>框架感知</strong> — 独有的路由识别能力，13 个框架的 URL → 处理器映射</li>
-            <li><strong>基准测试最详细</strong> — 6 个真实大型项目（包括 VS Code 级别）的完整对比数据</li>
-            <li><strong>可编程 API</strong> — 支持作为库使用，不仅限于 Claude Code</li>
-        </ul>
-    </div>
-
-    <!-- 适合谁 -->
-    <div class="section">
-        <h2><span class="emoji">👤</span> 适合谁使用</h2>
-        <ul>
-            <li><strong>Claude Code 重度用户</strong> — 每天使用 Claude Code 处理大型项目的开发者，收益最直接</li>
-            <li><strong>大型代码库维护者</strong> — 项目文件超过数百个，Claude Code 频繁"迷路"的团队</li>
-            <li><strong>跨语言项目开发者</strong> — 同时使用多种语言的项目（如 Python 后端 + TypeScript 前端）</li>
-            <li><strong>关注隐私/成本的企业</strong> — 100% 本地运行，无数据外泄风险，节省 API Token 开销</li>
-            <li><strong>Web 框架开发者</strong> — 框架感知路由功能对 Django/Flask/FastAPI/Express 等项目特别有用</li>
-            <li><strong>CI/CD 工程师</strong> — <code>codegraph affected</code> 可实现精准的测试选择策略</li>
-        </ul>
-    </div>
-
-    <!-- 快速上手 -->
-    <div class="section">
-        <h2><span class="emoji">🚀</span> 快速上手指南</h2>
-
-        <h3>1. 一键安装</h3>
-        <div class="code-block">
-<span class="comment"># 运行交互式安装器（自动配置 MCP 服务器 + 权限 + 全局指令）</span>
-<span class="cmd">npx</span> @colbymchenry/codegraph</div>
-
-        <h3>2. 重启 Claude Code</h3>
-        <div class="code-block">
-<span class="comment"># 重启 Claude Code 让 MCP 服务器加载</span>
-<span class="comment"># 安装器已自动完成以下配置：</span>
-<span class="comment">#   - ~/.claude.json 中添加 MCP 服务器配置</span>
-<span class="comment">#   - ~/.claude/settings.json 中设置权限白名单</span>
-<span class="comment">#   - ~/.claude/CLAUDE.md 中添加全局指令</span></div>
-
-        <h3>3. 初始化项目</h3>
-        <div class="code-block">
-<span class="cmd">cd</span> your-project
-<span class="cmd">codegraph</span> init <span class="flag">-i</span>    <span class="comment"># 交互式初始化 + 索引构建</span></div>
-
-        <h3>4. 开始使用</h3>
-        <div class="code-block">
-<span class="comment"># Claude Code 会自动使用 CodeGraph 工具</span>
-<span class="comment"># 当 .codegraph/ 目录存在时自动激活</span>
-
-<span class="comment"># 也可使用 CLI 手动操作：</span>
-<span class="cmd">codegraph</span> status          <span class="comment"># 查看索引状态</span>
-<span class="cmd">codegraph</span> search <span class="flag">"auth"</span>   <span class="comment"># 搜索符号</span>
-<span class="cmd">codegraph</span> context <span class="flag">"fix login bug"</span>  <span class="comment"># 为任务构建上下文</span></div>
-
-        <h3>5. CI 集成示例</h3>
-        <div class="code-block">
-<span class="comment">#!/usr/bin/env bash</span>
-AFFECTED=$(git diff <span class="flag">--name-only</span> HEAD | codegraph affected <span class="flag">--stdin --quiet</span>)
-<span class="cmd">if</span> [ <span class="flag">-n</span> <span class="flag">"$AFFECTED"</span> ]; <span class="cmd">then</span>
-  npx vitest run <span class="flag">$AFFECTED</span>
-<span class="cmd">fi</span></div>
-    </div>
-
-    <!-- 综合评分 -->
-    <div class="section">
-        <h2><span class="emoji">⭐</span> 综合评分</h2>
-
-        <div class="score-item">
-            <div class="score-header">
-                <span class="score-name">🧪 创新性</span>
-                <span class="score-value">9.0 / 10</span>
-            </div>
-            <div class="score-bar"><div class="score-fill s9" style="width: 90%"></div></div>
-        </div>
-        <div class="score-item">
-            <div class="score-header">
-                <span class="score-name">🔧 代码质量</span>
-                <span class="score-value">8.5 / 10</span>
-            </div>
-            <div class="score-bar"><div class="score-fill s8" style="width: 85%"></div></div>
-        </div>
-        <div class="score-item">
-            <div class="score-header">
-                <span class="score-name">💡 实用性</span>
-                <span class="score-value">9.5 / 10</span>
-            </div>
-            <div class="score-bar"><div class="score-fill s9" style="width: 95%"></div></div>
-        </div>
-        <div class="score-item">
-            <div class="score-header">
-                <span class="score-name">📚 文档完善度</span>
-                <span class="score-value">9.0 / 10</span>
-            </div>
-            <div class="score-bar"><div class="score-fill s9" style="width: 90%"></div></div>
-        </div>
-        <div class="score-item">
-            <div class="score-header">
-                <span class="score-name">🌐 社区活跃度</span>
-                <span class="score-value">7.5 / 10</span>
-            </div>
-            <div class="score-bar"><div class="score-fill s7" style="width: 75%"></div></div>
-        </div>
-
-        <div style="text-align: center; margin-top: 24px; padding: 16px; background: #0d1117; border-radius: 10px; border: 1px solid #30363d;">
-            <span style="font-size: 14px; color: #8b949e;">综合评分</span><br>
-            <span style="font-size: 2.4em; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">8.7</span>
-            <span style="font-size: 1.2em; color: #8b949e;"> / 10</span>
-        </div>
-    </div>
-
-    <!-- Links -->
-    <div class="section">
-        <h2><span class="emoji">🔗</span> 相关链接</h2>
-        <ul>
-            <li><strong>GitHub 仓库</strong> — <a href="https://github.com/colbymchenry/codegraph" style="color: #58a6ff;">github.com/colbymchenry/codegraph</a></li>
-            <li><strong>Reddit 讨论</strong> — <a href="https://www.reddit.com/r/ClaudeAI/comments/1rp6pkr/" style="color: #58a6ff;">r/ClaudeAI: "I built an MCP server that gives Claude Code a knowledge graph"</a></li>
-            <li><strong>作者 Medium 文章</strong> — <a href="https://medium.com/@me_82386/i-cut-my-claude-code-api-costs-by-40-with-one-tool-12cf4306a1ab" style="color: #58a6ff;">"I Cut Claude Code Exploration Time and Costs by 90%"</a></li>
-            <li><strong>npm 包</strong> — <a href="https://www.npmjs.com/package/@colbymchenry/codegraph" style="color: #58a6ff;">@colbymchenry/codegraph</a></li>
-        </ul>
-    </div>
-
-    <div class="footer">
-        <p>分析日期：2026-05-17 | GitHub Trending Deep Analysis</p>
-    </div>
+<div class="footer">
+    <p>GitHub: <a href="https://github.com/colbymchenry/codegraph" style="color:#58a6ff;">colbymchenry/codegraph</a></p>
+    <p>分析日期: 2026-05-26 | AI 深度分析 by Claude Code</p>
+</div>
 
 </div>
 </body>

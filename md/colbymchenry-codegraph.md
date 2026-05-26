@@ -1,151 +1,200 @@
 # colbymchenry/codegraph - GitHub Trending 深度分析
 
-> Pre-indexed code knowledge graph for Claude Code — 通过预构建代码知识图谱，将 AI 编程助手的探索效率提升 10 倍
+> Pre-indexed code knowledge graph for Claude Code, Codex, Cursor, OpenCode, and Hermes Agent — 通过预构建代码知识图谱，将 AI 编程助手的探索效率提升数倍
 
 | 指标 | 数据 |
 |------|------|
-| Stars | 2,103 |
-| 今日新增 | +397 |
+| GitHub | [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) |
+| Stars | ~14,000+ |
+| 本周增长 | +10,749 (GitHub Trending #1) |
 | 语言 | TypeScript |
 | 许可证 | MIT |
-| 分析日期 | 2026-05-17 |
+| 支持平台 | Windows / macOS / Linux (x64 + ARM64) |
 
 ---
 
 ## 项目简介与核心功能
 
-**CodeGraph** 是一个为 **Claude Code** 设计的本地代码知识图谱系统。它通过 **tree-sitter** 解析源代码，提取符号（函数、类、方法）和关系（调用、导入、继承），构建一个 SQLite 驱动的知识图谱，以 MCP 服务器形式为 Claude Code 提供"即时代码理解"能力。
+**CodeGraph** 是一个本地优先（local-first）的代码智能系统，使用 `tree-sitter` 解析源代码，为整个代码库构建语义知识图谱。它以 **MCP Server** 的形式运行，为 Claude Code、Cursor、Codex CLI、OpenCode、Hermes Agent 等 AI 编程助手提供高效的代码结构理解能力。
 
 ### 核心功能
 
-- **智能上下文构建** — 一次工具调用返回入口点、相关符号和代码片段
-- **全文搜索** — 基于 FTS5 的即时符号搜索
-- **影响分析** — 追踪调用者、被调用者和完整影响范围
-- **实时同步** — 原生 OS 文件事件 + 防抖自动同步
-- **框架感知路由** — 识别 13+ Web 框架的路由文件
-- **CI 集成** — `codegraph affected` 追踪变更影响的测试文件
-- **19+ 语言支持** — TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, C/C++, Swift, Kotlin 等
-
----
-
-## 技术架构
-
-```
-Claude Code → Explore Agent → CodeGraph MCP Server → SQLite Graph DB
-                                   ├── codegraph_search   (搜索符号)
-                                   ├── codegraph_callers  (查找调用者)
-                                   ├── codegraph_callees  (查找被调用者)
-                                   ├── codegraph_context  (构建上下文)
-                                   ├── codegraph_impact   (影响分析)
-                                   └── codegraph_explore  (综合探索)
-```
-
-### 工作流程
-
-1. **提取** — tree-sitter 解析源代码为 AST，提取节点（符号）和边（关系）
-2. **存储** — 数据存入本地 SQLite 数据库（`.codegraph/codegraph.db`），使用 FTS5 全文搜索
-3. **解析** — 解析引用关系：函数调用→定义、导入→源文件、类继承
-4. **自动同步** — 原生 OS 文件事件监视，增量同步，2 秒防抖
-
-### 技术亮点
-
-- tree-sitter 多语言统一 AST 提取管道
-- SQLite + FTS5 零依赖毫秒级查询
-- MCP 标准协议与 Claude Code 无缝对接
-- FSEvents/inotify/ReadDirectoryChangesW 原生文件监视
-- 13 个 Web 框架的路由自动识别
+- **智能上下文构建** — 一次工具调用返回入口点、相关符号和代码片段，无需昂贵的探索代理
+- **全文本搜索** — 基于 FTS5 的即时符号搜索
+- **影响分析** — 追踪调用者、被调用者和符号的完整影响范围
+- **调用链追踪** — `codegraph_trace` 追踪两个符号之间的完整调用路径（含动态分发）
+- **框架感知路由** — 识别 14+ Web 框架的路由文件，关联 URL 到处理器
+- **自动同步** — 原生 OS 文件事件监控，自动增量更新索引
+- **19+ 语言** — TypeScript、JavaScript、Python、Go、Rust、Java、C#、PHP、Ruby、C/C++、Swift、Kotlin、Dart、Lua、Svelte 等
 
 ---
 
 ## 性能基准测试
 
-在 6 个真实代码库上测试，比较 Claude Code 有无 CodeGraph 的表现：
+在 7 个真实开源代码库上的测试结果（中位数，4 次运行）：
 
-| 代码库 | 有 CG | 无 CG | 改进 |
-|--------|-------|-------|------|
-| VS Code (TS) | 3 调用, 17s | 52 调用, 1m37s | **94% 调用 · 82% 时间** |
-| Excalidraw (TS) | 3 调用, 29s | 47 调用, 1m45s | **94% 调用 · 72% 时间** |
-| Claude Code (Py+Rust) | 3 调用, 39s | 40 调用, 1m08s | **93% 调用 · 43% 时间** |
-| Claude Code (Java) | 1 调用, 19s | 26 调用, 1m22s | **96% 调用 · 77% 时间** |
-| Alamofire (Swift) | 3 调用, 22s | 32 调用, 1m39s | **91% 调用 · 78% 时间** |
-| Swift Compiler (Swift/C++) | 6 调用, 35s | 37 调用, 2m08s | **84% 调用 · 73% 时间** |
+**平均：35% 更便宜 · 57% 更少 Token · 46% 更快 · 71% 更少工具调用**
 
-**平均：92% 更少的工具调用 · 71% 更快的探索速度**
+| 代码库 | 语言 | 成本节省 | Token 节省 | 速度提升 | 工具调用减少 |
+|--------|------|----------|-----------|---------|-------------|
+| VS Code | TypeScript (~10k 文件) | 26% | 78% | 52% | 85% |
+| Excalidraw | TypeScript (~640 文件) | 52% | 90% | 73% | 96% |
+| Django | Python (~3k 文件) | 12% | 36% | 19% | 53% |
+| Tokio | Rust (~790 文件) | **82%** | **86%** | **71%** | **92%** |
+| OkHttp | Java (~645 文件) | 2% | 13% | 31% | 45% |
+| Gin | Go (~110 文件) | 21% | 34% | 27% | 40% |
+| Alamofire | Swift (~110 文件) | 47% | 64% | 48% | 83% |
+
+越大型的代码库，收益越显著。在 Tokio 上节省高达 82% 的成本。
+
+---
+
+## 技术架构与特点
+
+### 架构设计
+
+```
+┌─────────────────────────────────────────┐
+│            AI Coding Agent               │
+│  (Claude Code / Cursor / Codex / ...)    │
+│           直接调用 CodeGraph 工具          │
+│                  │                        │
+└──────────────────┼────────────────────────┘
+                   ▼
+┌─────────────────────────────────────────┐
+│         CodeGraph MCP Server             │
+│  context · trace · explore · callers     │
+│  callees · impact · search · files       │
+│                  │                        │
+│                  ▼                        │
+│      SQLite 知识图谱 (FTS5 全文搜索)      │
+│   symbols · edges · files · routes       │
+└─────────────────────────────────────────┘
+```
+
+### 核心技术栈
+
+- **Tree-sitter** — 高性能增量解析器，支持 19+ 语言的 AST 提取
+- **SQLite + FTS5** — 本地数据库存储符号、边关系和全文本索引
+- **MCP 协议** — Model Context Protocol，标准化的 AI 工具通信协议
+- **Node.js (打包运行时)** — 自包含二进制，无需用户安装 Node.js
+- **原生文件监控** — FSEvents (macOS) / inotify (Linux) / ReadDirectoryChangesW (Windows)
+
+### 关键设计特点
+
+- **零配置** — 无需配置文件，语言自动检测，开箱即用
+- **100% 本地** — 无数据离开机器，无 API Key，无外部服务
+- **自包含构建** — 打包 Node 运行时，跨平台 (Windows/macOS/Linux, x64/ARM64)
+- **智能排除** — 自动排除 node_modules、dist、build 等目录，遵循 .gitignore
+- **库/CLI/MCP 三模式** — 可作为 npm 库、命令行工具或 MCP Server 使用
 
 ---
 
 ## 应用场景
 
-- **大型代码库探索** — 数万文件项目中直接查询图谱
-- **变更影响分析** — 修改前了解完整影响半径
-- **跨语言代码理解** — Python+Rust 混合项目自动追踪
-- **CI/CD 测试选择** — 只运行受变更影响的测试
-- **新人入职** — 快速理解项目架构
-- **API 路由追踪** — URL 到处理器的完整链路
+- **大型代码库探索** — 在数千个文件的项目中快速定位符号、理解调用关系
+- **代码审查准备** — 在修改代码前分析影响范围，了解牵连的测试文件
+- **架构理解** — "请求如何从 Controller 到达数据库？" 类问题的即时解答
+- **CI/CD 集成** — 使用 `codegraph affected` 只运行受变更影响的测试
+- **新手入职** — 通过知识图谱快速理解陌生代码库的结构
+- **跨语言项目** — 单一工具同时索引 Python 后端 + TypeScript 前端
 
 ---
 
-## 为什么火（Trending 原因）
+## 为什么火 (Trending 原因)
 
-1. **直击 AI 编程助手核心痛点** — 解决 Claude Code 每次会话从零探索、重复消耗 Token 的问题
-2. **极致性能数据** — 94% 工具调用减少的数据极具说服力
-3. **100% 本地运行** — 零隐私顾虑，企业友好
-4. **一键安装** — `npx @colbymchenry/codegraph` 即可
-5. **MCP 生态红利** — Claude Code MCP 生态爆发期的先发优势
-6. **社区传播** — Reddit 热帖 + Medium 专题 + 多平台口碑
+**本周 #1 增长最快项目 (+14,100 Stars)**
+
+CodeGraph 解决了 AI 编程助手中一个被广泛忽视但极其痛的问题：**AI Agent 在代码库中"漫游"的高昂成本**。当 Claude Code、Cursor 等工具探索代码库时，它们需要反复调用 grep、glob、Read 等工具，消耗大量 Token 和时间。CodeGraph 用预构建的知识图谱直接消除了这个瓶颈。
+
+### 核心驱动因素
+
+1. **痛点精准** — 每个 AI 编程助手的重度用户都经历过 Agent "迷路" 的问题
+2. **数据说话** — 严谨的基准测试：7 个代码库、每种条件 4 次运行、中位数报告
+3. **生态时机** — MCP 协议正值爆发期，Claude Code 用户基数快速增长
+4. **零门槛** — 一行命令安装，自动检测并配置已安装的 AI Agent
+5. **多平台兼容** — 同时支持 Claude Code、Cursor、Codex CLI、OpenCode、Hermes Agent
+6. **完全本地** — 企业用户无需担心代码泄露，符合安全合规要求
 
 ---
 
 ## 同类项目对比
 
-| 项目 | 特点 | 评分 |
-|------|------|------|
-| **CodeGraph** | 19+ 语言 + MCP + 框架路由 + 基准测试 | ⭐⭐⭐⭐⭐ |
-| Code-Review-Graph | 专注代码审查，6.8x Token 减少 | ⭐⭐⭐⭐ |
-| Graphify | 70x Token 节省，商业化 | ⭐⭐⭐ |
-| Understand-Anything | 多代理管道，文件级图谱 | ⭐⭐⭐ |
+| 特性 | CodeGraph | code-review-graph | code-graph-mcp | Sourcegraph Cody |
+|------|-----------|-------------------|----------------|------------------|
+| 多 Agent 支持 | **5 个 Agent** | Claude Code | 通用 MCP | Cody IDE |
+| 语言支持 | **19+** | 有限 | AST 解析 | 广泛 |
+| 本地优先 | **100%** | 100% | 100% | 云端 + 本地 |
+| 框架路由感知 | **14 框架** | - | HTTP 路由 | - |
+| 影响分析 | **深度追踪** | 基础 | 调用图 | 搜索 + 引用 |
+| 自动同步 | **OS 原生事件** | 手动 | - | 实时 |
+| 安装门槛 | **一行命令** | 需配置 | 需配置 | IDE 插件 |
+| 基准测试 | **公开严谨** | 声称 6.8x | - | - |
 
-**CodeGraph 优势**：最全面的语言支持、独有框架感知路由、最详实的基准测试、可编程 API
+CodeGraph 在多 Agent 兼容性、框架路由感知、安装体验和基准测试透明度上具有明显优势。
 
 ---
 
 ## 适合谁使用
 
-- Claude Code 重度用户（每天使用大型项目）
-- 大型代码库维护者（数百文件以上）
-- 跨语言项目开发者
-- 关注隐私/成本的企业团队
-- Web 框架开发者
-- CI/CD 工程师
+- **AI 编程助手重度用户** — 每天使用 Claude Code / Cursor / Codex 的开发者，尤其是处理大型项目时
+- **企业开发团队** — 100% 本地运行，无需担心代码安全和合规问题
+- **开源项目维护者** — 快速理解大型代码库，加速 PR 审查
+- **全栈开发者** — 单一工具同时索引前端 + 后端 + 多语言项目
+- **DevOps / SRE** — 集成 CI 管道，只运行受影响的测试
 
 ---
 
-## 快速上手
+## 快速上手指南
+
+### 1. 安装 (一行命令)
 
 ```bash
-# 1. 一键安装
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+
+# 或使用 npm
 npx @colbymchenry/codegraph
-
-# 2. 重启 Claude Code
-
-# 3. 初始化项目
-cd your-project
-codegraph init -i
-
-# 4. 开始使用（Claude Code 自动激活）
-codegraph status            # 查看索引状态
-codegraph search "auth"     # 搜索符号
-codegraph context "fix login bug"  # 构建上下文
 ```
 
-### CI 集成
+### 2. 初始化项目
 
 ```bash
-#!/usr/bin/env bash
-AFFECTED=$(git diff --name-only HEAD | codegraph affected --stdin --quiet)
-if [ -n "$AFFECTED" ]; then
-  npx vitest run $AFFECTED
-fi
+cd your-project
+codegraph init -i
+```
+
+### 3. 重启 AI Agent
+
+重启 Claude Code / Cursor / Codex CLI，CodeGraph 会自动检测 `.codegraph/` 目录并使用。
+
+### 4. 享受高效编码
+
+Agent 会自动使用 CodeGraph 工具。你可以直接问：
+
+```
+"这个项目的路由是怎么组织的？"
+"修改 UserService 会影响哪些文件？"
+"从 API 请求到数据库写入的完整调用链是什么？"
+```
+
+### 手动配置 (可选)
+
+添加到 `~/.claude.json`：
+
+```json
+{
+  "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": ["serve", "--mcp"]
+    }
+  }
+}
 ```
 
 ---
@@ -154,19 +203,16 @@ fi
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| 创新性 | 9.0/10 | 将知识图谱引入 AI 编程助手，解决真实痛点 |
-| 代码质量 | 8.5/10 | 清晰的模块化架构，完善的语言支持 |
-| 实用性 | 9.5/10 | 一键安装，即时生效，显著提升效率 |
-| 文档完善度 | 9.0/10 | 详尽的 README、基准测试、CLI 文档 |
-| 社区活跃度 | 7.5/10 | 新项目但社区反馈积极，持续更新 |
+| 创新性 | **9.2/10** | 将知识图谱引入 AI 编程助手，理念新颖，解决真实痛点 |
+| 代码质量 | **8.8/10** | TypeScript 项目，结构清晰，支持 19+ 语言的 tree-sitter 查询 |
+| 实用性 | **9.5/10** | 每个 AI 编程助手用户都能受益，基准测试数据扎实 |
+| 文档完善度 | **9.3/10** | README 详尽，包含架构图、基准测试、CLI 参考、故障排除 |
+| 社区活跃度 | **9.0/10** | 本周 +10K Stars，Reddit 热议，生态工具积极适配 |
 
-**综合评分：8.7 / 10**
+### 综合评分：9.2 / 10 — 强烈推荐
+
+CodeGraph 是目前 AI 编程助手生态中最具创新性和实用性的工具之一。它精准地解决了 Agent 代码探索成本高昂的核心问题，提供了严谨的性能基准测试，零配置安装体验出色，且 100% 本地运行。如果你正在使用 Claude Code、Cursor 或其他 AI 编程助手，**强烈建议安装试试**。
 
 ---
 
-## 相关链接
-
-- [GitHub 仓库](https://github.com/colbymchenry/codegraph)
-- [Reddit 讨论](https://www.reddit.com/r/ClaudeAI/comments/1rp6pkr/)
-- [作者 Medium 文章](https://medium.com/@me_82386/i-cut-my-claude-code-api-costs-by-40-with-one-tool-12cf4306a1ab)
-- [npm 包](https://www.npmjs.com/package/@colbymchenry/codegraph)
+*分析日期: 2026-05-26 | AI 深度分析 by Claude Code*
