@@ -3,443 +3,323 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kronos - 金融市场的基础模型 | GitHub Trending 深度分析</title>
+<title>Kronos 深度分析 | GitHub Trending</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0a0e1a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; }
-  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
-
-  /* Header */
-  .header { text-align: center; padding: 48px 0 40px; border-bottom: 1px solid rgba(139, 92, 246, 0.2); }
-  .header .badge { display: inline-block; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(245, 158, 11, 0.15)); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: 6px 18px; font-size: 13px; color: #a78bfa; margin-bottom: 20px; letter-spacing: 1px; }
-  .header h1 { font-size: 2.2em; background: linear-gradient(135deg, #8b5cf6, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-  .header .subtitle { font-size: 1.1em; color: #94a3b8; }
-  .header .meta { margin-top: 20px; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
-  .header .meta span { font-size: 14px; color: #64748b; }
-  .header .meta span strong { color: #cbd5e1; }
-
-  /* Score */
-  .score-section { margin: 40px 0; }
-  .score-card { background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(245, 158, 11, 0.08)); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 16px; padding: 32px; text-align: center; }
-  .score-card .total-score { font-size: 3.5em; font-weight: 700; background: linear-gradient(135deg, #8b5cf6, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .score-card .total-label { font-size: 14px; color: #64748b; margin-top: 4px; }
-  .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 28px; }
-  .score-item { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(139, 92, 246, 0.15); border-radius: 12px; padding: 20px 12px; text-align: center; }
-  .score-item .dim-name { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
-  .score-item .dim-score { font-size: 1.8em; font-weight: 600; color: #a78bfa; }
-  .score-item .dim-bar { height: 4px; background: rgba(139, 92, 246, 0.15); border-radius: 2px; margin-top: 10px; overflow: hidden; }
-  .score-item .dim-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #8b5cf6, #f59e0b); }
-
-  /* Section */
-  .section { margin: 36px 0; }
-  .section h2 { font-size: 1.4em; color: #e2e8f0; margin-bottom: 20px; padding-left: 16px; border-left: 3px solid #8b5cf6; }
-  .section h3 { font-size: 1.15em; color: #cbd5e1; margin: 20px 0 12px; }
-
-  /* Info table */
-  .info-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-  .info-table td { padding: 12px 16px; border-bottom: 1px solid rgba(139, 92, 246, 0.1); font-size: 14px; }
-  .info-table td:first-child { color: #94a3b8; width: 140px; white-space: nowrap; }
-  .info-table td:last-child { color: #e2e8f0; }
-  .info-table a { color: #a78bfa; text-decoration: none; }
-  .info-table a:hover { text-decoration: underline; }
-
-  /* Feature cards */
-  .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
-  .feature-card { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(139, 92, 246, 0.15); border-radius: 12px; padding: 20px; }
-  .feature-card .fc-icon { font-size: 1.6em; margin-bottom: 8px; }
-  .feature-card .fc-title { font-size: 15px; font-weight: 600; color: #a78bfa; margin-bottom: 6px; }
-  .feature-card .fc-desc { font-size: 13px; color: #94a3b8; line-height: 1.6; }
-
-  /* Model table */
-  .model-table { width: 100%; border-collapse: collapse; margin: 16px 0; background: rgba(15, 23, 42, 0.4); border-radius: 12px; overflow: hidden; }
-  .model-table th { background: rgba(139, 92, 246, 0.12); padding: 12px 16px; text-align: left; font-size: 13px; color: #a78bfa; font-weight: 600; }
-  .model-table td { padding: 12px 16px; border-bottom: 1px solid rgba(139, 92, 246, 0.08); font-size: 13px; color: #cbd5e1; }
-  .model-table tr:last-child td { border-bottom: none; }
-  .model-table .highlight { color: #f59e0b; font-weight: 600; }
-
-  /* Tag */
-  .tag { display: inline-block; background: rgba(139, 92, 246, 0.12); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 4px; padding: 2px 10px; font-size: 12px; margin: 2px 4px 2px 0; }
-  .tag.amber { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
-
-  /* Code block */
-  .code-block { background: #0f172a; border: 1px solid rgba(139, 92, 246, 0.15); border-radius: 10px; padding: 20px; margin: 16px 0; overflow-x: auto; }
-  .code-block code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; color: #e2e8f0; line-height: 1.8; }
-  .code-block .comment { color: #4b5563; }
-  .code-block .keyword { color: #8b5cf6; }
-  .code-block .string { color: #f59e0b; }
-  .code-block .func { color: #60a5fa; }
-
-  /* Reason list */
-  .reason-list { list-style: none; padding: 0; }
-  .reason-list li { padding: 14px 20px; margin: 8px 0; background: rgba(15, 23, 42, 0.5); border-left: 3px solid #8b5cf6; border-radius: 0 8px 8px 0; font-size: 14px; color: #cbd5e1; }
-  .reason-list li strong { color: #a78bfa; }
-
-  /* Comparison table */
-  .compare-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-  .compare-table th { background: rgba(139, 92, 246, 0.12); padding: 12px 16px; text-align: center; font-size: 13px; color: #a78bfa; font-weight: 600; }
-  .compare-table th:first-child { text-align: left; }
-  .compare-table td { padding: 12px 16px; border-bottom: 1px solid rgba(139, 92, 246, 0.08); font-size: 13px; text-align: center; color: #cbd5e1; }
-  .compare-table td:first-child { text-align: left; color: #94a3b8; }
-  .compare-table .best { color: #f59e0b; font-weight: 600; }
-
-  /* Scenario tags */
-  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
-  .scenario-item { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(139, 92, 246, 0.12); border-radius: 10px; padding: 16px; text-align: center; }
-  .scenario-item .sc-emoji { font-size: 1.5em; margin-bottom: 8px; }
-  .scenario-item .sc-text { font-size: 13px; color: #cbd5e1; }
-
-  /* Footer */
-  .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(139, 92, 246, 0.15); font-size: 13px; color: #475569; }
-
-  /* Responsive */
-  @media (max-width: 640px) {
-    .score-grid { grid-template-columns: repeat(3, 1fr); }
-    .feature-grid { grid-template-columns: 1fr; }
-    .scenario-grid { grid-template-columns: repeat(2, 1fr); }
-    .header h1 { font-size: 1.6em; }
-    .header .meta { gap: 12px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.7}
+  .container{max-width:1100px;margin:0 auto;padding:20px}
+  .hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);border-radius:16px;padding:48px 40px;margin-bottom:32px;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;top:-50%;right:-20%;width:500px;height:500px;background:radial-gradient(circle,rgba(99,102,241,0.15) 0%,transparent 70%);border-radius:50%}
+  .hero h1{font-size:2.4em;background:linear-gradient(90deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+  .hero .subtitle{font-size:1.15em;color:#8b949e;margin-bottom:20px}
+  .hero .badges{display:flex;flex-wrap:wrap;gap:10px}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:.85em;font-weight:500}
+  .badge-blue{background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3)}
+  .badge-green{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.3)}
+  .badge-purple{background:rgba(167,139,250,0.15);color:#a78bfa;border:1px solid rgba(167,139,250,0.3)}
+  .badge-yellow{background:rgba(250,204,21,0.15);color:#facc15;border:1px solid rgba(250,204,21,0.3)}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px 32px;margin-bottom:24px}
+  .card h2{font-size:1.4em;color:#58a6ff;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .card h2 .icon{font-size:1.2em}
+  .card p{color:#c9d1d9;margin-bottom:12px}
+  .card ul{padding-left:20px;color:#c9d1d9}
+  .card ul li{margin-bottom:8px}
+  .card ul li strong{color:#58a6ff}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  th{background:#21262d;color:#58a6ff;padding:12px 16px;text-align:left;font-weight:600;font-size:.9em;border-bottom:2px solid #30363d}
+  td{padding:10px 16px;border-bottom:1px solid #21262d;font-size:.9em}
+  tr:hover td{background:#161b22}
+  .highlight{color:#f0883e;font-weight:600}
+  .score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px}
+  .score-item{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+  .score-item .score{font-size:2em;font-weight:700;margin:8px 0}
+  .score-item .label{color:#8b949e;font-size:.85em;margin-bottom:4px}
+  .score-item .bar{height:6px;border-radius:3px;background:#21262d;margin-top:10px;overflow:hidden}
+  .score-item .bar-fill{height:100%;border-radius:3px}
+  .s9{color:#4ade80}.s8{color:#60a5fa}.s7{color:#facc15}
+  .bar-95{width:95%;background:linear-gradient(90deg,#4ade80,#22d3ee)}
+  .bar-85{width:85%;background:linear-gradient(90deg,#60a5fa,#a78bfa)}
+  .bar-80{width:80%;background:linear-gradient(90deg,#facc15,#f97316)}
+  .bar-90{width:90%;background:linear-gradient(90deg,#4ade80,#60a5fa)}
+  .code-block{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px 20px;margin:12px 0;overflow-x:auto;font-family:'Fira Code',Consolas,monospace;font-size:.88em;color:#e6edf3;line-height:1.6}
+  .code-block .kw{color:#ff7b72}.code-block .fn{color:#d2a8ff}.code-block .str{color:#a5d6ff}.code-block .cmt{color:#8b949e}.code-block .num{color:#79c0ff}
+  .comp-grid{display:grid;gap:12px;margin-top:12px}
+  .comp-item{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:16px}
+  .comp-item .name{font-weight:600;color:#58a6ff;font-size:1.05em}
+  .comp-item .tag{font-size:.8em;padding:3px 10px;border-radius:12px;display:inline-block;margin-top:4px}
+  .tag-best{background:rgba(74,222,128,0.15);color:#4ade80}
+  .tag-good{background:rgba(96,165,250,0.15);color:#60a5fa}
+  .tag-mid{background:rgba(250,204,21,0.15);color:#facc15}
+  .user-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}
+  .user-card{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:18px}
+  .user-card .role{color:#58a6ff;font-weight:600;margin-bottom:6px}
+  .user-card .stars{color:#facc15}
+  .user-card .desc{color:#8b949e;font-size:.88em;margin-top:6px}
+  .warning-box{background:rgba(250,204,21,0.08);border:1px solid rgba(250,204,21,0.3);border-radius:10px;padding:20px;margin-top:16px}
+  .warning-box h3{color:#facc15;margin-bottom:10px;font-size:1.05em}
+  .warning-box ul li{color:#e6b422;margin-bottom:6px}
+  .footer{text-align:center;color:#484f58;padding:32px 0;font-size:.85em}
+  @media(max-width:768px){
+    .hero{padding:32px 20px}.hero h1{font-size:1.6em}
+    .card{padding:20px}.comp-item{grid-template-columns:1fr}
+    .score-grid{grid-template-columns:1fr 1fr}
   }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="badge">AAAI 2026 ACCEPTED</div>
-    <h1>Kronos</h1>
-    <div class="subtitle">金融市场的基础模型 — A Foundation Model for the Language of Financial Markets</div>
-    <div class="meta">
-      <span>⭐ <strong>23,077</strong> Stars (+241 today)</span>
-      <span>🐍 <strong>Python</strong></span>
-      <span>📄 <strong>MIT License</strong></span>
-      <span>📅 <strong>2026-05-07</strong> 分析</span>
+<!-- Hero Section -->
+<div class="hero">
+  <h1>Kronos</h1>
+  <p class="subtitle">全球首个专为K线（蜡烛图）设计的开源金融基础模型 — 金融市场也有自己的"语言"</p>
+  <div class="badges">
+    <span class="badge badge-purple">AAAI 2026</span>
+    <span class="badge badge-green">25K+ Stars</span>
+    <span class="badge badge-blue">MIT License</span>
+    <span class="badge badge-yellow">120亿条K线数据</span>
+    <span class="badge badge-green">45+全球交易所</span>
+  </div>
+</div>
+
+<!-- 项目简介 -->
+<div class="card">
+  <h2><span class="icon">📋</span> 项目简介</h2>
+  <p><strong>Kronos</strong> 是一个 <span class="highlight">decoder-only 基础模型家族</span>，专门针对金融市场的"语言"——K线序列进行预训练。与通用时间序列基础模型（Chronos、TimesFM）不同，Kronos 专为处理金融数据独有的<span class="highlight">高噪声特性</span>而设计。</p>
+  <p>核心创新：采用<strong>两阶段框架</strong>——先用专门的 Tokenizer 将连续的多维K线数据（OHLCV）量化为<strong>层次化离散 token</strong>，再用大型自回归 Transformer 进行预训练，使其成为适用于多种量化任务的统一模型。</p>
+  <table>
+    <tr><th>维度</th><th>信息</th></tr>
+    <tr><td>项目地址</td><td><a href="https://github.com/shiyu-coder/Kronos" style="color:#58a6ff">github.com/shiyu-coder/Kronos</a></td></tr>
+    <tr><td>论文</td><td>AAAI 2026 (arXiv:2508.02739)</td></tr>
+    <tr><td>作者</td><td>Yu Shi, Zongliang Fu, Shuo Chen 等（清华大学）</td></tr>
+    <tr><td>模型托管</td><td>Hugging Face (NeoQuasar)</td></tr>
+    <tr><td>技术栈</td><td>Python / PyTorch / Transformers</td></tr>
+  </table>
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+  <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+  <h3 style="color:#a78bfa;margin:12px 0 8px">两阶段预训练框架</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px">
+      <strong style="color:#f0883e">Stage 1: Kronos-Tokenizer</strong><br>
+      <span style="color:#8b949e;font-size:.9em">将连续 OHLCV 数据量化为层次化离散 token，捕捉K线数据的局部模式与全局趋势</span>
+    </div>
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px">
+      <strong style="color:#f0883e">Stage 2: 自回归 Transformer</strong><br>
+      <span style="color:#8b949e;font-size:.9em">在大规模 token 序列上进行预训练，学习金融市场的"语法"和"语义"</span>
     </div>
   </div>
 
-  <!-- Score -->
-  <div class="score-section">
-    <div class="score-card">
-      <div class="total-score">8.6 / 10</div>
-      <div class="total-label">综合评分</div>
-      <div class="score-grid">
-        <div class="score-item">
-          <div class="dim-name">创新性</div>
-          <div class="dim-score">9.0</div>
-          <div class="dim-bar"><div class="dim-bar-fill" style="width:90%"></div></div>
-        </div>
-        <div class="score-item">
-          <div class="dim-name">代码质量</div>
-          <div class="dim-score">8.5</div>
-          <div class="dim-bar"><div class="dim-bar-fill" style="width:85%"></div></div>
-        </div>
-        <div class="score-item">
-          <div class="dim-name">实用性</div>
-          <div class="dim-score">8.5</div>
-          <div class="dim-bar"><div class="dim-bar-fill" style="width:85%"></div></div>
-        </div>
-        <div class="score-item">
-          <div class="dim-name">文档完善度</div>
-          <div class="dim-score">9.0</div>
-          <div class="dim-bar"><div class="dim-bar-fill" style="width:90%"></div></div>
-        </div>
-        <div class="score-item">
-          <div class="dim-name">社区活跃度</div>
-          <div class="dim-score">8.0</div>
-          <div class="dim-bar"><div class="dim-bar-fill" style="width:80%"></div></div>
-        </div>
-      </div>
+  <h3 style="color:#a78bfa;margin:12px 0 8px">模型家族</h3>
+  <table>
+    <tr><th>模型</th><th>Tokenizer</th><th>上下文长度</th><th>参数量</th><th>开源</th></tr>
+    <tr><td>Kronos-mini</td><td>Tokenizer-2k</td><td>2048</td><td>4.1M</td><td style="color:#4ade80">✅</td></tr>
+    <tr><td>Kronos-small</td><td>Tokenizer-base</td><td>512</td><td>24.7M</td><td style="color:#4ade80">✅</td></tr>
+    <tr><td>Kronos-base</td><td>Tokenizer-base</td><td>512</td><td>102.3M</td><td style="color:#4ade80">✅</td></tr>
+    <tr><td>Kronos-large</td><td>Tokenizer-base</td><td>512</td><td>499.2M</td><td style="color:#f85149">❌</td></tr>
+  </table>
+
+  <h3 style="color:#a78bfa;margin:16px 0 8px">关键技术特性</h3>
+  <ul>
+    <li><strong>概率预测</strong>：支持温度采样（Temperature）和核采样（Top-p），可生成多条预测路径取均值</li>
+    <li><strong>批量推理</strong>：<code style="color:#e6edf3;background:#21262d;padding:2px 6px;border-radius:4px">predict_batch</code> 支持多资产并行预测</li>
+    <li><strong>微调管线</strong>：完整 tokenizer + predictor 微调流程，支持多 GPU（torchrun）</li>
+    <li><strong>Qlib 集成</strong>：提供 A 股微调示例 + 回测评估</li>
+  </ul>
+</div>
+
+<!-- 为什么火 -->
+<div class="card">
+  <h2><span class="icon">🔥</span> 为什么火（Trending 原因）</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(167,139,250,0.05));border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px">
+      <strong style="color:#a78bfa">首创性</strong><br><span style="color:#8b949e;font-size:.9em">全球首个K线专用金融基础模型，填补市场空白</span>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(74,222,128,0.1),rgba(34,211,238,0.05));border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:16px">
+      <strong style="color:#4ade80">AAAI 2026 录用</strong><br><span style="color:#8b949e;font-size:.9em">顶会论文背书，学术权威性强</span>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(250,204,21,0.1),rgba(249,115,22,0.05));border:1px solid rgba(250,204,21,0.2);border-radius:10px;padding:16px">
+      <strong style="color:#facc15">"GPT读蜡烛图"</strong><br><span style="color:#8b949e;font-size:.9em">概念新颖，极具传播力</span>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(96,165,250,0.1),rgba(59,130,246,0.05));border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:16px">
+      <strong style="color:#60a5fa">120亿条数据</strong><br><span style="color:#8b949e;font-size:.9em">训练数据规模惊人，覆盖45+全球交易所</span>
     </div>
   </div>
+</div>
 
-  <!-- Overview -->
-  <div class="section">
-    <h2>项目概览</h2>
-    <table class="info-table">
-      <tr><td>仓库</td><td><a href="https://github.com/shiyu-coder/Kronos">shiyu-coder/Kronos</a></td></tr>
-      <tr><td>论文</td><td><a href="https://arxiv.org/abs/2508.02739">arXiv:2508.02739</a> | AAAI 2026 接收 | NeurIPS 2025 展示</td></tr>
-      <tr><td>作者</td><td>Yu Shi, Zongliang Fu, Shuo Chen, Bohan Zhao, Wei Xu, Changshui Zhang, Jian Li</td></tr>
-      <tr><td>核心架构</td><td>Decoder-only Transformer + BSQ K线分词器</td></tr>
-      <tr><td>训练数据</td><td>45+ 全球交易所历史K线数据</td></tr>
-      <tr><td>开源模型</td><td>Kronos-mini (4.1M) / small (24.7M) / base (102.3M)</td></tr>
-      <tr><td>闭源模型</td><td>Kronos-large (499.2M)</td></tr>
-    </table>
-  </div>
+<!-- 同类对比 -->
+<div class="card">
+  <h2><span class="icon">⚔️</span> 同类项目对比</h2>
+  <table>
+    <tr><th>项目</th><th>定位</th><th>数据类型</th><th>核心优势</th><th>局限性</th></tr>
+    <tr>
+      <td><strong style="color:#4ade80">Kronos</strong></td>
+      <td>金融K线专用</td>
+      <td>OHLCV K线</td>
+      <td>金融专精，性能领先</td>
+      <td>仅限K线格式</td>
+    </tr>
+    <tr>
+      <td>Chronos (Amazon)</td>
+      <td>通用时间序列</td>
+      <td>任意连续值</td>
+      <td>通用性强，周数据好</td>
+      <td>非金融专精</td>
+    </tr>
+    <tr>
+      <td>TimesFM (Google)</td>
+      <td>通用时间序列</td>
+      <td>任意连续值</td>
+      <td>零样本能力强</td>
+      <td>不擅长高频金融</td>
+    </tr>
+    <tr>
+      <td>MOIRAI (Salesforce)</td>
+      <td>通用多变量</td>
+      <td>多变量时序</td>
+      <td>多变量支持好</td>
+      <td>金融场景非最优</td>
+    </tr>
+    <tr>
+      <td>TabPFN</td>
+      <td>表格数据</td>
+      <td>表格特征</td>
+      <td>小样本极强</td>
+      <td>非时序专精</td>
+    </tr>
+  </table>
+  <p style="margin-top:12px"><span class="highlight">Kronos 核心差异化：</span>100% 金融数据训练 + 层次化 token 编码，在金融场景下显著优于通用时间序列模型。</p>
+</div>
 
-  <!-- Core Architecture -->
-  <div class="section">
-    <h2>核心架构</h2>
-    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 16px;">
-      Kronos 将金融市场 K线数据视为一种"语言"，通过两阶段框架实现对金融时序的建模与预测。
-    </p>
-
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="fc-icon">🔢</div>
-        <div class="fc-title">Stage 1: BSQ K线分词器</div>
-        <div class="fc-desc">
-          采用 Binary Space Quantization (BSQ) 算法，将连续的 OHLCV K线数据量化为层次化的离散 Token。
-          不同于简单的均匀分箱，BSQ 在二进制空间中保留金融数据的局部结构和时序依赖关系。
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">🧠</div>
-        <div class="fc-title">Stage 2: 自回归 Transformer</div>
-        <div class="fc-desc">
-          在离散化 Token 上进行大规模自回归预训练。模型学习了金融市场的"语法"——包括趋势、波动率、形态模式等隐含规律，
-          从而具备 Zero-shot 通用预测能力。
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">📊</div>
-        <div class="fc-title">多尺度预测</div>
-        <div class="fc-desc">
-          层次化 Token 设计支持多尺度预测：从分钟级到日级，从价格预测到波动率估计，
-          单一模型覆盖多种金融预测任务。
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">⚡</div>
-        <div class="fc-title">合成K线生成</div>
-        <div class="fc-desc">
-          作为语言模型的自然副产品，Kronos 能够生成逼真的合成 K线数据，
-          在生成保真度上比传统方法提升 22%，可用于数据增强和策略回测。
-        </div>
-      </div>
+<!-- 适合谁用 -->
+<div class="card">
+  <h2><span class="icon">👥</span> 适合谁使用</h2>
+  <div class="user-grid">
+    <div class="user-card">
+      <div class="role">量化交易研究员</div>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <div class="desc">策略开发、信号生成、回测验证</div>
+    </div>
+    <div class="user-card">
+      <div class="role">金融 AI 研究者</div>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <div class="desc">论文复现、模型改进、基准对比</div>
+    </div>
+    <div class="user-card">
+      <div class="role">技术型个人投资者</div>
+      <div class="stars">⭐⭐⭐⭐</div>
+      <div class="desc">辅助分析、趋势判断</div>
+    </div>
+    <div class="user-card">
+      <div class="role">金融工程学生</div>
+      <div class="stars">⭐⭐⭐⭐</div>
+      <div class="desc">学习金融AI、课程项目</div>
     </div>
   </div>
+</div>
 
-  <!-- Model Zoo -->
-  <div class="section">
-    <h2>模型矩阵</h2>
-    <table class="model-table">
-      <thead>
-        <tr>
-          <th>模型</th>
-          <th>参数量</th>
-          <th>上下文长度</th>
-          <th>开源</th>
-          <th>适用场景</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Kronos-mini</td>
-          <td>4.1M</td>
-          <td>2,048</td>
-          <td><span class="tag">HuggingFace</span></td>
-          <td>快速推理 / 边缘部署</td>
-        </tr>
-        <tr>
-          <td>Kronos-small</td>
-          <td>24.7M</td>
-          <td>512</td>
-          <td><span class="tag">HuggingFace</span></td>
-          <td>日常预测 / 研究</td>
-        </tr>
-        <tr>
-          <td>Kronos-base</td>
-          <td>102.3M</td>
-          <td>512</td>
-          <td><span class="tag">HuggingFace</span></td>
-          <td class="highlight">生产级预测 / 推荐</td>
-        </tr>
-        <tr>
-          <td>Kronos-large</td>
-          <td>499.2M</td>
-          <td>—</td>
-          <td><span class="tag amber">闭源</span></td>
-          <td>机构级应用</td>
-        </tr>
-      </tbody>
-    </table>
+<!-- 快速上手 -->
+<div class="card">
+  <h2><span class="icon">🚀</span> 快速上手指南</h2>
+  <h3 style="color:#a78bfa;margin:12px 0 8px">安装</h3>
+  <div class="code-block">
+<span class="fn">git clone</span> https://github.com/shiyu-coder/Kronos.git
+<span class="fn">cd</span> Kronos
+<span class="fn">pip install</span> -r requirements.txt
   </div>
 
-  <!-- Performance -->
-  <div class="section">
-    <h2>关键性能</h2>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="fc-icon">📈</div>
-        <div class="fc-title">价格预测</div>
-        <div class="fc-desc">
-          Zero-shot 在多市场、多时间尺度上展现出色预测精度，
-          无需针对特定标的进行微调即可获得有意义的预测结果。
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">📉</div>
-        <div class="fc-title">波动率预测</div>
-        <div class="fc-desc">
-          在波动率预测任务上 MAE 降低 <strong style="color:#f59e0b">9%</strong>，
-          显著优于传统统计模型和通用时序模型。
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">🔄</div>
-        <div class="fc-title">合成数据</div>
-        <div class="fc-desc">
-          合成 K线保真度提升 <strong style="color:#f59e0b">22%</strong>，
-          生成的数据在统计分布上更接近真实市场，可用于回测和数据增强。
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="fc-icon">🌍</div>
-        <div class="fc-title">全球市场覆盖</div>
-        <div class="fc-desc">
-          训练数据覆盖 <strong style="color:#f59e0b">45+</strong> 全球交易所，
-          包括股票、加密货币、外汇等多种资产类别，具备跨市场泛化能力。
-        </div>
-      </div>
+  <h3 style="color:#a78bfa;margin:16px 0 8px">5行代码预测</h3>
+  <div class="code-block">
+<span class="kw">from</span> model <span class="kw">import</span> Kronos, KronosTokenizer, KronosPredictor
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+tokenizer = KronosTokenizer.<span class="fn">from_pretrained</span>(<span class="str">"NeoQuasar/Kronos-Tokenizer-base"</span>)
+model = Kronos.<span class="fn">from_pretrained</span>(<span class="str">"NeoQuasar/Kronos-small"</span>)
+predictor = <span class="fn">KronosPredictor</span>(model, tokenizer, max_context=<span class="num">512</span>)
+
+df = pd.<span class="fn">read_csv</span>(<span class="str">"your_kline_data.csv"</span>)
+pred_df = predictor.<span class="fn">predict</span>(
+    df=df[[<span class="str">'open'</span>,<span class="str">'high'</span>,<span class="str">'low'</span>,<span class="str">'close'</span>,<span class="str">'volume'</span>,<span class="str">'amount'</span>]],
+    x_timestamp=df[<span class="str">'timestamps'</span>],
+    y_timestamp=future_timestamps,
+    pred_len=<span class="num">120</span>, T=<span class="num">1.0</span>, top_p=<span class="num">0.9</span>, sample_count=<span class="num">1</span>
+)
+  </div>
+
+  <h3 style="color:#a78bfa;margin:16px 0 8px">微调自己的数据</h3>
+  <div class="code-block">
+<span class="cmt"># 1. 准备数据集</span>
+python finetune/qlib_data_preprocess.py
+
+<span class="cmt"># 2. 微调 Tokenizer</span>
+torchrun --standalone --nproc_per_node=<span class="num">2</span> finetune/train_tokenizer.py
+
+<span class="cmt"># 3. 微调 Predictor</span>
+torchrun --standalone --nproc_per_node=<span class="num">2</span> finetune/train_predictor.py
+
+<span class="cmt"># 4. 回测评估</span>
+python finetune/qlib_test.py --device cuda:<span class="num">0</span>
+  </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="card">
+  <h2><span class="icon">📊</span> 综合评分</h2>
+  <div class="score-grid">
+    <div class="score-item">
+      <div class="label">创新性</div>
+      <div class="score s9">9.5</div>
+      <div class="bar"><div class="bar-fill bar-95"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="label">代码质量</div>
+      <div class="score s8">8.5</div>
+      <div class="bar"><div class="bar-fill bar-85"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="label">实用性</div>
+      <div class="score s8">8.0</div>
+      <div class="bar"><div class="bar-fill bar-80"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="label">文档完善度</div>
+      <div class="score s9">9.0</div>
+      <div class="bar"><div class="bar-fill bar-90"></div></div>
+    </div>
+    <div class="score-item">
+      <div class="label">社区活跃度</div>
+      <div class="score s9">9.0</div>
+      <div class="bar"><div class="bar-fill bar-90"></div></div>
+    </div>
+    <div class="score-item" style="border-color:#58a6ff">
+      <div class="label" style="color:#58a6ff;font-weight:600">综合评分</div>
+      <div class="score" style="font-size:2.4em;color:#4ade80">8.8</div>
+      <div class="bar"><div class="bar-fill bar-90"></div></div>
     </div>
   </div>
+</div>
 
-  <!-- Why Trending -->
-  <div class="section">
-    <h2>热门原因</h2>
-    <ul class="reason-list">
-      <li><strong>首个开源金融K线基础模型</strong> — 将 NLP 领域的"基础模型 + 预训练 + 微调"范式首次完整引入金融K线预测领域，开创性意义显著</li>
-      <li><strong>AAAI 2026 接收 + NeurIPS 2025 展示</strong> — 顶会双认证，学术质量背书，引发学术界和工业界双重关注</li>
-      <li><strong>独创 BSQ 分词器</strong> — 将连续 OHLCV 数据转化为层次化离散 Token 的方法，是金融时序建模的关键创新</li>
-      <li><strong>Zero-shot 通用预测</strong> — 无需微调即可在任意市场、任意标的、任意时间尺度上直接预测，大幅降低使用门槛</li>
-      <li><strong>实时 Demo 可视化</strong> — 提供 BTC/USDT 24 小时预测实时展示，直观验证模型能力，降低信任成本</li>
-      <li><strong>完整的微调 Pipeline</strong> — 基于 Qlib 的 A 股微调流程 + 多 GPU 支持，从研究到生产全链路覆盖</li>
+<!-- 注意事项 -->
+<div class="card">
+  <h2><span class="icon">⚠️</span> 注意事项</h2>
+  <div class="warning-box">
+    <h3>重要提醒</h3>
+    <ul>
+      <li>微调示例仅为演示，<strong>非生产级量化系统</strong></li>
+      <li>真实交易需要组合优化、风险因子中性化等更复杂技术</li>
+      <li>模型生成原始信号，需后处理才能获得"纯 Alpha"</li>
+      <li>回测应仔细建模交易成本、滑点和市场冲击</li>
     </ul>
   </div>
+</div>
 
-  <!-- Comparison -->
-  <div class="section">
-    <h2>竞品对比</h2>
-    <table class="compare-table">
-      <thead>
-        <tr>
-          <th>特性</th>
-          <th>Kronos</th>
-          <th>传统统计模型</th>
-          <th>通用时序模型</th>
-          <th>量化因子模型</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Zero-shot 能力</td>
-          <td class="best">✓ 跨市场</td>
-          <td>✗ 需参数估计</td>
-          <td>△ 有限</td>
-          <td>✗ 需训练</td>
-        </tr>
-        <tr>
-          <td>K线数据原生</td>
-          <td class="best">✓ BSQ 分词</td>
-          <td>✗</td>
-          <td>✗</td>
-          <td>✗</td>
-        </tr>
-        <tr>
-          <td>多任务能力</td>
-          <td class="best">价格+波动率+生成</td>
-          <td>单一任务</td>
-          <td>单一任务</td>
-          <td>单一任务</td>
-        </tr>
-        <tr>
-          <td>开源可用</td>
-          <td class="best">3 个模型</td>
-          <td>N/A</td>
-          <td>部分</td>
-          <td>少有</td>
-        </tr>
-        <tr>
-          <td>学术发表</td>
-          <td class="best">AAAI 2026</td>
-          <td>经典文献</td>
-          <td>部分</td>
-          <td>部分</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Code Example -->
-  <div class="section">
-    <h2>快速开始</h2>
-    <div class="code-block">
-      <code>
-<span class="comment"># 安装依赖</span>
-pip install kronos<br><br>
-<span class="comment"># 加载模型并进行预测</span>
-<span class="keyword">from</span> kronos <span class="keyword">import</span> KronosPredictor<br><br>
-<span class="comment"># 初始化预测器（自动下载预训练权重）</span>
-predictor = <span class="func">KronosPredictor</span>(model_name=<span class="string">"kronos-base"</span>)<br><br>
-<span class="comment"># 对单只股票进行预测</span>
-prediction = predictor.<span class="func">predict</span>(<br>
-&nbsp;&nbsp;symbol=<span class="string">"BTC/USDT"</span>,<br>
-&nbsp;&nbsp;interval=<span class="string">"1h"</span>,<br>
-&nbsp;&nbsp;horizon=<span class="string">24</span>&nbsp;&nbsp;<span class="comment"># 预测未来 24 根 K 线</span>
-)<br><br>
-<span class="comment"># 批量预测（多 GPU 并行）</span>
-results = predictor.<span class="func">predict_batch</span>(<br>
-&nbsp;&nbsp;symbols=[<span class="string">"AAPL"</span>, <span class="string">"GOOGL"</span>, <span class="string">"MSFT"</span>],<br>
-&nbsp;&nbsp;interval=<span class="string">"1d"</span>,<br>
-&nbsp;&nbsp;horizon=<span class="string">5</span><br>
-)<br><br>
-<span class="comment"># 基于 Qlib 的 A 股微调</span>
-torchrun --nproc_per_node=<span class="string">4</span> finetune.py \\<br>
-&nbsp;&nbsp;--model kronos-base \\<br>
-&nbsp;&nbsp;--market cn_a_share \\<br>
-&nbsp;&nbsp;--data_dir ./data
-      </code>
-    </div>
-  </div>
-
-  <!-- Scenarios -->
-  <div class="section">
-    <h2>应用场景</h2>
-    <div class="scenario-grid">
-      <div class="scenario-item">
-        <div class="sc-emoji">💹</div>
-        <div class="sc-text">量化交易策略研究与回测</div>
-      </div>
-      <div class="scenario-item">
-        <div class="sc-emoji">📊</div>
-        <div class="sc-text">金融时序数据增强</div>
-      </div>
-      <div class="scenario-item">
-        <div class="sc-emoji">🔬</div>
-        <div class="sc-text">市场微观结构学术研究</div>
-      </div>
-      <div class="scenario-item">
-        <div class="sc-emoji">⚠️</div>
-        <div class="sc-text">波动率估计与风险管理</div>
-      </div>
-      <div class="scenario-item">
-        <div class="sc-emoji">🤖</div>
-        <div class="sc-text">智能投顾系统信号生成</div>
-      </div>
-      <div class="scenario-item">
-        <div class="sc-emoji">🎓</div>
-        <div class="sc-text">金融 AI 教学与研究实验</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Community -->
-  <div class="section">
-    <h2>社区生态</h2>
-    <table class="info-table">
-      <tr><td>GitHub Stars</td><td>23,077 (持续增长中)</td></tr>
-      <tr><td>学术认证</td><td>AAAI 2026 接收 / NeurIPS 2025 Workshop 展示</td></tr>
-      <tr><td>社区讨论</td><td>Reddit r/quant 活跃讨论 ("How well does Kronos function in reality?")</td></tr>
-      <tr><td>中文社区</td><td>知乎、GitCode、CSDN 广泛报道</td></tr>
-      <tr><td>衍生项目</td><td>Apex Terminal (基于 Kronos 引擎的交易终端)</td></tr>
-      <tr><td>HuggingFace</td><td>NeoQuasar/ 组织下托管全部开源模型权重</td></tr>
-    </table>
-  </div>
-
-  <div class="footer">
-    🤖 由 AI 深度分析生成 | Powered by Claude Code<br>
-    <span style="font-size: 11px; color: #334155;">⚠️ 本报告仅供技术研究参考，不构成任何投资建议</span>
-  </div>
+<!-- Footer -->
+<div class="footer">
+  <p>分析日期：2026-05-26 | 数据来源：GitHub、arXiv、AAAI、技术博客</p>
+  <p style="margin-top:8px">GitHub Trending Deep Analysis</p>
+</div>
 
 </div>
 </body>
