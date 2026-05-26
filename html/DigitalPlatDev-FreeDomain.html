@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitalPlat FreeDomain 深度分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(135deg, #38bdf8, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .header .subtitle {
+            font-size: 1.1em;
+            color: #8b949e;
+            position: relative;
+        }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .header .meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #38bdf8;
+        }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #38b9df44; }
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card p, .card li { color: #b1bac4; }
+        .card ul { padding-left: 20px; }
+        .card ul li { margin-bottom: 8px; }
+
+        /* Intro Card */
+        .intro-text { font-size: 1.05em; line-height: 1.8; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .stat-item .value {
+            font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-item .label { font-size: 0.85em; color: #8b949e; margin-top: 4px; }
+
+        /* Extensions */
+        .extensions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0;
+        }
+        .ext-tag {
+            padding: 8px 18px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #c9d1d9;
+            font-size: 0.95em;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+        .comparison-table th {
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 2px solid #21262d;
+            font-weight: 600;
+        }
+        .comparison-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid #21262d;
+            color: #b1bac4;
+        }
+        .comparison-table tr:hover td { background: rgba(56, 189, 248, 0.03); }
+        .comparison-table .highlight td { background: rgba(56, 189, 248, 0.06); }
+
+        /* Score Section */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 600px) { .scores-grid { grid-template-columns: 1fr; } }
+        .score-item {
+            background: rgba(33, 38, 45, 0.8);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .score-item .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .score-item .score-name { font-weight: 600; color: #c9d1d9; }
+        .score-item .score-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+        .score-bar {
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .score-fill.s9 { background: linear-gradient(90deg, #38bdf8, #22d3ee); }
+        .score-fill.s8 { background: linear-gradient(90deg, #38bdf8, #a855f7); }
+        .score-fill.s7 { background: linear-gradient(90deg, #a855f7, #ec4899); }
+        .score-fill.s6 { background: linear-gradient(90deg, #f59e0b, #ec4899); }
+
+        .total-score {
+            text-align: center;
+            margin-top: 24px;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(168, 85, 247, 0.08));
+            border-radius: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .total-score .big-score {
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .total-score .score-label { color: #8b949e; font-size: 1.1em; }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #79c0ff;
+            line-height: 1.6;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .cmd { color: #d2a8ff; }
+        .code-block .url { color: #a5d6ff; }
+
+        /* Steps */
+        .steps { counter-reset: step; }
+        .step {
+            counter-increment: step;
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 20px;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #0d1117;
+            font-size: 0.95em;
+        }
+        .step h4 { color: #c9d1d9; margin-bottom: 6px; }
+        .step p { color: #8b949e; font-size: 0.95em; }
+
+        /* Tags */
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            padding: 4px 12px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #a855f7;
+        }
+
+        /* Story Quote */
+        .story-quote {
+            border-left: 3px solid #a855f7;
+            padding: 16px 20px;
+            margin: 16px 0;
+            background: rgba(168, 85, 247, 0.05);
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #b1bac4;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid #21262d;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 20px; }
+            .container { padding: 12px; }
+            .comparison-table { font-size: 0.82em; }
+            .comparison-table th, .comparison-table td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>DigitalPlat FreeDomain</h1>
+    <div class="subtitle">让每个人都有自己的数字身份 —— 免费域名基础设施</div>
+    <div class="meta">
+        <span>⭐ 167K+ Stars</span>
+        <span>🌍 500K+ 注册域名</span>
+        <span>👤 创始人 15 岁创建</span>
+        <span>📜 AGPL-3.0</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">📖</span> 项目简介</h2>
+        <p class="intro-text">
+            DigitalPlat FreeDomain 是一个开源的免费域名注册平台，由 <strong>Edward Hsing</strong> 在 15 岁时创建，如今已发展为服务全球 40 万+ 用户的基础设施项目。它提供多种免费域名后缀，允许用户注册独一无二的域名并绑定到 Cloudflare、FreeDNS 等任何 DNS 服务商，让任何人都能零成本拥有自己的网络身份。
+        </p>
+        <div class="story-quote">
+            "我 15 岁时买了一个域名。我没有预料到它会成为数十万人使用的东西。它不是一个创业项目，也不是一个计划——我只是想看看我能构建什么。" —— Edward Hsing
+        </div>
+        <p><strong>GitHub：</strong> <a href="https://github.com/DigitalPlatDev/FreeDomain" style="color:#58a6ff;">github.com/DigitalPlatDev/FreeDomain</a></p>
+        <p><strong>官网：</strong> <a href="https://domain.digitalplat.org/" style="color:#58a6ff;">domain.digitalplat.org</a></p>
+        <p><strong>许可协议：</strong> AGPL-3.0</p>
+        <div class="tag-group">
+            <span class="tag">DNS</span>
+            <span class="tag">免费域名</span>
+            <span class="tag">开源</span>
+            <span class="tag">非营利</span>
+            <span class="tag">基础设施</span>
+            <span class="tag">Python/Flask</span>
+        </div>
+    </div>
+
+    <!-- 核心数据 -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 核心数据</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="value">167K+</div>
+                <div class="label">GitHub Stars</div>
+            </div>
+            <div class="stat-item">
+                <div class="value">500K+</div>
+                <div class="label">已注册域名</div>
+            </div>
+            <div class="stat-item">
+                <div class="value">#40</div>
+                <div class="label">GitHub 全球排名</div>
+            </div>
+            <div class="stat-item">
+                <div class="value">1K+/天</div>
+                <div class="label">新增 Stars</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+        <ul>
+            <li><strong>DNS 层：</strong>基于 BIND9 搭建，直接与 DNS 底层交互，提供高可用的域名解析服务</li>
+            <li><strong>后端：</strong>Python + Flask 框架，轻量高效的 Web 服务</li>
+            <li><strong>基础架构：</strong>运行在 VPS 上，自主管理 DNS 基础设施</li>
+            <li><strong>身份验证：</strong>GitHub 账号绑定验证，防止滥用</li>
+            <li><strong>反滥用系统：</strong>自动化审核管道、行为模式评分、结构化举报与响应机制</li>
+            <li><strong>DNS 服务商兼容：</strong>Cloudflare、FreeDNS (Afraid.org)、Hostry 等</li>
+        </ul>
+        <h3 style="margin-top:20px; color:#8b949e; font-size:1em;">可用域名后缀</h3>
+        <div class="extensions">
+            <span class="ext-tag">.US.KG</span>
+            <span class="ext-tag">.DPDNS.ORG</span>
+            <span class="ext-tag">.QZZ.IO</span>
+            <span class="ext-tag">.XX.KG</span>
+            <span class="ext-tag">.QD.JE</span>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>个人博客/作品集：</strong>学生和开发者展示个人项目的理想选择</li>
+            <li><strong>MVP 原型验证：</strong>初创团队快速上线测试产品概念</li>
+            <li><strong>开发测试环境：</strong>需要自定义域名进行 API 测试、Webhook 调试</li>
+            <li><strong>自托管服务：</strong>为 HomeLab、NAS、智能家居等分配域名</li>
+            <li><strong>学习与教育：</strong>学习 DNS 配置、域名管理的实战工具</li>
+            <li><strong>非营利组织：</strong>为公益项目和小型组织节省域名费用</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火 (Trending 原因)</h2>
+        <ul>
+            <li><strong>Freenom 倒闭后的市场真空：</strong>Freenom（.tk/.ml 等免费域名）因法律问题停止注册，全球免费域名市场出现巨大缺口，FreeDomain 填补了这一空白</li>
+            <li><strong>15 岁少年的传奇故事：</strong>创始人的成长经历在 dev.to 上引发广泛共鸣，文章获得大量互动，传播力极强</li>
+            <li><strong>真正零成本：</strong>无需信用卡、无隐藏费用，完全免费的域名服务</li>
+            <li><strong>50 万+用户验证：</strong>庞大的用户基数本身就是最好的信任背书</li>
+            <li><strong>非营利基金会运营：</strong>DigitalPlat Foundation 以公益方式运营，增强了社区的信任感</li>
+            <li><strong>低门槛高兼容：</strong>支持 Cloudflare 等主流 DNS 服务商，技术门槛极低</li>
+        </ul>
+    </div>
+
+    <!-- 同类对比 -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>域名类型</th>
+                    <th>状态</th>
+                    <th>费用</th>
+                    <th>审核速度</th>
+                    <th>DNS 控制</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="highlight">
+                    <td><strong>DigitalPlat FreeDomain</strong></td>
+                    <td>.us.kg, .dpdns.org 等</td>
+                    <td style="color:#3fb950;">✅ 活跃</td>
+                    <td>免费</td>
+                    <td>即时</td>
+                    <td>完整</td>
+                </tr>
+                <tr>
+                    <td>Freenom (.tk/.ml)</td>
+                    <td>国家顶级域名</td>
+                    <td style="color:#f85149;">❌ 已停运</td>
+                    <td>曾是免费</td>
+                    <td>—</td>
+                    <td>有限</td>
+                </tr>
+                <tr>
+                    <td>EU.org</td>
+                    <td>.eu.org 子域名</td>
+                    <td style="color:#3fb950;">✅ 活跃</td>
+                    <td>免费</td>
+                    <td>数天~数月</td>
+                    <td>完整</td>
+                </tr>
+                <tr>
+                    <td>FreeDNS (Afraid.org)</td>
+                    <td>多种子域名</td>
+                    <td style="color:#3fb950;">✅ 活跃</td>
+                    <td>免费</td>
+                    <td>即时</td>
+                    <td>有限</td>
+                </tr>
+                <tr>
+                    <td>nic.ua (.pp.ua)</td>
+                    <td>.pp.ua 子域名</td>
+                    <td style="color:#d29922;">⚠️ 有限</td>
+                    <td>免费</td>
+                    <td>较慢</td>
+                    <td>完整</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top:12px; color:#8b949e; font-size:0.9em;">
+            <strong>核心优势：</strong>FreeDomain 在免费域名领域拥有最快的注册速度、最多的域名后缀选择以及最大的用户社区。与 EU.org 动辄数月的审核周期相比，即时注册体验是其核心竞争力。
+        </p>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+        <ul>
+            <li><strong>学生群体：</strong>需要免费域名完成课程项目或搭建个人网站</li>
+            <li><strong>独立开发者：</strong>快速为 SaaS 原型或开源项目分配域名</li>
+            <li><strong>初创团队：</strong>在获得融资前用免费域名验证商业想法</li>
+            <li><strong>自托管爱好者：</strong>为家庭服务器、NAS、智能家居配置域名</li>
+            <li><strong>非营利组织：</strong>以零预算建立线上存在</li>
+            <li><strong>学习者：</strong>练习 DNS 配置、Web 服务器部署等技能</li>
+        </ul>
+        <p style="margin-top:12px; color:#d29922;">⚠️ <strong>注意：</strong>不适合用于关键生产环境或长期商业项目。域名需要定期续期，且作为免费服务，稳定性和 SLA 无法与付费域名商相比。</p>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <div class="steps">
+            <div class="step">
+                <h4>访问官网注册</h4>
+                <p>打开 <a href="https://domain.digitalplat.org/" style="color:#58a6ff;">domain.digitalplat.org</a>，使用 GitHub 账号登录并完成身份验证</p>
+            </div>
+            <div class="step">
+                <h4>选择域名后缀</h4>
+                <p>从可用的后缀中选择（如 .us.kg、.dpdns.org、.qzz.io），输入想要的域名前缀</p>
+            </div>
+            <div class="step">
+                <h4>注册域名</h4>
+                <p>确认域名可用后，点击注册。系统即时分配，无需等待审核</p>
+            </div>
+            <div class="step">
+                <h4>配置 DNS</h4>
+                <p>将域名指向你的 DNS 服务商（推荐 Cloudflare），添加 A/CNAME 记录指向你的服务器</p>
+            </div>
+            <div class="step">
+                <h4>部署上线</h4>
+                <p>配置 Web 服务器（Nginx/Caddy 等），绑定域名，你的网站即可上线</p>
+            </div>
+        </div>
+        <div class="code-block">
+<span class="comment"># 示例：使用 Cloudflare 管理 DNS</span>
+<span class="cmd">1.</span> 在 FreeDomain 注册 yourname<span class="url">.us.kg</span>
+<span class="cmd">2.</span> 登录 Cloudflare → 添加站点 → 输入 yourname<span class="url">.us.kg</span>
+<span class="cmd">3.</span> 在 FreeDomain 面板中将 NS 记录改为 Cloudflare 提供的 NS
+<span class="cmd">4.</span> 在 Cloudflare 添加 DNS 记录：
+    A    yourname<span class="url">.us.kg</span>    →    <span class="url">你的服务器IP</span>
+<span class="cmd">5.</span> 等待 DNS 传播（通常几分钟）
+        </div>
+    </div>
+
+    <!-- 创始人故事 -->
+    <div class="card">
+        <h2><span class="icon">💡</span> 创始人故事</h2>
+        <p>Edward Hsing 在 15 岁时购买了一个域名，最初只是为了让朋友们使用子域名。随着越来越多的人请求使用，这个个人实验逐渐演变成了一个公共服务。他用 Python + Flask 在小型 VPS 上搭建了 BIND9 DNS 服务器，完全自主构建了域名注册和管理系统。</p>
+        <p style="margin-top:12px;">如今 18 岁的他运营着 DigitalPlat Foundation（非营利慈善组织），管理着服务全球 40 万+ 用户的基础设施。项目经历了从个人项目到公共基础设施的转变，同时也建立了完善的反滥用系统（自动化审核、行为评分、GitHub 身份验证等）来维护平台健康。</p>
+        <div class="story-quote">
+            "维护一个东西比构建它要难得多。运行免费域名基础设施意味着需要大规模地处理滥用——垃圾邮件、钓鱼、误用。你不能忽视它，你必须为此设计系统。" —— Edward Hsing
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">🏆</span> 综合评分</h2>
+        <div class="scores-grid">
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="score-name">创新性</span>
+                    <span class="score-value">9.0</span>
+                </div>
+                <div class="score-bar"><div class="score-fill s9" style="width:90%"></div></div>
+                <p style="color:#8b949e; font-size:0.82em; margin-top:6px;">15岁少年构建的免费域名基础设施，填补了 Freenom 倒闭后的市场空白</p>
+            </div>
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="score-name">代码质量</span>
+                    <span class="score-value">7.5</span>
+                </div>
+                <div class="score-bar"><div class="score-fill s8" style="width:75%"></div></div>
+                <p style="color:#8b949e; font-size:0.82em; margin-top:6px;">Python/Flask 后端，BIND9 DNS，架构务实但非企业级</p>
+            </div>
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="score-name">实用性</span>
+                    <span class="score-value">9.5</span>
+                </div>
+                <div class="score-bar"><div class="score-fill s9" style="width:95%"></div></div>
+                <p style="color:#8b949e; font-size:0.82em; margin-top:6px;">50万+注册域名验证，真正零成本，即时注册，广泛适用场景</p>
+            </div>
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="score-name">文档完善度</span>
+                    <span class="score-value">7.0</span>
+                </div>
+                <div class="score-bar"><div class="score-fill s7" style="width:70%"></div></div>
+                <p style="color:#8b949e; font-size:0.82em; margin-top:6px;">README 清晰，有教程链接，但技术文档和 API 文档相对简单</p>
+            </div>
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="score-name">社区活跃度</span>
+                    <span class="score-value">9.5</span>
+                </div>
+                <div class="score-bar"><div class="score-fill s9" style="width:95%"></div></div>
+                <p style="color:#8b949e; font-size:0.82em; margin-top:6px;">167K+ Stars，GitHub 全球 #40，Discord 社区，每日千星增长</p>
+            </div>
+        </div>
+        <div class="total-score">
+            <div class="big-score">8.5 / 10</div>
+            <div class="score-label">综合评分 — 极力推荐</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>📊 GitHub Trending 深度分析 · 2026-05-27 · 由 AI 自动生成</p>
+</div>
+
+</body>
+</html>
