@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axorax/awesome-free-apps 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            border-bottom: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(168, 85, 247, 0.06) 0%, transparent 50%);
+            animation: float 15s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+        .header h1 {
+            font-size: 2.6em;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .header .subtitle {
+            font-size: 1.15em;
+            color: #8b949e;
+            position: relative;
+            z-index: 1;
+        }
+        .header .meta {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .header .meta span {
+            background: rgba(56, 189, 248, 0.1);
+            color: #58a6ff;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.88em;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 28px;
+            margin: 24px 0;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #388bfd55; }
+        .card h2 {
+            font-size: 1.45em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.2em; }
+        .card h3 { font-size: 1.15em; margin: 16px 0 8px; color: #58a6ff; }
+        .card p { margin: 8px 0; color: #b1bac4; }
+        .card ul { padding-left: 22px; margin: 8px 0; }
+        .card li { margin: 5px 0; color: #b1bac4; }
+
+        /* Scores */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-item .label { font-size: 0.88em; color: #8b949e; margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-item .bar {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 10px;
+            background: #21262d;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+        .s-innovation .value { color: #f778ba; }
+        .s-innovation .bar-fill { background: linear-gradient(90deg, #f778ba, #ff9dce); }
+        .s-code .value { color: #58a6ff; }
+        .s-code .bar-fill { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
+        .s-practical .value { color: #3fb950; }
+        .s-practical .bar-fill { background: linear-gradient(90deg, #3fb950, #56d364); }
+        .s-docs .value { color: #d29922; }
+        .s-docs .bar-fill { background: linear-gradient(90deg, #d29922, #e3b341); }
+        .s-community .value { color: #bc8cff; }
+        .s-community .bar-fill { background: linear-gradient(90deg, #bc8cff, #d2a8ff); }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.92em;
+        }
+        .comparison-table th {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #388bfd55;
+        }
+        .comparison-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #21262d;
+        }
+        .comparison-table tr:hover td { background: rgba(56, 189, 248, 0.04); }
+        .highlight { color: #3fb950; font-weight: 600; }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            margin: 2px;
+        }
+        .tag-blue { background: rgba(56, 189, 248, 0.12); color: #58a6ff; border: 1px solid rgba(56, 189, 248, 0.25); }
+        .tag-green { background: rgba(63, 185, 80, 0.12); color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.25); }
+        .tag-purple { background: rgba(188, 140, 255, 0.12); color: #bc8cff; border: 1px solid rgba(188, 140, 255, 0.25); }
+        .tag-orange { background: rgba(210, 153, 34, 0.12); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.25); }
+
+        /* Quick start */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 10px 0;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            color: #79c0ff;
+        }
+        .code-block .comment { color: #8b949e; }
+
+        /* Category grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .category-chip {
+            background: rgba(56, 189, 248, 0.06);
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .category-chip:hover {
+            border-color: #388bfd55;
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Summary */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(188, 140, 255, 0.08));
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 16px;
+        }
+        .summary-box p { color: #c9d1d9; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.88em;
+            border-top: 1px solid #21262d;
+            margin-top: 40px;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .category-grid { grid-template-columns: repeat(3, 1fr); }
+            .comparison-table { font-size: 0.82em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>awesome-free-apps</h1>
+    <p class="subtitle">精选最佳免费 PC 和移动应用大全</p>
+    <div class="meta">
+        <span>🏷️ Awesome List</span>
+        <span>⭐ GitHub Trending</span>
+        <span>💻 全平台覆盖</span>
+        <span>📦 500+ 应用</span>
+        <span>📅 分析日期: 2026-05-26</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2><span class="icon">📖</span> 项目简介与核心功能</h2>
+        <p><strong>Axorax/awesome-free-apps</strong> 是一个精心策划的免费应用程序合集，覆盖 <strong>Windows、macOS、Linux</strong> 三大桌面平台以及 <strong>Android、iOS</strong> 移动平台。该项目以 Markdown 格式维护，采用清晰的分类体系和直观的图标标注系统，让用户能够快速找到所需的高质量免费软件。</p>
+        <h3>核心功能亮点</h3>
+        <ul>
+            <li><strong>全平台覆盖</strong> — 使用 🪟🍎🐧 图标清晰标注每个应用支持的平台</li>
+            <li><strong>开源标识</strong> — 🟢 标记开源软件并提供仓库链接</li>
+            <li><strong>编辑推荐</strong> — ⭐ 标记经过验证的高质量推荐应用</li>
+            <li><strong>智能筛选</strong> — 提供按平台、开源、推荐等多维度过滤视图</li>
+            <li><strong>移动端支持</strong> — 独立的 Android 和 iOS 分类</li>
+        </ul>
+        <h3>覆盖的应用类别</h3>
+        <div class="category-grid">
+            <div class="category-chip">🎵 音频工具</div>
+            <div class="category-chip">🌐 浏览器</div>
+            <div class="category-chip">💬 通讯工具</div>
+            <div class="category-chip">🗜️ 压缩归档</div>
+            <div class="category-chip">🎨 系统定制</div>
+            <div class="category-chip">📊 数据管理</div>
+            <div class="category-chip">🛠️ 开发工具</div>
+            <div class="category-chip">📄 文档处理</div>
+            <div class="category-chip">📝 笔记工具</div>
+            <div class="category-chip">✏️ 文本编辑器</div>
+            <div class="category-chip">📥 下载管理</div>
+            <div class="category-chip">🎮 游戏</div>
+            <div class="category-chip">📱 模拟器</div>
+            <div class="category-chip">🖼️ 图形工具</div>
+            <div class="category-chip">🔒 安全工具</div>
+            <div class="category-chip">🎬 视频工具</div>
+            <div class="category-chip">🌐 VPN/代理</div>
+            <div class="category-chip">🔧 系统工具</div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与特点</h2>
+        <ul>
+            <li><strong>纯 Markdown 构建</strong> — 项目完全以 Markdown 编写，无需任何构建工具，维护门槛极低</li>
+            <li><strong>图标标注系统</strong> — 自定义 emoji 图标体系（🪟🍎🐧🟢⭐）实现平台和属性的快速识别</li>
+            <li><strong>模块化分类</strong> — 采用三级嵌套目录结构（大类 → 子类 → 具体应用），层次清晰</li>
+            <li><strong>多视图过滤</strong> — 提供 full-guide.md 主文档 + 多个 filter/ 子文件实现按维度筛选</li>
+            <li><strong>社区驱动</strong> — 通过 GitHub Issues 和 PR 接受社区贡献，持续扩展应用列表</li>
+        </ul>
+        <div class="code-block">
+            <span class="comment"># 仓库结构</span>
+            awesome-free-apps/
+            ├── README.md                  <span class="comment"># 主入口（完整指南）</span>
+            ├── full-guide.md              <span class="comment"># 完整列表</span>
+            ├── filter/
+            │   ├── recommended-only.md    <span class="comment"># 仅推荐应用</span>
+            │   ├── Windows-only.md        <span class="comment"># Windows 专属</span>
+            │   ├── macOS-only.md          <span class="comment"># macOS 专属</span>
+            │   ├── Linux-only.md          <span class="comment"># Linux 专属</span>
+            │   ├── open-source-only.md    <span class="comment"># 仅开源应用</span>
+            │   ├── mobile.md              <span class="comment"># 移动端应用</span>
+            │   ├── Android-only.md        <span class="comment"># Android 专属</span>
+            │   └── iOS-only.md            <span class="comment"># iOS 专属</span>
+            └── .github/
+                └── afa.png                <span class="comment"># 项目 Logo</span>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>描述</th>
+                    <th>典型应用</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>🖥️ 新机装机</td>
+                    <td>新电脑/重装系统后快速配置常用软件</td>
+                    <td>7-Zip, Firefox, VS Code, VLC, OBS</td>
+                </tr>
+                <tr>
+                    <td>👨‍💻 开发者工具箱</td>
+                    <td>搭建完整开发环境，从编辑器到虚拟化</td>
+                    <td>Docker, Postman, DBeaver, Wireshark</td>
+                </tr>
+                <tr>
+                    <td>🎨 创作者必备</td>
+                    <td>视频剪辑、图像处理、音乐制作全免费方案</td>
+                    <td>DaVinci Resolve, GIMP, Blender, Audacity</td>
+                </tr>
+                <tr>
+                    <td>🔒 隐私安全</td>
+                    <td>建立安全的浏览和通讯环境</td>
+                    <td>Tor Browser, Signal, Bitwarden, WireGuard</td>
+                </tr>
+                <tr>
+                    <td>🎮 游戏娱乐</td>
+                    <td>游戏平台、模拟器、云游戏全覆盖</td>
+                    <td>Steam, RetroArch, Dolphin, PPSSPP</td>
+                </tr>
+                <tr>
+                    <td>🏢 办公效率</td>
+                    <td>替代付费办公软件的免费方案</td>
+                    <td>LibreOffice, Obsidian, Thunderbird</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Trending 原因 -->
+    <div class="card">
+        <h2><span class="icon">🔥</span> 为什么火（Trending 原因分析）</h2>
+        <ul>
+            <li><strong>刚需高频</strong> — 每个人都需要免费好用的软件，受众面极广，天然具备传播力</li>
+            <li><strong>实用价值极高</strong> — 不是技术展示，而是真正可用的"工具箱"，star 即收藏的心态驱动大量收藏</li>
+            <li><strong>AI 时代的新需求</strong> — 列表中新增了 Ollama、KaiROS AI、RightLayout 等 AI 工具，紧跟热点</li>
+            <li><strong>Awesome 系列效应</strong> — "awesome-xxx" 是 GitHub 上最有影响力的 curation 模式，自带流量属性</li>
+            <li><strong>跨平台全面性</strong> — 区别于大多数只关注单一平台的列表，三端 + 移动端全覆盖是巨大差异化</li>
+            <li><strong>持续更新活跃</strong> — 社区通过 PR 不断贡献新应用，保持列表的时效性和新鲜度</li>
+            <li><strong>筛选功能贴心</strong> — 提供推荐/开源/平台等多维度筛选，解决了"选择困难症"问题</li>
+        </ul>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>覆盖平台</th>
+                    <th>分类数量</th>
+                    <th>筛选功能</th>
+                    <th>推荐标记</th>
+                    <th>特色</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="highlight">awesome-free-apps</span></td>
+                    <td>Win/Mac/Linux/Mobile</td>
+                    <td>18+ 大类</td>
+                    <td class="highlight">✅ 多维度</td>
+                    <td class="highlight">✅ ⭐ 推荐</td>
+                    <td>全平台 + 智能筛选</td>
+                </tr>
+                <tr>
+                    <td>awesome-selfhosted</td>
+                    <td>服务端</td>
+                    <td>15+ 大类</td>
+                    <td>⚠️ 基础</td>
+                    <td>❌</td>
+                    <td>自部署服务为主</td>
+                </tr>
+                <tr>
+                    <td>awesome-opensource-apps</td>
+                    <td>跨平台</td>
+                    <td>10+ 大类</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>仅开源软件</td>
+                </tr>
+                <tr>
+                    <td>free-for-dev</td>
+                    <td>开发者服务</td>
+                    <td>按服务类型</td>
+                    <td>⚠️ 基础</td>
+                    <td>❌</td>
+                    <td>免费 SaaS 层级</td>
+                </tr>
+                <tr>
+                    <td>Awesome Windows</td>
+                    <td>仅 Windows</td>
+                    <td>15+ 大类</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>Windows 专属</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="summary-box">
+            <p><strong>对比结论：</strong>awesome-free-apps 在同类项目中以<strong>全平台覆盖 + 智能筛选 + 推荐标记</strong>三大差异化优势脱颖而出，是目前最全面的免费应用聚合列表之一。</p>
+        </div>
+    </div>
+
+    <!-- 适合谁 -->
+    <div class="card">
+        <h2><span class="icon">👥</span> 适合谁使用</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr><th>用户类型</th><th>适用程度</th><th>推荐理由</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>🖥️ 普通电脑用户</td>
+                    <td><span class="tag tag-green">强烈推荐</span></td>
+                    <td>一站式免费软件商店，省去搜索和比价时间</td>
+                </tr>
+                <tr>
+                    <td>👨‍💻 开发者</td>
+                    <td><span class="tag tag-green">强烈推荐</span></td>
+                    <td>API 工具、数据库客户端、终端模拟器等开发工具齐全</td>
+                </tr>
+                <tr>
+                    <td>🎨 内容创作者</td>
+                    <td><span class="tag tag-blue">非常推荐</span></td>
+                    <td>DaVinci Resolve、GIMP、Blender、OBS 等免费专业创作工具</td>
+                </tr>
+                <tr>
+                    <td>🔧 系统管理员</td>
+                    <td><span class="tag tag-blue">非常推荐</span></td>
+                    <td>安全工具、VPN、远程访问、虚拟化等运维工具完备</td>
+                </tr>
+                <tr>
+                    <td>🎮 游戏玩家</td>
+                    <td><span class="tag tag-purple">推荐</span></td>
+                    <td>游戏平台、模拟器、云游戏应有尽有</td>
+                </tr>
+                <tr>
+                    <td>📱 移动用户</td>
+                    <td><span class="tag tag-orange">部分推荐</span></td>
+                    <td>移动端覆盖相对较少，但仍在持续扩展</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2><span class="icon">🚀</span> 快速上手指南</h2>
+        <h3>方式一：直接浏览（推荐）</h3>
+        <div class="code-block">
+<span class="comment"># 访问项目主页，直接阅读 README</span>
+https://github.com/Axorax/awesome-free-apps
+        </div>
+        <h3>方式二：按需筛选</h3>
+        <div class="code-block">
+<span class="comment"># 只看编辑推荐</span>
+https://github.com/Axorax/awesome-free-apps/blob/main/filter/recommended-only.md
+
+<span class="comment"># 只看 Windows 应用</span>
+https://github.com/Axorax/awesome-free-apps/blob/main/filter/Windows-only.md
+
+<span class="comment"># 只看开源应用</span>
+https://github.com/Axorax/awesome-free-apps/blob/main/filter/open-source-only.md
+
+<span class="comment"># 只看 macOS 应用</span>
+https://github.com/Axorax/awesome-free-apps/blob/main/filter/macOS-only.md
+
+<span class="comment"># 只看移动端应用</span>
+https://github.com/Axorax/awesome-free-apps/blob/main/filter/mobile.md
+        </div>
+        <h3>方式三：克隆到本地</h3>
+        <div class="code-block">
+git clone https://github.com/Axorax/awesome-free-apps.git
+cd awesome-free-apps
+<span class="comment"># 用 Markdown 编辑器打开浏览</span>
+        </div>
+        <h3>图标速查</h3>
+        <table class="comparison-table">
+            <thead><tr><th>图标</th><th>含义</th><th>图标</th><th>含义</th></tr></thead>
+            <tbody>
+                <tr><td>🪟</td><td>支持 Windows</td><td>🟢</td><td>开源软件（附仓库链接）</td></tr>
+                <tr><td>🍎</td><td>支持 macOS</td><td>⭐</td><td>编辑推荐</td></tr>
+                <tr><td>🐧</td><td>支持 Linux</td><td>—</td><td>—</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item s-innovation">
+                <div class="label">创新性</div>
+                <div class="value">6.5</div>
+                <div class="bar"><div class="bar-fill" style="width: 65%"></div></div>
+            </div>
+            <div class="score-item s-code">
+                <div class="label">代码质量</div>
+                <div class="value">8.0</div>
+                <div class="bar"><div class="bar-fill" style="width: 80%"></div></div>
+            </div>
+            <div class="score-item s-practical">
+                <div class="label">实用性</div>
+                <div class="value">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width: 95%"></div></div>
+            </div>
+            <div class="score-item s-docs">
+                <div class="label">文档完善度</div>
+                <div class="value">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item s-community">
+                <div class="label">社区活跃度</div>
+                <div class="value">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width: 85%"></div></div>
+            </div>
+        </div>
+        <div class="summary-box" style="margin-top: 20px;">
+            <p><strong>综合评价：</strong>awesome-free-apps 作为一款精选列表项目，在<strong>实用性</strong>方面几乎达到了天花板级别——每个人都可能从中找到自己需要的免费工具。<strong>文档质量</strong>出色，分类逻辑清晰、图标体系直观。虽然作为 awesome-list 在<strong>创新性</strong>上有限，但其全面的平台覆盖和贴心的筛选功能使其成为同类项目中的佼佼者。<strong>综合评分：8.3/10</strong></p>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>分析报告由 AI 自动生成 | <a href="https://github.com/Axorax/awesome-free-apps" target="_blank">查看 GitHub 项目</a> | 分析日期: 2026-05-26</p>
+</div>
+
+</body>
+</html>
