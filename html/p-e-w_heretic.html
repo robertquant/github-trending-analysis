@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：Heretic - LLM 自动去审查工具</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #bc8cff;
+            --accent-cyan: #39d2c0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        .meta-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        .meta-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+        }
+        .meta-item .label { color: var(--text-secondary); }
+        .meta-item .value { font-weight: 600; }
+        .section {
+            margin-bottom: 36px;
+        }
+        .section h2 {
+            font-size: 1.5em;
+            color: var(--accent-blue);
+            border-left: 4px solid var(--accent-blue);
+            padding-left: 14px;
+            margin-bottom: 18px;
+        }
+        .section h3 {
+            font-size: 1.15em;
+            color: var(--accent-cyan);
+            margin: 20px 0 10px;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .card p { margin-bottom: 12px; }
+        .card ul { padding-left: 22px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; }
+        .highlight-box {
+            background: rgba(88,166,255,0.08);
+            border: 1px solid rgba(88,166,255,0.25);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 14px 0;
+        }
+        .warning-box {
+            background: rgba(210,153,34,0.08);
+            border: 1px solid rgba(210,153,34,0.25);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 14px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 0.92em;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background: var(--bg-secondary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin: 18px 0;
+        }
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-card .score-label {
+            color: var(--text-secondary);
+            font-size: 0.88em;
+            margin-bottom: 6px;
+        }
+        .score-card .score-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-card .score-bar {
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-card .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .overall-score {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .overall-score .big-score {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .overall-score .score-text {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        code {
+            background: rgba(88,166,255,0.12);
+            color: var(--accent-cyan);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 0.88em;
+            margin: 12px 0;
+        }
+        .tag {
+            display: inline-block;
+            background: rgba(188,140,255,0.15);
+            color: var(--accent-purple);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            margin: 3px;
+        }
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            margin-top: 40px;
+        }
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.6em; }
+            .score-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Heretic</h1>
+    <p class="subtitle">Fully Automatic Censorship Removal for Language Models</p>
+    <p style="margin-top:8px;">
+        <span class="tag">LLM 安全对齐</span>
+        <span class="tag">Abliteration</span>
+        <span class="tag">自动化工具</span>
+        <span class="tag">模型权重修改</span>
+        <span class="tag">Optuna 优化</span>
+    </p>
+</div>
+
+<div class="meta-bar">
+    <div class="meta-item">
+        <span class="label">仓库</span>
+        <span class="value" style="color:var(--accent-blue);">p-e-w/heretic</span>
+    </div>
+    <div class="meta-item">
+        <span class="label">语言</span>
+        <span class="value">Python</span>
+    </div>
+    <div class="meta-item">
+        <span class="label">Stars</span>
+        <span class="value" style="color:var(--accent-orange);">~21,700 ⭐</span>
+    </div>
+    <div class="meta-item">
+        <span class="label">协议</span>
+        <span class="value">AGPL-3.0</span>
+    </div>
+    <div class="meta-item">
+        <span class="label">作者</span>
+        <span class="value">Philipp Emanuel Weidmann</span>
+    </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="section">
+    <h2>一、项目概述</h2>
+    <div class="card">
+        <p><strong>Heretic</strong> 是一个完全自动化的开源 Python 工具，用于移除基于 Transformer 的大语言模型（LLM）中内置的"安全对齐"（即内容审查/拒绝机制），无需昂贵的重新训练或后训练（post-training）。</p>
+        <p>该项目由 Philipp Emanuel Weidmann 开发，结合了<strong>方向性消融</strong>（directional ablation，又称 "abliteration"）技术和基于 <strong>Optuna</strong> 的 TPE（Tree-structured Parzen Estimator）参数优化器，实现了端到端的自动化处理——用户只需提供一个模型名称，Heretic 即可自动完成全部去审查流程。</p>
+        <div class="highlight-box">
+            <strong>核心价值主张：</strong>使用 Heretic 无需理解 Transformer 内部原理，任何会运行命令行程序的人都可以使用它来去除语言模型的审查机制。社区已使用该工具创建并发布了超过 <strong>3,000+</strong> 个去审查模型。
+        </div>
+    </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+    <h2>二、技术架构</h2>
+    <div class="card">
+        <h3>2.1 核心原理：方向性消融（Abliteration）</h3>
+        <p>Heretic 的核心思想基于 Arditi 等人（2024）的研究发现：LLM 的"拒绝回答"行为编码在残差流（residual stream）的特定方向上。通过识别并消融这些"拒绝方向"（refusal direction），可以抑制模型的审查行为。</p>
+        <p>具体实现步骤：</p>
+        <ul>
+            <li><strong>拒绝方向计算</strong>：对每组"有害"和"无害"提示，计算模型在每层 Transformer 中首个 token 的残差向量，然后通过差均值法（difference-of-means）得出每层的拒绝方向向量。</li>
+            <li><strong>正交化权重矩阵</strong>：对每个支持组件（当前为 attention out-projection 和 MLP down-projection），将对应的权重矩阵相对于拒绝方向进行正交化，抑制该方向的传播。</li>
+            <li><strong>参数优化</strong>：使用 Optuna TPE 优化器（默认 50 次试验），联合最小化<strong>拒绝次数</strong>和<strong>与原始模型的 KL 散度</strong>，在去除审查与保持模型能力之间找到最优平衡。</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>2.2 可优化参数体系</h3>
+        <table>
+            <tr><th>参数</th><th>说明</th></tr>
+            <tr><td><code>direction_index</code></td><td>拒绝方向索引，支持浮点数值（线性插值相邻层向量）或 <code>per layer</code>（逐层使用）</td></tr>
+            <tr><td><code>max_weight</code></td><td>消融权重核函数的最大值</td></tr>
+            <tr><td><code>max_weight_position</code></td><td>最大权重在层序列中的位置</td></tr>
+            <tr><td><code>min_weight</code></td><td>消融权重核函数的最小值</td></tr>
+            <tr><td><code>min_weight_distance</code></td><td>最小权重与最大权重的层间距</td></tr>
+        </table>
+        <p>这些参数描述了消融权重在层间的核函数形状，允许灵活控制不同层的消融强度。</p>
+    </div>
+
+    <div class="card">
+        <h3>2.3 支持的模型架构</h3>
+        <ul>
+            <li><strong>密集模型（Dense Models）</strong>：大部分主流架构</li>
+            <li><strong>多模态模型（Multimodal Models）</strong>：视觉-语言模型等</li>
+            <li><strong>MoE 架构</strong>：多种混合专家模型</li>
+            <li><strong>混合模型</strong>：如 Qwen3.5</li>
+        </ul>
+        <div class="warning-box">
+            <strong>暂不支持：</strong>纯状态空间模型（State-Space Models）和部分实验性架构。
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>2.4 研究功能（Interpretability）</h3>
+        <p>通过 <code>pip install -U heretic-llm[research]</code> 安装扩展功能：</p>
+        <ul>
+            <li><code>--plot-residuals</code>：生成残差向量的 PaCMAP 2D 投影图和动画 GIF，可视化模型各层对"有害/无害"提示的内部表征差异</li>
+            <li><code>--print-residual-geometry</code>：输出详细的残差几何分析表，包含余弦相似度、L2 范数、轮廓系数等定量指标</li>
+        </ul>
+    </div>
+</div>
+
+<!-- 核心创新点 -->
+<div class="section">
+    <h2>三、核心创新点</h2>
+    <div class="card">
+        <h3>3.1 灵活的消融权重核函数</h3>
+        <p>不同于传统方法对所有层施加常量消融权重，Heretic 引入了参数化的核函数形状，结合自动优化可以在"合规性/质量"权衡上取得更好效果。这一思路部分源自 Maxime Labonne 在 gemma-3-12b-it-abliterated-v2 中的非等权重探索。</p>
+
+        <h3>3.2 浮点数拒绝方向索引</h3>
+        <p>传统方法的拒绝方向索引为整数（对应特定层），而 Heretic 将其扩展为<strong>浮点数</strong>，对非整数值取相邻两层的线性插值。这解锁了远超差均值计算所得的额外方向空间，优化器常常能找到比任何单层方向更优的向量。</p>
+
+        <h3>3.3 按组件分离的消融参数</h3>
+        <p>作者发现 MLP 干预对模型的损害通常大于 Attention 干预，因此 Heretic 为不同组件选择独立的消融参数，进一步优化了合规性与模型质量的平衡。</p>
+
+        <h3>3.4 全自动化 + 双目标优化</h3>
+        <p>传统 abliteration 方法需要大量手动调参和专业知识，Heretic 将整个流程封装为一行命令，同时联合优化拒绝抑制和能力保持两个目标，让非专家用户也能生成高质量的去审查模型。</p>
+    </div>
+</div>
+
+<!-- 性能基准 -->
+<div class="section">
+    <h2>四、性能基准</h2>
+    <div class="card">
+        <h3>4.1 Gemma-3-12B-IT 对比</h3>
+        <table>
+            <tr>
+                <th>模型</th>
+                <th>"有害"提示拒绝次数（/100）</th>
+                <th>"无害"提示 KL 散度</th>
+            </tr>
+            <tr>
+                <td>google/gemma-3-12b-it（原始）</td>
+                <td>97</td>
+                <td>0（基准）</td>
+            </tr>
+            <tr>
+                <td>mlabonne/gemma-3-12b-it-abliterated-v2</td>
+                <td>3</td>
+                <td>1.04</td>
+            </tr>
+            <tr>
+                <td>huihui-ai/gemma-3-12b-it-abliterated</td>
+                <td>3</td>
+                <td>0.45</td>
+            </tr>
+            <tr style="background:rgba(63,185,80,0.08);">
+                <td><strong>p-e-w/gemma-3-12b-it-heretic</strong></td>
+                <td><strong>3</strong></td>
+                <td><strong>0.16</strong></td>
+            </tr>
+        </table>
+        <div class="highlight-box">
+            Heretic 在达到相同拒绝抑制效果（3/100）的同时，KL 散度仅为最佳竞品的 <strong>1/6.5</strong>，意味着对原始模型能力的损害极小。
+        </div>
+        <p>Heretic 生成的模型在 MMLU、GSM8K 等标准基准上也被独立验证，表现优于或等于竞品工具生成的模型。</p>
+    </div>
+
+    <div class="card">
+        <h3>4.2 硬件需求与运行时间</h3>
+        <table>
+            <tr><th>配置项</th><th>说明</th></tr>
+            <tr><td>最低 PyTorch 版本</td><td>2.2+（部分模型需 2.6+）</td></tr>
+            <tr><td>Python 版本</td><td>3.10+</td></tr>
+            <tr><td>典型运行时间</td><td>RTX 3090 上处理 Qwen3-4B 约 20-30 分钟</td></tr>
+            <tr><td>量化支持</td><td>bitsandbytes 4-bit 量化（<code>bnb_4bit</code>），大幅降低显存需求</td></tr>
+            <tr><td>自动批处理</td><td>启动时自动基准测试确定最优 batch size</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+    <h2>五、应用场景</h2>
+    <div class="card">
+        <table>
+            <tr><th>场景</th><th>说明</th></tr>
+            <tr>
+                <td>学术研究</td>
+                <td>研究 LLM 安全对齐的内部机制、模型可解释性（interpretability），了解安全训练如何编码在模型权重中</td>
+            </tr>
+            <tr>
+                <td>AI 安全评估</td>
+                <td>红队测试（Red Teaming）：评估安全对齐的鲁棒性，发现对齐漏洞</td>
+            </tr>
+            <tr>
+                <td>本地部署自由化</td>
+                <td>为需要无审查 AI 的场景（创意写作、代码审计、敏感话题讨论等）提供技术支持</td>
+            </tr>
+            <tr>
+                <td>模型对比分析</td>
+                <td>利用内置的评估功能，定量比较不同 abliteration 方法的质量</td>
+            </tr>
+            <tr>
+                <td>可解释性可视化</td>
+                <td>利用研究功能生成残差向量投影图和几何分析，深入理解模型内部表征</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- 竞品对比 -->
+<div class="section">
+    <h2>六、竞品对比</h2>
+    <div class="card">
+        <table>
+            <tr>
+                <th>工具</th>
+                <th>自动化程度</th>
+                <th>参数优化</th>
+                <th>模型损伤程度</th>
+                <th>易用性</th>
+            </tr>
+            <tr style="background:rgba(63,185,80,0.08);">
+                <td><strong>Heretic</strong></td>
+                <td>完全自动</td>
+                <td>Optuna TPE（双目标）</td>
+                <td>极低（KL=0.16）</td>
+                <td>一行命令</td>
+            </tr>
+            <tr>
+                <td>FailSpy/abliterator</td>
+                <td>半手动</td>
+                <td>无自动优化</td>
+                <td>较高</td>
+                <td>需 Jupyter Notebook</td>
+            </tr>
+            <tr>
+                <td>AutoAbliteration</td>
+                <td>半自动</td>
+                <td>有限</td>
+                <td>中高</td>
+                <td>需要配置</td>
+            </tr>
+            <tr>
+                <td>ErisForge</td>
+                <td>手动</td>
+                <td>无</td>
+                <td>较高</td>
+                <td>需专业知识</td>
+            </tr>
+            <tr>
+                <td>DECCP</td>
+                <td>手动</td>
+                <td>有限</td>
+                <td>中等</td>
+                <td>需专业知识</td>
+            </tr>
+        </table>
+        <p>根据 arXiv 论文（2512.13655）的系统比较，Heretic 在 16 个指令微调模型上的综合表现优于 DECCP、ErisForge 和 FailSpy/abliterator。</p>
+    </div>
+</div>
+
+<!-- 使用方式 -->
+<div class="section">
+    <h2>七、快速使用</h2>
+    <div class="card">
+        <pre><code># 安装
+pip install -U heretic-llm
+
+# 一行命令去审查
+heretic Qwen/Qwen3-4B-Instruct-2507
+
+# 启用量化（低显存环境）
+heretic Qwen/Qwen3-4B-Instruct-2507 --quantization bnb_4bit
+
+# 评估已有模型
+heretic --model google/gemma-3-12b-it --evaluate-model p-e-w/gemma-3-12b-it-heretic
+
+# 生成残差可视化（需安装 research 扩展）
+pip install -U heretic-llm[research]
+heretic Qwen/Qwen3-4B-Instruct-2507 --plot-residuals</code></pre>
+    </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+    <h2>八、综合评分</h2>
+    <div class="score-grid">
+        <div class="score-card">
+            <div class="score-label">技术创新性</div>
+            <div class="score-value" style="color:var(--accent-blue);">9.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--accent-blue);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">工程完成度</div>
+            <div class="score-value" style="color:var(--accent-green);">9.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--accent-green);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">易用性</div>
+            <div class="score-value" style="color:var(--accent-cyan);">9.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--accent-cyan);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">社区活跃度</div>
+            <div class="score-value" style="color:var(--accent-orange);">9.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--accent-orange);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">文档质量</div>
+            <div class="score-value" style="color:var(--accent-purple);">8.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--accent-purple);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">实用价值</div>
+            <div class="score-value" style="color:var(--accent-green);">8.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--accent-green);"></div></div>
+        </div>
+    </div>
+    <div class="overall-score">
+        <div class="big-score">9.0 / 10</div>
+        <div class="score-text">综合评分 · 卓越</div>
+    </div>
+</div>
+
+<!-- 总结 -->
+<div class="section">
+    <h2>九、总结</h2>
+    <div class="card">
+        <p><strong>Heretic</strong> 是目前 LLM abliteration 领域技术最先进、工程完成度最高的开源工具。它通过三项关键创新（灵活核函数、浮点方向索引、组件分离参数）配合 Optuna 双目标优化，在自动化程度和输出质量上都显著超越了现有竞品。</p>
+        <p>项目适合 AI 安全研究人员、红队测试人员、本地 LLM 部署者以及对模型可解释性感兴趣的学者使用。其一键式操作和极低的模型损伤（KL 散度仅为竞品的 1/6.5）使其成为该领域的事实标准工具。</p>
+        <div class="warning-box">
+            <strong>注意：</strong>该工具涉及移除 AI 安全对齐机制，使用者应遵守当地法律法规，仅在合法授权的研究和教育场景下使用。
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <p>分析日期：2026-05-28 · 数据来源：GitHub、arXiv、Reddit r/LocalLLaMA、Trendshift</p>
+    <p>仓库地址：<a href="https://github.com/p-e-w/heretic" style="color:var(--accent-blue);">github.com/p-e-w/heretic</a></p>
+</div>
+
+</body>
+</html>
