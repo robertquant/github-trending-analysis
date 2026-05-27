@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析: ZOZO's Contact Solver (ppf-contact-solver)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1a1b26 0%, #0d1117 50%, #161b22 100%);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid #21262d;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+        .header .subtitle { color: #8b949e; font-size: 1.1em; }
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            background: #161b22;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            border: 1px solid #21262d;
+        }
+        .card {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid #21262d;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #30363d; }
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #58a6ff, #79c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card h3 { color: #d2a8ff; margin: 16px 0 10px; font-size: 1.15em; }
+        .card p { margin-bottom: 12px; color: #c9d1d9; }
+        .card ul { padding-left: 20px; margin-bottom: 12px; }
+        .card li { margin-bottom: 6px; }
+        .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .tag {
+            background: linear-gradient(135deg, #1f6feb33, #388bfd33);
+            border: 1px solid #1f6feb55;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.82em;
+            color: #79c0ff;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-item {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            border: 1px solid #21262d;
+        }
+        .score-item .label { color: #8b949e; font-size: 0.85em; margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-item .bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #21262d;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill { height: 100%; border-radius: 2px; }
+        .s9 { color: #3fb950; }
+        .s8 { color: #58a6ff; }
+        .s7 { color: #d29922; }
+        .s6 { color: #f0883e; }
+        .bar-s9 { background: linear-gradient(90deg, #3fb950, #56d364); }
+        .bar-s8 { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+        .bar-s7 { background: linear-gradient(90deg, #d29922, #e3b341); }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9em;
+        }
+        .comparison-table th {
+            background: #0d1117;
+            padding: 12px;
+            text-align: left;
+            color: #58a6ff;
+            border-bottom: 2px solid #21262d;
+        }
+        .comparison-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #21262d;
+        }
+        .comparison-table tr:hover td { background: #1c2128; }
+        .highlight { color: #3fb950; font-weight: 600; }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', Consolas, monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: #e6edf3;
+        }
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .func { color: #d2a8ff; }
+        .reason-list { list-style: none; padding: 0; counter-reset: reason; }
+        .reason-list li {
+            counter-increment: reason;
+            padding: 12px 16px 12px 50px;
+            position: relative;
+            margin-bottom: 10px;
+            background: #0d1117;
+            border-radius: 8px;
+            border: 1px solid #21262d;
+        }
+        .reason-list li::before {
+            content: counter(reason);
+            position: absolute;
+            left: 16px;
+            top: 12px;
+            background: linear-gradient(135deg, #1f6feb, #a371f7);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #484f58;
+            font-size: 0.85em;
+        }
+        .footer a { color: #58a6ff; text-decoration: none; }
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .header h1 { font-size: 1.6em; }
+            .card { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>ZOZO's Contact Solver</h1>
+        <p class="subtitle">GPU 加速的物理仿真接触求解器 — 彻底解决"穿模"问题</p>
+        <div class="meta">
+            <span>🏢 ZOZO, Inc. (st-tech)</span>
+            <span>⭐ ~3,100 Stars</span>
+            <span>📜 Apache 2.0</span>
+            <span>🐍 Python + CUDA + Rust</span>
+        </div>
+    </div>
+
+    <!-- 项目简介 -->
+    <div class="card">
+        <h2>📋 项目简介与核心功能</h2>
+        <p><strong>ppf-contact-solver</strong> 是由日本最大时尚电商公司 <strong>ZOZO, Inc.</strong> 开发并开源的物理仿真接触求解器，发表于 ACM Transactions on Graphics (TOG) 2024。它专注于解决物理仿真中"穿模/穿透"这一长期难题，能够处理壳体（cloth）、实体（solid）和杆件（rod）之间的复杂接触问题。</p>
+        <h3>核心功能</h3>
+        <ul>
+            <li><strong>零穿透保证</strong>：所有接触解析均确保无穿透，通过 GitHub Actions 自动化测试（每个场景连续运行 10 次）验证</li>
+            <li><strong>超大规摸并行</strong>：极端案例支持超过 <strong>1.8 亿</strong> 个接触点，全部在 GPU 上单精度运算</li>
+            <li><strong>有限元方法（FEM）</strong>：使用 FEM 处理可变形体，采用符号力雅可比矩阵</li>
+            <li><strong>严格应变限制</strong>：三角形面片不超过严格上限（如 1%），模拟效果不会出现"橡皮筋"感</li>
+            <li><strong>Blender 插件</strong>：2026年4月发布官方 Blender Add-on，支持远程模拟（甚至在 macOS 上使用）</li>
+            <li><strong>JupyterLab 前端</strong>：浏览器中即可运行完整仿真流程</li>
+            <li><strong>MCP 支持</strong>：支持通过自然语言让 LLM（如 Claude）驱动仿真</li>
+            <li><strong>一键部署</strong>：Windows 原生可执行文件、Docker 镜像（~1GB）、AWS/GCP/vast.ai 云端部署</li>
+        </ul>
+        <div class="tag-container">
+            <span class="tag">物理仿真</span>
+            <span class="tag">接触求解</span>
+            <span class="tag">GPU 加速</span>
+            <span class="tag">CUDA</span>
+            <span class="tag">Blender</span>
+            <span class="tag">FEM</span>
+            <span class="tag">布料模拟</span>
+            <span class="tag">开源</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2>🏗️ 技术架构与特点</h2>
+        <h3>核心算法</h3>
+        <p>基于论文 <em>"A Cubic Barrier with Elasticity-Inclusive Dynamic Stiffness"</em>（ACM TOG 2024），提出了一种三次势垒函数，将弹性力纳入动态刚度计算，从根本上避免了传统惩罚法（penalty method）的参数调优问题。</p>
+        <h3>技术栈</h3>
+        <table class="comparison-table">
+            <tr><th>组件</th><th>技术</th></tr>
+            <tr><td>求解器核心</td><td>C++ / CUDA 12.8+</td></tr>
+            <tr><td>Python 前端</td><td>Python 3 (JupyterLab)</td></tr>
+            <tr><td>Blender 插件</td><td>Python + Rust (编译为扩展)</td></tr>
+            <tr><td>容器化</td><td>Docker (~1GB 镜像)</td></tr>
+            <tr><td>CI/CD</td><td>GitHub Actions (GPU runner)</td></tr>
+            <tr><td>文档</td><td>Sphinx + GitHub Pages</td></tr>
+        </table>
+        <h3>架构亮点</h3>
+        <ul>
+            <li><strong>客户端-服务器分离</strong>：Blender/JupyterLab 作为前端，求解器作为后端服务运行（可在远程 GPU 上）</li>
+            <li><strong>方法链式 API</strong>：采用 JavaScript 风格的方法链，Python API 直观易读</li>
+            <li><strong>内置网格生成</strong>：<code>.triangulate()</code> 和 <code>.tetrahedralize()</code> 无需外部 CAD 工具</li>
+            <li><strong>GPU 全流程并行</strong>：接触和弹性求解器均运行在 GPU 上，单精度浮点</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2>🎯 应用场景</h2>
+        <ul>
+            <li><strong>虚拟试衣 / 数字时尚</strong>：ZOZO 作为时尚电商，核心需求是精确的服装物理仿真，用于虚拟试穿和产品展示</li>
+            <li><strong>游戏和影视特效</strong>：解决游戏和动画中长期存在的"穿模"问题（角色衣物穿过身体等）</li>
+            <li><strong>工程仿真</strong>：汽车碰撞测试、材料力学分析中的接触问题</li>
+            <li><strong>机器人仿真</strong>：机器人抓取、柔性物体操作中的接触建模</li>
+            <li><strong>医疗仿真</strong>：手术模拟、器官变形等生物力学应用</li>
+            <li><strong>纺织品设计</strong>：面料褶皱、编织结构的物理模拟</li>
+        </ul>
+    </div>
+
+    <!-- 为什么火 -->
+    <div class="card">
+        <h2>🔥 为什么火（Trending 原因）</h2>
+        <ol class="reason-list">
+            <li><strong>解决了行业长期痛点</strong>：物理仿真中的"穿模"问题困扰游戏和影视行业数十年，该求解器提供数学保证的零穿透解</li>
+            <li><strong>Blender 插件发布</strong>：2026年4月发布官方 Blender Add-on，让数百万 Blender 用户首次接触到此技术</li>
+            <li><strong>Two Minute Papers 报道</strong>：知名 YouTube 科技频道 Two Minute Papers 专题报道，标题为"The Worst Bug In Games Is Now Gone Forever"，引发病毒式传播</li>
+            <li><strong>顶级学术背景</strong>：发表于 ACM TOG（计算机图形学顶刊），学术严谨性有保障</li>
+            <li><strong>极致工程品质</strong>：GitHub Actions 连续 10 次自动化测试、Docker 一键部署、完善的 Python API 文档</li>
+            <li><strong>来自 ZOZO 的反差惊喜</strong>：一家日本时尚电商公司发布高质量物理引擎，出人意料，引发好奇和讨论</li>
+            <li><strong>Apache 2.0 开源</strong>：完全允许商业使用，降低了采用门槛</li>
+        </ol>
+    </div>
+
+    <!-- 同类项目对比 -->
+    <div class="card">
+        <h2>⚔️ 同类项目对比</h2>
+        <table class="comparison-table">
+            <tr>
+                <th>特性</th>
+                <th>ppf-contact-solver</th>
+                <th>Blender 内置布料</th>
+                <th>NVIDIA PhysX</th>
+                <th>Maya nCloth</th>
+            </tr>
+            <tr>
+                <td>零穿透保证</td>
+                <td class="highlight">✓ 数学保证</td>
+                <td>✗</td>
+                <td>✗</td>
+                <td>部分</td>
+            </tr>
+            <tr>
+                <td>GPU 加速</td>
+                <td class="highlight">✓ 全流程 GPU</td>
+                <td>部分</td>
+                <td>✓</td>
+                <td>✗</td>
+            </tr>
+            <tr>
+                <td>最大接触数</td>
+                <td class="highlight">1.8亿+</td>
+                <td>~百万级</td>
+                <td>~百万级</td>
+                <td>~十万级</td>
+            </tr>
+            <tr>
+                <td>开源</td>
+                <td class="highlight">✓ Apache 2.0</td>
+                <td>✓ GPL</td>
+                <td>✓ (部分)</td>
+                <td>✗</td>
+            </tr>
+            <tr>
+                <td>Blender 集成</td>
+                <td class="highlight">✓ 官方插件</td>
+                <td>内置</td>
+                <td>第三方</td>
+                <td>✗</td>
+            </tr>
+            <tr>
+                <td>应变限制</td>
+                <td class="highlight">严格 (≤1%)</td>
+                <td>需手动调参</td>
+                <td>近似</td>
+                <td>近似</td>
+            </tr>
+            <tr>
+                <td>实时性</td>
+                <td>离线/交互速率</td>
+                <td>✓ 实时</td>
+                <td>✓ 实时</td>
+                <td>离线</td>
+            </tr>
+            <tr>
+                <td>价格</td>
+                <td class="highlight">免费</td>
+                <td>免费</td>
+                <td>免费</td>
+                <td>付费 (Maya 许可)</td>
+            </tr>
+        </table>
+        <p style="margin-top: 12px; color: #8b949e; font-size: 0.9em;">注：ppf-contact-solver 定位为<strong>离线高质量仿真</strong>，不追求实时性，但在接触精度和稳定性上远超竞品。</p>
+    </div>
+
+    <!-- 适合谁使用 -->
+    <div class="card">
+        <h2>👥 适合谁使用</h2>
+        <table class="comparison-table">
+            <tr><th>用户类型</th><th>适合度</th><th>说明</th></tr>
+            <tr><td>Blender 艺术家</td><td class="highlight">★★★★★</td><td>官方插件 + 远程 GPU 模式，macOS 也能用</td></tr>
+            <tr><td>游戏/影视特效师</td><td class="highlight">★★★★★</td><td>彻底解决穿模问题，生产级质量</td></tr>
+            <tr><td>图形学研究者</td><td class="highlight">★★★★☆</td><td>TOG 论文 + 参考实现，可复现和扩展</td></tr>
+            <tr><td>服装/时尚行业</td><td class="highlight">★★★★☆</td><td>ZOZO 本行，虚拟试衣场景</td></tr>
+            <tr><td>Python 开发者</td><td>★★★★☆</td><td>JupyterLab 界面友好，API 文档完善</td></tr>
+            <tr><td>工程仿真工程师</td><td>★★★☆☆</td><td>主要面向布料，实体和杆件仿真尚在发展中</td></tr>
+            <tr><td>独立游戏开发者</td><td>★★★☆☆</td><td>离线仿真，非实时，适合预计算而非运行时</td></tr>
+        </table>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="card">
+        <h2>🚀 快速上手指南</h2>
+        <h3>方式一：Windows 原生（最简单）</h3>
+        <div class="code-block">
+<span class="comment"># 1. 安装最新 NVIDIA 驱动</span>
+<span class="comment"># 2. 从 GitHub Releases 下载并解压 (~320MB)</span>
+<span class="comment"># 3. 双击 start.bat 即可</span>
+<span class="comment"># 浏览器自动打开 http://localhost:8080</span>
+        </div>
+
+        <h3>方式二：Docker（推荐 Linux/macOS 用户）</h3>
+        <div class="code-block">
+<span class="comment"># 拉取并运行 Docker 镜像 (~1GB)</span>
+docker run --rm -it \
+  --name ppf-contact-solver \
+  --gpus all \
+  -p 8080:8080 \
+  -p 9090:9090 \
+  -e WEB_PORT=8080 \
+  ghcr.io/st-tech/ppf-contact-solver-compiled:latest
+
+<span class="comment"># 打开浏览器访问 http://localhost:8080</span>
+        </div>
+
+        <h3>方式三：Blender 插件</h3>
+        <div class="code-block">
+<span class="comment"># 1. 先用 Docker 或 Windows 启动求解器服务</span>
+<span class="comment"># 2. 在 Blender 5+ 中安装官方 Add-on</span>
+<span class="comment"># 3. 配置求解器地址 (如 localhost:9090)</span>
+<span class="comment"># 4. 在 Blender 中创建场景并运行仿真</span>
+<span class="comment"># 注意：Blender 可运行在 macOS，仿真在远程 GPU</span>
+        </div>
+
+        <h3>Python API 示例（JupyterLab）</h3>
+        <div class="code-block">
+<span class="keyword">from</span> frontend <span class="keyword">import</span> App
+
+app = App.<span class="func">create</span>(<span class="string">"drape"</span>)
+
+<span class="comment"># 创建一个 128 分辨率的方形网格</span>
+V, F = app.mesh.<span class="func">square</span>(res=128, ex=[1, 0, 0], ey=[0, 0, 1])
+app.asset.add.<span class="func">tri</span>(<span class="string">"sheet"</span>, V, F)
+
+<span class="comment"># 创建一个球体</span>
+V, F = app.mesh.<span class="func">icosphere</span>(r=0.5, subdiv_count=4)
+app.asset.add.<span class="func">tri</span>(<span class="string">"sphere"</span>, V, F)
+
+<span class="comment"># 创建场景并设置仿真参数</span>
+scene = app.scene.<span class="func">create</span>()
+scene.<span class="func">add</span>(<span class="string">"sheet"</span>).<span class="func">at</span>(0, 0, 0).<span class="func">pin</span>()
+scene.<span class="func">add</span>(<span class="string">"sphere"</span>).<span class="func">at</span>(0, -0.5, 0).<span class="func">pin</span>()
+scene = scene.<span class="func">build</span>()
+
+<span class="comment"># 运行仿真</span>
+session = app.session.<span class="func">create</span>(scene)
+session.param.<span class="func">set</span>(<span class="string">"frames"</span>, 100).<span class="func">set</span>(<span class="string">"dt"</span>, 0.01)
+session.<span class="func">build</span>().<span class="func">start</span>().<span class="func">preview</span>()
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2>📊 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">🔬 创新性</div>
+                <div class="value s9">9.5</div>
+                <div class="bar"><div class="bar-fill bar-s9" style="width: 95%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">💻 代码质量</div>
+                <div class="value s9">9.0</div>
+                <div class="bar"><div class="bar-fill bar-s9" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">🛠️ 实用性</div>
+                <div class="value s8">8.5</div>
+                <div class="bar"><div class="bar-fill bar-s8" style="width: 85%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">📖 文档完善度</div>
+                <div class="value s9">9.0</div>
+                <div class="bar"><div class="bar-fill bar-s9" style="width: 90%"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">🌐 社区活跃度</div>
+                <div class="value s8">8.0</div>
+                <div class="bar"><div class="bar-fill bar-s8" style="width: 80%"></div></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 24px; padding: 16px; background: #0d1117; border-radius: 10px; border: 1px solid #21262d;">
+            <span style="color: #8b949e; font-size: 0.9em;">综合评分</span><br>
+            <span style="font-size: 2.4em; font-weight: 800; background: linear-gradient(90deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">8.8 / 10</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>分析日期: 2026-05-27 | 数据来源: <a href="https://github.com/st-tech/ppf-contact-solver">GitHub</a></p>
+        <p style="margin-top: 6px;">🤖 由 AI 自动深度分析生成 | Powered by Claude Code</p>
+    </div>
+
+</div>
+</body>
+</html>
