@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenStock 深度分析 | GitHub Trending</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+  .header { text-align: center; margin-bottom: 48px; }
+  .header h1 {
+    font-size: 2.4em; font-weight: 800; margin-bottom: 12px;
+    background: linear-gradient(135deg, #58a6ff 0%, #3fb950 50%, #d2a8ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header .subtitle { color: #8b949e; font-size: 1.1em; }
+  .header .meta { display: flex; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; }
+  .badge-blue { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+  .badge-green { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+  .badge-purple { background: rgba(210,168,255,0.15); color: #d2a8ff; border: 1px solid rgba(210,168,255,0.3); }
+  .badge-orange { background: rgba(255,166,87,0.15); color: #ffa657; border: 1px solid rgba(255,166,87,0.3); }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 28px; margin-bottom: 24px; }
+  .card h2 { font-size: 1.4em; margin-bottom: 16px; color: #f0f6fc; display: flex; align-items: center; gap: 10px; }
+  .card h2 .icon { font-size: 1.2em; }
+  .card p { color: #c9d1d9; margin-bottom: 12px; }
+  .card ul { padding-left: 20px; margin-bottom: 12px; }
+  .card li { margin-bottom: 8px; color: #c9d1d9; }
+  .card li strong { color: #f0f6fc; }
+  .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+  .tech-item { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; text-align: center; }
+  .tech-item .name { font-weight: 700; color: #58a6ff; font-size: 0.95em; }
+  .tech-item .desc { color: #8b949e; font-size: 0.8em; margin-top: 4px; }
+  .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
+  .score-item { text-align: center; padding: 16px 8px; background: #0d1117; border-radius: 10px; border: 1px solid #30363d; }
+  .score-item .score { font-size: 2em; font-weight: 800; }
+  .score-item .label { font-size: 0.8em; color: #8b949e; margin-top: 4px; }
+  .score-high { color: #3fb950; }
+  .score-mid { color: #ffa657; }
+  .score-low { color: #f85149; }
+  .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 0.88em; overflow-x: auto; margin: 12px 0; color: #c9d1d9; }
+  .comparison-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .comparison-table th, .comparison-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #30363d; }
+  .comparison-table th { background: #0d1117; color: #58a6ff; font-weight: 700; font-size: 0.9em; }
+  .comparison-table td { font-size: 0.9em; }
+  .comparison-table tr:hover { background: rgba(88,166,255,0.05); }
+  .highlight { color: #3fb950; font-weight: 600; }
+  .warning { color: #ffa657; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 600; margin: 2px; }
+  .tag-ts { background: rgba(49,120,198,0.2); color: #58a6ff; }
+  .tag-next { background: rgba(200,200,200,0.15); color: #e0e0e0; }
+  .tag-mongo { background: rgba(77,179,61,0.2); color: #4db33d; }
+  .tag-tailwind { background: rgba(56,189,248,0.2); color: #38bdf8; }
+  .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.85em; }
+  .footer a { color: #58a6ff; text-decoration: none; }
+  .why-section .reason { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; padding: 12px; background: #0d1117; border-radius: 8px; border-left: 3px solid #3fb950; }
+  .why-section .reason .num { font-size: 1.4em; font-weight: 800; color: #3fb950; min-width: 32px; }
+  .why-section .reason .text { flex: 1; }
+  .why-section .reason .text strong { color: #f0f6fc; }
+  .steps { counter-reset: step; }
+  .step { counter-increment: step; display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+  .step::before { content: counter(step); min-width: 36px; height: 36px; background: linear-gradient(135deg, #58a6ff, #3fb950); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0d1117; font-size: 0.95em; flex-shrink: 0; }
+  .total-score { text-align: center; padding: 28px; margin-top: 16px; background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(63,185,80,0.1)); border-radius: 12px; border: 1px solid #30363d; }
+  .total-score .big { font-size: 3.5em; font-weight: 900; background: linear-gradient(135deg, #58a6ff, #3fb950); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .total-score .label { color: #8b949e; font-size: 1em; margin-top: 4px; }
+  @media (max-width: 640px) {
+    .header h1 { font-size: 1.6em; }
+    .score-grid { grid-template-columns: repeat(3, 1fr); }
+    .tech-grid { grid-template-columns: repeat(2, 1fr); }
+    .card { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>OpenStock</h1>
+    <div class="subtitle">开源股票市场平台 — 替代昂贵付费工具的免费方案</div>
+    <div class="meta">
+      <span class="badge badge-blue">Open-Dev-Society/OpenStock</span>
+      <span class="badge badge-green">AGPL-3.0</span>
+      <span class="badge badge-purple">TypeScript 93.4%</span>
+      <span class="badge badge-orange">Next.js 15</span>
+    </div>
+    <div class="meta" style="margin-top:8px;">
+      <span class="tag tag-ts">TypeScript</span>
+      <span class="tag tag-next">Next.js 15</span>
+      <span class="tag tag-mongo">MongoDB</span>
+      <span class="tag tag-tailwind">Tailwind CSS v4</span>
+      <span class="tag tag-ts">shadcn/ui</span>
+      <span class="tag tag-next">TradingView</span>
+      <span class="tag tag-mongo">Finnhub</span>
+    </div>
+  </div>
+
+  <!-- 项目简介 -->
+  <div class="card">
+    <h2><span class="icon">📖</span> 项目简介与核心功能</h2>
+    <p><strong>OpenStock</strong> 是一个由 <strong>Open Dev Society</strong> 社区构建的开源股票市场应用，旨在替代 Bloomberg Terminal、Yahoo Finance Premium 等昂贵的市场平台。项目秉持"技术属于每个人"的理念，提供完全免费、永久开放的股票市场数据追踪与分析工具。</p>
+    <ul>
+      <li><strong>实时价格追踪</strong> — 基于 Finnhub API 获取股票实时报价，支持全球市场</li>
+      <li><strong>个性化 Watchlist</strong> — 用户自选股票列表，存储在 MongoDB 中</li>
+      <li><strong>TradingView 图表</strong> — 嵌入 K 线图、技术分析、热力图等专业图表组件</li>
+      <li><strong>全局搜索 + Command Palette</strong> — 快速搜索股票（Cmd/Ctrl+K），支持模糊匹配</li>
+      <li><strong>市场概览</strong> — 热力图、行情报价、热门新闻一站式查看</li>
+      <li><strong>情感分析</strong> — 整合 Reddit、X.com、新闻和 Polymarket 的市场情绪数据（Adanos API）</li>
+      <li><strong>个性化 Onboarding</strong> — 收集国家、投资目标、风险偏好、行业偏好</li>
+      <li><strong>AI 邮件推送</strong> — Gemini 驱动的个性化欢迎邮件 + 每日新闻摘要</li>
+      <li><strong>深色主题 UI</strong> — shadcn/ui + Radix UI 精美界面，暗色主题为默认</li>
+    </ul>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="card">
+    <h2><span class="icon">⚙️</span> 技术架构与特点</h2>
+    <p>项目采用现代全栈 TypeScript 架构，技术选型非常前沿：</p>
+    <div class="tech-grid">
+      <div class="tech-item"><div class="name">Next.js 15</div><div class="desc">App Router + React 19</div></div>
+      <div class="tech-item"><div class="name">TypeScript</div><div class="desc">93.4% 覆盖率</div></div>
+      <div class="tech-item"><div class="name">Tailwind CSS v4</div><div class="desc">PostCSS 集成</div></div>
+      <div class="tech-item"><div class="name">shadcn/ui</div><div class="desc">Radix UI 原语</div></div>
+      <div class="tech-item"><div class="name">MongoDB</div><div class="desc">Mongoose ODM</div></div>
+      <div class="tech-item"><div class="name">Better Auth</div><div class="desc">邮箱/密码认证</div></div>
+      <div class="tech-item"><div class="name">Finnhub API</div><div class="desc">市场数据源</div></div>
+      <div class="tech-item"><div class="name">TradingView</div><div class="desc">嵌入式图表组件</div></div>
+      <div class="tech-item"><div class="name">Inngest</div><div class="desc">事件驱动 + Cron</div></div>
+      <div class="tech-item"><div class="name">Gemini AI</div><div class="desc">AI 邮件生成</div></div>
+      <div class="tech-item"><div class="name">Docker</div><div class="desc">一键部署</div></div>
+      <div class="tech-item"><div class="name">Nodemailer</div><div class="desc">邮件服务</div></div>
+    </div>
+    <p style="margin-top:16px;"><strong>架构亮点：</strong></p>
+    <ul>
+      <li><strong>App Router 模式</strong> — 利用 Next.js 15 的 App Router + Server Actions 实现高效服务端渲染</li>
+      <li><strong>事件驱动</strong> — Inngest 处理用户注册事件、每日 Cron 任务，解耦业务逻辑</li>
+      <li><strong>AI 集成</strong> — 支持 Gemini、MiniMax、Siray 多 AI 提供商，用于个性化邮件生成</li>
+      <li><strong>Docker 一键部署</strong> — 包含 MongoDB 的完整 Docker Compose 配置</li>
+    </ul>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="card">
+    <h2><span class="icon">🎯</span> 应用场景</h2>
+    <ul>
+      <li><strong>个人投资者</strong> — 追踪自选股、查看行情图表、阅读市场新闻，替代付费的 Bloomberg/Yahoo Finance</li>
+      <li><strong>金融学习者</strong> — 了解股票市场运作，通过开源代码学习金融数据可视化</li>
+      <li><strong>开发者</strong> — 学习 Next.js 15 + App Router + MongoDB + TradingView 的全栈实战项目</li>
+      <li><strong>自托管需求</strong> — 部署私有的股票追踪平台，数据完全掌控在自己手中</li>
+      <li><strong>社区/教育组织</strong> — 为社区成员提供免费的金融工具，践行开放知识理念</li>
+    </ul>
+  </div>
+
+  <!-- 为什么火 -->
+  <div class="card why-section">
+    <h2><span class="icon">🔥</span> 为什么火 (Trending 原因)</h2>
+    <div class="reason">
+      <div class="num">1</div>
+      <div class="text"><strong>精准的痛点定位</strong> — 金融数据平台要么昂贵（Bloomberg），要么功能受限且广告多（Yahoo Finance）。OpenStock 填补了"免费且专业"的空白。</div>
+    </div>
+    <div class="reason">
+      <div class="num">2</div>
+      <div class="text"><strong>前沿技术栈</strong> — Next.js 15 + React 19 + Tailwind CSS v4 + shadcn/ui，代表了 2026 年前端开发的最佳实践，对开发者具有极高的学习参考价值。</div>
+    </div>
+    <div class="reason">
+      <div class="num">3</div>
+      <div class="text"><strong>开放社区理念</strong> — Open Dev Society 的宣言（"技术属于每个人"）在当前 AI 和金融领域普遍收费的大环境下，引发了广泛共鸣。</div>
+    </div>
+    <div class="reason">
+      <div class="num">4</div>
+      <div class="text"><strong>AI 赋能金融</strong> — 集成 Gemini AI 生成个性化投资摘要，结合社交媒体情感分析（Reddit/X/Polymarket），是 "AI + 金融" 趋势的典型代表。</div>
+    </div>
+    <div class="reason">
+      <div class="num">5</div>
+      <div class="text"><strong>社交传播效应</strong> — 在 Reddit、Medium、Instagram、Threads 等多个平台广泛传播，加上 HelloGitHub 推荐，迅速积累了社区关注度。</div>
+    </div>
+  </div>
+
+  <!-- 同类项目对比 -->
+  <div class="card">
+    <h2><span class="icon">⚖️</span> 同类项目对比</h2>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>项目</th>
+          <th>定位</th>
+          <th>技术栈</th>
+          <th>AI 功能</th>
+          <th>部署方式</th>
+          <th>特色</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong class="highlight">OpenStock</strong></td>
+          <td>股票追踪平台</td>
+          <td>Next.js + MongoDB</td>
+          <td>Gemini AI</td>
+          <td>Docker / Vercel</td>
+          <td>现代 UI + 情感分析</td>
+        </tr>
+        <tr>
+          <td>Ghostfolio</td>
+          <td>投资组合管理</td>
+          <td>Angular + Prisma</td>
+          <td>无</td>
+          <td>Docker</td>
+          <td>隐私优先，轻量</td>
+        </tr>
+        <tr>
+          <td>OpenBB</td>
+          <td>投资研究终端</td>
+          <td>Python</td>
+          <td>AI 插件</td>
+          <td>桌面 / Web</td>
+          <td>专业研究，Jupyter</td>
+        </tr>
+        <tr>
+          <td>Maybe</td>
+          <td>个人财务管理</td>
+          <td>Ruby on Rails</td>
+          <td>无</td>
+          <td>Docker</td>
+          <td>现代设计，全栈</td>
+        </tr>
+        <tr>
+          <td>Portfolio Performance</td>
+          <td>桌面投资分析</td>
+          <td>Java</td>
+          <td>无</td>
+          <td>桌面应用</td>
+          <td>税务报告，欧洲市场</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px;">OpenStock 的差异化优势在于：<strong>现代 Web 技术栈 + AI 集成 + 社交媒体情感分析 + 精美 UI</strong>，定位在"面向所有人的免费金融平台"，而非专业交易终端。</p>
+  </div>
+
+  <!-- 适合谁使用 -->
+  <div class="card">
+    <h2><span class="icon">👥</span> 适合谁使用</h2>
+    <ul>
+      <li><strong>个人投资者</strong> — 需要免费、专业的股票追踪工具，不想为 Bloomberg 等平台付费</li>
+      <li><strong>全栈开发者</strong> — 想学习 Next.js 15 App Router、React 19、Tailwind v4、shadcn/ui 等最新技术的实战项目</li>
+      <li><strong>开源社区爱好者</strong> — 认同"技术属于每个人"的理念，希望参与有意义的开源项目</li>
+      <li><strong>金融科技创业者</strong> — 希望基于开源项目快速搭建自己的金融数据平台</li>
+      <li><strong>学生和自学开发者</strong> — 项目代码结构清晰，TypeScript 覆盖率高，适合学习现代 Web 开发</li>
+    </ul>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="card">
+    <h2><span class="icon">🚀</span> 快速上手指南</h2>
+    <p><strong>前置条件：</strong>Node.js 20+、MongoDB、Finnhub API Key（免费）</p>
+    <div class="code-block">
+# 1. 克隆项目
+git clone https://github.com/Open-Dev-Society/OpenStock.git
+cd OpenStock
+
+# 2. 安装依赖
+pnpm install
+
+# 3. 配置环境变量
+cp .env.example .env
+# 编辑 .env，填入 MongoDB URI、Finnhub Key 等
+
+# 4. 验证数据库连接
+pnpm test:db
+
+# 5. 启动开发服务器
+pnpm dev
+
+# 6. （可选）启动 Inngest 本地工作流
+npx inngest-cli@latest dev
+
+# 打开 http://localhost:3000
+    </div>
+    <p><strong>Docker 一键部署：</strong></p>
+    <div class="code-block">
+# 启动 MongoDB + 应用
+docker compose up -d mongodb && docker compose up -d --build
+
+# 访问 http://localhost:3000
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="card">
+    <h2><span class="icon">📊</span> 综合评分</h2>
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="score score-mid">7.5</div>
+        <div class="label">创新性</div>
+      </div>
+      <div class="score-item">
+        <div class="score score-high">8.0</div>
+        <div class="label">代码质量</div>
+      </div>
+      <div class="score-item">
+        <div class="score score-high">8.5</div>
+        <div class="label">实用性</div>
+      </div>
+      <div class="score-item">
+        <div class="score score-high">8.5</div>
+        <div class="label">文档完善度</div>
+      </div>
+      <div class="score-item">
+        <div class="score score-mid">7.0</div>
+        <div class="label">社区活跃度</div>
+      </div>
+    </div>
+    <div class="total-score">
+      <div class="big">7.9</div>
+      <div class="label">综合评分 / 10</div>
+    </div>
+    <p style="margin-top:16px; font-size:0.9em; color:#8b949e;">
+      <strong>创新性 7.5</strong>：技术栈现代但并非独创，AI + 金融情感分析的整合是亮点 |
+      <strong>代码质量 8.0</strong>：TypeScript 93.4% 覆盖率，项目结构清晰，shadcn/ui 组件化 |
+      <strong>实用性 8.5</strong>：直击金融工具昂贵的痛点，Docker 部署方便 |
+      <strong>文档完善度 8.5</strong>：README 非常详尽，包含环境变量、Docker、项目结构等所有细节 |
+      <strong>社区活跃度 7.0</strong>：项目较新，核心贡献者较少，但社交媒体传播力强
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>分析日期：2026-05-27 | <a href="https://github.com/Open-Dev-Society/OpenStock">GitHub 仓库</a> | 由 AI 自动分析生成</p>
+  </div>
+
+</div>
+</body>
+</html>
