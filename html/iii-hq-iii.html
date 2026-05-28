@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告: iii-hq/iii — 实时服务编排与观测引擎</title>
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #A29BFE;
+            --accent: #00CEC9;
+            --accent-dark: #00B5B0;
+            --bg: #0F0F1A;
+            --bg-card: #1A1A2E;
+            --bg-card-hover: #222240;
+            --text: #E8E8F0;
+            --text-muted: #8888AA;
+            --border: #2A2A45;
+            --success: #00D68F;
+            --warning: #FFB800;
+            --danger: #FF6B6B;
+            --info: #4ECDC4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 48px;
+        }
+
+        .header .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .header .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Score Card */
+        .score-section {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 700px) {
+            .score-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .total-score {
+            background: linear-gradient(135deg, var(--bg-card), #252550);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .total-score .number {
+            font-size: 72px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .total-score .label {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .total-score .stars-display {
+            margin-top: 12px;
+            font-size: 24px;
+            letter-spacing: 4px;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 500px) {
+            .score-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .score-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .score-item .dim-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .score-item .dim-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .score-item .dim-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .score-item .dim-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        .section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: var(--primary-light);
+        }
+
+        .section p {
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .section ul, .section ol {
+            margin: 12px 0 16px 24px;
+        }
+
+        .section li {
+            margin-bottom: 8px;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #12121F;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-block .comment {
+            color: #5C6370;
+        }
+
+        .code-block .keyword {
+            color: #C678DD;
+        }
+
+        .code-block .string {
+            color: #98C379;
+        }
+
+        .code-block .command {
+            color: #61AFEF;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: var(--bg-card);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag-yes {
+            background: rgba(0, 214, 143, 0.15);
+            color: var(--success);
+        }
+
+        .tag-no {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--danger);
+        }
+
+        .tag-partial {
+            background: rgba(255, 184, 0, 0.15);
+            color: var(--warning);
+        }
+
+        /* Architecture diagram */
+        .arch-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 16px 0;
+            text-align: center;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(0, 206, 201, 0.1));
+            border: 1px solid var(--primary);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+
+        .highlight-box strong {
+            color: var(--primary-light);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Grid layout for primitives */
+        .primitives-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .primitives-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .primitive-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .primitive-card .icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .primitive-card .name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .primitive-card .desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Scenario cards */
+        .scenario-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        @media (max-width: 600px) {
+            .scenario-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .scenario-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .scenario-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="badge">GitHub Trending 深度分析</div>
+            <h1>iii-hq/iii</h1>
+            <div class="subtitle">实时服务编排、扩展与观测引擎</div>
+            <div class="meta">
+                <span>📅 分析日期: 2026-05-28</span>
+                <span>🔗 github.com/iii-hq/iii</span>
+                <span>📜 Engine: ELv2 | SDK: Apache 2.0</span>
+                <span>🖥️ Rust / Node.js / Python</span>
+            </div>
+        </div>
+
+        <!-- Score Section -->
+        <div class="score-section">
+            <div class="total-score">
+                <div class="number">7.5</div>
+                <div class="label">综合评分 / 10</div>
+                <div class="stars-display">★★★★★★★☆☆☆</div>
+            </div>
+            <div class="score-breakdown">
+                <div class="score-item">
+                    <div class="dim-label">创新性</div>
+                    <div class="dim-value" style="color: var(--success)">8.5</div>
+                    <div class="dim-bar"><div class="dim-bar-fill" style="width: 85%; background: var(--success);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="dim-label">技术架构</div>
+                    <div class="dim-value" style="color: var(--accent)">8.0</div>
+                    <div class="dim-bar"><div class="dim-bar-fill" style="width: 80%; background: var(--accent);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="dim-label">实用性</div>
+                    <div class="dim-value" style="color: var(--primary-light)">7.5</div>
+                    <div class="dim-bar"><div class="dim-bar-fill" style="width: 75%; background: var(--primary-light);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="dim-label">社区生态</div>
+                    <div class="dim-value" style="color: var(--warning)">5.5</div>
+                    <div class="dim-bar"><div class="dim-bar-fill" style="width: 55%; background: var(--warning);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="dim-label">文档质量</div>
+                    <div class="dim-value" style="color: var(--accent)">7.5</div>
+                    <div class="dim-bar"><div class="dim-bar-fill" style="width: 75%; background: var(--accent);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="dim-label">AI Agent 集成</div>
+                    <div class="dim-value" style="color: var(--success)">9.0</div>
+                    <div class="dim-bar"><div class="dim-bar-fill" style="width: 90%; background: var(--success);"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 一、项目概述 -->
+        <div class="section">
+            <h2>一、项目概述</h2>
+            <p>
+                <strong>iii</strong>（发音 "three eye"）是一个开源的实时服务编排引擎，其核心目标是<strong>让后端服务的组合、扩展和观测变得前所未有的简单</strong>。
+                项目由 iii-hq 团队开发，采用 Rust 编写引擎核心，提供 Node.js、Python、Rust 三种 SDK。
+            </p>
+            <p>
+                传统微服务架构中，每引入一个新的基础设施组件（队列、定时任务、HTTP 网关、可观测性工具），都需要独立集成、配置和运维。
+                iii 的理念是将这一切<strong>折叠到一个实时系统表面</strong>——通过统一的三个原语（Worker、Function、Trigger），让所有服务天生可组合、可观测。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心理念：</strong>「Before iii」需要无数集成；「After iii」只需 <code>iii worker add &lt;anything&gt;</code>。
+                新的 Worker 加入后，自动进入实时目录，其他 Worker 立即可调用。这就是 iii 所称的「零集成」（Zero-Integration）范式。
+            </div>
+        </div>
+
+        <!-- 二、技术架构 -->
+        <div class="section">
+            <h2>二、技术架构</h2>
+
+            <h3>2.1 三大核心原语</h3>
+            <div class="primitives-grid">
+                <div class="primitive-card">
+                    <div class="icon">⚙️</div>
+                    <div class="name">Worker</div>
+                    <div class="desc">注册到 iii 引擎的进程。TypeScript API 服务、Python 数据管道、Rust 微服务都可以是 Worker。Worker 还可以在运行时创建其他 Worker。</div>
+                </div>
+                <div class="primitive-card">
+                    <div class="icon">⚡</div>
+                    <div class="name">Function</div>
+                    <div class="desc">具有稳定标识符的工作单元（如 <code>content::classify</code>、<code>orders::validate</code>）。接收输入、执行工作、返回输出。</div>
+                </div>
+                <div class="primitive-card">
+                    <div class="icon">🔔</div>
+                    <div class="name">Trigger</div>
+                    <div class="desc">触发函数执行的事件源。支持 HTTP 端点、Cron 定时、队列订阅、状态变更、流事件、直接调用等。声明式定义，iii 负责路由和序列化。</div>
+                </div>
+            </div>
+
+            <h3>2.2 架构图</h3>
+            <div class="arch-diagram">
+┌──────────────────────────────────────────────────────┐
+│                    iii Engine (Rust)                  │
+│                                                       │
+│   ┌─────────┐  ┌─────────┐  ┌─────────────────────┐ │
+│   │  Router  │  │Catalog  │  │ Observability Layer │ │
+│   │         │  │(workers │  │ (Traces/Logs/State)  │ │
+│   │ Trigger │  │ .iii.dev│  │                     │ │
+│   │ Matching│  │         │  │                     │ │
+│   └────┬────┘  └────┬────┘  └──────────┬──────────┘ │
+│        │            │                   │             │
+└────────┼────────────┼───────────────────┼─────────────┘
+         │            │                   │
+    ┌────┴────┐  ┌───┴───┐  ┌───────────┴────────────┐
+    │ WebSocket  │ WS    │  │  iii Console            │
+    │ Protocol   │       │  │  (React + Rust)         │
+    └────┬────┘  └───┬───┘  └────────────────────────┘
+         │           │
+    ┌────┴───┬───────┴──────┬──────────────┐
+    │        │              │              │
+┌───┴──┐ ┌──┴───┐  ┌──────┴──┐  ┌───────┴──┐
+│TS/JS │ │Python│  │  Rust   │  │ AI Agent │
+│Worker│ │Worker│  │  Worker │  │  Worker  │
+└──────┘ └──────┘  └─────────┘  └──────────┘
+            </div>
+
+            <h3>2.3 技术栈</h3>
+            <table class="comparison-table">
+                <tr><th>组件</th><th>技术</th><th>说明</th></tr>
+                <tr><td>Engine</td><td>Rust</td><td>核心运行时，高性能 WebSocket 路由</td></tr>
+                <tr><td>SDK</td><td>Node.js / Python / Rust</td><td>多语言 SDK，通过 WebSocket 连接引擎</td></tr>
+                <tr><td>Console</td><td>React + Rust</td><td>开发者运维控制台，检查 Worker/Trace/Log</td></tr>
+                <tr><td>Agent Skills</td><td>MCP 兼容</td><td>Agent 可读取 iii 参考材料，动态添加 Worker</td></tr>
+                <tr><td>安装</td><td>Shell / Docker</td><td>支持 curl 安装和 Docker 容器部署</td></tr>
+            </table>
+
+            <h3>2.4 许可证</h3>
+            <p>引擎核心采用 <strong>Elastic License 2.0 (ELv2)</strong>，允许免费使用但不允许将引擎本身作为托管服务提供。SDK、Console、文档均为 <strong>Apache License 2.0</strong>，可自由使用和修改。</p>
+        </div>
+
+        <!-- 三、核心创新点 -->
+        <div class="section">
+            <h2>三、核心创新点</h2>
+
+            <h3>3.1 零集成范式（Zero-Integration）</h3>
+            <p>
+                传统微服务是「点对点集成」——每增加一个服务，需要配置 N 个连接。iii 提出了「共享运行时」的概念：所有 Worker 通过引擎的实时目录自动发现彼此，<strong>无需任何集成代码</strong>。
+            </p>
+
+            <h3>3.2 统一原语模型</h3>
+            <p>
+                Worker → Function → Trigger 三个原语覆盖了后端开发的所有场景。无论是 HTTP API、定时任务、消息队列还是流处理，都映射到同一套心智模型，<strong>极大降低了认知复杂度</strong>。
+            </p>
+
+            <h3>3.3 运行时自扩展</h3>
+            <p>
+                Worker 可以在运行时创建其他 Worker。这意味着 AI Agent 可以在运行过程中发现系统缺少某个能力，<strong>动态添加一个 Worker 来获得这个能力</strong>，然后立即调用它。这是 iii 在 AI Agent 集成方面的独特优势。
+            </p>
+
+            <h3>3.4 内建可观测性</h3>
+            <p>
+                所有通过 iii 注册的 Function 调用自动具有 Trace 和 Log，无需额外集成 OpenTelemetry 或类似工具。iii Console 提供实时可视化界面，开发者可以即时查看每个 Function 的执行状态。
+            </p>
+
+            <h3>3.5 极简 CLI</h3>
+            <div class="code-block">
+<span class="comment"># 初始化项目</span>
+<span class="command">iii project init myapp</span>
+<span class="command">cd myapp</span>
+<span class="command">iii</span>  <span class="comment"># 启动引擎</span>
+
+<span class="comment"># 添加能力</span>
+<span class="command">iii worker add queue</span>
+<span class="command">iii worker add agent</span>
+<span class="command">iii worker add sandbox</span>
+<span class="command">iii worker add &lt;anything&gt;</span>
+            </div>
+        </div>
+
+        <!-- 四、应用场景 -->
+        <div class="section">
+            <h2>四、应用场景</h2>
+            <div class="scenario-cards">
+                <div class="scenario-card">
+                    <h4>🤖 AI Agent 基础设施</h4>
+                    <p>Agent 在运行时发现能力缺失时，可以动态添加 Worker 并调用。非常适合构建可自我进化的 AI Agent 系统。</p>
+                </div>
+                <div class="scenario-card">
+                    <h4>🔧 微服务编排</h4>
+                    <p>替代传统的 API Gateway + Service Mesh + 消息队列组合，用一个统一的 iii 引擎管理所有服务的发现、路由和通信。</p>
+                </div>
+                <div class="scenario-card">
+                    <h4>📊 数据管道</h4>
+                    <p>使用 Python Worker 编写数据管道，通过 Stream Trigger 和 Queue Trigger 处理实时数据流，无需独立的消息中间件。</p>
+                </div>
+                <div class="scenario-card">
+                    <h4>🚀 快速原型开发</h4>
+                    <p>iii-vs-traditional 示例显示：传统网关实现需要 ~465 行代码，iii 只需 ~120 行。适合初创团队快速搭建后端原型。</p>
+                </div>
+                <div class="scenario-card">
+                    <h4>📈 统一可观测性</h4>
+                    <p>无需集成 Jaeger/Grafana/Prometheus 等多个可观测性工具，iii Console 提供一站式的 Worker/Trace/Log/State 检查。</p>
+                </div>
+                <div class="scenario-card">
+                    <h4>🌐 多框架 API 聚合</h4>
+                    <p>在单个 iii 项目中同时运行 Express、Fastify、Hono、Koa 四种 API 框架，各自作为独立 Worker，共享上下文。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 五、竞品对比 -->
+        <div class="section">
+            <h2>五、竞品对比</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>维度</th>
+                    <th>iii</th>
+                    <th>Dapr</th>
+                    <th>Temporal</th>
+                    <th>Motia</th>
+                </tr>
+                <tr>
+                    <td>核心定位</td>
+                    <td>实时服务编排+观测</td>
+                    <td>分布式应用运行时</td>
+                    <td>持久化工作流引擎</td>
+                    <td>代码优先后端框架</td>
+                </tr>
+                <tr>
+                    <td>编程语言</td>
+                    <td>Rust (引擎) + 多语言 SDK</td>
+                    <td>Go (运行时) + 多语言 SDK</td>
+                    <td>Go (服务) + 多语言 SDK</td>
+                    <td>TypeScript</td>
+                </tr>
+                <tr>
+                    <td>内建可观测性</td>
+                    <td><span class="tag tag-yes">原生集成</span></td>
+                    <td><span class="tag tag-partial">需配合 Zipkin 等</span></td>
+                    <td><span class="tag tag-partial">内建但有限</span></td>
+                    <td><span class="tag tag-yes">内建</span></td>
+                </tr>
+                <tr>
+                    <td>AI Agent 原生支持</td>
+                    <td><span class="tag tag-yes">动态添加 Worker</span></td>
+                    <td><span class="tag tag-partial">Dapr Agents (新)</span></td>
+                    <td><span class="tag tag-no">不支持</span></td>
+                    <td><span class="tag tag-partial">有限支持</span></td>
+                </tr>
+                <tr>
+                    <td>运行时自扩展</td>
+                    <td><span class="tag tag-yes">支持</span></td>
+                    <td><span class="tag tag-no">不支持</span></td>
+                    <td><span class="tag tag-no">不支持</span></td>
+                    <td><span class="tag tag-no">不支持</span></td>
+                </tr>
+                <tr>
+                    <td>成熟度</td>
+                    <td>早期项目 (2026)</td>
+                    <td>CNCF 毕业，成熟</td>
+                    <td>生产就绪，成熟</td>
+                    <td>较新</td>
+                </tr>
+                <tr>
+                    <td>社区规模</td>
+                    <td>小型，增长中</td>
+                    <td>大型社区</td>
+                    <td>大型社区</td>
+                    <td>小型社区</td>
+                </tr>
+                <tr>
+                    <td>许可证</td>
+                    <td>ELv2 + Apache 2.0</td>
+                    <td>Apache 2.0 / MIT</td>
+                    <td>MIT</td>
+                    <td>MIT</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>iii 的核心差异化优势：</strong>
+                <ol>
+                    <li><strong>零集成范式</strong>——Dapr 和 Temporal 都需要配置 sidecar 或客户端，iii 通过共享运行时消除集成开销</li>
+                    <li><strong>运行时自扩展</strong>——AI Agent 可以在运行时动态添加能力，这是其他框架不具备的特性</li>
+                    <li><strong>三个原语统一一切</strong>——心智模型极简，学习曲线低</li>
+                </ol>
+            </div>
+
+            <div class="highlight-box">
+                <strong>iii 的主要不足：</strong>
+                <ol>
+                    <li><strong>项目较新</strong>——生态、社区和生产验证远不及 Dapr 和 Temporal</li>
+                    <li><strong>ELv2 许可证</strong>——引擎使用 Elastic License，限制了商业托管场景</li>
+                    <li><strong>生态工具链</strong>——缺少成熟的 CI/CD 集成、Kubernetes Operator 等</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- 六、综合评分说明 -->
+        <div class="section">
+            <h2>六、综合评分说明</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>评分维度</th>
+                    <th>分数</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>创新性</td>
+                    <td><strong>8.5 / 10</strong></td>
+                    <td>零集成范式和运行时自扩展是真正有创意的设计，重新思考了微服务编排的基本模型</td>
+                </tr>
+                <tr>
+                    <td>技术架构</td>
+                    <td><strong>8.0 / 10</strong></td>
+                    <td>Rust 引擎保证性能，多语言 SDK 降低接入门槛，三原语模型简洁优雅。但架构细节的公开文档尚不够深入</td>
+                </tr>
+                <tr>
+                    <td>实用性</td>
+                    <td><strong>7.5 / 10</strong></td>
+                    <td>CLI 和 SDK 设计简洁，示例代码直观。但缺少与主流工具（K8s、Terraform）的集成方案，生产环境部署路径不明确</td>
+                </tr>
+                <tr>
+                    <td>社区生态</td>
+                    <td><strong>5.5 / 10</strong></td>
+                    <td>项目处于早期阶段，社区规模小，第三方贡献者少，缺少生产案例和最佳实践</td>
+                </tr>
+                <tr>
+                    <td>文档质量</td>
+                    <td><strong>7.5 / 10</strong></td>
+                    <td>README 清晰完整，有独立的文档站点（Mintlify）。但 API 参考和高级用例文档有待补充</td>
+                </tr>
+                <tr>
+                    <td>AI Agent 集成</td>
+                    <td><strong>9.0 / 10</strong></td>
+                    <td>这是 iii 最亮的特性。Agent Skills + 运行时自扩展 + 统一可观测性，为 AI Agent 基础设施提供了一个非常有前景的方案</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>本报告由 AI 自动生成 | 数据来源：GitHub、Web 公开信息 | 分析日期：2026-05-28</p>
+            <p style="margin-top: 8px;">项目地址：<a href="https://github.com/iii-hq/iii" style="color: var(--accent);">github.com/iii-hq/iii</a> | 官网：<a href="https://iii.dev" style="color: var(--accent);">iii.dev</a></p>
+        </div>
+    </div>
+</body>
+</html>
