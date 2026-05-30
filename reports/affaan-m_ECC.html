@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECC (Everything Claude Code) 深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.7;
+            padding: 2rem;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #1a1e2e 0%, #2d1b4e 50%, #1b3a4e 100%);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: #f0f6fc;
+            margin-bottom: 0.5rem;
+        }
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: #8b949e;
+            margin-bottom: 1.5rem;
+        }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-stars { background: #2ea04333; color: #3fb950; border: 1px solid #2ea04355; }
+        .badge-lang { background: #f7816633; color: #f78166; border: 1px solid #f7816655; }
+        .badge-type { background: #58a6ff33; color: #58a6ff; border: 1px solid #58a6ff55; }
+        .badge-rank { background: #d2a8ff33; color: #d2a8ff; border: 1px solid #d2a8ff55; }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .meta-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .meta-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+        .meta-card .label {
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-top: 0.3rem;
+        }
+
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.35rem;
+            color: #f0f6fc;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h3 {
+            font-size: 1.1rem;
+            color: #e6edf3;
+            margin: 1.2rem 0 0.6rem;
+        }
+        .section p { margin-bottom: 0.8rem; color: #b1bac4; }
+        .section ul, .section ol { margin: 0.5rem 0 1rem 1.5rem; color: #b1bac4; }
+        .section li { margin-bottom: 0.4rem; }
+
+        .highlight-box {
+            background: #1b2838;
+            border-left: 4px solid #58a6ff;
+            padding: 1rem 1.2rem;
+            border-radius: 0 6px 6px 0;
+            margin: 1rem 0;
+        }
+
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .score-table th, .score-table td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+        .score-table th { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; }
+        .score-table td { color: #c9d1d9; }
+        .score-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #21262d;
+            overflow: hidden;
+            margin-top: 0.3rem;
+        }
+        .score-bar-fill { height: 100%; border-radius: 4px; }
+        .score-overall {
+            font-size: 3rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .compare-table th, .compare-table td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+            font-size: 0.9rem;
+        }
+        .compare-table th { color: #8b949e; font-weight: 600; }
+        .compare-table tr:hover { background: #1b2838; }
+
+        .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-right: 0.3rem; }
+        .tag-green { background: #2ea04333; color: #3fb950; }
+        .tag-blue { background: #58a6ff33; color: #58a6ff; }
+        .tag-yellow { background: #d2992233; color: #d29922; }
+        .tag-red { background: #f8514933; color: #f85149; }
+
+        .footer {
+            text-align: center;
+            color: #484f58;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #21262d;
+        }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { background: #1b2838; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; color: #e6edf3; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>ECC (Everything Claude Code)</h1>
+        <div class="subtitle">The Harness-Native Operator System for Agentic Work</div>
+        <div class="badge-row">
+            <span class="badge badge-stars">&#9733; 176K+ Stars</span>
+            <span class="badge badge-rank">GitHub #32 All-Time</span>
+            <span class="badge badge-type">AI Agent Framework</span>
+            <span class="badge badge-lang">Claude Code / Codex / Cursor</span>
+        </div>
+    </div>
+
+    <!-- Meta Cards -->
+    <div class="meta-grid">
+        <div class="meta-card">
+            <div class="value" style="color:#3fb950;">176K+</div>
+            <div class="label">GitHub Stars</div>
+        </div>
+        <div class="meta-card">
+            <div class="value" style="color:#58a6ff;">249</div>
+            <div class="label">技能模块 (Skills)</div>
+        </div>
+        <div class="meta-card">
+            <div class="value" style="color:#d2a8ff;">63</div>
+            <div class="label">专用智能体 (Agents)</div>
+        </div>
+        <div class="meta-card">
+            <div class="value" style="color:#f78166;">79</div>
+            <div class="label">斜杠命令 (Commands)</div>
+        </div>
+        <div class="meta-card">
+            <div class="value" style="color:#d29922;">1,282</div>
+            <div class="label">安全测试用例</div>
+        </div>
+        <div class="meta-card">
+            <div class="value" style="color:#79c0ff;">v1.10.0</div>
+            <div class="label">当前版本</div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2>&#128218; 项目概述</h2>
+        <p><strong>ECC (Everything Claude Code)</strong> 是一个面向 AI 编程助手的<strong>多工具链操作系统层</strong>（Multi-harness Operating Layer），由开发者 <strong>Affaan Mustafa</strong>（@affaan-m）创建。它最初是一个 Claude Code 的插件集合，但已快速演进为支持 Claude Code、Cursor、Codex 等主流 AI 编程工具的通用增强框架。</p>
+
+        <div class="highlight-box">
+            <strong>核心定位：</strong>不是简单的配置文件集，而是基于 10+ 个月高强度日常使用和真实产品开发迭代而成的生产级智能体工程系统。它将 AI 编程助手的操作范式从"自由对话"升级为"结构化工作流"。
+        </div>
+
+        <h3>项目起源</h3>
+        <p>2025 年 9 月，Affaan Mustafa 参加了 <strong>Anthropic × Cerebral Valley / Forum Ventures 黑客马拉松</strong>，在不到一天内构建了一个名为 <strong>Zenith Chat</strong> 的 AI 产品，赢得了 <strong>50,000 美元的 API 额度</strong>。他在比赛中打磨的 Claude Code 配置在 2026 年 1 月以开源形式发布，这便是 ECC 的起源。</p>
+
+        <h3>关键里程碑</h3>
+        <ul>
+            <li><strong>2025年9月：</strong>赢得 Anthropic 黑客马拉松，Zenith Chat 项目</li>
+            <li><strong>2026年1月：</strong>ECC 正式开源</li>
+            <li><strong>2026年3月：</strong>发布 v1.9.0，达到 82K Stars</li>
+            <li><strong>2026年5月：</strong>发布 v1.10.0，达到 140K+ Stars，含 156 个技能模块</li>
+            <li><strong>当前：</strong>176K+ Stars，GitHub 全历史排名 #32，ECC 2.0 alpha 开发中</li>
+        </ul>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2>&#9881;&#65039; 技术架构</h2>
+        <p>ECC 采用<strong>基于提示的元工具架构</strong>（Prompt-based Meta-tool Architecture），通过上下文注入和双消息模式实现智能体的能力扩展。其架构层次如下：</p>
+
+        <h3>1. Agents（智能体层）</h3>
+        <p>ECC 提供 63 个专用智能体，每个智能体专注于特定领域：</p>
+        <ul>
+            <li><strong>Code Architect Agent</strong> — 分析代码组织、架构模式、依赖图</li>
+            <li><strong>Security Scanner Agent</strong> — 自动化安全扫描（1,282 个测试用例）</li>
+            <li><strong>Research Agent</strong> — 研究优先的开发工作流</li>
+            <li><strong>Memory Optimizer Agent</strong> — 智能体记忆优化</li>
+        </ul>
+
+        <h3>2. Skills（技能模块层）</h3>
+        <p>249 个生产级技能模块，覆盖核心开发场景：</p>
+        <ul>
+            <li><strong>Git Workflow</strong> — 版本控制自动化</li>
+            <li><strong>Dashboard Builder</strong> — 数据可视化快速构建</li>
+            <li><strong>Documentation Lookup</strong> — 智能文档查询</li>
+            <li><strong>Cost-Aware LLM Pipeline</strong> — LLM 调用成本优化</li>
+            <li><strong>TDD Workflow</strong> — 测试驱动开发流程</li>
+        </ul>
+
+        <h3>3. Hooks &amp; Rules（规则与钩子层）</h3>
+        <p>强制执行安全与质量规则：</p>
+        <ul>
+            <li>禁止硬编码密钥和凭证</li>
+            <li>SQL 注入防护</li>
+            <li>XSS 跨站脚本防护</li>
+            <li>CSRF 跨站请求伪造防护</li>
+            <li>环境变量信任路径管理</li>
+        </ul>
+
+        <h3>4. MCP 集成层</h3>
+        <p>通过 Model Context Protocol 集成外部工具和数据源：</p>
+        <ul>
+            <li><strong>Context7 MCP</strong> — 实时获取最新的库/框架文档</li>
+            <li>自定义 MCP 服务器连接</li>
+        </ul>
+
+        <h3>5. Commands（命令层）</h3>
+        <p>79 个斜杠命令提供快捷操作入口：</p>
+        <ul>
+            <li><code>/tdd</code> — 测试驱动开发</li>
+            <li><code>/build-fix</code> — 构建错误修复</li>
+            <li><code>/code-review</code> — 代码审查</li>
+            <li><code>/plan</code> — 实施规划</li>
+        </ul>
+
+        <div class="highlight-box">
+            <strong>架构亮点：</strong>所有组件（Agents、Skills、Hooks、Commands）在安装后自动加载，无需手动配置。Claude 模型触发 Skills 的可靠性达到约 98%，显著高于非 Claude 模型。
+        </div>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2>&#128161; 核心创新点</h2>
+
+        <h3>1. 多工具链统一操作系统</h3>
+        <p>ECC 最初只支持 Claude Code，但已演进为跨 Claude Code、Cursor、Codex 的统一操作层。开发者无需为每个 AI 编程工具分别配置工作流，ECC 提供了标准化的能力接口。</p>
+
+        <h3>2. 从"自由对话"到"结构化工作流"</h3>
+        <p>传统的 AI 编程助手依赖自由形式的对话交互。ECC 引入了结构化的技能和智能体系统，让 AI 编程过程更加可预测、可复现、可审计。这种范式转变类似于从"命令行"到"脚本"的演进。</p>
+
+        <h3>3. 安全优先设计</h3>
+        <p>内置 1,282 个安全测试用例的 AgentShield 扫描器，以及强制执行的安全规则钩子。这在 AI 编程工具生态中是少见的深度安全集成。</p>
+
+        <h3>4. 成本感知的 LLM 管道</h3>
+        <p>内置 LLM 调用成本优化技能，可以根据不同模型的价格（如 Haiku 4.5、Sonnet 4.6）智能选择最优模型组合，在保证质量的同时控制成本。</p>
+
+        <h3>5. 社区驱动的快速迭代</h3>
+        <p>从开源到 176K Stars 仅用了约 4 个月，这个增长速度在 GitHub 历史上极为罕见，反映了 AI 编程增强工具的巨大需求。156+ 个技能模块中的大部分来自社区贡献。</p>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2>&#127919; 应用场景</h2>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>描述</th>
+                    <th>相关组件</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>企业级代码审查</strong></td>
+                    <td>自动化代码质量检查、安全扫描、架构一致性验证</td>
+                    <td><span class="tag tag-green">Security Agent</span> <span class="tag tag-blue">/code-review</span></td>
+                </tr>
+                <tr>
+                    <td><strong>测试驱动开发</strong></td>
+                    <td>从测试用例出发自动生成实现代码，确保代码质量</td>
+                    <td><span class="tag tag-blue">/tdd</span> <span class="tag tag-green">TDD Skill</span></td>
+                </tr>
+                <tr>
+                    <td><strong>大型代码库重构</strong></td>
+                    <td>架构分析、依赖图生成、跨文件重构自动化</td>
+                    <td><span class="tag tag-green">Code Architect</span> <span class="tag tag-blue">/plan</span></td>
+                </tr>
+                <tr>
+                    <td><strong>技术文档生成</strong></td>
+                    <td>自动从代码生成文档、查找最新框架文档</td>
+                    <td><span class="tag tag-green">Doc Lookup</span> <span class="tag tag-blue">Context7 MCP</span></td>
+                </tr>
+                <tr>
+                    <td><strong>AI 工具链优化</strong></td>
+                    <td>统一管理多个 AI 编程工具的配置和工作流</td>
+                    <td><span class="tag tag-green">Multi-harness</span> <span class="tag tag-yellow">Cost Pipeline</span></td>
+                </tr>
+                <tr>
+                    <td><strong>CI/CD 集成</strong></td>
+                    <td>将 AI 驱动的代码检查嵌入持续集成管道</td>
+                    <td><span class="tag tag-green">Hooks</span> <span class="tag tag-blue">Build-fix</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2>&#9878;&#65039; 竞品对比</h2>
+        <p>ECC 在 AI 编程增强工具生态中的定位独特。以下与主要竞品的对比：</p>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>ECC</th>
+                    <th>Cursor Rules</th>
+                    <th>Aider</th>
+                    <th>GitHub Copilot</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>类型</strong></td>
+                    <td>多工具链操作层</td>
+                    <td>IDE 规则系统</td>
+                    <td>开源 CLI 工具</td>
+                    <td>IDE 插件</td>
+                </tr>
+                <tr>
+                    <td><strong>支持的 AI 工具</strong></td>
+                    <td>Claude Code / Cursor / Codex</td>
+                    <td>仅 Cursor</td>
+                    <td>多 LLM 后端</td>
+                    <td>VS Code / JetBrains</td>
+                </tr>
+                <tr>
+                    <td><strong>技能/规则数量</strong></td>
+                    <td>249 Skills + 79 Commands</td>
+                    <td>用户自定义</td>
+                    <td>基础命令集</td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td><strong>安全集成</strong></td>
+                    <td><span class="tag tag-green">深度集成 (1,282 测试)</span></td>
+                    <td><span class="tag tag-yellow">基础规则</span></td>
+                    <td><span class="tag tag-red">有限</span></td>
+                    <td><span class="tag tag-red">有限</span></td>
+                </tr>
+                <tr>
+                    <td><strong>开源</strong></td>
+                    <td><span class="tag tag-green">完全开源</span></td>
+                    <td><span class="tag tag-green">开源</span></td>
+                    <td><span class="tag tag-green">开源</span></td>
+                    <td><span class="tag tag-red">闭源</span></td>
+                </tr>
+                <tr>
+                    <td><strong>社区活跃度</strong></td>
+                    <td>176K+ Stars</td>
+                    <td>N/A (配置型)</td>
+                    <td>25K+ Stars</td>
+                    <td>N/A (企业产品)</td>
+                </tr>
+                <tr>
+                    <td><strong>学习曲线</strong></td>
+                    <td><span class="tag tag-yellow">中等</span></td>
+                    <td><span class="tag tag-green">低</span></td>
+                    <td><span class="tag tag-yellow">中等</span></td>
+                    <td><span class="tag tag-green">低</span></td>
+                </tr>
+                <tr>
+                    <td><strong>成本优化</strong></td>
+                    <td><span class="tag tag-green">内置成本管道</span></td>
+                    <td><span class="tag tag-red">无</span></td>
+                    <td><span class="tag tag-yellow">可配置</span></td>
+                    <td><span class="tag tag-red">固定订阅</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <strong>ECC 的差异化优势：</strong>ECC 不是要替代 Cursor、Copilot 等 IDE 工具，而是作为它们的"操作系统层"，提供标准化的智能体、技能和安全框架。这种"元工具"定位使其在 AI 编程工具生态中占据独特的生态位。
+        </div>
+    </div>
+
+    <!-- 创始人背景 -->
+    <div class="section">
+        <h2>&#129418; 创始人背景</h2>
+        <p><strong>Affaan Mustafa</strong> (@affaan-m) 是一位旧金山的技术创业者和 AI 工程师。</p>
+        <ul>
+            <li><strong>教育背景：</strong>加州大学圣地亚哥分校 (UCSD) 经济学专业</li>
+            <li><strong>创业经历：</strong>Itô 联合创始人 — 为预测市场构建 ETF 产品（ALL17 加速器成员）</li>
+            <li><strong>其他项目：</strong>AgentShield（AI 智能体配置安全扫描器，638 Stars）</li>
+            <li><strong>成就：</strong>Anthropic 黑客马拉松冠军（Zenith Chat 项目，$50K API 额度）</li>
+        </ul>
+        <p>他兼具经济学思维和 AI 工程能力，这解释了 ECC 中对成本优化和结构化工作流的重视。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2>&#11088; 综合评分</h2>
+        <div class="score-overall" style="color: #3fb950;">9.0 / 10</div>
+
+        <table class="score-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>评分</th>
+                    <th style="width:40%;">可视化</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>创新性</strong></td>
+                    <td>9.5</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:95%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div></td>
+                </tr>
+                <tr>
+                    <td><strong>实用性</strong></td>
+                    <td>9.0</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:90%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div></td>
+                </tr>
+                <tr>
+                    <td><strong>代码质量</strong></td>
+                    <td>8.5</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#3fb950,#d29922);"></div></div></td>
+                </tr>
+                <tr>
+                    <td><strong>社区活跃度</strong></td>
+                    <td>9.5</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:95%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div></td>
+                </tr>
+                <tr>
+                    <td><strong>文档完善度</strong></td>
+                    <td>9.0</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:90%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div></td>
+                </tr>
+                <tr>
+                    <td><strong>安全性</strong></td>
+                    <td>9.0</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:90%;background:linear-gradient(90deg,#3fb950,#58a6ff);"></div></div></td>
+                </tr>
+                <tr>
+                    <td><strong>可扩展性</strong></td>
+                    <td>8.5</td>
+                    <td><div class="score-bar"><div class="score-bar-fill" style="width:85%;background:linear-gradient(90deg,#3fb950,#d29922);"></div></div></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 总结 -->
+    <div class="section">
+        <h2>&#128221; 总结</h2>
+        <p>ECC 是当前 AI 编程工具生态中增长最迅猛的项目之一，其核心价值在于：</p>
+        <ol>
+            <li><strong>范式创新</strong> — 首次将 AI 编程助手视为需要"操作系统"的平台，而非简单的对话工具</li>
+            <li><strong>生态整合</strong> — 打破了不同 AI 编程工具之间的壁垒，提供统一的能力层</li>
+            <li><strong>安全深度</strong> — 1,282 个安全测试用例在同类工具中罕见</li>
+            <li><strong>实战驱动</strong> — 10+ 个月高强度使用迭代，而非纸上谈兵</li>
+        </ol>
+        <p><strong>潜在风险：</strong>ECC 的快速增长也引发了一些社区争议，部分开发者认为如此庞大的技能集可能导致认知负担和选择性困难。ECC 2.0 的 alpha 版本正在解决这一问题，可能会引入更智能的技能推荐和自动加载机制。</p>
+    </div>
+
+    <!-- Links -->
+    <div class="section">
+        <h2>&#128279; 相关链接</h2>
+        <ul>
+            <li><a href="https://github.com/affaan-m/ECC" target="_blank">GitHub 仓库</a></li>
+            <li><a href="https://github.com/affaan-m/ECC/blob/main/AGENTS.md" target="_blank">Agents 文档</a></li>
+            <li><a href="https://github.com/affaan-m/ECC/blob/main/README.zh-CN.md" target="_blank">中文 README</a></li>
+            <li><a href="https://www.sitepoint.com/everything-claude-code-ecc-production-engineering-platform/" target="_blank">SitePoint 深度评测</a></li>
+            <li><a href="https://medium.com/@tentenco/everything-claude-code-inside-the-82k-star-agent-harness-thats-dividing-the-developer-community-4fe54feccbc1" target="_blank">Medium 分析文章</a></li>
+            <li><a href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills" target="_blank">Anthropic 官方：Agent Skills 工程博客</a></li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>分析日期：2026-05-31 &nbsp;|&nbsp; 数据来源：GitHub、WebSearch &nbsp;|&nbsp; 由 AI 深度分析引擎生成</p>
+    </div>
+
+</div>
+</body>
+</html>
