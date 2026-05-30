@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告：galilai-group/stable-worldmodel</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+    padding: 2rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.35rem; color: var(--accent); margin: 2rem 0 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1.1rem; color: var(--purple); margin: 1.2rem 0 0.5rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .meta a { color: var(--accent); text-decoration: none; }
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-right: 0.4rem;
+  }
+  .badge-blue { background: #1f6feb33; color: var(--accent); }
+  .badge-green { background: #23863633; color: var(--green); }
+  .badge-orange { background: #9e6a0333; color: var(--orange); }
+  .badge-purple { background: #8957e533; color: var(--purple); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .score-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0.3rem 0;
+  }
+  .score-bar label {
+    min-width: 100px;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .score-track {
+    flex: 1;
+    height: 8px;
+    background: #21262d;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s;
+  }
+  .score-val {
+    font-weight: 700;
+    font-size: 0.9rem;
+    min-width: 32px;
+    text-align: right;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0;
+    font-size: 0.88rem;
+  }
+  th, td { padding: 0.5rem 0.8rem; border: 1px solid var(--border); text-align: left; }
+  th { background: #21262d; color: var(--muted); font-weight: 600; }
+  td { background: var(--card); }
+  code {
+    background: #161b22;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--green);
+  }
+  pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 0.8rem 0;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+  li { margin: 0.3rem 0; }
+  .highlight { color: var(--green); font-weight: 600; }
+  .warn { color: var(--orange); }
+  .total-score {
+    text-align: center;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .total-score .number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .total-score .label { color: var(--muted); font-size: 0.95rem; }
+  .footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>galilai-group/stable-worldmodel</h1>
+<p class="meta">
+  <span class="badge badge-blue">AI / 机器学习</span>
+  <span class="badge badge-green">世界模型</span>
+  <span class="badge badge-purple">JEPA</span>
+  <span class="badge badge-orange">研究基础设施</span>
+  <br><br>
+  GitHub: <a href="https://github.com/galilai-group/stable-worldmodel">galilai-group/stable-worldmodel</a> &nbsp;|&nbsp;
+  论文: <a href="https://arxiv.org/abs/2605.21800">arXiv:2605.21800</a> &nbsp;|&nbsp;
+  文档: <a href="https://galilai-group.github.io/stable-worldmodel/">官方文档</a> &nbsp;|&nbsp;
+  分析日期: 2026-05-30
+</p>
+
+<!-- 项目概述 -->
+<h2>一、项目概述</h2>
+<div class="card">
+  <p><strong>stable-worldmodel（SWM）</strong> 是由 GalilAI Group（核心成员包括 Yann LeCun、Randall Balestriero 等）开发的一个<strong>模块化、可复现的世界模型研究平台</strong>。它为世界模型研究的三个核心阶段——<strong>数据采集、模型训练、评估与规划</strong>——提供统一的编程接口和命令行工具。</p>
+  <br>
+  <p>该项目的核心使命是解决当前世界模型研究领域中普遍存在的<strong>实现碎片化</strong>问题：不同研究团队各自搭建数据管线、训练循环和评估框架，导致结果难以复现和对比。SWM 将这些基础设施标准化，让研究人员可以将精力集中在模型架构和目标函数的创新上。</p>
+  <br>
+  <p>该项目由 Yann LeCun 公开背书，他称其为"a clean recipe to train JEPA world models"。基于 SWM 已诞生了多个重要研究工作，包括 C-JEPA（因果世界模型）和 LeWM（LeWorldModel）。</p>
+</div>
+
+<!-- 技术架构 -->
+<h2>二、技术架构</h2>
+
+<h3>2.1 三层架构设计</h3>
+<div class="card">
+  <table>
+    <tr><th>层级</th><th>功能</th><th>核心组件</th></tr>
+    <tr><td>数据层</td><td>统一的数据采集、存储与加载</td><td>LanceDB / HDF5 / Video / Folder / LeRobot 格式注册表</td></tr>
+    <tr><td>训练层</td><td>模型训练管线</td><td>标准化训练循环，参考实现（LeWM, DINO-WM）</td></tr>
+    <tr><td>评估层</td><td>模型预测控制（MPC）评估</td><td>CEM / iCEM / MPPI / 梯度优化器求解器</td></tr>
+  </table>
+</div>
+
+<h3>2.2 环境支持（30+ 标准化环境）</h3>
+<div class="card">
+  <ul>
+    <li><strong>经典世界模型基准</strong>：PushT、TwoRoom</li>
+    <li><strong>DeepMind Control Suite</strong>：Humanoid、Cheetah、Hopper、Walker、Reacher 等 11 个连续控制环境</li>
+    <li><strong>Gymnasium 经典控制</strong>：CartPole、MountainCar、Acrobot、Pendulum</li>
+    <li><strong>机器人操作</strong>：Fetch Reach/Push/Slide/PickAndPlace</li>
+    <li><strong>OGBench</strong>：OGBCube、OGBScene</li>
+    <li><strong>Craftax</strong>：像素和符号版本</li>
+    <li><strong>Atari</strong>：100+ 游戏（通过 ALE）</li>
+  </ul>
+  <p style="margin-top:0.8rem;">每个环境配备独立的 <strong>Factors of Variation (FoV)</strong>——可独立控制的光照、纹理、动力学、形态学参数——用于零样本泛化评估。</p>
+</div>
+
+<h3>2.3 数据格式与性能基准</h3>
+<div class="card">
+  <table>
+    <tr><th>格式</th><th>吞吐量 (samples/s)</th><th>存储大小</th><th>适用场景</th></tr>
+    <tr><td><code>LanceDB</code></td><td>~4,815</td><td>13.31 GB</td><td>默认格式，支持追加写入和快速索引读取</td></tr>
+    <tr><td><code>HDF5</code></td><td>~1,474</td><td>43.12 GB</td><td>可移植单文件</td></tr>
+    <tr><td><code>Video</code></td><td>~1,331</td><td>496 MB</td><td>长序列场景，极致压缩</td></tr>
+    <tr><td><code>LanceDB (S3)</code></td><td>~3,184</td><td>云端</td><td>分布式训练场景</td></tr>
+  </table>
+  <p style="margin-top:0.5rem;">LanceDB 格式在吞吐量和存储效率上均显著优于 HDF5，且原生支持 S3 云端读取，而 HDF5 在 S3 上吞吐量骤降至 ~9 samples/s。</p>
+</div>
+
+<h3>2.4 求解器与基线</h3>
+<div class="card">
+  <p><strong>规划求解器</strong>：</p>
+  <ul>
+    <li><strong>采样类</strong>：Cross-Entropy Method (CEM)、Improved CEM (iCEM)、Model Predictive Path Integral (MPPI)、Predictive Sampling</li>
+    <li><strong>梯度类</strong>：SGD、Adam、Projected Gradient Descent (PGD)</li>
+    <li><strong>约束优化</strong>：Augmented Lagrangian</li>
+  </ul>
+  <p style="margin-top:0.8rem;"><strong>内置基线模型</strong>：</p>
+  <ul>
+    <li><strong>JEPA 类</strong>：DINO-WM、PLDM、LeWM</li>
+    <li><strong>行为克隆</strong>：GCBC</li>
+    <li><strong>强化学习</strong>：GCIVL、GCIQL</li>
+  </ul>
+</div>
+
+<h3>2.5 技术栈</h3>
+<div class="card">
+  <table>
+    <tr><th>组件</th><th>技术</th></tr>
+    <tr><td>语言</td><td>Python 3.10+（LeRobot 支持需 3.12+）</td></tr>
+    <tr><td>深度学习框架</td><td>PyTorch</td></tr>
+    <tr><td>数据存储</td><td>LanceDB / HDF5 / decord (视频)</td></tr>
+    <tr><td>环境接口</td><td>Gymnasium (OpenAI Gym 兼容)</td></tr>
+    <tr><td>代码质量</td><td>Ruff (linting/formatting)、完整测试套件</td></tr>
+    <tr><td>分发</td><td>PyPI (<code>pip install stable-worldmodel</code>)</td></tr>
+    <tr><td>CLI</td><td><code>swm</code> 命令行工具</td></tr>
+  </table>
+</div>
+
+<!-- 核心创新点 -->
+<h2>三、核心创新点</h2>
+<div class="card">
+  <h3>1. 统一研究管线</h3>
+  <p>首次将世界模型研究的数据采集、训练、评估三个阶段整合到单一框架中，消除了不同团队间重复造轮子的问题。研究人员可以用 ~20 行代码完成从数据采集到模型评估的完整流程。</p>
+
+  <h3>2. 格式注册表机制</h3>
+  <p>创新性的格式注册表设计，让 LanceDB、HDF5、Video 等数据格式可以通过统一接口互换，自动检测格式类型，一键转换。特别值得注意的是 LanceDB 在 S3 场景下 350 倍于 HDF5 的吞吐优势。</p>
+
+  <h3>3. 因子变化 (Factors of Variation) 系统</h3>
+  <p>每个环境内置可独立控制的视觉和物理参数变化因子（光照、纹理、动力学、形态学等），使零样本泛化评估无需额外配置。这在其他世界模型框架中是独一无二的。</p>
+
+  <h3>4. JEPA 生态核心</h3>
+  <p>作为 JEPA（Joint-Embedding Predictive Architecture）研究生态的基础设施层，已催生了 C-JEPA（因果推理）和 LeWM（端到端像素级 JEPA）等前沿工作。LeWorldModel 实现了仅需两个损失项（下一步预测 + 正则化）即可从原始像素稳定训练 JEPA。</p>
+
+  <h3>5. 一键可复现性</h3>
+  <p>通过标准化的环境、数据格式、评估协议和丰富的命令行工具 (<code>swm</code>)，确保不同研究团队的实验结果可以直接对比，推动领域向可复现科学研究迈进。</p>
+</div>
+
+<!-- 应用场景 -->
+<h2>四、应用场景</h2>
+<div class="card">
+  <table>
+    <tr><th>场景</th><th>描述</th><th>相关环境</th></tr>
+    <tr><td>机器人操作规划</td><td>通过世界模型预测物体运动轨迹，实现模型预测控制</td><td>PushT、Fetch 系列</td></tr>
+    <tr><td>自主导航</td><td>学习环境动态的紧凑表示，用于路径规划和避障</td><td>TwoRoom、DM Control</td></tr>
+    <tr><td>游戏 AI</td><td>学习游戏世界的状态转移模型，实现高效策略搜索</td><td>Atari (100+游戏)、Craftax</td></tr>
+    <tr><td>自动驾驶仿真</td><td>构建驾驶场景的世界模型，用于策略评估（LeCun 提及的延伸方向）</td><td>潜在扩展</td></tr>
+    <tr><td>具身智能研究</td><td>让机器人通过观察学习世界规律，而非仅靠试错</td><td>全环境套件</td></tr>
+    <tr><td>学术基准评测</td><td>标准化的世界模型比较框架，用于论文实验</td><td>全部 30+ 环境</td></tr>
+  </table>
+</div>
+
+<!-- 竞品对比 -->
+<h2>五、竞品对比</h2>
+<div class="card">
+  <table>
+    <tr><th>维度</th><th>stable-worldmodel</th><th>Dreamer 系列</th><th>DIAMOND</th><th>DINO-WM</th></tr>
+    <tr><td><strong>定位</strong></td><td>研究基础设施平台</td><td>端到端世界模型算法</td><td>扩散式世界模型</td><td>JEPA 世界模型算法</td></tr>
+    <tr><td><strong>覆盖范围</strong></td><td>数据+训练+评估全流程</td><td>训练+评估</td><td>训练+评估</td><td>训练+评估</td></tr>
+    <tr><td><strong>数据管理</strong></td><td>5种格式，S3支持</td><td>自定义</td><td>自定义</td><td>自定义</td></tr>
+    <tr><td><strong>环境数量</strong></td><td>30+（含100+ Atari）</td><td>有限</td><td>有限</td><td>有限</td></tr>
+    <tr><td><strong>泛化评估</strong></td><td>内置 FoV 系统</td><td>无</td><td>无</td><td>无</td></tr>
+    <tr><td><strong>求解器</strong></td><td>7种（采样+梯度+约束）</td><td>内置 CEM</td><td>内置</td><td>内置</td></tr>
+    <tr><td><strong>JEPA 支持</strong></td><td>原生支持（核心方向）</td><td>不支持</td><td>不支持</td><td>是（单一实现）</td></tr>
+    <tr><td><strong>可复现性</strong></td><td>高（标准化管线）</td><td>中</td><td>中</td><td>中</td></tr>
+    <tr><td><strong>学术背书</strong></td><td>Yann LeCun</td><td>社区认可</td><td>社区认可</td><td>社区认可</td></tr>
+  </table>
+  <p style="margin-top:0.8rem;"><strong>核心差异</strong>：SWM 不是与 Dreamer/DIAMOND 等竞争的模型算法，而是它们的<strong>上层基础设施</strong>。理论上，Dreamer 等算法可以作为 SWM 的一个基线实现在此框架中运行。这种"研究操作系统"的定位使其具有独特的生态位。</p>
+</div>
+
+<!-- 综合评分 -->
+<h2>六、综合评分</h2>
+
+<div class="total-score">
+  <div class="number">8.5 / 10</div>
+  <div class="label">综合评分 · 极高研究价值</div>
+</div>
+
+<div class="card">
+  <div class="score-bar">
+    <label>技术创新</label>
+    <div class="score-track"><div class="score-fill" style="width:85%;background:var(--accent);"></div></div>
+    <span class="score-val" style="color:var(--accent);">8.5</span>
+  </div>
+  <div class="score-bar">
+    <label>实用价值</label>
+    <div class="score-track"><div class="score-fill" style="width:80%;background:var(--green);"></div></div>
+    <span class="score-val" style="color:var(--green);">8.0</span>
+  </div>
+  <div class="score-bar">
+    <label>代码质量</label>
+    <div class="score-track"><div class="score-fill" style="width:90%;background:var(--purple);"></div></div>
+    <span class="score-val" style="color:var(--purple);">9.0</span>
+  </div>
+  <div class="score-bar">
+    <label>文档完善度</label>
+    <div class="score-track"><div class="score-fill" style="width:88%;background:var(--accent);"></div></div>
+    <span class="score-val" style="color:var(--accent);">8.8</span>
+  </div>
+  <div class="score-bar">
+    <label>社区活跃度</label>
+    <div class="score-track"><div class="score-fill" style="width:85%;background:var(--green);"></div></div>
+    <span class="score-val" style="color:var(--green);">8.5</span>
+  </div>
+  <div class="score-bar">
+    <label>生态影响</label>
+    <div class="score-track"><div class="score-fill" style="width:88%;background:var(--orange);"></div></div>
+    <span class="score-val" style="color:var(--orange);">8.8</span>
+  </div>
+</div>
+
+<div class="card">
+  <h3>评分解读</h3>
+  <ul>
+    <li><strong>技术创新 (8.5)</strong>：统一管线设计、格式注册表、FoV 系统均为领域首创，但底层模型算法（JEPA 本身）非该项目的原创贡献</li>
+    <li><strong>实用价值 (8.0)</strong>：对世界模型研究者是即插即用的工具箱；但当前世界模型在实际工业场景的成熟度仍有限，框架的应用广度受限于领域发展阶段</li>
+    <li><strong>代码质量 (9.0)</strong>：完整的测试套件、类型标注、Ruff 规范、CLI 工具、PyPI 分发，达到了工业级开源项目的标准</li>
+    <li><strong>文档完善度 (8.8)</strong>：详尽的 API 文档、教程、基准数据、快速上手指南，一站式文档站点</li>
+    <li><strong>社区活跃度 (8.5)</strong>：Yann LeCun 背书、GitHub Trending、ICLR Workshop 关联，学术社区关注度极高</li>
+    <li><strong>生态影响 (8.8)</strong>：已催生 C-JEPA、LeWM 等前沿工作，正在成为 JEPA/世界模型研究的标准基础设施</li>
+  </ul>
+</div>
+
+<h2>七、总结</h2>
+<div class="card">
+  <p><strong>stable-worldmodel</strong> 是世界模型研究领域的一座里程碑式基础设施项目。它不是又一个世界模型算法，而是让所有世界模型研究者站在同一地基上进行公平比较的"研究操作系统"。</p>
+  <br>
+  <p><strong>优势</strong>：</p>
+  <ul>
+    <li>统一的"数据-训练-评估"管线，消除实现碎片化</li>
+    <li>30+ 标准化环境 + 因子变化系统，实现真正的可复现评估</li>
+    <li>Yann LeCun 团队直接参与，学术权威性极高</li>
+    <li>已形成 JEPA 研究生态的基础设施层（C-JEPA、LeWM 均基于此）</li>
+    <li>工业级代码质量和文档</li>
+  </ul>
+  <br>
+  <p><strong>潜在挑战</strong>：</p>
+  <ul>
+    <li>API 仍在活跃开发中，次版本间可能存在不兼容</li>
+    <li>当前主要聚焦 JEPA 范式，对其他世界模型方法（如扩散式、自回归式）的覆盖相对有限</li>
+    <li>世界模型在实际工业部署中的成熟度仍处早期，短期内难以直接产生商业价值</li>
+  </ul>
+  <br>
+  <p><strong>适合谁</strong>：从事世界模型、具身智能、模型预测控制方向的研究者和博士生；希望快速复现和对比世界模型算法的实验室；以及对 JEPA 架构感兴趣的开发者。</p>
+</div>
+
+<div class="footer">
+  本报告由 AI 深度分析引擎自动生成 &nbsp;|&nbsp; 数据来源：GitHub、arXiv、Web Search &nbsp;|&nbsp; 2026-05-30
+</div>
+
+</body>
+</html>
