@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project N.O.M.A.D. 深度分析报告</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --accent: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        .header .subtitle { color: var(--text-muted); font-size: 1.1em; }
+        .header .meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .header .meta span { color: var(--text-muted); font-size: 14px; }
+
+        .score-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid var(--border);
+        }
+        .score-section h2 { margin-bottom: 24px; font-size: 1.4em; }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+        .score-card {
+            text-align: center;
+            padding: 20px 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+        }
+        .score-card .label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+        .score-card .value { font-size: 2em; font-weight: 700; }
+        .score-card .bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill { height: 100%; border-radius: 2px; }
+        .score-overall {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .score-overall .big-score {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .score-overall .label { font-size: 16px; color: var(--text-muted); }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+        .section h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2 .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .section p { color: var(--text-muted); margin-bottom: 12px; }
+        .section ul { padding-left: 20px; color: var(--text-muted); }
+        .section li { margin-bottom: 6px; }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+        }
+        .tech-item .tech-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .tech-item .tech-name { font-weight: 600; font-size: 14px; }
+        .tech-item .tech-desc { font-size: 12px; color: var(--text-muted); }
+
+        .feature-list { margin-top: 16px; }
+        .feature-item {
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .feature-item .feat-title { font-weight: 600; margin-bottom: 4px; }
+        .feature-item .feat-desc { font-size: 13px; color: var(--text-muted); }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .compare-table th, .compare-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .compare-table th {
+            background: rgba(255,255,255,0.05);
+            font-weight: 600;
+            color: var(--text);
+        }
+        .compare-table td { color: var(--text-muted); }
+        .compare-table tr:hover { background: rgba(255,255,255,0.02); }
+        .compare-table .highlight { color: var(--success); font-weight: 600; }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .pros, .cons {
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .pros { background: rgba(34,197,94,0.05); }
+        .cons { background: rgba(239,68,68,0.05); }
+        .pros h3 { color: var(--success); margin-bottom: 12px; }
+        .cons h3 { color: #ef4444; margin-bottom: 12px; }
+        .pros li, .cons li { margin-bottom: 6px; font-size: 14px; }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 600px) {
+            .pros-cons { grid-template-columns: 1fr; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 1.6em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="badge">GitHub Trending 深度分析</div>
+        <h1>Project N.O.M.A.D.</h1>
+        <div class="subtitle">Node for Offline Media, Archives, and Data — 完全离线的知识堡垒</div>
+        <div class="meta">
+            <span>Crosstalk-Solutions/project-nomad</span>
+            <span>13k+ Stars</span>
+            <span>Apache License 2.0</span>
+            <span>分析日期: 2026-05-31</span>
+        </div>
+    </div>
+
+    <!-- Score Section -->
+    <div class="score-section">
+        <h2>综合评分</h2>
+        <div class="score-grid">
+            <div class="score-card">
+                <div class="label">创新性</div>
+                <div class="value" style="color: #a78bfa;">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%; background: #a78bfa;"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">实用性</div>
+                <div class="value" style="color: #60a5fa;">9.2</div>
+                <div class="bar"><div class="bar-fill" style="width:92%; background: #60a5fa;"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">技术质量</div>
+                <div class="value" style="color: #22c55e;">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%; background: #22c55e;"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">社区活跃度</div>
+                <div class="value" style="color: #f59e0b;">8.8</div>
+                <div class="bar"><div class="bar-fill" style="width:88%; background: #f59e0b;"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">文档完善度</div>
+                <div class="value" style="color: #ec4899;">8.7</div>
+                <div class="bar"><div class="bar-fill" style="width:87%; background: #ec4899;"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">易用性</div>
+                <div class="value" style="color: #06b6d4;">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%; background: #06b6d4;"></div></div>
+            </div>
+        </div>
+        <div class="score-overall">
+            <div class="label">综合得分</div>
+            <div class="big-score">8.8 / 10</div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(96,165,250,0.15); color: #60a5fa;">&#128218;</span>项目概述</h2>
+        <p>
+            <strong>Project N.O.M.A.D.</strong>（Node for Offline Media, Archives, and Data）是由 <strong>Crosstalk Solutions</strong>
+            开发的一款完全离线、自包含的知识与教育服务器。它将维基百科、AI 聊天、离线地图、教育课程、数据分析工具等多项核心能力整合到一个 Docker 容器编排平台中，
+            仅需一条太阳能板即可运行，号称"末日生存电脑"。
+        </p>
+        <p>
+            该项目在 GitHub 上线仅数周便获得超过 13,000 颗星标，迅速登上 Trending 榜单，受到了全球开发者社区、自托管爱好者、数字主权倡导者以及灾难应急准备社区的广泛关注。
+            项目采用 Apache 2.0 许可证，完全开源免费。
+        </p>
+    </div>
+
+    <!-- Technical Architecture -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(34,197,94,0.15); color: #22c55e;">&#9881;</span>技术架构</h2>
+        <p>Project N.O.M.A.D. 采用 Docker 容器化架构，所有服务组件均以独立容器运行，通过 Docker Compose 进行编排管理。核心架构包含一个自研的 "Command Center" 管理 UI 和 API 层，统一管理所有容器化工具和资源的安装、配置与更新。</p>
+
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(96,165,250,0.15); color: #60a5fa;">&#128051;</div>
+                <div>
+                    <div class="tech-name">Docker / Docker Compose</div>
+                    <div class="tech-desc">核心编排层，所有服务容器化管理</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(167,139,250,0.15); color: #a78bfa;">&#129302;</div>
+                <div>
+                    <div class="tech-name">Ollama</div>
+                    <div class="tech-desc">本地 LLM 推理引擎，默认 Qwen 2.5 3B 模型</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(34,197,94,0.15); color: #22c55e;">&#128214;</div>
+                <div>
+                    <div class="tech-name">Kiwix</div>
+                    <div class="tech-desc">离线维基百科/百科全书阅读器（ZIM 格式）</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(245,158,11,0.15); color: #f59e0b;">&#127891;</div>
+                <div>
+                    <div class="tech-name">Kolibri</div>
+                    <div class="tech-desc">离线教育平台，支持 Khan Academy 课程</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(236,72,153,0.15); color: #ec4899;">&#128506;</div>
+                <div>
+                    <div class="tech-name">ProtoMaps</div>
+                    <div class="tech-desc">可下载的离线区域地图与导航</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(6,182,212,0.15); color: #06b6d4;">&#128272;</div>
+                <div>
+                    <div class="tech-name">CyberChef</div>
+                    <div class="tech-desc">加密、编码、哈希和数据分析工具</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6;">&#128451;</div>
+                <div>
+                    <div class="tech-name">Qdrant</div>
+                    <div class="tech-desc">向量数据库，支持 RAG 语义搜索</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(251,146,60,0.15); color: #fb923c;">&#128221;</div>
+                <div>
+                    <div class="tech-name">FlatNotes</div>
+                    <div class="tech-desc">本地 Markdown 笔记工具</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(96,165,250,0.15); color: #60a5fa;">&#128187;</div>
+                <div>
+                    <div class="tech-name">Command Center</div>
+                    <div class="tech-desc">自研管理 UI，统一编排所有服务</div>
+                </div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon" style="background: rgba(34,197,94,0.15); color: #22c55e;">&#128451;</div>
+                <div>
+                    <div class="tech-name">MySQL</div>
+                    <div class="tech-desc">后端数据存储</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top:24px; margin-bottom:12px;">架构示意</h3>
+        <pre style="background: #0f172a; padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 13px; color: #94a3b8; border: 1px solid var(--border);">
+┌─────────────────────────────────────────────────────────────┐
+│                   Command Center (管理 UI + API)              │
+│                   http://localhost:8080                       │
+├──────────┬──────────┬──────────┬──────────┬─────────────────┤
+│  Kiwix   │ Kolibri  │  Ollama  │ ProtoMaps│   CyberChef     │
+│ (百科全书) │ (教育平台) │ (AI推理)  │ (离线地图)│  (数据工具)     │
+│  :8090   │  :8095   │ :11434   │  :8098   │    :8096        │
+├──────────┴──────────┴──────────┴──────────┴─────────────────┤
+│              Qdrant (向量DB)  │  FlatNotes  │  MySQL          │
+│              :6333           │  :8097      │  :3306          │
+├──────────────────────────────────────────────────────────────┤
+│                  Docker Compose 编排层                        │
+├──────────────────────────────────────────────────────────────┤
+│              Debian-based OS (Ubuntu 推荐)                    │
+│              x86-64 架构 / GPU 可选                            │
+└──────────────────────────────────────────────────────────────┘</pre>
+    </div>
+
+    <!-- Core Innovations -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(245,158,11,0.15); color: #f59e0b;">&#128161;</span>核心创新点</h2>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feat-title">1. "一键式"离线知识堡垒</div>
+                <div class="feat-desc">只需 3 行命令即可安装完整的离线知识服务器，集成维基百科（约 50-996GB）、AI 聊天、离线地图、教育课程等，真正实现"即插即用"的离线知识中心。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">2. 容器化编排 + 统一管理 UI</div>
+                <div class="feat-desc">自研的 Command Center 提供了一站式管理界面，用户无需手动配置各个 Docker 容器，安装、更新、管理全部通过 Web UI 完成，极大降低了使用门槛。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">3. AI + RAG 知识增强</div>
+                <div class="feat-desc">集成 Ollama 本地大模型推理 + Qdrant 向量数据库，支持文档上传和语义搜索（RAG），在完全离线环境下实现 AI 增强的知识检索和对话。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">4. 极低功耗设计</div>
+                <div class="feat-desc">核心服务可在最低 4GB RAM 的设备上运行，配合一块太阳能板即可供电，适用于极端环境、野外作业、灾难应急等场景。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">5. 零遥测 + 隐私优先</div>
+                <div class="feat-desc">项目内置零遥测设计，仅在安装时需要网络连接，运行期间完全离线。唯一的外部请求是用于检测网络连通性的 Cloudflare 端点。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">6. 灵活的 AI 后端支持</div>
+                <div class="feat-desc">除默认的 Ollama 外，还支持 OpenAI API 兼容的后端（如 LM Studio、llama.cpp），用户可根据硬件条件灵活选择推理方案。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Scenarios -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(236,72,153,0.15); color: #ec4899;">&#127919;</span>应用场景</h2>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feat-title">灾难应急与生存准备</div>
+                <div class="feat-desc">在自然灾害、战争、网络中断等极端场景下，提供可靠的离线知识库、医疗参考和 AI 辅助决策能力。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">远程地区教育与医疗</div>
+                <div class="feat-desc">为偏远地区、发展中国家提供离线的 Khan Academy 课程、维基百科知识和医疗参考资料，配合太阳能供电即可部署。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">数字主权与隐私保护</div>
+                <div class="feat-desc">对于重视数据隐私的个人和组织，NOMAD 提供完全自托管、零外传的知识与 AI 服务，所有数据仅存在于本地。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">Homelab 与自托管爱好者</div>
+                <div class="feat-desc">作为自托管项目的集成平台，一键部署多种常用工具，适合技术爱好者在家庭实验室中搭建私有知识中心。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">军事与野外作业</div>
+                <div class="feat-desc">在无法依赖外部网络的军事行动或野外勘探中，提供本地化的地图、百科、AI 辅助和数据分析能力。</div>
+            </div>
+            <div class="feature-item">
+                <div class="feat-title">学校与教育机构</div>
+                <div class="feat-desc">为网络条件有限的学校提供离线教育平台，支持多用户进度跟踪，适合课堂教学和远程教育。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competitor Comparison -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(6,182,212,0.15); color: #06b6d4;">&#9878;</span>竞品对比</h2>
+        <p>目前市场上没有直接对标的项目——将百科、AI、地图、教育完整整合为一个离线平台的方案极为罕见。以下是分模块的竞品对比：</p>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>能力维度</th>
+                    <th>Project N.O.M.A.D.</th>
+                    <th>替代方案</th>
+                    <th>对比</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>离线百科</td>
+                    <td class="highlight">Kiwix（内置）</td>
+                    <td>Kiwix 独立安装</td>
+                    <td>NOMAD 集成管理更便捷</td>
+                </tr>
+                <tr>
+                    <td>本地 AI</td>
+                    <td>Ollama + Open WebUI</td>
+                    <td class="highlight">LM Studio / text-gen-webui</td>
+                    <td>LM Studio GUI 更友好，NOMAD 集成度更高</td>
+                </tr>
+                <tr>
+                    <td>离线教育</td>
+                    <td class="highlight">Kolibri（内置）</td>
+                    <td>Kolibri 独立部署</td>
+                    <td>NOMAD 一键安装，独立部署需手动配置</td>
+                </tr>
+                <tr>
+                    <td>离线地图</td>
+                    <td>ProtoMaps</td>
+                    <td>OpenStreetMap / Organic Maps</td>
+                    <td>各有所长，NOMAD 集成在统一平台中</td>
+                </tr>
+                <tr>
+                    <td>综合集成度</td>
+                    <td class="highlight">一站式平台</td>
+                    <td>自建 Homelab 堆栈</td>
+                    <td>NOMAD 显著降低部署复杂度</td>
+                </tr>
+                <tr>
+                    <td>自托管协作</td>
+                    <td>暂无协作功能</td>
+                    <td class="highlight">Nextcloud / ownCloud</td>
+                    <td>Nextcloud 协作能力更强</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:24px; margin-bottom:12px;">核心竞争优势</h3>
+        <ul>
+            <li><strong>唯一的一站式方案</strong>：目前市场上没有其他项目能将百科、AI、地图、教育、工具如此完整地整合进一个离线平台</li>
+            <li><strong>极低部署门槛</strong>：3 行命令完成安装，对比传统自建方案需要数十小时的配置工作</li>
+            <li><strong>活跃的开发节奏</strong>：定期发布新版本（如 v1.30.0 暗色模式），社区反馈积极</li>
+            <li><strong>硬件基准测试</strong>：内置性能评分和社区排行榜，方便用户选择合适硬件</li>
+        </ul>
+    </div>
+
+    <!-- Pros & Cons -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6;">&#9878;</span>优劣势分析</h2>
+        <div class="pros-cons">
+            <div class="pros">
+                <h3>&#9989; 优势</h3>
+                <ul>
+                    <li>真正的"开箱即用"离线知识服务器</li>
+                    <li>一键安装，3 行命令完成部署</li>
+                    <li>丰富的功能集（百科、AI、地图、教育、工具）</li>
+                    <li>零遥测、零外部依赖的设计理念</li>
+                    <li>支持太阳能板供电，极低功耗运行</li>
+                    <li>灵活的 AI 后端支持（Ollama/LM Studio/llama.cpp）</li>
+                    <li>活跃的社区和持续的功能更新</li>
+                    <li>完善的文档和安装指南</li>
+                    <li>Apache 2.0 开源许可，商业友好</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h3>&#10060; 不足</h3>
+                <ul>
+                    <li>仅支持 x86-64 架构，不支持 ARM/Raspberry Pi</li>
+                    <li>AI 功能需要较强的 GPU 硬件才能充分发挥</li>
+                    <li>暂无用户认证系统，不适合多用户安全场景</li>
+                    <li>完全离线数据需要大量存储空间（百科可达 996GB）</li>
+                    <li>不支持直接暴露到公网（安全限制）</li>
+                    <li>初始安装必须联网下载依赖</li>
+                    <li>部分组件（如 ProtoMaps）功能相对基础</li>
+                    <li>目前不支持协作和文件共享功能</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardware Requirements -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(251,146,60,0.15); color: #fb923c;">&#128187;</span>硬件需求</h2>
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>配置级别</th>
+                    <th>处理器</th>
+                    <th>内存</th>
+                    <th>存储</th>
+                    <th>GPU</th>
+                    <th>参考价格</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>最低配置</td>
+                    <td>2GHz 双核</td>
+                    <td>4GB</td>
+                    <td>5GB</td>
+                    <td>无</td>
+                    <td>$150+</td>
+                </tr>
+                <tr>
+                    <td>推荐配置</td>
+                    <td>Ryzen 7 / i7</td>
+                    <td>32GB</td>
+                    <td>250GB SSD</td>
+                    <td>RTX 3060</td>
+                    <td>$500-$1000</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary -->
+    <div class="section">
+        <h2><span class="icon" style="background: rgba(96,165,250,0.15); color: #60a5fa;">&#128203;</span>总结</h2>
+        <p>
+            Project N.O.M.A.D. 是一个极具创新性和实用价值的开源项目，它以"将人类文明装入一个 Docker 容器"为愿景，成功地将百科知识、AI 能力、教育资源、离线地图和实用工具整合为一个完全离线、开箱即用的平台。
+        </p>
+        <p>
+            在全球数字主权意识增强、灾难应急需求上升的大背景下，NOMAD 填补了一个重要的市场空白。虽然目前在 ARM 支持、用户认证等方面还有提升空间，但其核心设计理念——离线优先、隐私优先、一键部署——已经赢得了广泛的社区认可。
+        </p>
+        <p>
+            对于自托管爱好者、数字隐私倡导者、教育工作者和灾难应急准备者而言，Project N.O.M.A.D. 是 2026 年最值得关注的开源项目之一。
+        </p>
+    </div>
+
+    <div class="footer">
+        <p>本报告由 AI 自动生成 | 数据来源：GitHub、Reddit、VirtusLab、Quadrata 等</p>
+        <p>分析日期：2026-05-31 | Crosstalk-Solutions/project-nomad</p>
+    </div>
+
+</div>
+</body>
+</html>
