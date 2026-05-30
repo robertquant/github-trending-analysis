@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告 - run-llama/liteparse</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+  .header { text-align: center; margin-bottom: 48px; padding: 48px 24px; background: linear-gradient(135deg, #161b22 0%, #1a2332 100%); border-radius: 16px; border: 1px solid #30363d; }
+  .header .badge { display: inline-block; padding: 4px 14px; background: #1f6feb33; color: #58a6ff; border-radius: 20px; font-size: 13px; margin-bottom: 16px; }
+  .header h1 { font-size: 32px; color: #f0f6fc; margin-bottom: 8px; }
+  .header .subtitle { color: #8b949e; font-size: 16px; }
+  .header .meta { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+  .header .meta span { color: #8b949e; font-size: 14px; }
+  .section { margin-bottom: 36px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; padding: 28px; }
+  .section h2 { font-size: 22px; color: #f0f6fc; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #21262d; }
+  .section h3 { font-size: 17px; color: #79c0ff; margin: 16px 0 10px; }
+  .section p { margin-bottom: 12px; }
+  .section ul, .section ol { padding-left: 20px; margin-bottom: 12px; }
+  .section li { margin-bottom: 6px; }
+  .highlight { color: #7ee787; font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 10px; background: #1f6feb22; color: #58a6ff; border-radius: 12px; font-size: 12px; margin: 2px; }
+  .score-card { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 20px; }
+  .score-item { text-align: center; padding: 20px 12px; background: #0d1117; border-radius: 10px; border: 1px solid #30363d; }
+  .score-item .score { font-size: 36px; font-weight: 700; color: #7ee787; }
+  .score-item .label { font-size: 13px; color: #8b949e; margin-top: 4px; }
+  .score-item.score-high .score { color: #7ee787; }
+  .score-item.score-mid .score { color: #d29922; }
+  .score-item.score-low .score { color: #f85149; }
+  .comparison-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+  .comparison-table th { background: #0d1117; color: #58a6ff; padding: 12px 16px; text-align: left; border-bottom: 2px solid #30363d; }
+  .comparison-table td { padding: 10px 16px; border-bottom: 1px solid #21262d; }
+  .comparison-table tr:hover { background: #1a2332; }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px; }
+  .feature-card { padding: 20px; background: #0d1117; border-radius: 10px; border: 1px solid #30363d; }
+  .feature-card h4 { color: #79c0ff; margin-bottom: 8px; font-size: 15px; }
+  .feature-card p { font-size: 13px; color: #8b949e; margin: 0; }
+  .verdict { text-align: center; padding: 32px; background: linear-gradient(135deg, #1a2332, #162316); border-radius: 12px; border: 1px solid #238636; margin-top: 20px; }
+  .verdict .verdict-score { font-size: 48px; font-weight: 700; color: #7ee787; }
+  .verdict .verdict-text { font-size: 18px; color: #f0f6fc; margin-top: 8px; }
+  .verdict .verdict-sub { color: #8b949e; margin-top: 8px; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .footer { text-align: center; color: #484f58; font-size: 12px; margin-top: 48px; padding-top: 24px; border-top: 1px solid #21262d; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <div class="badge">GitHub Trending 深度分析</div>
+  <h1>run-llama/liteparse</h1>
+  <div class="subtitle">快速、轻量、开源的文档解析器 — LlamaIndex 团队出品</div>
+  <div class="meta">
+    <span>📅 分析日期: 2026-05-30</span>
+    <span>🏷️ 许可证: Apache 2.0</span>
+    <span>💻 语言: Rust + TypeScript + WASM</span>
+    <span>🏢 团队: LlamaIndex (run-llama)</span>
+  </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="section">
+  <h2>📋 项目概述</h2>
+  <p><strong>LiteParse</strong> 是由 <span class="highlight">LlamaIndex</span>（即 run-llama 组织）开发并开源的文档解析工具。它是 LlamaParse 云服务背后的核心文本提取引擎，以独立开源项目的形式发布，专注于 <span class="highlight">快速、轻量、本地化</span> 的文档解析。</p>
+  <p>LiteParse 能够从 PDF、Office 文档（DOCX、PPTX、XLSX）和图片中提取具有 <span class="highlight">空间布局感知</span> 的文本内容，保留文本的坐标位置和边界框信息（bounding boxes），为下游 AI Agent 工作流提供高质量的解析输入。</p>
+
+  <h3>核心定位</h3>
+  <ul>
+    <li><strong>无云依赖</strong> — 完全本地运行，无需 API 密钥或网络连接</li>
+    <li><strong>无 LLM 消耗</strong> — 不调用任何大模型，零 token 成本</li>
+    <li><strong>无 GPU 需求</strong> — 纯规则引擎，不依赖任何 AI 模型</li>
+    <li><strong>多格式支持</strong> — PDF、DOCX、PPTX、XLSX、图片等</li>
+    <li><strong>多语言接口</strong> — CLI、Python、Node.js/TypeScript、Rust、WASM</li>
+  </ul>
+
+  <h3>关键数据</h3>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>解析速度</h4>
+      <p>~200-500 页/秒，v2.0 用 Rust 重写后速度提升高达 100 倍</p>
+    </div>
+    <div class="feature-card">
+      <h4>运行环境</h4>
+      <p>Python、Node.js、WASM、Rust、Cloudflare Workers、浏览器、移动端</p>
+    </div>
+    <div class="feature-card">
+      <h4>许可证</h4>
+      <p>Apache 2.0 开源协议，商业友好</p>
+    </div>
+    <div class="feature-card">
+      <h4>零依赖</h4>
+      <p>零 Python 依赖，零外部运行时要求</p>
+    </div>
+  </div>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+  <h2>🏗️ 技术架构</h2>
+  <p>LiteParse v2.0 采用了全新的 Rust 重写架构，核心理念是 <span class="highlight">"将文本投射到空间网格"</span>，而非尝试将复杂文档转换为 Markdown。</p>
+
+  <h3>架构分层</h3>
+  <ul>
+    <li><strong>核心解析引擎（Rust）</strong> — 负责底层的 PDF 文本提取和空间布局计算，使用 Rust 编写以确保极致性能和内存安全</li>
+    <li><strong>WASM 编译层</strong> — 将 Rust 核心编译为 WebAssembly，使其能在浏览器、Edge Runtime、Cloudflare Workers 等任何支持 WASM 的环境运行</li>
+    <li><strong>多语言绑定层</strong>
+      <ul>
+        <li><span class="tag">Python</span> 通过原生绑定调用 Rust 核心</li>
+        <li><span class="tag">Node.js/TypeScript</span> 提供 CLI 工具和 npm 包 <code>@llamaindex/liteparse</code></li>
+        <li><span class="tag">Rust</span> 作为 crate 直接使用</li>
+        <li><span class="tag">WASM</span> 用于浏览器和 Edge 环境</li>
+      </ul>
+    </li>
+    <li><strong>HTTP 服务层（liteparse-server）</strong> — 开源自托管 HTTP 后端，适用于需要 API 服务的场景</li>
+  </ul>
+
+  <h3>两步工作流设计</h3>
+  <ol>
+    <li><strong>快速文本提取</strong> — 原始文本和空间坐标的高效抽取</li>
+    <li><strong>结构化解析</strong> — 利用空间信息还原文档的逻辑结构</li>
+  </ol>
+  <p>这种设计的核心哲学是：现代 LLM 已经具备阅读表格的能力，因此无需花费算力将表格转换为特定格式，只需保留空间布局信息让 LLM 自行理解。</p>
+
+  <h3>空间布局感知</h3>
+  <p>与传统 PDF 解析器不同，LiteParse 不只是提取纯文本，而是为每个文本块提供：</p>
+  <ul>
+    <li>精确的坐标位置（x, y）</li>
+    <li>边界框信息（bounding box）</li>
+    <li>页码和阅读顺序</li>
+  </ul>
+  <p>这些信息让下游的 AI 模型能够理解文档的视觉结构，从而更准确地处理表格、多栏布局和图文混排等复杂场景。</p>
+</div>
+
+<!-- 核心创新点 -->
+<div class="section">
+  <h2>💡 核心创新点</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h4>1. 空间网格投射模型</h4>
+      <p>突破传统 PDF 解析的"文本流"思路，将文本投射到二维空间网格，保留完整的视觉布局语义。这一设计让 LLM 能够像"看"文档一样理解文档结构。</p>
+    </div>
+    <div class="feature-card">
+      <h4>2. 100 倍性能飞跃（Rust 重写）</h4>
+      <p>v2.0 用 Rust 完全重写核心引擎，相比 v1 实现了最高 100 倍的性能提升。每秒可解析 200-500 页文档，远超同类工具。</p>
+    </div>
+    <div class="feature-card">
+      <h4>3. 全平台 WASM 部署</h4>
+      <p>通过 WASM 编译，实现"一次编写，到处运行"。可在 Cloudflare Workers 边缘节点、浏览器、移动设备等环境毫秒级解析 PDF。</p>
+    </div>
+    <div class="feature-card">
+      <h4>4. Model-Free 智能解析</h4>
+      <p>不依赖任何 AI 模型，完全基于规则和空间算法。零 GPU、零 token 消耗，彻底消除运行成本，同时保持高解析质量。</p>
+    </div>
+    <div class="feature-card">
+      <h4>5. Agent-First 设计理念</h4>
+      <p>专为 AI Agent 工作流优化，作为文档处理链路的第一环节。提供 Agent Skill 定义、沙箱执行环境等 Agent 生态支持。</p>
+    </div>
+    <div class="feature-card">
+      <h4>6. LlamaParse 核心引擎开源</h4>
+      <p>将 LlamaParse（商业云服务）的核心处理引擎开源，让社区能够免费获得与商业产品同等质量的解析能力。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+  <h2>🎯 应用场景</h2>
+
+  <h3>1. RAG（检索增强生成）管道</h3>
+  <p>作为 RAG 系统的文档预处理环节，将 PDF/Office 文档高质量地转换为向量数据库可索引的结构化文本。配合 LanceDB 等向量数据库使用效果尤佳。</p>
+
+  <h3>2. AI Agent 文档处理</h3>
+  <p>为 AI Agent 提供本地化的文档解析能力。Agent 可自主解析上传的文档，无需将文件发送到第三方云服务，保障数据隐私和安全。</p>
+
+  <h3>3. 金融研究 Agent</h3>
+  <p>LlamaIndex 官方提供了基于 LiteParse 构建金融研究 Agent 的完整教程，可解析财报、研报等复杂金融文档。</p>
+
+  <h3>4. CI/CD 自动化文档处理</h3>
+  <p>在 CI/CD 流水线中自动解析和验证生成的文档，如测试报告、API 文档等。</p>
+
+  <h3>5. 边缘计算文档解析</h3>
+  <p>通过 WASM 在 Cloudflare Workers 等 Edge Runtime 上运行，实现就近解析，减少数据传输延迟。</p>
+
+  <h3>6. 浏览器端文档处理</h3>
+  <p>在浏览器中直接解析 PDF，无需后端服务器支持，适合隐私敏感场景和离线应用。</p>
+
+  <h3>7. 自托管文档解析服务</h3>
+  <p>使用 liteparse-server 快速搭建私有文档解析 API，替代云服务，满足合规需求。</p>
+</div>
+
+<!-- 竞品对比 -->
+<div class="section">
+  <h2>⚔️ 竞品对比</h2>
+
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>工具</th>
+        <th>速度</th>
+        <th>方法</th>
+        <th>模型依赖</th>
+        <th>布局感知</th>
+        <th>运行方式</th>
+        <th>最佳场景</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong style="color:#7ee787">LiteParse</strong></td>
+        <td>~200-500 页/秒</td>
+        <td>规则 + 空间网格</td>
+        <td>无</td>
+        <td>✅ 强</td>
+        <td>本地/Edge/WASM</td>
+        <td>极速本地解析、Agent 工作流</td>
+      </tr>
+      <tr>
+        <td><strong>PyMuPDF</strong></td>
+        <td>~180 页/秒</td>
+        <td>原生 PDF 库</td>
+        <td>无</td>
+        <td>❌ 弱</td>
+        <td>本地 Python</td>
+        <td>快速纯文本提取</td>
+      </tr>
+      <tr>
+        <td><strong>pdfplumber</strong></td>
+        <td>~18 页/秒</td>
+        <td>Python 文本提取</td>
+        <td>无</td>
+        <td>⚠️ 中</td>
+        <td>本地 Python</td>
+        <td>简单表格提取</td>
+      </tr>
+      <tr>
+        <td><strong>Docling (IBM)</strong></td>
+        <td>中等</td>
+        <td>AI/ML 模型</td>
+        <td>需要</td>
+        <td>✅ 强</td>
+        <td>本地 Python</td>
+        <td>高精度布局理解</td>
+      </tr>
+      <tr>
+        <td><strong>LlamaParse</strong></td>
+        <td>中等</td>
+        <td>AI 增强解析</td>
+        <td>需要（云端）</td>
+        <td>✅ 最强</td>
+        <td>云 API</td>
+        <td>最复杂文档的高精度解析</td>
+      </tr>
+      <tr>
+        <td><strong>MarkItDown (Microsoft)</strong></td>
+        <td>中等</td>
+        <td>格式转换</td>
+        <td>无</td>
+        <td>⚠️ 中</td>
+        <td>本地 Python</td>
+        <td>文档转 Markdown</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>竞争优势分析</h3>
+  <ul>
+    <li><strong>速度碾压</strong>：比 pdfplumber 快 10-25 倍，比 PyMuPDF 快 1-3 倍</li>
+    <li><strong>零成本运行</strong>：无需 GPU、无需 LLM token、无需云服务费用</li>
+    <li><strong>部署灵活</strong>：WASM 支持使其可在几乎所有计算环境运行</li>
+    <li><strong>Agent 生态整合</strong>：与 LlamaIndex 生态深度整合，开箱即用</li>
+  </ul>
+
+  <h3>劣势分析</h3>
+  <ul>
+    <li>对扫描件 PDF（纯图片）的 OCR 支持有限，不如 AI 增强解析器</li>
+    <li>社区生态相对年轻（2026 年 3 月开源），成熟度不如 PyMuPDF</li>
+    <li>对于极其复杂的文档布局，可能不如 Docling 或 LlamaParse 精确</li>
+  </ul>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+  <h2>📊 综合评分</h2>
+  <div class="score-card">
+    <div class="score-item score-high">
+      <div class="score">9.5</div>
+      <div class="label">技术创新</div>
+    </div>
+    <div class="score-item score-high">
+      <div class="score">9.0</div>
+      <div class="label">实用价值</div>
+    </div>
+    <div class="score-item score-high">
+      <div class="score">9.5</div>
+      <div class="label">性能表现</div>
+    </div>
+    <div class="score-item score-high">
+      <div class="score">8.5</div>
+      <div class="label">社区活跃度</div>
+    </div>
+    <div class="score-item score-high">
+      <div class="score">9.0</div>
+      <div class="label">代码质量</div>
+    </div>
+    <div class="score-item score-mid">
+      <div class="score">7.5</div>
+      <div class="label">成熟度</div>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <div class="verdict-score">9.1 / 10</div>
+    <div class="verdict-text">强烈推荐关注</div>
+    <div class="verdict-sub">
+      LiteParse 是文档解析领域的一个里程碑式项目。它将 LlamaParse 的核心引擎开源，以 Rust 实现极致性能，<br>
+      通过 WASM 实现全平台部署，且完全免费、无需 AI 模型。对于需要本地化文档处理的 AI Agent 开发者而言，这是目前最优选择之一。
+    </div>
+  </div>
+</div>
+
+<!-- 参考链接 -->
+<div class="section">
+  <h2>🔗 参考链接</h2>
+  <ul>
+    <li><a href="https://github.com/run-llama/liteparse" target="_blank">GitHub 仓库</a></li>
+    <li><a href="https://www.llamaindex.ai/liteparse" target="_blank">LlamaIndex 官方页面</a></li>
+    <li><a href="https://www.llamaindex.ai/blog/liteparse-local-document-parsing-for-ai-agents" target="_blank">官方博客：LiteParse 介绍</a></li>
+    <li><a href="https://www.llamaindex.ai/blog/liteparse-v2-0-runs-everywhere" target="_blank">官方博客：LiteParse v2.0 Rust 重写</a></li>
+    <li><a href="https://www.lancedb.com/blog/smart-parsing-meets-sharp-retrieval-combining-liteparse-and-lancedb" target="_blank">LiteParse + LanceDB 集成教程</a></li>
+    <li><a href="https://simonwillison.net/2026/Apr/23/liteparse-for-the-web/" target="_blank">Simon Willison 评测：浏览器端 PDF 解析</a></li>
+  </ul>
+</div>
+
+<div class="footer">
+  <p>GitHub Trending 深度分析报告 · 由 AI 自动生成 · 2026-05-30</p>
+</div>
+
+</div>
+</body>
+</html>
