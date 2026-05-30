@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析：stop-slop — AI写作痕迹清除工具</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --card: #1a1d27;
+            --border: #2a2d3a;
+            --fg: #e4e4e7;
+            --muted: #8b8d98;
+            --accent: #f97316;
+            --accent2: #22d3ee;
+            --green: #34d399;
+            --red: #f87171;
+            --yellow: #fbbf24;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), #ea580c);
+            color: #fff;
+            padding: 0.3rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: 0.5px;
+        }
+        .header h1 {
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .header .subtitle {
+            color: var(--muted);
+            font-size: 1.1rem;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .meta-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .meta-card .label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.4rem;
+        }
+        .meta-card .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .section p, .section li {
+            color: var(--fg);
+            opacity: 0.9;
+        }
+        .section ul {
+            padding-left: 1.2rem;
+        }
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+        .highlight-box {
+            background: rgba(249, 115, 22, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.2rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+        .highlight-box.cyan {
+            background: rgba(34, 211, 238, 0.1);
+            border-left-color: var(--accent2);
+        }
+        .code-block {
+            background: #12141c;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            color: var(--accent2);
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+            margin: 1rem 0;
+        }
+        .score-item {
+            background: #12141c;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .score-item .score-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+        }
+        .score-item .score-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+        .score-item .score-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .comparison-table th {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .tag-green { background: rgba(52, 211, 153, 0.15); color: var(--green); }
+        .tag-yellow { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+        .tag-red { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.8rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="badge">GitHub Trending 深度分析</div>
+    <h1>stop-slop</h1>
+    <p class="subtitle">AI写作痕迹识别与清除的技能文件</p>
+    <p style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;">
+        hardikpandya/stop-slop &middot; 分析日期：2026-05-30
+    </p>
+</div>
+
+<div class="meta-grid">
+    <div class="meta-card">
+        <div class="label">项目类型</div>
+        <div class="value" style="color: var(--accent);">AI 写作工具</div>
+    </div>
+    <div class="meta-card">
+        <div class="label">核心形态</div>
+        <div class="value" style="color: var(--accent2);">SKILL.md</div>
+    </div>
+    <div class="meta-card">
+        <div class="label">开源协议</div>
+        <div class="value" style="color: var(--green);">MIT</div>
+    </div>
+    <div class="meta-card">
+        <div class="label">作者</div>
+        <div class="value" style="font-size: 1rem;">Hardik Pandya</div>
+    </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(249,115,22,0.15); color: var(--accent);">&#128218;</span> 项目概述</h2>
+    <p>
+        <strong>stop-slop</strong> 是一个专为 <strong>Claude Code</strong>（及其他 LLM）设计的技能文件（Skill File），旨在识别和消除 AI 生成文本中的可预测写作模式——即所谓的 <strong>"AI slop"</strong>（AI 废话/套路文）。
+    </p>
+    <div class="highlight-box">
+        <strong>核心理念：</strong>AI 写作存在可辨识的模式——重复的短语、固定的结构、可预测的节奏。这个工具教会 LLM 捕捉并去除这些"AI 腔"，使文本回归自然、真实的人类写作风格。
+    </div>
+    <p style="margin-top: 0.8rem;">
+        项目由产品设计师 <strong>Hardik Pandya</strong> 创建。他在深度使用 AI 辅助写作后，敏锐地发现了 AI 生成文本的模式化问题，于是设计了这套系统化的解决方案。
+    </p>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(34,211,238,0.15); color: var(--accent2);">&#9881;</span> 技术架构</h2>
+
+    <h3 style="margin-bottom: 0.5rem; font-size: 1rem;">项目结构</h3>
+    <div class="code-block">
+stop-slop/
+├── SKILL.md              # 核心指令文件
+├── references/
+│   ├── phrases.md        # 需移除的短语列表
+│   ├── structures.md     # 需避免的结构模式
+│   └── examples.md       # 改写前后对照示例
+├── README.md
+└── LICENSE               # MIT
+    </div>
+
+    <h3 style="margin: 1rem 0 0.5rem; font-size: 1rem;">工作原理</h3>
+    <p>项目采用 <strong>规则驱动 + 参考文档</strong> 的三层架构：</p>
+    <ul>
+        <li><strong>SKILL.md（核心指令层）</strong>：定义 7 条核心写作规则，包括去除填充短语、使用主动语态、要求具体化等</li>
+        <li><strong>phrases.md（短语黑名单）</strong>：收录常见的 AI 套路表达，如"delve into"、"it's worth noting"等开场白和强调词</li>
+        <li><strong>structures.md（结构模式库）</strong>：识别二段式对比、排比清单、戏剧性碎片化等 AI 偏好的结构套路</li>
+        <li><strong>examples.md（示例库）</strong>：提供 before/after 对照，将 AI 味浓重的文本改写为自然的人类写作</li>
+    </ul>
+
+    <h3 style="margin: 1rem 0 0.5rem; font-size: 1rem;">集成方式</h3>
+    <ul>
+        <li><strong>Claude Code：</strong>作为技能文件夹直接加载</li>
+        <li><strong>Claude Projects：</strong>上传 SKILL.md 到项目知识库</li>
+        <li><strong>自定义指令：</strong>从 SKILL.md 复制核心规则</li>
+        <li><strong>API 调用：</strong>将 SKILL.md 纳入系统提示词</li>
+    </ul>
+
+    <h3 style="margin: 1rem 0 0.5rem; font-size: 1rem;">评分系统</h3>
+    <p>项目内置了 <strong>50 分制评分体系</strong>，从 5 个维度评估文本质量：</p>
+    <table class="comparison-table">
+        <tr><th>维度</th><th>评估问题</th></tr>
+        <tr><td>直接性 (Directness)</td><td>是直接陈述还是绕弯子？</td></tr>
+        <tr><td>节奏 (Rhythm)</td><td>句子长短是否变化自然？</td></tr>
+        <tr><td>信任感 (Trust)</td><td>是否尊重读者智力？</td></tr>
+        <tr><td>真实感 (Authenticity)</td><td>读起来像人写的吗？</td></tr>
+        <tr><td>密度 (Density)</td><td>是否有可删减的冗余？</td></tr>
+    </table>
+    <p style="margin-top: 0.5rem; color: var(--red);"><strong>低于 35/50 分：需要重写。</strong></p>
+</div>
+
+<!-- 核心创新点 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(52,211,153,0.15); color: var(--green);">&#128161;</span> 核心创新点</h2>
+
+    <div class="highlight-box cyan">
+        <strong>创新 1：让 AI 自我纠正</strong><br>
+        不是用外部工具检测 AI 文本，而是直接教会 LLM 识别自身的写作模式并主动修正——从源头解决问题。
+    </div>
+
+    <div class="highlight-box cyan" style="margin-top: 0.8rem;">
+        <strong>创新 2：规则可迁移</strong><br>
+        基于 Markdown 技能文件的设计，使其可以无缝迁移到 Claude Code、Claude Projects、API 调用等多种场景，甚至可用于其他 LLM（如 Codex）。
+    </div>
+
+    <div class="highlight-box cyan" style="margin-top: 0.8rem;">
+        <strong>创新 3：量化评估体系</strong><br>
+        5 维度 50 分制评分表，将主观的"读起来像 AI 写的"这种感觉转化为可量化、可追踪的客观指标。
+    </div>
+
+    <div class="highlight-box cyan" style="margin-top: 0.8rem;">
+        <strong>创新 4：参考驱动的知识增强</strong><br>
+        通过 references 目录下的短语库、结构模式库和示例库，以 RAG 式的方式为 LLM 提供丰富的写作规范参考。
+    </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(251,191,36,0.15); color: var(--yellow);">&#127919;</span> 应用场景</h2>
+    <ul>
+        <li><strong>内容创作者</strong>：使用 AI 辅助写作时，自动去除 AI 味，产出更自然的文章、博客、营销文案</li>
+        <li><strong>技术文档团队</strong>：确保技术文档、API 文档不带有 AI 生成的机械感</li>
+        <li><strong>学术写作</strong>：辅助去除论文中可能被 AI 检测器标记的模式化表达</li>
+        <li><strong>产品营销</strong>：确保营销文案有真实的人类语感，避免"AI 腔"影响品牌形象</li>
+        <li><strong>编辑审校</strong>：作为审稿工具，快速定位 AI 生成的痕迹</li>
+        <li><strong>开发者</strong>：集成到 CI/CD 流水线中，自动检查提交的文档和文案质量</li>
+    </ul>
+</div>
+
+<!-- 竞品对比 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(249,115,22,0.15); color: var(--accent);">&#9878;</span> 竞品对比</h2>
+    <table class="comparison-table">
+        <tr>
+            <th>维度</th>
+            <th>stop-slop</th>
+            <th>GPTZero / Winston AI</th>
+            <th>Kagi SlopStop</th>
+            <th>dabit3/deslop</th>
+        </tr>
+        <tr>
+            <td>定位</td>
+            <td>AI 写作风格修正</td>
+            <td>AI 内容检测</td>
+            <td>搜索结果过滤</td>
+            <td>AI 代码模式检测</td>
+        </tr>
+        <tr>
+            <td>工作方式</td>
+            <td>规则驱动 + LLM 自纠</td>
+            <td>统计学/机器学习检测</td>
+            <td>社区标注 + 过滤</td>
+            <td>正则扫描 git diff</td>
+        </tr>
+        <tr>
+            <td>解决问题</td>
+            <td>让输出更像人写的</td>
+            <td>判断是否 AI 生成</td>
+            <td>过滤搜索中的 AI 内容</td>
+            <td>检测代码中的 AI 套路</td>
+        </tr>
+        <tr>
+            <td>适用范围</td>
+            <td>通用文本</td>
+            <td>通用文本</td>
+            <td>网页搜索</td>
+            <td>源代码</td>
+        </tr>
+        <tr>
+            <td>集成难度</td>
+            <td><span class="tag tag-green">极低</span></td>
+            <td><span class="tag tag-yellow">中等</span></td>
+            <td><span class="tag tag-yellow">需订阅</span></td>
+            <td><span class="tag tag-green">npm 安装</span></td>
+        </tr>
+        <tr>
+            <td>成本</td>
+            <td><span class="tag tag-green">免费开源</span></td>
+            <td><span class="tag tag-yellow">Freemium</span></td>
+            <td><span class="tag tag-red">需付费</span></td>
+            <td><span class="tag tag-green">免费开源</span></td>
+        </tr>
+    </table>
+    <div class="highlight-box" style="margin-top: 1rem;">
+        <strong>核心差异：</strong>stop-slop 不做"检测"（告诉你这是 AI 写的），而是做"修正"（让文本不再像 AI 写的）。它从输出端入手，是一个预防性工具而非检测性工具。
+    </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(249,115,22,0.15); color: var(--accent);">&#11088;</span> 综合评分</h2>
+    <div class="score-grid">
+        <div class="score-item">
+            <div class="score-label">创新性</div>
+            <div class="score-value" style="color: var(--accent);">9.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--accent);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">实用性</div>
+            <div class="score-value" style="color: var(--green);">8.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--green);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">工程质量</div>
+            <div class="score-value" style="color: var(--accent2);">7.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 75%; background: var(--accent2);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">社区活跃度</div>
+            <div class="score-value" style="color: var(--yellow);">8.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: var(--yellow);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">可扩展性</div>
+            <div class="score-value" style="color: var(--accent);">8.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--accent);"></div></div>
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem; padding: 1.2rem; background: #12141c; border-radius: 12px;">
+        <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem;">综合评分</div>
+        <div style="font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            8.3 / 10
+        </div>
+        <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem;">
+            <span class="tag tag-green">推荐关注</span>
+        </div>
+    </div>
+</div>
+
+<!-- 总结 -->
+<div class="section">
+    <h2><span class="icon" style="background: rgba(52,211,153,0.15); color: var(--green);">&#128203;</span> 总结</h2>
+    <p>
+        stop-slop 以极简的设计（仅几个 Markdown 文件）切入了一个真实且日益增长的需求：让 AI 生成的文本更自然、更像人类写的东西。它不是检测工具，而是<strong>预防工具</strong>——从 LLM 输出端直接解决问题。
+    </p>
+    <p style="margin-top: 0.8rem;">
+        随着越来越多的内容由 AI 生成，"去 AI 腔"将成为一种刚需技能。stop-slop 开创了"技能文件"这一轻量级范式，简单、免费、可迁移，使其具有极强的传播力。作为 GitHub Trending 上的热门项目，它反映了社区对 AI 写作质量问题的高度关注。
+    </p>
+    <p style="margin-top: 0.8rem;">
+        <strong>适合人群：</strong>内容创作者、技术写作者、营销团队、以及所有希望 AI 辅助写作但不想被"AI 腔"拖累的人。
+    </p>
+</div>
+
+<div class="footer">
+    <p>GitHub Trending 深度分析报告 &middot; 由 AI 自动生成 &middot; 2026-05-30</p>
+</div>
+
+</body>
+</html>
