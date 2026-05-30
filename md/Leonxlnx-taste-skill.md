@@ -4,30 +4,31 @@
 
 | 指标 | 数值 |
 |------|------|
-| ⭐ Stars | ~19,600 |
-| 🍴 Forks | ~1,500 |
+| ⭐ Stars | ~28,600 |
+| 🍴 Forks | ~2,100 |
 | 📜 License | MIT |
 | 🔗 GitHub | https://github.com/Leonxlnx/taste-skill |
 | 🌐 官网 | https://tasteskill.dev |
-| 📅 分析日期 | 2026-05-26 |
+| 📅 分析日期 | 2026-05-30 |
 
 ---
 
-## 📊 综合评分：8.8 / 10 🔥 强烈推荐
+## 📊 综合评分：8.6 / 10 🔥 推荐
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
 | 创新性 | 9.0 | 将设计审美抽象为可移植 Agent Skill 的理念非常新颖，三旋钮参数化设计控制是独创 |
-| 代码质量 | 8.0 | SKILL.md 格式清晰规范，多变体组织合理 |
-| 实用性 | 9.5 | 直击 AI 前端最大痛点，一行安装零配置，跨三大主流 Agent |
-| 文档完善度 | 8.5 | README 清晰，有独立官网和 changelog |
-| 社区活跃度 | 9.0 | ~19.6k Stars 快速增长，Reddit 热议，多个 awesome list 收录 |
+| 实用性 | 8.5 | 直击 AI 前端最大痛点，一行安装零配置，跨所有主流 Agent |
+| 社区活跃度 | 9.0 | ~28.6k Stars 快速增长，Reddit 热议，GitHub Trending |
+| 技术深度 | 7.5 | SKILL.md 格式清晰，v2 架构升级显著，但本质是规则文件而非代码框架 |
+| 文档完善度 | 8.5 | README 清晰，独立官网，有 CHANGELOG 和 research 目录 |
+| 可扩展性 | 9.0 | 框架无关、代理无关，10+ 风格变体可灵活组合 |
 
 ---
 
 ## 🎯 项目简介
 
-**taste-skill** 是一个专为 AI 编码代理（Cursor、Codex、Claude Code）设计的**前端设计质量增强框架**。它通过可移植的 Agent Skill 文件（SKILL.md），为 AI 生成的界面注入高级设计感——更强的布局、排版、动效和间距，彻底摆脱 AI 生成界面的"模板味"。
+**taste-skill** 是一个专为 AI 编码代理（Cursor、Claude Code、Codex、Gemini CLI 等）设计的**前端设计质量增强框架**。它通过可移植的 Agent Skill 文件（SKILL.md），为 AI 生成的界面注入高级设计感——更强的布局、排版、动效和间距，彻底摆脱 AI 生成界面的"模板味"。
 
 ### 核心能力
 
@@ -45,6 +46,15 @@
 
 每个 Skill 是一个独立的 Markdown 文件，包含设计规则、代码模板和约束条件。AI Agent 可直接加载并遵循执行。
 
+### v2 核心架构升级
+
+- **§0 简报推断**：AI 代理在生成前先分析上下文——行业、受众、情绪、动效深度、布局家族
+- **§2 设计系统映射**：智能选择 Material、Fluent、Carbon、Polaris、shadcn、Tailwind 等设计系统
+- **§8 暗色模式协议**：默认双模式，确保对比度和层级一致性
+- **§11 重设计协议**：审计优先策略，保留规则和现代化杠杆
+- **§12 区块库模式**：迭代添加区块的契约，保持组件库一致性
+- **§14 预检清单**：所有检查项必须真实通过后才可输出
+
 ### 三大可调参数
 
 | 参数 | 范围 | 效果 |
@@ -52,13 +62,6 @@
 | DESIGN_VARIANCE | 1-10 | 低：居中/整洁 → 高：不对称/现代 |
 | MOTION_INTENSITY | 1-10 | 低：hover 微动 → 高：滚动/磁性动效 |
 | VISUAL_DENSITY | 1-10 | 低：宽松留白 → 高：密集仪表盘 |
-
-### 技术特点
-
-- **框架无关**：设计规则面向设计意图而非特定框架 API，React/Vue/Svelte 通用
-- **内置 GSAP 动画骨架**：提供标准的动效代码模式
-- **设计系统映射**：自动推断设计语言并适配
-- **Pre-flight 检查**：严格输出前验证，防止半成品代码
 
 ---
 
@@ -68,7 +71,7 @@
 
 | Skill | 安装名 | 用途 |
 |-------|--------|------|
-| taste-skill | `design-taste-frontend` | 🆕 v2 默认，三旋钮 + 反slop + 设计推断 |
+| taste-skill | `design-taste-frontend` | v2 默认，简报推断 + 设计系统映射 + 预检 |
 | taste-skill-v1 | `design-taste-frontend-v1` | v1 保守版，兼容旧工作流 |
 | gpt-tasteskill | `gpt-taste` | GPT/Codex 专用，更严格 |
 | image-to-code-skill | `image-to-code` | 图像 → 分析 → 代码流水线 |
@@ -91,72 +94,38 @@
 
 ## 💡 应用场景
 
-- **AI 辅助前端开发**：用 Cursor/Claude Code 生成高质量 UI
+- **AI 辅助前端开发**：用 Cursor/Claude Code/Codex 生成高质量 UI
 - **快速原型设计**：先用图像 Skill 生成参考设计，再交给编码 Agent 实现
 - **现有项目 UI 升级**：用 redesign-skill 审计并优化已有界面
 - **品牌视觉系统**：用 brandkit 生成 Logo、配色、字体等品牌识别系统
 - **移动端 App 设计**：生成 iOS/Android 风格的界面设计稿
+- **团队设计规范标准化**：将团队设计偏好编码为 SKILL.md
 
 ---
 
-## 🔥 为什么火 (Trending 原因)
+## ⚔️ 竞品对比
 
-1. **直击痛点**：AI 生成的 UI 长得都一样是当前最大槽点
-2. **Agent Skill 生态爆发**：2026 年是 AI Agent 技能标准化元年
-3. **跨工具兼容**：同时支持 Cursor、Codex、Claude Code 三大主流 Agent
-4. **极低使用门槛**：一行 `npx skills add` 即可安装
-5. **口碑传播**：Reddit r/codex 社区热议，多个 awesome list 收录
-
----
-
-## ⚔️ 同类项目对比
-
-| 项目 | 特点 | 定位 |
-|------|------|------|
-| **taste-skill** | 多风格变体、三旋钮可调、图像+代码双管线 | 🏆 综合最强 |
-| addyosmani/agent-skills | 通用 Agent Skill 集合，设计非唯一焦点 | 广而不精 |
-| hardikpandya/stop-slop | 专注反 slop，无风格变体和旋钮 | 功能单一 |
-
----
-
-## 👥 适合谁使用
-
-- **前端开发者**：用 AI Agent 写界面但苦于输出千篇一律
-- **独立开发者/创业者**：没有专业设计师，需要 AI 产出高质量原型
-- **UI/UX 设计师**：用图像生成 Skill 快速产出设计参考
-- **AI Agent 开发者**：构建编码 Agent 时集成提升输出质量
-- **技术团队**：用 redesign-skill 对现有产品进行 UI 质量审计
+| 维度 | Taste-Skill | 21st.dev/Magic UI | shadcn/ui |
+|------|------------|-------------------|-----------|
+| 定位 | AI 品味层 | 组件生成平台 | React 组件库 |
+| 核心方式 | 规则约束 AI 输出 | 提供组件库 + AI 生成 | 可复制组件代码 |
+| 开源 | 完全 | 部分 | 完全 |
+| 代理兼容 | Cursor/Claude/Codex/Gemini | 自有平台 | 需手动集成 |
+| 框架绑定 | 无关 | React 为主 | React |
+| 设计灵活性 | 极高（10+ 变体 + 三维拨盘） | 中等 | 中等 |
 
 ---
 
 ## 🚀 快速上手
 
-### 1. 安装全部 Skill
-
 ```bash
+# 安装全部 Skill
 npx skills add https://github.com/Leonxlnx/taste-skill
-```
 
-### 2. 或安装单个 Skill
-
-```bash
+# 安装单个 Skill
 npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"
 ```
 
-### 3. 调整设计参数
-
-打开 SKILL.md 文件，修改顶部的三个数值旋钮：
-
-```
-DESIGN_VARIANCE: 7    # 布局实验性（1-10）
-MOTION_INTENSITY: 5   # 动画深度（1-10）
-VISUAL_DENSITY: 6     # 信息密度（1-10）
-```
-
-### 4. 在你的 Agent 中使用
-
-Cursor、Codex 或 Claude Code 会自动加载 SKILL.md 并遵循设计规则。也可以直接将 SKILL.md 内容粘贴到 ChatGPT/Codex 对话中使用。
-
 ---
 
-*分析日期：2026-05-26 | 🤖 由 Claude Code AI 自动深度分析生成*
+*分析日期：2026-05-30 | 🤖 由 Claude Code AI 自动深度分析生成*

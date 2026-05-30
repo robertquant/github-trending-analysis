@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告 - Leonxlnx/taste-skill</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #a855f7;
+            --accent2: #6366f1;
+            --green: #3fb950;
+            --yellow: #d29922;
+            --red: #f85149;
+            --blue: #58a6ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #1a1040 0%, #0d1117 50%, #0a192f 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        .header .tagline {
+            color: var(--accent);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            position: relative;
+            font-style: italic;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .meta-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .meta-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .meta-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .meta-card .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        /* Section */
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section h2 .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .section ul li {
+            padding: 0.5rem 0 0.5rem 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 1rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        /* Score */
+        .score-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(168, 85, 247, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(168, 85, 247, 0.15);
+        }
+
+        .score-item .score-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-item .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .score-item .score-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .score-item .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        .overall-score {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1));
+            border-radius: 12px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            margin-top: 1.5rem;
+        }
+
+        .overall-score .big-score {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .overall-score .score-text {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        /* Comparison table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        table th, table td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        table th {
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        table td {
+            color: var(--text-secondary);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-purple { background: rgba(168, 85, 247, 0.15); color: var(--accent); }
+        .badge-green { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+        .badge-blue { background: rgba(88, 166, 255, 0.15); color: var(--blue); }
+        .badge-yellow { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+
+        /* Skills grid */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .skill-card {
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(168, 85, 247, 0.03);
+        }
+
+        .skill-card h4 {
+            color: var(--text);
+            margin-bottom: 0.3rem;
+        }
+
+        .skill-card p {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        .skill-card .install-name {
+            font-family: 'SF Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(99, 102, 241, 0.08));
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .highlight-box p {
+            color: var(--text);
+            margin-bottom: 0;
+        }
+
+        /* Dial visualization */
+        .dials {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .dial {
+            text-align: center;
+        }
+
+        .dial .dial-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .dial svg {
+            width: 80px;
+            height: 80px;
+        }
+
+        .dial .dial-value {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Taste-Skill</h1>
+            <div class="subtitle">Leonxlnx/taste-skill</div>
+            <div class="tagline">"The Anti-Slop Frontend Framework for AI Agents"</div>
+        </div>
+
+        <!-- Meta Cards -->
+        <div class="meta-grid">
+            <div class="meta-card">
+                <div class="value">28.6k+</div>
+                <div class="label">GitHub Stars</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">2.1k+</div>
+                <div class="label">Forks</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">Shell</div>
+                <div class="label">主要语言</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">MIT</div>
+                <div class="label">开源协议</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">2026-05</div>
+                <div class="label">GitHub Trending</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">v2</div>
+                <div class="label">当前版本</div>
+            </div>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(168,85,247,0.15);">📋</span> 项目概述</h2>
+            <p>
+                <strong>Taste-Skill</strong> 是一个面向 AI 编码代理（如 Cursor、Claude Code、OpenAI Codex 等）的开源可移植技能框架，核心目标是通过结构化的 <code>SKILL.md</code> 文件，赋予 AI "良好的品味"（Good Taste），从而防止 AI 生成千篇一律、乏味通用的前端 UI（被称为 "slop"）。
+            </p>
+            <div class="highlight-box">
+                <p><strong>核心理念：</strong>将设计品味编码为可移植的基础设施文件，让任何支持 SKILL.md 的 AI 代理都能生成具有专业水准的前端界面。</p>
+            </div>
+            <p>
+                项目由开发者 <strong>Leon Lin (Leonxlnx)</strong> 创建，专注于 AI 与设计工程的交叉领域。截至 2026 年 5 月，该项目在 GitHub 上已获得超过 28,000 颗星，成为 2026 年 AI 前端设计领域最热门的开源项目之一。
+            </p>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(99,102,241,0.15);">🏗️</span> 技术架构</h2>
+            <p>
+                Taste-Skill 的技术架构核心是 <strong>SKILL.md</strong> 文件格式 —— 一种可移植的指令文件，AI 代理可以自动加载并遵循其中的设计规则。
+            </p>
+            <h3 style="color: var(--accent); margin: 1rem 0 0.8rem; font-size: 1.1rem;">安装与集成机制</h3>
+            <ul>
+                <li><strong>一键安装：</strong>通过 <code>npx skills add</code> CLI 命令，从 GitHub 仓库扫描 <code>skills/</code> 目录并自动安装</li>
+                <li><strong>单技能安装：</strong>支持通过 <code>--skill</code> 参数指定安装特定的技能变体</li>
+                <li><strong>手动集成：</strong>可直接将 <code>SKILL.md</code> 复制到项目中，或粘贴到 ChatGPT/Codex 对话中</li>
+                <li><strong>跨代理兼容：</strong>支持 Cursor、Claude Code、Codex、Gemini CLI、v0、Lovable、OpenCode 等主流 AI 编码工具</li>
+            </ul>
+            <h3 style="color: var(--accent); margin: 1.5rem 0 0.8rem; font-size: 1.1rem;">v2 核心架构升级</h3>
+            <ul>
+                <li><strong>§0 简报推断（Brief Inference）：</strong>AI 代理在生成前先分析上下文 —— 行业、受众、情绪、动效深度、布局家族</li>
+                <li><strong>§2 设计系统映射（Design System Map）：</strong>智能选择 Material、Fluent、Carbon、Polaris、shadcn、Tailwind 等设计系统</li>
+                <li><strong>§8 暗色模式协议（Dark Mode Protocol）：</strong>默认支持双模式，确保对比度和层级一致性</li>
+                <li><strong>§11 重设计协议（Redesign Protocol）：</strong>针对已有项目的审计优先策略，保留规则和现代化杠杆</li>
+                <li><strong>§12 区块库模式（Block Library Schema）：</strong>迭代添加区块的契约，保持组件库一致性</li>
+                <li><strong>§14 严格的预检清单（Pre-flight Check）：</strong>所有检查项必须真实通过后才可输出</li>
+            </ul>
+            <h3 style="color: var(--accent); margin: 1.5rem 0 0.8rem; font-size: 1.1rem;">可调参数系统（v2 Dials）</h3>
+            <div class="dials">
+                <div class="dial">
+                    <div class="dial-label">DESIGN_VARIANCE</div>
+                    <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="35" fill="none" stroke="#30363d" stroke-width="4"/><circle cx="40" cy="40" r="35" fill="none" stroke="#a855f7" stroke-width="4" stroke-dasharray="110 220" stroke-linecap="round" transform="rotate(-90 40 40)"/><text x="40" y="44" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="700">1-10</text></svg>
+                    <div class="dial-value">布局实验度</div>
+                </div>
+                <div class="dial">
+                    <div class="dial-label">MOTION_INTENSITY</div>
+                    <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="35" fill="none" stroke="#30363d" stroke-width="4"/><circle cx="40" cy="40" r="35" fill="none" stroke="#6366f1" stroke-width="4" stroke-dasharray="110 220" stroke-linecap="round" transform="rotate(-90 40 40)"/><text x="40" y="44" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="700">1-10</text></svg>
+                    <div class="dial-value">动效深度</div>
+                </div>
+                <div class="dial">
+                    <div class="dial-label">VISUAL_DENSITY</div>
+                    <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="35" fill="none" stroke="#30363d" stroke-width="4"/><circle cx="40" cy="40" r="35" fill="none" stroke="#58a6ff" stroke-width="4" stroke-dasharray="110 220" stroke-linecap="round" transform="rotate(-90 40 40)"/><text x="40" y="44" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="700">1-10</text></svg>
+                    <div class="dial-value">信息密度</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技能矩阵 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(63,185,80,0.15);">🎯</span> 技能矩阵（Skills Matrix）</h2>
+            <p>项目提供了丰富的技能变体，分为实现类技能和图像生成类技能两大类：</p>
+
+            <h3 style="color: var(--green); margin: 1rem 0 0.8rem; font-size: 1rem;">实现类技能（输出代码）</h3>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h4>taste-skill <span class="badge badge-green">v2</span></h4>
+                    <p>默认通用技能，重写版本，支持简报推断、设计系统映射和严格预检</p>
+                    <div class="install-name">design-taste-frontend</div>
+                </div>
+                <div class="skill-card">
+                    <h4>gpt-tasteskill</h4>
+                    <p>GPT/Codex 专用更严格变体，更强的布局方差和 GSAP 动效方向</p>
+                    <div class="install-name">gpt-taste</div>
+                </div>
+                <div class="skill-card">
+                    <h4>image-to-code-skill</h4>
+                    <p>图像优先流水线：生成参考 → 分析 → 实现代码，全程一体化</p>
+                    <div class="install-name">image-to-code</div>
+                </div>
+                <div class="skill-card">
+                    <h4>redesign-skill</h4>
+                    <p>针对已有项目的审计和重设计，修复布局、间距和层级问题</p>
+                    <div class="install-name">redesign-existing-projects</div>
+                </div>
+                <div class="skill-card">
+                    <h4>soft-skill</h4>
+                    <p>高端视觉设计，柔和对比、充足留白、高级字体和弹性动效</p>
+                    <div class="install-name">high-end-visual-design</div>
+                </div>
+                <div class="skill-card">
+                    <h4>minimalist-skill</h4>
+                    <p>极简编辑风 UI（Notion/Linear 风格），克制配色、清晰结构</p>
+                    <div class="install-name">minimalist-ui</div>
+                </div>
+                <div class="skill-card">
+                    <h4>brutalist-skill</h4>
+                    <p>粗野工业风，瑞士排版、强烈对比、实验性布局</p>
+                    <div class="install-name">industrial-brutalist-ui</div>
+                </div>
+                <div class="skill-card">
+                    <h4>stitch-skill</h4>
+                    <p>Google Stitch 兼容设计规则，支持 DESIGN.md 导出格式</p>
+                    <div class="install-name">stitch-design-taste</div>
+                </div>
+            </div>
+
+            <h3 style="color: var(--blue); margin: 1.5rem 0 0.8rem; font-size: 1rem;">图像生成类技能（输出参考图）</h3>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h4>imagegen-frontend-web</h4>
+                    <p>网站参考图：Hero、Landing、多区块页面，强排版与反 slop 艺术方向</p>
+                    <div class="install-name">imagegen-frontend-web</div>
+                </div>
+                <div class="skill-card">
+                    <h4>imagegen-frontend-mobile</h4>
+                    <p>移动端界面和流程：iOS/Android、Mockup、一致的多屏组合</p>
+                    <div class="install-name">imagegen-frontend-mobile</div>
+                </div>
+                <div class="skill-card">
+                    <h4>brandkit</h4>
+                    <p>品牌视觉板：Logo 方向、配色系统、字体排印、身份应用</p>
+                    <div class="install-name">brandkit</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心创新点 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(210,153,34,0.15);">💡</span> 核心创新点</h2>
+            <ul>
+                <li><strong>品味即基础设施：</strong>首次将"设计品味"抽象为可移植的 SKILL.md 文件格式，使设计决策成为可复用、可共享的代码级资产</li>
+                <li><strong>代理无关架构：</strong>不绑定任何特定 AI 工具，一个安装命令即可适配 Cursor、Claude Code、Codex、Gemini CLI 等所有主流代理</li>
+                <li><strong>三维可调拨盘：</strong>创新性的 DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY 三维参数系统，允许开发者精确控制 AI 输出的视觉风格</li>
+                <li><strong>多风格变体矩阵：</strong>提供从极简到粗野、从柔和到工业的完整风格光谱，而非一刀切的解决方案</li>
+                <li><strong>图像-代码双通道：</strong>同时支持图像生成技能和代码生成技能，形成完整的从参考图到代码的闭环工作流</li>
+                <li><strong>框架无关：</strong>规则针对设计意图而非特定框架 API，与 React、Vue、Svelte 等所有前端框架兼容</li>
+                <li><strong>审计优先重设计：</strong>独特的 redesign 协议，先审计再修改，避免了盲目的全局替换式重设计</li>
+            </ul>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(88,166,255,0.15);">🌍</span> 应用场景</h2>
+            <ul>
+                <li><strong>个人开发者快速原型：</strong>使用 AI 编码代理快速搭建具有专业设计水准的 Landing Page、作品集网站</li>
+                <li><strong>初创团队 MVP 开发：</strong>在缺乏专职设计师的情况下，通过 AI 生成高质量的初始界面</li>
+                <li><strong>现有项目 UI 升级：</strong>使用 redesign-skill 对已有项目进行系统性的视觉审计和优化</li>
+                <li><strong>设计参考生成：</strong>使用图像生成类技能（imagegen-frontend-web/mobile）快速产出设计参考板</li>
+                <li><strong>品牌视觉探索：</strong>使用 brandkit 技能生成 Logo 方向、配色方案、字体系统等品牌标识素材</li>
+                <li><strong>前端工程教学：</strong>通过阅读 SKILL.md 中编码的设计规则，学习专业前端设计的最佳实践</li>
+                <li><strong>团队设计规范标准化：</strong>将团队的设计偏好编码为 SKILL.md，确保 AI 代理输出的 UI 符合团队风格</li>
+            </ul>
+        </div>
+
+        <!-- 竞品对比 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(248,81,73,0.15);">⚔️</span> 竞品对比</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>Taste-Skill</th>
+                        <th>21st.dev / Magic UI</th>
+                        <th>shadcn/ui</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color: var(--text);"><strong>定位</strong></td>
+                        <td>AI 代理的设计品味层</td>
+                        <td>AI 辅助组件生成平台</td>
+                        <td>高质量 React 组件库</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>核心方式</strong></td>
+                        <td>通过规则约束 AI 输出</td>
+                        <td>提供组件库 + AI 生成</td>
+                        <td>可复制粘贴的组件代码</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>开放性</strong></td>
+                        <td><span class="badge badge-green">完全开源</span></td>
+                        <td><span class="badge badge-yellow">部分开源</span></td>
+                        <td><span class="badge badge-green">完全开源</span></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>代理兼容</strong></td>
+                        <td>Cursor / Claude / Codex / Gemini 全支持</td>
+                        <td>自有平台</td>
+                        <td>需手动集成</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>设计灵活性</strong></td>
+                        <td><span class="badge badge-purple">极高</span> 10+ 风格变体 + 三维拨盘</td>
+                        <td>中等，组件化</td>
+                        <td>中等，需自行定制</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>框架绑定</strong></td>
+                        <td><span class="badge badge-green">框架无关</span></td>
+                        <td>React 为主</td>
+                        <td>React</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>学习成本</strong></td>
+                        <td>极低（一行安装）</td>
+                        <td>低</td>
+                        <td>中（需理解组件体系）</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text);"><strong>设计深度</strong></td>
+                        <td>从排版到动效的系统性设计规则</td>
+                        <td>组件级视觉</td>
+                        <td>组件级视觉</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top: 1rem;">
+                <p><strong>差异化优势：</strong>Taste-Skill 不是组件库，不是设计系统，而是 AI 代理的"设计品味层"。它可以与 Magic UI、shadcn/ui 等组件库叠加使用 —— 先用 Taste-Skill 约束 AI 的设计判断力，再结合组件库输出结构化代码。</p>
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(168,85,247,0.15);">⭐</span> 综合评分</h2>
+            <div class="score-container">
+                <div class="score-item">
+                    <div class="score-label">创新性</div>
+                    <div class="score-value" style="color: var(--accent);">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, var(--accent), var(--accent2));"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">实用性</div>
+                    <div class="score-value" style="color: var(--green);">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: linear-gradient(90deg, var(--green), #2ea043);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">社区活跃度</div>
+                    <div class="score-value" style="color: var(--blue);">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, var(--blue), #388bfd);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">技术深度</div>
+                    <div class="score-value" style="color: var(--yellow);">7.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 75%; background: linear-gradient(90deg, var(--yellow), #e3b341);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">文档质量</div>
+                    <div class="score-value" style="color: var(--accent);">8.5</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: linear-gradient(90deg, var(--accent), var(--accent2));"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">可扩展性</div>
+                    <div class="score-value" style="color: var(--green);">9.0</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: linear-gradient(90deg, var(--green), #2ea043);"></div></div>
+                </div>
+            </div>
+            <div class="overall-score">
+                <div class="big-score">8.6 / 10</div>
+                <div class="score-text">综合评级：优秀 — AI 前端设计领域的开创性项目</div>
+            </div>
+        </div>
+
+        <!-- 分析总结 -->
+        <div class="section">
+            <h2><span class="icon" style="background: rgba(168,85,247,0.15);">📝</span> 分析总结</h2>
+            <p>
+                Taste-Skill 是 2026 年 AI + 前端设计交叉领域最具创新性的项目之一。它精准地识别了 AI 编码代理的一个核心痛点 —— <strong>生成的前端 UI 千篇一律、缺乏设计感</strong>，并通过优雅的 SKILL.md 格式提供了解决方案。
+            </p>
+            <p>
+                项目最大的价值在于将"设计品味"这一难以量化的概念转化为可移植、可共享的基础设施文件。三个可调拨盘（设计方差、动效强度、视觉密度）的设计尤为巧妙，让开发者可以在"安全"和"大胆"之间找到适合自己的平衡点。
+            </p>
+            <p>
+                多样化的技能矩阵（从极简到粗野，从代码到图像生成）覆盖了几乎所有前端设计场景。框架无关、代理无关的架构选择也展现了长远的生态视野 —— 这不是一个绑定特定工具的项目，而是一个面向整个 AI 编码生态的设计品味层。
+            </p>
+            <div class="highlight-box">
+                <p><strong>一句话评价：</strong>Taste-Skill 不只是一个工具，它定义了一种新的范式 —— 将设计品味编码为 AI 可执行的基础设施，让"好品味"不再是少数人的专利，而是人人可以部署的代码。</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <a href="https://github.com/Leonxlnx/taste-skill" target="_blank">GitHub 仓库</a> &nbsp;·&nbsp;
+                <a href="https://www.tasteskill.dev/" target="_blank">官方网站</a> &nbsp;·&nbsp;
+                <a href="https://trendshift.io/repositories/21681" target="_blank">Trendshift</a>
+            </p>
+            <p style="margin-top: 0.5rem;">分析日期：2026-05-30 | 数据来源：GitHub、WebSearch</p>
+        </div>
+    </div>
+</body>
+</html>
