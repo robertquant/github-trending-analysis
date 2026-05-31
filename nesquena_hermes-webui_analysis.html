@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes WebUI 深度分析报告 | nesquena/hermes-webui</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --bg: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2333;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-green: #3fb950;
+            --accent-blue: #58a6ff;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --gradient-1: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            --gradient-2: linear-gradient(135deg, #00b894, #55efc4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 0;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--gradient-1);
+            border-radius: 0 0 24px 24px;
+            margin-bottom: 40px;
+        }
+        .header h1 { font-size: 2.4em; font-weight: 800; margin-bottom: 12px; color: #fff; }
+        .header .subtitle { font-size: 1.1em; color: rgba(255,255,255,0.85); margin-bottom: 20px; }
+        .header .meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .header .meta span {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #fff;
+        }
+
+        /* Score Section */
+        .score-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .score-card:hover { transform: translateY(-3px); border-color: var(--primary-light); }
+        .score-card .label { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px; }
+        .score-card .value { font-size: 2em; font-weight: 800; }
+        .score-card .value.green { color: var(--accent-green); }
+        .score-card .value.blue { color: var(--accent-blue); }
+        .score-card .value.orange { color: var(--accent-orange); }
+        .score-card .value.purple { color: var(--primary-light); }
+        .score-card .bar {
+            height: 4px; border-radius: 2px;
+            background: var(--border); margin-top: 12px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill { height: 100%; border-radius: 2px; }
+
+        /* Overall Score */
+        .overall-score {
+            text-align: center;
+            padding: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 40px;
+        }
+        .overall-score .big-number {
+            font-size: 4em; font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .overall-score .label { color: var(--text-secondary); margin-top: 8px; }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 1.5em; font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+        .section h2 .icon { margin-right: 8px; }
+        .section h3 {
+            font-size: 1.15em; font-weight: 600;
+            margin: 20px 0 10px;
+            color: var(--primary-light);
+        }
+        .section p { color: var(--text-secondary); margin-bottom: 12px; }
+        .section ul { padding-left: 20px; color: var(--text-secondary); margin-bottom: 12px; }
+        .section li { margin-bottom: 6px; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+        .feature-item:hover { border-color: var(--primary); }
+        .feature-item .title { font-weight: 600; color: var(--text); margin-bottom: 6px; }
+        .feature-item .desc { font-size: 0.9em; color: var(--text-secondary); }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9em;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table th {
+            background: var(--bg-card-hover);
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+        .comparison-table td { color: var(--text-secondary); }
+        .comparison-table td:first-child { color: var(--text); font-weight: 500; }
+        .check { color: var(--accent-green); font-weight: bold; }
+        .cross { color: var(--accent-red); }
+        .partial { color: var(--accent-orange); }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin: 2px 4px;
+        }
+        .tag.tech { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+        .tag.feature { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+        }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 30px; margin-top: 16px; }
+        .timeline::before {
+            content: '';
+            position: absolute; left: 8px; top: 0; bottom: 0;
+            width: 2px; background: var(--border);
+        }
+        .timeline-item {
+            position: relative; margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute; left: -26px; top: 8px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--bg-card);
+        }
+        .timeline-item .date { font-size: 0.85em; color: var(--primary-light); }
+        .timeline-item .text { color: var(--text-secondary); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header { padding: 40px 16px; }
+            .header h1 { font-size: 1.6em; }
+            .section { padding: 20px; }
+            .score-section { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Hermes WebUI</h1>
+    <div class="subtitle">为 Hermes Agent 打造的轻量级 Web 界面 — 自托管、零构建、全功能</div>
+    <div class="meta">
+        <span>nesquena/hermes-webui</span>
+        <span>MIT License</span>
+        <span>Python + Vanilla JS</span>
+        <span>v0.51.x</span>
+        <span>137 Contributors</span>
+        <span>5303 Tests</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Overall Score -->
+    <div class="overall-score">
+        <div class="big-number">8.7 / 10</div>
+        <div class="label">综合评分 — GitHub Trending 深度分析 | 2026-06-01</div>
+    </div>
+
+    <!-- Score Cards -->
+    <div class="score-section">
+        <div class="score-card">
+            <div class="label">技术创新</div>
+            <div class="value green">9.0</div>
+            <div class="bar"><div class="bar-fill" style="width:90%; background: var(--gradient-2);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="label">实用性</div>
+            <div class="value blue">9.2</div>
+            <div class="bar"><div class="bar-fill" style="width:92%; background: var(--accent-blue);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="label">代码质量</div>
+            <div class="value purple">8.8</div>
+            <div class="bar"><div class="bar-fill" style="width:88%; background: var(--gradient-1);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="label">社区活跃度</div>
+            <div class="value orange">8.5</div>
+            <div class="bar"><div class="bar-fill" style="width:85%; background: var(--accent-orange);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="label">文档完善度</div>
+            <div class="value green">8.5</div>
+            <div class="bar"><div class="bar-fill" style="width:85%; background: var(--gradient-2);"></div></div>
+        </div>
+    </div>
+
+    <!-- Section 1: Project Overview -->
+    <div class="section">
+        <h2><span class="icon">&#128218;</span>项目概述</h2>
+        <p><strong>Hermes WebUI</strong> 是由社区开发者 <strong>nesquena</strong> 创建的开源项目，为 Nous Research 的 <strong>Hermes Agent</strong> 提供了一个轻量级、自托管的 Web 界面。它将原本只能通过终端或消息平台访问的自主 AI Agent 带到了浏览器中，实现了与 CLI 几乎 1:1 的功能对等。</p>
+        <h3>核心定位</h3>
+        <p>Hermes WebUI 不是又一个通用聊天界面。它是一个<strong>专为 Hermes Agent 定制</strong>的管理面板和交互界面，深度集成了 Agent 的全部能力：持久化记忆、自改进技能系统、定时任务（Cron）、多 Provider 模型切换、工作区文件管理——所有这一切都可以在浏览器中通过三栏布局完成操作。</p>
+        <h3>项目数据</h3>
+        <ul>
+            <li><strong>开源协议</strong>：MIT License</li>
+            <li><strong>当前版本</strong>：v0.51.58+（截至 2026 年 5 月）</li>
+            <li><strong>贡献者</strong>：137 位代码贡献者（截至 v0.51.58）</li>
+            <li><strong>测试覆盖</strong>：5,303 个测试用例，488 个测试文件</li>
+            <li><strong>技术栈</strong>：Python 后端（server.py ~446 行路由壳）+ 原生 JS 前端，无构建步骤、无框架、无打包器</li>
+            <li><strong>Docker 支持</strong>：预构建多架构镜像（amd64 + arm64），单容器 / 双容器 / 三容器三种部署模式</li>
+            <li><strong>依赖项目</strong>：Hermes Agent（Nous Research 开发，约 64K GitHub Stars）</li>
+        </ul>
+    </div>
+
+    <!-- Section 2: Architecture -->
+    <div class="section">
+        <h2><span class="icon">&#127959;</span>技术架构</h2>
+        <p>Hermes WebUI 采用了极简但功能强大的架构设计——<strong>纯 Python + 原生 JavaScript</strong>，完全摒弃了现代前端框架（React/Vue/Svelte），也没有任何构建步骤。这种选择带来了极低的部署门槛和极高的可维护性。</p>
+        <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                      Browser (Client)                       │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐  │
+│  │ ui.js     │ │sessions.js│ │messages.js│ │ panels.js    │  │
+│  │ (7216行)  │ │ (3517行)  │ │ (2301行)  │ │ (6480行)     │  │
+│  └─────┬────┘ └─────┬────┘ └─────┬────┘ └──────┬────────┘  │
+│        │             │            │              │           │
+│  ┌─────┴─────┐ ┌────┴─────┐ ┌───┴──────┐                │
+│  │commands.js│ │ boot.js  │ │workspace.js│                │
+│  │ (1302行)  │ │(1607行)  │ │ (369行)   │                │
+│  └───────────┘ └──────────┘ └───────────┘                │
+└────────────────────────┬────────────────────────────────────┘
+                         │ SSE / HTTP API
+┌────────────────────────┴────────────────────────────────────┐
+│                  server.py (HTTP 路由壳 + 认证中间件)          │
+│  ┌────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌──────────┐ │
+│  │auth.py │ │routes.py│ │streaming│ │models.py│ │config.py │ │
+│  │(366行) │ │(9772行) │ │(4420行) │ │(1927行) │ │(4139行)  │ │
+│  └────────┘ └────────┘ └─────────┘ └────────┘ └──────────┘ │
+│  ┌──────────┐ ┌─────────┐ ┌──────┐ ┌────────┐ ┌─────────┐  │
+│  │profiles  │ │workspace │ │upload│ │updates │ │onboarding│  │
+│  │(1056行)  │ │(810行)   │ │(284) │ │(545行) │ │(1002行)  │  │
+│  └──────────┘ └─────────┘ └──────┘ └────────┘ └─────────┘  │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────┴────────────────────────────────────┐
+│              Hermes Agent Core (AIAgent)                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐  │
+│  │ 持久记忆  │ │ 技能系统  │ │ Cron调度  │ │ 多Provider支持│  │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                    │
+│  │ 工具执行  │ │ 子Agent  │ │ 消息平台  │                    │
+│  └──────────┘ └──────────┘ └──────────┘                    │
+└─────────────────────────────────────────────────────────────┘</div>
+        <h3>架构亮点</h3>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="title">零构建前端</div>
+                <div class="desc">纯原生 JavaScript + CSS，无 Node.js、无 Webpack、无 npm。直接用浏览器运行，部署简单到极致。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">SSE 流式传输</div>
+                <div class="desc">通过 Server-Sent Events 实现流式响应，token 逐个呈现。支持自动重连，在 SSH 隧道断线场景下保持稳定。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">进程内集成</div>
+                <div class="desc">默认单容器模式将 WebUI 和 Agent 运行在同一进程中，也支持通过 Gateway API 分离部署。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">三栏布局</div>
+                <div class="desc">左侧会话导航、中间聊天区域、右侧工作区文件浏览器，全部功能触手可及。</div>
+            </div>
+        </div>
+        <h3>关键后端模块</h3>
+        <ul>
+            <li><strong>routes.py (9,772 行)</strong> — 所有 GET/POST 路由处理，项目的核心模块</li>
+            <li><strong>streaming.py (4,420 行)</strong> — SSE 引擎、Agent 执行、取消支持</li>
+            <li><strong>config.py (4,139 行)</strong> — 环境发现、全局配置、模型检测、热重载</li>
+            <li><strong>models.py (1,927 行)</strong> — 会话模型、CRUD 操作、CLI 桥接</li>
+            <li><strong>panels.js (6,480 行)</strong> — 前端面板系统（Cron、技能、记忆、配置等）</li>
+        </ul>
+    </div>
+
+    <!-- Section 3: Core Innovations -->
+    <div class="section">
+        <h2><span class="icon">&#128161;</span>核心创新点</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="title">1. CLI 完全对等的 Web 体验</div>
+                <div class="desc">不同于 Open WebUI 等通用聊天界面，Hermes WebUI 深度集成了 Agent 的全部能力——工具调用卡片、子 Agent 委派、审批流、Cron 任务管理、技能编辑器，所有 CLI 可做的操作都有对应的 Web 界面。这是目前唯一实现 1:1 功能对等的 Web 界面。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">2. 极简技术栈的极致表现</div>
+                <div class="desc">在 2026 年前端框架百花齐放的时代，Hermes WebUI 选择了"反主流"路线：零构建、零框架、零打包。结果证明这种选择在自托管工具领域极具优势——部署时间从分钟级降到秒级，维护成本趋近于零，且代码可读性极高。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">3. 自适应环境发现</div>
+                <div class="desc">启动脚本 start.sh 能自动发现 Hermes Agent 目录、Python 环境、状态目录、工作区路径、端口等，无需手动配置。这种"零配置"理念贯穿整个项目，从安装到日常使用。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">4. 多维度安全体系</div>
+                <div class="desc">可选密码认证 + WebAuthn/Passkeys 无密码登录、HMAC-SHA256 签名 Cookie、安全响应头（CSP/Permissions-Policy）、Shell 命令审批卡片、Session 导入路径验证。社区贡献者还进行了专门的 CSRF/SSRF/XSS 安全审计。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">5. 丰富的主题与皮肤系统</div>
+                <div class="desc">双轴主题系统：Theme（system/dark/light）和 Skin（default/ares/mono/slate/poseidon/sisyphus/charizard/sienna/catppuccin/nous/geist-contrast），共 11 种视觉风格。通过 CSS 变量 + data-skin 属性实现，扩展性极强。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">6. 移动优先响应式设计</div>
+                <div class="desc">专为手机使用优化：汉堡侧栏、触摸友好控件（最小 44px）、全高度聊天区、Tailscale 零配置 VPN 接入。社区甚至验证了在 ARM64 Android 手机上通过 AVF 虚拟化运行的可行性。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Application Scenarios -->
+    <div class="section">
+        <h2><span class="icon">&#127919;</span>应用场景</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="title">&#128187; 个人 AI 工作站</div>
+                <div class="desc">开发者在本地或 VPS 上运行 Hermes Agent + WebUI，通过浏览器或手机管理日常开发任务、文件操作、代码审查。Agent 会学习你的工作习惯，自动创建和改进技能。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">&#128241; 移动端 Agent 控制</div>
+                <div class="desc">通过 Tailscale VPN 从手机安全访问 WebUI。在通勤途中查看 Agent 执行结果、发起新对话、管理工作区文件。移动端界面完全适配。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">&#9200; 自动化任务调度</div>
+                <div class="desc">利用内置 Cron 系统设置定时任务：代码质量检查、数据抓取、报告生成。Agent 离线时也能执行，结果推送到 Telegram/Discord/Slack 等平台。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">&#127968; Homelab 自托管服务</div>
+                <div class="desc">在家庭服务器上部署，作为全家人的 AI 助手中心。支持多 Profile 隔离、密码/Passkey 认证，通过 SSH 隧道或 Tailscale 安全暴露服务。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">&#128101; 小团队 AI 协作</div>
+                <div class="desc">团队成员通过 WebUI 与同一个 Hermes Agent 交互，共享技能库和记忆系统。支持 Session 项目分组、标签管理、会话归档等协作功能。</div>
+            </div>
+            <div class="feature-item">
+                <div class="title">&#128300; 多模型对比实验</div>
+                <div class="desc">支持 200+ LLM 模型（OpenAI、Anthropic、Google、DeepSeek、OpenRouter 等），可在对话中无缝切换模型，对比不同模型对同一问题的回答质量。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: Competitive Analysis -->
+    <div class="section">
+        <h2><span class="icon">&#9878;</span>竞品对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>Hermes WebUI</th>
+                    <th>Open WebUI</th>
+                    <th>OpenClaw Dashboard</th>
+                    <th>Claude Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>开源协议</td>
+                    <td><span class="check">MIT</span></td>
+                    <td><span class="check">MIT</span></td>
+                    <td><span class="check">MIT</span></td>
+                    <td><span class="cross">闭源</span></td>
+                </tr>
+                <tr>
+                    <td>Agent 深度集成</td>
+                    <td><span class="check">原生深度集成</span></td>
+                    <td><span class="partial">API 桥接</span></td>
+                    <td><span class="check">原生集成</span></td>
+                    <td><span class="check">原生</span></td>
+                </tr>
+                <tr>
+                    <td>CLI 功能对等</td>
+                    <td><span class="check">是</span></td>
+                    <td><span class="cross">否</span></td>
+                    <td><span class="partial">部分</span></td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>持久化记忆管理</td>
+                    <td><span class="check">内联编辑</span></td>
+                    <td><span class="partial">有限</span></td>
+                    <td><span class="check">是</span></td>
+                    <td><span class="partial">项目级</span></td>
+                </tr>
+                <tr>
+                    <td>Cron 任务管理</td>
+                    <td><span class="check">完整 UI</span></td>
+                    <td><span class="cross">否</span></td>
+                    <td><span class="check">是</span></td>
+                    <td><span class="cross">仅云端</span></td>
+                </tr>
+                <tr>
+                    <td>技能系统管理</td>
+                    <td><span class="check">完整 CRUD</span></td>
+                    <td><span class="cross">否</span></td>
+                    <td><span class="check">市场</span></td>
+                    <td><span class="cross">否</span></td>
+                </tr>
+                <tr>
+                    <td>工作区文件浏览</td>
+                    <td><span class="check">完整（编辑/预览/Git）</span></td>
+                    <td><span class="partial">基础</span></td>
+                    <td><span class="partial">基础</span></td>
+                    <td><span class="cross">否</span></td>
+                </tr>
+                <tr>
+                    <td>技术栈复杂度</td>
+                    <td><span class="check">极低（Python+原生JS）</span></td>
+                    <td><span class="partial">Svelte</span></td>
+                    <td><span class="partial">Node.js</span></td>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <td>部署难度</td>
+                    <td><span class="check">极低（一条命令）</span></td>
+                    <td><span class="check">低</span></td>
+                    <td><span class="check">低</span></td>
+                    <td><span class="check">低（npm）</span></td>
+                </tr>
+                <tr>
+                    <td>多平台消息集成</td>
+                    <td><span class="partial">通过 Agent 间接</span></td>
+                    <td><span class="cross">否</span></td>
+                    <td><span class="check">15+ 平台</span></td>
+                    <td><span class="partial">Telegram/Discord</span></td>
+                </tr>
+                <tr>
+                    <td>移动端体验</td>
+                    <td><span class="check">原生响应式</span></td>
+                    <td><span class="check">良好</span></td>
+                    <td><span class="partial">一般</span></td>
+                    <td><span class="cross">无</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>竞争格局分析</h3>
+        <p>Hermes WebUI 的核心差异化优势在于<strong>与 Hermes Agent 的深度绑定</strong>。Open WebUI 是一个通用聊天前端（126K+ Stars），功能更广泛但对 Agent 特性的支持较浅；OpenClaw Dashboard 在功能上最接近，但基于 Node.js 生态，且存在安全事件历史；Claude Code 虽强大但闭源且绑定 Anthropic 生态。</p>
+        <p>Hermes WebUI 以<strong>极简技术栈 + 极深 Agent 集成</strong>的策略，在自托管 AI Agent 界面领域开辟了一个独特且有价值的位置。</p>
+    </div>
+
+    <!-- Section 6: Development Timeline -->
+    <div class="section">
+        <h2><span class="icon">&#128197;</span>发展历程</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="date">2026 年 2 月 25 日</div>
+                <div class="text">Nous Research 正式发布 Hermes Agent（MIT 开源），引发了自托管 AI Agent 的热潮</div>
+            </div>
+            <div class="timeline-item">
+                <div class="date">2026 年 3-4 月</div>
+                <div class="text">nesquena 发起 Hermes WebUI 项目，社区快速响应，首批贡献者提交核心功能 PR</div>
+            </div>
+            <div class="timeline-item">
+                <div class="date">2026 年 4 月</div>
+                <div class="text">@aronprins 提交 v0.50.0 UI 大改版——将控制面板移至 composer footer，引入 Control Center 和三栏布局</div>
+            </div>
+            <div class="timeline-item">
+                <div class="date">2026 年 5 月</div>
+                <div class="text">Hermes Agent 登顶 OpenRouter 全球日排行榜第一名（224B daily tokens），带动 WebUI 关注度飙升</div>
+            </div>
+            <div class="timeline-item">
+                <div class="date">2026 年 5 月</div>
+                <div class="text">项目达到 v0.51.58，137 位贡献者，5303 个测试，成为 Hermes Agent 生态中最活跃的 Web 界面项目</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 7: Strengths & Risks -->
+    <div class="section">
+        <h2><span class="icon">&#9878;</span>优势与风险</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div>
+                <h3 style="color: var(--accent-green);">&#9989; 优势</h3>
+                <ul>
+                    <li><strong>零构建部署</strong> — 克隆、配置、运行，三步完成</li>
+                    <li><strong>CLI 完全对等</strong> — 所有终端功能在 Web 上可用</li>
+                    <li><strong>极致轻量</strong> — 无框架依赖，代码透明可审计</li>
+                    <li><strong>活跃社区</strong> — 137 位贡献者，高频发版</li>
+                    <li><strong>安全设计</strong> — Passkey 认证、HMAC Cookie、安全头</li>
+                    <li><strong>移动优先</strong> — 手机端体验不妥协</li>
+                    <li><strong>测试覆盖</strong> — 5303 个测试确保稳定性</li>
+                    <li><strong>多模型支持</strong> — 200+ LLM Provider 无缝切换</li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="color: var(--accent-red);">&#9888;&#65039; 风险与挑战</h3>
+                <ul>
+                    <li><strong>依赖 Hermes Agent</strong> — 紧耦合，Agent 架构变更可能影响 WebUI</li>
+                    <li><strong>原生 JS 天花板</strong> — 随功能增长，无框架的前端可能面临可维护性挑战</li>
+                    <li><strong>多容器架构限制</strong> — 工具在 WebUI 容器执行而非 Agent 容器（#681）</li>
+                    <li><strong>安全暴露面</strong> — Agent 本身曾发现 9 个 CVE，WebUI 增加了攻击面</li>
+                    <li><strong>竞品压力</strong> — Open WebUI（126K+ Stars）有更大的社区基础</li>
+                    <li><strong>Windows 原生支持不完善</strong> — 部分工具依赖 POSIX 环境</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 8: Summary -->
+    <div class="section">
+        <h2><span class="icon">&#128202;</span>总结与展望</h2>
+        <p>Hermes WebUI 是自托管 AI Agent 生态中的一颗耀眼新星。它用<strong>"Less is More"</strong>的哲学证明了，在 AI Agent 管理界面这个赛道上，<strong>深度集成胜过功能堆砌，极简架构胜过框架狂欢</strong>。</p>
+        <p>项目的技术选择——纯 Python + 原生 JS——在 2026 年的 AI 工具领域是反直觉的，但恰恰是这种选择让它成为部署最快、门槛最低的 Agent Web 界面。5303 个测试和 137 位贡献者证明了这种选择在质量上的可持续性。</p>
+        <p>随着 Hermes Agent 登顶 OpenRouter 全球排行榜，以及多 Agent 编排能力在路线图中的规划，Hermes WebUI 有望成为自托管 AI Agent 的<strong>标准管理界面</strong>。</p>
+        <h3>评分细项</h3>
+        <table class="comparison-table">
+            <thead>
+                <tr><th>维度</th><th>评分</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>技术创新</td><td>9.0 / 10</td><td>零构建架构在 Agent UI 领域的突破性实践</td></tr>
+                <tr><td>实用性</td><td>9.2 / 10</td><td>CLI 完全对等、移动适配、多模型支持，生产级可用</td></tr>
+                <tr><td>代码质量</td><td>8.8 / 10</td><td>5303 测试、清晰架构、活跃 Code Review</td></tr>
+                <tr><td>社区活跃度</td><td>8.5 / 10</td><td>137 贡献者、高频发版，但依赖 Hermes Agent 社区</td></tr>
+                <tr><td>文档完善度</td><td>8.5 / 10</td><td>README 极其详尽，配套 docs/ 目录覆盖各场景</td></tr>
+                <tr style="font-weight: bold;"><td>综合评分</td><td style="color: var(--primary-light);">8.7 / 10</td><td>自托管 AI Agent Web 界面的标杆项目</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>本报告由 AI 深度分析生成 | 分析日期：2026-06-01 | 数据来源：GitHub、Web Search</p>
+        <p>项目地址：<a href="https://github.com/nesquena/hermes-webui" style="color: var(--accent-blue);">github.com/nesquena/hermes-webui</a></p>
+    </div>
+</div>
+
+</body>
+</html>
