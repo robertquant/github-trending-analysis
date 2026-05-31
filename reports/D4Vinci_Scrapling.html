@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：Scrapling - 自适应Web爬虫框架</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --accent: #7c3aed;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gradient-1: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .hero {
+            background: var(--gradient-1);
+            color: white;
+            padding: 48px 24px;
+            text-align: center;
+        }
+        .hero h1 { font-size: 2.2em; margin-bottom: 12px; }
+        .hero .subtitle { font-size: 1.15em; opacity: 0.9; }
+        .hero .meta { margin-top: 20px; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+        .hero .meta span {
+            background: rgba(255,255,255,0.18);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+        .score-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        .score-card h2 { font-size: 1.3em; margin-bottom: 20px; color: var(--primary); }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 16px 8px;
+            border-radius: 12px;
+            background: #f1f5f9;
+        }
+        .score-item .label { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px; }
+        .score-item .value { font-size: 1.8em; font-weight: 700; color: var(--primary); }
+        .score-item .bar {
+            margin-top: 8px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-item .bar .fill { height: 100%; border-radius: 3px; background: var(--gradient-1); }
+        .overall-score {
+            text-align: center;
+            padding: 20px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            color: white;
+        }
+        .overall-score .big { font-size: 3em; font-weight: 800; }
+        .overall-score .desc { font-size: 1em; opacity: 0.9; }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        .section h2 {
+            font-size: 1.3em;
+            margin-bottom: 16px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section h3 { font-size: 1.1em; margin: 18px 0 10px; color: var(--text); }
+        .section p { margin-bottom: 12px; }
+        .section ul { padding-left: 24px; margin-bottom: 12px; }
+        .section li { margin-bottom: 6px; }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .feature-item .icon { font-size: 1.5em; margin-bottom: 8px; }
+        .feature-item .title { font-weight: 600; margin-bottom: 6px; }
+        .feature-item .desc { font-size: 0.9em; color: var(--text-secondary); }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.92em;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .comparison-table tr:hover { background: #f8fafc; }
+        .comparison-table .highlight { color: var(--success); font-weight: 600; }
+
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .benchmark-item {
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .benchmark-item .lib { font-weight: 600; margin-bottom: 4px; }
+        .benchmark-item .time { font-size: 1.6em; font-weight: 700; color: var(--primary); }
+        .benchmark-item .vs { font-size: 0.85em; color: var(--text-secondary); }
+
+        .use-case-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .use-case {
+            background: #f0f9ff;
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 0 10px 10px 0;
+        }
+        .use-case .title { font-weight: 600; margin-bottom: 4px; }
+        .use-case .desc { font-size: 0.9em; color: var(--text-secondary); }
+
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+        .stat-badge {
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        .stat-badge strong { color: var(--primary); }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88em;
+            line-height: 1.6;
+        }
+        .tag {
+            display: inline-block;
+            background: #ede9fe;
+            color: var(--accent);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            margin: 2px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-size: 0.88em;
+        }
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.5em; }
+            .container { padding: 16px 12px; }
+            .section, .score-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>Scrapling 深度分析报告</h1>
+    <div class="subtitle">自适应Web爬虫框架 - 从单次请求到全站爬取，一个库解决所有问题</div>
+    <div class="meta">
+        <span>D4Vinci/Scrapling</span>
+        <span>55.8K Stars</span>
+        <span>5.4K Forks</span>
+        <span>v0.4.8</span>
+        <span>Python 3.10+</span>
+    </div>
+</div>
+
+<div class="container">
+
+<!-- 综合评分 -->
+<div class="score-card">
+    <h2>综合评分</h2>
+    <div class="score-grid">
+        <div class="score-item">
+            <div class="label">创新性</div>
+            <div class="value">9.5</div>
+            <div class="bar"><div class="fill" style="width:95%"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="label">实用性</div>
+            <div class="value">9.3</div>
+            <div class="bar"><div class="fill" style="width:93%"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="label">性能</div>
+            <div class="value">9.4</div>
+            <div class="bar"><div class="fill" style="width:94%"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="label">文档/生态</div>
+            <div class="value">9.0</div>
+            <div class="bar"><div class="fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="label">社区活跃</div>
+            <div class="value">9.2</div>
+            <div class="bar"><div class="fill" style="width:92%"></div></div>
+        </div>
+    </div>
+    <div class="overall-score">
+        <div class="big">9.3 / 10</div>
+        <div class="desc">卓越级别 - Web爬虫领域的革命性项目</div>
+    </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="section">
+    <h2>项目概述</h2>
+    <p>Scrapling 是由 Karim Shoair（D4Vinci）开发的一个自适应Python Web爬虫框架，能够处理从单个HTTP请求到大规模全站爬取的所有场景。项目于2024年创建，截至2026年6月已获得 55.8K Stars 和 5.4K Forks，是当前GitHub上最热门的Web爬虫开源项目之一。</p>
+
+    <div class="stats-row">
+        <div class="stat-badge">作者：<strong>Karim Shoair (D4Vinci)</strong></div>
+        <div class="stat-badge">许可证：<strong>BSD-3-Clause</strong></div>
+        <div class="stat-badge">提交数：<strong>1,446</strong></div>
+        <div class="stat-badge">版本：<strong>v0.4.8</strong>（2026.05.11）</div>
+        <div class="stat-badge">测试覆盖率：<strong>92%</strong></div>
+        <div class="stat-badge">发布版本：<strong>46</strong></div>
+    </div>
+
+    <h3>核心定位</h3>
+    <p>Scrapling 的核心理念是 <strong>"一个库，零妥协"</strong>。它将通常需要组合多个工具（如 requests + BeautifulSoup、Scrapy + Playwright）才能完成的工作统一到一个框架中：</p>
+    <ul>
+        <li><strong>自适应解析器</strong>：当网站结构变化时，自动重新定位目标元素，无需人工维护选择器</li>
+        <li><strong>多层获取器</strong>：从快速HTTP请求到隐身浏览器自动化，覆盖所有场景</li>
+        <li><strong>全功能爬虫框架</strong>：类似Scrapy的Spider API，支持并发、暂停/恢复、多会话</li>
+        <li><strong>内置反检测</strong>：开箱即用地绕过Cloudflare Turnstile等反爬机制</li>
+    </ul>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+    <h2>技术架构</h2>
+    <p>Scrapling 采用分层架构设计，每一层独立且可组合使用：</p>
+
+    <h3>1. 解析引擎层（Parser Engine）</h3>
+    <p>基于优化的 C 扩展构建，使用哈希确定性 DOM 指纹（Hashed Deterministic DOM Fingerprints）技术来实现元素的自适应追踪。性能基准测试显示，文本提取速度达到 2.02ms（处理5000个嵌套元素），比 BeautifulSoup4 + lxml 快约 <strong>784倍</strong>，与 Parsel/Scrapy 相当。</p>
+
+    <h3>2. 获取器层（Fetchers）</h3>
+    <div class="feature-grid">
+        <div class="feature-item">
+            <div class="icon">⚡</div>
+            <div class="title">Fetcher</div>
+            <div class="desc">高速HTTP请求，支持浏览器TLS指纹模拟、HTTP/3、隐身请求头</div>
+        </div>
+        <div class="feature-item">
+            <div class="icon">🎭</div>
+            <div class="title">DynamicFetcher</div>
+            <div class="desc">基于Playwright的完整浏览器自动化，支持Chromium和Chrome，可渲染JavaScript</div>
+        </div>
+        <div class="feature-item">
+            <div class="icon">🥷</div>
+            <div class="title">StealthyFetcher</div>
+            <div class="desc">高级隐身模式，指纹欺骗，可绕过Cloudflare Turnstile/Interstitial等反爬系统</div>
+        </div>
+    </div>
+
+    <h3>3. 爬虫框架层（Spider Framework）</h3>
+    <p>提供类似Scrapy的声明式Spider API，核心特性包括：</p>
+    <ul>
+        <li><strong>并发控制</strong>：可配置并发限制、按域名限流、下载延迟</li>
+        <li><strong>多会话支持</strong>：在同一个Spider中混合使用HTTP、隐身浏览器等不同获取方式</li>
+        <li><strong>暂停/恢复</strong>：基于检查点的爬取持久化，Ctrl+C优雅停机后可从断点续爬</li>
+        <li><strong>流式模式</strong>：通过 async for 实时流式获取爬取结果</li>
+        <li><strong>开发模式</strong>：首次请求缓存到磁盘，后续迭代开发时无需重复请求目标服务器</li>
+    </ul>
+
+    <h3>4. 基础设施层</h3>
+    <ul>
+        <li><strong>代理轮换</strong>：内置 ProxyRotator，支持循环和自定义轮换策略</li>
+        <li><strong>DNS防泄漏</strong>：可选DNS-over-HTTPS，通过Cloudflare DoH路由DNS查询</li>
+        <li><strong>广告拦截</strong>：内置约3500个已知广告/追踪器域名的屏蔽列表</li>
+        <li><strong>MCP服务器</strong>：可与AI工具（Claude、Cursor等）集成，实现AI辅助的数据提取</li>
+        <li><strong>CLI工具</strong>：命令行直接抓取URL，支持交互式Web爬虫Shell</li>
+    </ul>
+
+    <h3>性能基准</h3>
+    <div class="benchmark-grid">
+        <div class="benchmark-item">
+            <div class="lib">Scrapling</div>
+            <div class="time">2.02ms</div>
+            <div class="vs">基准 1.0x</div>
+        </div>
+        <div class="benchmark-item">
+            <div class="lib">Parsel/Scrapy</div>
+            <div class="time">2.04ms</div>
+            <div class="vs">1.01x</div>
+        </div>
+        <div class="benchmark-item">
+            <div class="lib">Raw Lxml</div>
+            <div class="time">2.54ms</div>
+            <div class="vs">1.26x</div>
+        </div>
+        <div class="benchmark-item">
+            <div class="lib">PyQuery</div>
+            <div class="time">24.17ms</div>
+            <div class="vs">~12x</div>
+        </div>
+        <div class="benchmark-item">
+            <div class="lib">BS4 + lxml</div>
+            <div class="time">1584ms</div>
+            <div class="vs">~784x</div>
+        </div>
+        <div class="benchmark-item">
+            <div class="lib">BS4 + html5lib</div>
+            <div class="time">3392ms</div>
+            <div class="vs">~1679x</div>
+        </div>
+    </div>
+</div>
+
+<!-- 核心创新点 -->
+<div class="section">
+    <h2>核心创新点</h2>
+
+    <h3>1. 自适应选择器（Self-Healing Selectors）</h3>
+    <p>这是 Scrapling 最具突破性的创新。传统爬虫使用CSS选择器或XPath定位元素，一旦网站改版，所有选择器失效，需要手动修复。Scrapling 使用智能相似性算法，为每个元素生成哈希确定性DOM指纹，在网站结构变化后自动重新定位目标元素。</p>
+    <div class="code-block">
+from scrapling.fetchers import StealthyFetcher
+
+StealthyFetcher.adaptive = True
+p = StealthyFetcher.fetch('https://example.com', headless=True)
+products = p.css('.product', auto_save=True)      # 首次：保存元素指纹
+# 网站改版后...
+products = p.css('.product', adaptive=True)        # 自动通过指纹重新定位</div>
+    <p>关键点：这一功能 <strong>不依赖AI/ML模型</strong>，通过纯算法实现，因此速度快、资源消耗低。</p>
+
+    <h3>2. 统一的获取器架构</h3>
+    <p>提供了三种获取器 + 对应的Session类，所有获取器共享同一套解析API：</p>
+    <table class="comparison-table">
+        <tr>
+            <th>获取器</th>
+            <th>类型</th>
+            <th>JS渲染</th>
+            <th>反检测</th>
+            <th>速度</th>
+        </tr>
+        <tr>
+            <td>Fetcher</td>
+            <td>HTTP请求</td>
+            <td>否</td>
+            <td>TLS指纹模拟</td>
+            <td class="highlight">极快</td>
+        </tr>
+        <tr>
+            <td>DynamicFetcher</td>
+            <td>浏览器自动化</td>
+            <td class="highlight">是</td>
+            <td>基础</td>
+            <td>中等</td>
+        </tr>
+        <tr>
+            <td>StealthyFetcher</td>
+            <td>隐身浏览器</td>
+            <td class="highlight">是</td>
+            <td class="highlight">高级</td>
+            <td>较慢</td>
+        </tr>
+    </table>
+
+    <h3>3. MCP服务器集成AI</h3>
+    <p>Scrapling 提供了内置的MCP（Model Context Protocol）服务器，可直接与Claude、Cursor等AI工具集成。MCP服务器在传递内容给AI之前，先利用Scrapling提取目标内容，从而减少Token消耗、降低成本、加速操作。</p>
+
+    <h3>4. 开发者体验优化</h3>
+    <ul>
+        <li><strong>交互式Shell</strong>：内置IPython shell，支持curl转Scrapling请求、浏览器预览等</li>
+        <li><strong>CLI直接抓取</strong>：无需编写代码即可从命令行抓取网页内容</li>
+        <li><strong>完整类型提示</strong>：100%类型注解覆盖，PyRight和MyPy严格检查</li>
+        <li><strong>即用Docker镜像</strong>：每次发布自动构建包含所有浏览器的Docker镜像</li>
+    </ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+    <h2>应用场景</h2>
+    <div class="use-case-list">
+        <div class="use-case">
+            <div class="title">电商价格监控</div>
+            <div class="desc">利用自适应选择器追踪竞品价格变化，即使网站频繁改版也不中断</div>
+        </div>
+        <div class="use-case">
+            <div class="title">数据采集与分析</div>
+            <div class="desc">大规模爬取结构化数据用于市场研究、舆情分析、学术研究等</div>
+        </div>
+        <div class="use-case">
+            <div class="title">AI/LLM训练数据</div>
+            <div class="desc">通过MCP服务器与AI工具集成，为RAG管道和模型训练高效采集数据</div>
+        </div>
+        <div class="use-case">
+            <div class="title">SEO与竞品分析</div>
+            <div class="desc">监控搜索引擎排名、关键词、外链，分析竞争对手内容策略</div>
+        </div>
+        <div class="use-case">
+            <div class="title">OSINT情报收集</div>
+            <div class="desc">隐身模式绕过反爬检测，安全地收集开源情报数据</div>
+        </div>
+        <div class="use-case">
+            <div class="title">自动化测试</div>
+            <div class="desc">利用浏览器自动化能力进行Web应用的端到端测试</div>
+        </div>
+        <div class="use-case">
+            <div class="title">内容聚合平台</div>
+            <div class="desc">Spider框架支持大规模并发爬取，适合新闻、博客等内容聚合</div>
+        </div>
+        <div class="use-case">
+            <div class="title">金融数据采集</div>
+            <div class="desc">实时抓取股票、加密货币等金融数据，配合暂停/恢复功能长期运行</div>
+        </div>
+    </div>
+</div>
+
+<!-- 竞品对比 -->
+<div class="section">
+    <h2>竞品对比</h2>
+    <table class="comparison-table">
+        <tr>
+            <th>特性</th>
+            <th>Scrapling</th>
+            <th>Scrapy</th>
+            <th>BeautifulSoup</th>
+            <th>Playwright</th>
+            <th>Crawl4AI</th>
+        </tr>
+        <tr>
+            <td>类型</td>
+            <td>全功能框架</td>
+            <td>爬虫框架</td>
+            <td>解析库</td>
+            <td>浏览器自动化</td>
+            <td>AI爬虫</td>
+        </tr>
+        <tr>
+            <td>JS渲染</td>
+            <td class="highlight">内置</td>
+            <td>需插件</td>
+            <td>不支持</td>
+            <td class="highlight">原生</td>
+            <td class="highlight">内置</td>
+        </tr>
+        <tr>
+            <td>反爬绕过</td>
+            <td class="highlight">内置</td>
+            <td>需中间件</td>
+            <td>不支持</td>
+            <td>基础</td>
+            <td>有限</td>
+        </tr>
+        <tr>
+            <td>自适应选择器</td>
+            <td class="highlight">支持</td>
+            <td>不支持</td>
+            <td>不支持</td>
+            <td>不支持</td>
+            <td>不支持</td>
+        </tr>
+        <tr>
+            <td>大规模爬取</td>
+            <td class="highlight">Spider API</td>
+            <td class="highlight">原生支持</td>
+            <td>不支持</td>
+            <td>有限</td>
+            <td>有限</td>
+        </tr>
+        <tr>
+            <td>暂停/恢复</td>
+            <td class="highlight">支持</td>
+            <td class="highlight">支持</td>
+            <td>不支持</td>
+            <td>不支持</td>
+            <td>不支持</td>
+        </tr>
+        <tr>
+            <td>AI集成</td>
+            <td class="highlight">MCP服务器</td>
+            <td>不支持</td>
+            <td>不支持</td>
+            <td>不支持</td>
+            <td class="highlight">内置</td>
+        </tr>
+        <tr>
+            <td>解析速度</td>
+            <td class="highlight">极快(2ms)</td>
+            <td class="highlight">极快(2ms)</td>
+            <td>慢(1584ms)</td>
+            <td>N/A</td>
+            <td>中等</td>
+        </tr>
+        <tr>
+            <td>学习曲线</td>
+            <td>中等</td>
+            <td>较陡</td>
+            <td>低</td>
+            <td>中等</td>
+            <td>低</td>
+        </tr>
+        <tr>
+            <td>GitHub Stars</td>
+            <td class="highlight">55.8K</td>
+            <td>54K</td>
+            <td>17K</td>
+            <td>72K</td>
+            <td>35K</td>
+        </tr>
+    </table>
+
+    <h3>Scrapling的独特优势</h3>
+    <ul>
+        <li><strong>唯一的自适应选择器</strong>：目前市面上唯一支持网站结构变化后自动修复选择器的Python爬虫库</li>
+        <li><strong>三层获取器合一</strong>：无需在不同工具间切换，根据目标网站难度选择合适的获取器</li>
+        <li><strong>反检测开箱即用</strong>：不需要额外配置，StealthyFetcher可直接绕过Cloudflare Turnstile</li>
+    </ul>
+</div>
+
+<!-- 总结 -->
+<div class="section">
+    <h2>总结与展望</h2>
+    <p>Scrapling 代表了Web爬虫技术的下一代演进方向。它不仅仅是一个工具，而是一个完整的生态系统，将传统爬虫工具的优势（Scrapy的框架能力、BeautifulSoup的易用性、Playwright的浏览器控制）融合到一个统一的框架中。</p>
+
+    <h3>优势总结</h3>
+    <ul>
+        <li>革命性的自适应选择器技术，显著降低爬虫维护成本</li>
+        <li>出色的性能表现，解析速度与Scrapy/Parsel持平，远超BeautifulSoup</li>
+        <li>完整的工具链：解析、获取、爬取、反检测、AI集成一应俱全</li>
+        <li>活跃的社区和持续迭代（46个版本发布）</li>
+        <li>优秀的文档（支持8种语言）和92%的测试覆盖率</li>
+    </ul>
+
+    <h3>潜在风险</h3>
+    <ul>
+        <li>项目相对年轻（2024年启动），长期稳定性有待观察</li>
+        <li>隐身模式依赖Playwright和Camoufox，浏览器自动化本身有资源开销</li>
+        <li>需要Python 3.10+，对老旧环境不兼容</li>
+    </ul>
+
+    <h3>推荐场景</h3>
+    <p>如果你需要构建 <strong>长期运行的爬虫系统</strong>（尤其是目标网站可能改版）、需要 <strong>绕过反爬检测</strong>、或者希望 <strong>用一个库替代多个工具的组合</strong>，Scrapling 是目前最佳的选择。</p>
+</div>
+
+<div class="footer">
+    <p>分析日期：2026-06-01 | 数据来源：GitHub、PyPI、官方文档、社区评测</p>
+    <p>Generated by GitHub Trending Deep Analyzer</p>
+</div>
+
+</div>
+</body>
+</html>
