@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：supermemoryai/supermemory</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-card-hover: #263348;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+            --border-color: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #06b6d4, #3b82f6);
+            --gradient-3: linear-gradient(135deg, #10b981, #06b6d4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: var(--gradient-1);
+            border-radius: 20px;
+            padding: 50px 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .header h1 { font-size: 2.2em; font-weight: 800; margin-bottom: 10px; position: relative; z-index: 1; }
+        .header .subtitle { font-size: 1.15em; opacity: 0.9; position: relative; z-index: 1; }
+        .header .meta {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .header .meta span {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        /* Score Section */
+        .score-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .score-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .score-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .score-card .score { font-size: 2.8em; font-weight: 800; }
+        .score-card .label { color: var(--text-secondary); font-size: 0.9em; margin-top: 4px; }
+        .score-card .bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2 .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+        .section p { color: var(--text-secondary); margin-bottom: 14px; }
+        .section ul, .section ol { color: var(--text-secondary); padding-left: 24px; margin-bottom: 14px; }
+        .section li { margin-bottom: 8px; }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-item {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .feature-item h4 {
+            font-size: 1.05em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feature-item p { font-size: 0.9em; color: var(--text-muted); margin-bottom: 0; }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        td { color: var(--text-secondary); font-size: 0.9em; }
+        tr:hover td { background: rgba(59, 130, 246, 0.05); }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .tag-green { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .tag-blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .tag-orange { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .tag-red { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+        /* Benchmark */
+        .benchmark-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .benchmark-row:last-child { border-bottom: none; }
+        .benchmark-name { width: 160px; font-weight: 600; flex-shrink: 0; }
+        .benchmark-bar { flex: 1; }
+        .benchmark-bar .bar {
+            width: 100%;
+            height: 28px;
+            background: var(--border-color);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .benchmark-bar .bar-fill {
+            height: 100%;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: white;
+        }
+        .benchmark-desc { color: var(--text-muted); font-size: 0.85em; margin-top: 4px; }
+
+        /* Code */
+        pre {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 18px;
+            overflow-x: auto;
+            margin: 14px 0;
+            border: 1px solid var(--border-color);
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.88em;
+        }
+        .inline-code {
+            background: rgba(59, 130, 246, 0.12);
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #60a5fa;
+            font-size: 0.9em;
+        }
+
+        /* Architecture Diagram */
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+        .arch-box {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 20px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .arch-box.highlight {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .arch-arrow {
+            color: var(--text-muted);
+            font-size: 1.4em;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 30px 0 10px;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header { padding: 30px 20px; }
+            .header h1 { font-size: 1.6em; }
+            .section { padding: 20px; }
+            .score-section { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Supermemory</h1>
+        <div class="subtitle">AI 时代的记忆引擎 — 让 AI 拥有持久记忆的上下文工程平台</div>
+        <div class="meta">
+            <span>supermemoryai/supermemory</span>
+            <span>23.6k Stars</span>
+            <span>2.1k Forks</span>
+            <span>TypeScript</span>
+            <span>分析日期: 2026-06-01</span>
+        </div>
+    </div>
+
+    <!-- Score Cards -->
+    <div class="score-section">
+        <div class="score-card">
+            <div class="score" style="color: var(--accent-blue);">9.2</div>
+            <div class="label">技术创新</div>
+            <div class="bar"><div class="bar-fill" style="width:92%; background: var(--gradient-1);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score" style="color: var(--accent-purple);">9.0</div>
+            <div class="label">实用价值</div>
+            <div class="bar"><div class="bar-fill" style="width:90%; background: var(--gradient-1);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score" style="color: var(--accent-cyan);">9.5</div>
+            <div class="label">社区活跃度</div>
+            <div class="bar"><div class="bar-fill" style="width:95%; background: var(--gradient-2);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score" style="color: var(--accent-green);">8.8</div>
+            <div class="label">生态成熟度</div>
+            <div class="bar"><div class="bar-fill" style="width:88%; background: var(--gradient-3);"></div></div>
+        </div>
+        <div class="score-card">
+            <div class="score" style="color: var(--accent-orange);">9.1</div>
+            <div class="label">综合评分</div>
+            <div class="bar"><div class="bar-fill" style="width:91%; background: var(--gradient-1);"></div></div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">&#x1F4CB;</span>
+            项目概述
+        </h2>
+        <p><strong>Supermemory</strong> 是一个开源的 AI 记忆引擎和上下文工程平台，旨在解决大语言模型（LLM）在对话间"失忆"的核心痛点。项目由 supermemoryai 研究实验室开发，目前已在 GitHub 上获得 <strong>23,600+ Stars</strong> 和 <strong>2,100+ Forks</strong>，是当前 AI 记忆层领域最受关注的项目之一。</p>
+        <p>项目的核心理念可以用一句话概括：<em>"你的 AI 忘记了对话间的一切。Supermemory 修复了这个问题。"</em></p>
+        <p>Supermemory 在三大 AI 记忆基准测试中均排名第一：LongMemEval（81.6%）、LoCoMo 和 ConvoMem，证明了其在记忆提取、知识更新和个性化方面的技术领先性。</p>
+
+        <div class="feature-grid">
+            <div class="feature-item">
+                <h4>&#x1F9E0; 智能记忆</h4>
+                <p>自动从对话中提取事实，处理时间变化、矛盾信息，自动遗忘过期信息</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F464; 用户画像</h4>
+                <p>自动维护用户上下文 — 稳定事实 + 近期活动，单次调用约 50ms</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F50D; 混合搜索</h4>
+                <p>RAG + 记忆一体化查询，知识库文档与个性化上下文同时返回</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F50C; 连接器</h4>
+                <p>Google Drive、Gmail、Notion、OneDrive、GitHub — 实时 webhook 同步</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F4C4; 多模态提取</h4>
+                <p>PDF、图片(OCR)、视频(转录)、代码(AST 感知分块) — 上传即用</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F527; MCP 支持</h4>
+                <p>原生 MCP 服务器，一键集成 Claude Desktop、Cursor、VS Code 等</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6;">&#x1F528;</span>
+            技术架构
+        </h2>
+        <p>Supermemory 采用分层架构设计，将记忆管理、用户画像构建、搜索检索和数据连接整合为统一的上下文引擎。</p>
+
+        <div class="arch-flow">
+            <div class="arch-box">应用层<br><small>AI 工具 / Agent</small></div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-box highlight"><strong>Supermemory</strong><br><small>统一 API</small></div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-box">记忆引擎<br><small>事实提取 / 矛盾处理</small></div>
+            <div class="arch-box">用户画像<br><small>静态 + 动态画像</small></div>
+            <div class="arch-box">混合搜索<br><small>RAG + 记忆</small></div>
+            <div class="arch-box">连接器<br><small>实时同步</small></div>
+        </div>
+
+        <h3 style="margin-top: 24px; margin-bottom: 12px;">核心组件详解</h3>
+        <ul>
+            <li><strong>记忆引擎 (Memory Engine)</strong>：从对话中提取结构化事实，跟踪信息更新，自动解决矛盾（如 "我刚搬到旧金山" 会覆盖 "我住在纽约"），自动遗忘过期的临时信息。</li>
+            <li><strong>用户画像系统 (User Profiles)</strong>：分为静态画像（长期稳定事实，如职业、偏好）和动态画像（近期活动，如正在开发的项目）。单次调用约 50ms 即可获取完整画像。</li>
+            <li><strong>混合搜索 (Hybrid Search)</strong>：将 RAG 文档检索和个性化记忆检索合二为一，一次查询同时返回知识库内容和用户相关记忆。</li>
+            <li><strong>连接器系统 (Connectors)</strong>：支持 Google Drive、Gmail、Notion、OneDrive、GitHub、Web Crawler 等外部数据源的实时 webhook 同步。</li>
+            <li><strong>多模态提取器</strong>：支持 PDF 解析、图片 OCR、视频转录、代码 AST 感知分块等多种数据格式的自动化处理。</li>
+        </ul>
+
+        <h3 style="margin-top: 24px; margin-bottom: 12px;">技术栈</h3>
+        <table>
+            <tr><th>层次</th><th>技术</th></tr>
+            <tr><td>主语言</td><td>TypeScript</td></tr>
+            <tr><td>SDK</td><td>npm (supermemory) / pip (supermemory)</td></tr>
+            <tr><td>架构模式</td><td>RAG Pipeline + Memory Graph + Vector Search</td></tr>
+            <tr><td>协议</td><td>MCP (Model Context Protocol)</td></tr>
+            <tr><td>部署方式</td><td>云端托管 / 自托管 (Enterprise)</td></tr>
+            <tr><td>集成框架</td><td>Vercel AI SDK, LangChain, LangGraph, OpenAI Agents SDK, Mastra, Agno, n8n</td></tr>
+        </table>
+
+        <h3 style="margin-top: 24px; margin-bottom: 12px;">核心 API 示例</h3>
+        <pre><code>import Supermemory from "supermemory";
+const client = new Supermemory();
+
+// 存储记忆
+await client.add({
+  content: "用户喜欢 TypeScript，偏好函数式编程",
+  containerTag: "user_123",
+});
+
+// 获取用户画像 + 搜索相关记忆
+const { profile, searchResults } = await client.profile({
+  containerTag: "user_123",
+  q: "用户喜欢什么编程风格？",
+});
+
+// profile.static  → ["喜欢 TypeScript", "偏好函数式编程"]
+// profile.dynamic → ["正在做 API 集成"]</code></pre>
+    </div>
+
+    <!-- 基准测试 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(6,182,212,0.15); color: #06b6d4;">&#x1F3AF;</span>
+            基准测试成绩
+        </h2>
+        <p>Supermemory 在所有主要 AI 记忆基准测试中均达到 SOTA（State-of-the-Art）水平：</p>
+
+        <div class="benchmark-row">
+            <div class="benchmark-name">LongMemEval</div>
+            <div class="benchmark-bar">
+                <div class="bar"><div class="bar-fill" style="width: 81.6%; background: var(--gradient-1);">81.6% — #1</div></div>
+                <div class="benchmark-desc">跨会话长期记忆 + 知识更新能力</div>
+            </div>
+        </div>
+        <div class="benchmark-row">
+            <div class="benchmark-name">LoCoMo</div>
+            <div class="benchmark-bar">
+                <div class="bar"><div class="bar-fill" style="width: 90%; background: var(--gradient-2);">#1</div></div>
+                <div class="benchmark-desc">扩展对话中的事实召回（单跳、多跳、时序、对抗性）</div>
+            </div>
+        </div>
+        <div class="benchmark-row">
+            <div class="benchmark-name">ConvoMem</div>
+            <div class="benchmark-bar">
+                <div class="bar"><div class="bar-fill" style="width: 88%; background: var(--gradient-3);">#1</div></div>
+                <div class="benchmark-desc">个性化和偏好学习</div>
+            </div>
+        </div>
+
+        <p style="margin-top: 16px;">项目还开源了 <span class="inline-code">MemoryBench</span> — 一个标准化、可复现的记忆供应商基准测试框架，支持对 Supermemory、Mem0、Zep 等进行直接对比。</p>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(16,185,129,0.15); color: #10b981;">&#x1F4A1;</span>
+            核心创新点
+        </h2>
+
+        <div class="feature-grid">
+            <div class="feature-item">
+                <h4>&#x1F504; 记忆 vs RAG 的本质区别</h4>
+                <p>Supermemory 明确区分了"记忆"和"RAG"：RAG 是无状态的文档检索，而记忆是关于用户的、有时间感知的、会自动更新的事实跟踪系统。</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x23F0; 自动遗忘机制</h4>
+                <p>系统能识别临时性信息（如 "我明天有考试"）并自动过期处理，矛盾信息自动解决，噪音不会成为永久记忆。</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x26A1; 50ms 用户画像</h4>
+                <p>一次 API 调用即可获取完整用户画像（静态 + 动态），延迟仅约 50ms，可直接注入系统提示词。</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F517; 统一上下文栈</h4>
+                <p>记忆、RAG、用户画像、连接器、文件处理 — 全部整合在一个系统中，无需分别配置向量数据库、嵌入管线或分块策略。</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F517; MCP 原生支持</h4>
+                <p>一行命令 <span class="inline-code">npx install-mcp</span> 即可集成到 Claude Desktop、Cursor、VS Code 等主流 AI 开发工具中。</p>
+            </div>
+            <div class="feature-item">
+                <h4>&#x1F4CA; 开源 MemoryBench</h4>
+                <p>提供标准化的基准测试框架，让记忆解决方案的对比变得透明和可复现。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(245,158,11,0.15); color: #f59e0b;">&#x1F30D;</span>
+            应用场景
+        </h2>
+
+        <table>
+            <tr><th>场景</th><th>描述</th><th>适用对象</th></tr>
+            <tr>
+                <td><strong>AI 编程助手</strong></td>
+                <td>通过 MCP 插件让 Claude Code / Cursor 记住开发者偏好、项目上下文、历史决策</td>
+                <td><span class="tag tag-blue">开发者</span></td>
+            </tr>
+            <tr>
+                <td><strong>智能客服系统</strong></td>
+                <td>记住用户的历史问题、偏好和反馈，提供连贯的跨会话支持体验</td>
+                <td><span class="tag tag-green">企业</span></td>
+            </tr>
+            <tr>
+                <td><strong>个人知识管理</strong></td>
+                <td>构建 "第二大脑"，自动从对话、文档、邮件中提取和组织知识</td>
+                <td><span class="tag tag-blue">个人用户</span></td>
+            </tr>
+            <tr>
+                <td><strong>AI Agent 开发</strong></td>
+                <td>为 LangChain/LangGraph/OpenAI Agents 等 Agent 框架提供持久记忆层</td>
+                <td><span class="tag tag-blue">开发者</span></td>
+            </tr>
+            <tr>
+                <td><strong>内容创作与品牌调性</strong></td>
+                <td>记住品牌风格、写作偏好、历史内容，确保输出一致性</td>
+                <td><span class="tag tag-green">企业</span></td>
+            </tr>
+            <tr>
+                <td><strong>医疗记录管理</strong></td>
+                <td>管理患者病历信息，跟踪病情变化和用药历史</td>
+                <td><span class="tag tag-orange">医疗</span></td>
+            </tr>
+            <tr>
+                <td><strong>企业知识库</strong></td>
+                <td>通过连接器自动同步 Google Drive、Notion、GitHub 等企业数据源</td>
+                <td><span class="tag tag-green">企业</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(239,68,68,0.15); color: #ef4444;">&#x2696;&#xFE0F;</span>
+            竞品对比
+        </h2>
+        <p>Supermemory 在 2026 年 AI 记忆层赛道中面临多个强劲对手，但凭借统一 API 设计和基准测试成绩占据领先地位。</p>
+
+        <table>
+            <tr>
+                <th>特性</th>
+                <th>Supermemory</th>
+                <th>Mem0</th>
+                <th>Zep</th>
+                <th>Letta (MemGPT)</th>
+            </tr>
+            <tr>
+                <td><strong>GitHub Stars</strong></td>
+                <td>~23.6k</td>
+                <td>~25k</td>
+                <td>~3k</td>
+                <td>~15k</td>
+            </tr>
+            <tr>
+                <td><strong>核心定位</strong></td>
+                <td>统一上下文引擎</td>
+                <td>记忆 API</td>
+                <td>记忆 + 知识图谱</td>
+                <td>有状态的 LLM Agent</td>
+            </tr>
+            <tr>
+                <td><strong>基准测试</strong></td>
+                <td><span class="tag tag-green">三大基准 #1</span></td>
+                <td>较高</td>
+                <td>中等</td>
+                <td>中等</td>
+            </tr>
+            <tr>
+                <td><strong>混合搜索</strong></td>
+                <td><span class="tag tag-green">支持</span></td>
+                <td><span class="tag tag-orange">有限</span></td>
+                <td><span class="tag tag-green">支持</span></td>
+                <td><span class="tag tag-red">不支持</span></td>
+            </tr>
+            <tr>
+                <td><strong>用户画像</strong></td>
+                <td><span class="tag tag-green">自动 (50ms)</span></td>
+                <td><span class="tag tag-green">支持</span></td>
+                <td><span class="tag tag-green">支持</span></td>
+                <td><span class="tag tag-orange">有限</span></td>
+            </tr>
+            <tr>
+                <td><strong>连接器</strong></td>
+                <td>6+ (含 webhook)</td>
+                <td>少量</td>
+                <td>中等</td>
+                <td>有限</td>
+            </tr>
+            <tr>
+                <td><strong>MCP 支持</strong></td>
+                <td><span class="tag tag-green">原生支持</span></td>
+                <td><span class="tag tag-orange">社区实现</span></td>
+                <td><span class="tag tag-orange">社区实现</span></td>
+                <td><span class="tag tag-red">不支持</span></td>
+            </tr>
+            <tr>
+                <td><strong>自托管</strong></td>
+                <td><span class="tag tag-orange">仅企业版</span></td>
+                <td><span class="tag tag-green">开源自托管</span></td>
+                <td><span class="tag tag-green">开源自托管</span></td>
+                <td><span class="tag tag-green">开源自托管</span></td>
+            </tr>
+            <tr>
+                <td><strong>免费额度</strong></td>
+                <td>1M tokens</td>
+                <td>有限免费</td>
+                <td>开源免费</td>
+                <td>开源免费</td>
+            </tr>
+        </table>
+
+        <h3 style="margin-top: 20px; margin-bottom: 10px;">竞争优势</h3>
+        <ul>
+            <li><strong>统一 API 设计</strong>：一个 API 覆盖记忆、RAG、用户画像、连接器，开发集成成本极低</li>
+            <li><strong>基准测试领先</strong>：三大权威基准测试均排名第一，技术实力有据可依</li>
+            <li><strong>生态集成广泛</strong>：MCP 原生支持 + 8 大主流 AI 开发工具插件</li>
+            <li><strong>开发者体验极佳</strong>：无需配置向量数据库、嵌入管线或分块策略</li>
+        </ul>
+        <h3 style="margin-top: 16px; margin-bottom: 10px;">潜在劣势</h3>
+        <ul>
+            <li><strong>自托管限制</strong>：仅企业版支持自托管，对数据隐私要求严格的用户可能倾向 Mem0 或 Zep</li>
+            <li><strong>记忆控制权</strong>：系统自动决定记忆内容，开发者对记忆粒度的精细控制有限</li>
+            <li><strong>相对年轻</strong>：相比 Mem0 等更早入局者，企业级生产验证案例相对较少</li>
+        </ul>
+    </div>
+
+    <!-- 综合评价 -->
+    <div class="section">
+        <h2>
+            <span class="icon" style="background: rgba(236,72,153,0.15); color: #ec4899;">&#x1F2D0;</span>
+            综合评价
+        </h2>
+        <p><strong>Supermemory 是 2026 年 AI 记忆层赛道中最值得关注的明星项目。</strong>它不仅解决了一个真实的、高频的痛点 — AI 的对话间失忆问题，而且在技术实现上展现了显著的创新性。</p>
+        <p>项目的核心竞争力在于三个维度：</p>
+        <ol>
+            <li><strong>技术深度</strong>：明确区分"记忆"与"RAG"，实现自动矛盾解决和遗忘机制，三大基准测试排名第一</li>
+            <li><strong>工程完成度</strong>：统一的 API 设计覆盖完整上下文栈，从安装到使用体验极为流畅</li>
+            <li><strong>生态策略</strong>：通过 MCP 原生支持和多平台插件策略，快速渗透主流 AI 开发工具生态</li>
+        </ol>
+        <p>对于正在构建 AI Agent 或应用的开发者来说，Supermemory 是目前最值得优先评估的记忆层解决方案。其在开源社区的爆发式增长（23.6k Stars）也印证了市场对这一问题的强烈需求。</p>
+
+        <h3 style="margin-top: 20px; margin-bottom: 10px;">推荐指数</h3>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <span style="font-size: 2em; color: var(--accent-orange);">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+            <span style="color: var(--text-secondary); font-size: 1.1em;">5/5 — 强烈推荐关注和使用</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>报告生成时间: 2026-06-01 | 数据来源: GitHub, WebSearch | 由 Claude 深度分析生成</p>
+    </div>
+
+</div>
+</body>
+</html>
