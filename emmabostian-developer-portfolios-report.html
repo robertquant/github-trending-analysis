@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告: emmabostian/developer-portfolios</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .report-header {
+            text-align: center;
+            padding: 60px 40px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+
+        .report-header .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent-blue);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .report-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: var(--gradient-3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .report-header .subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .report-header .meta-info {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .report-header .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .report-header .meta-item .icon {
+            font-size: 16px;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+
+        .section:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .section h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2 .section-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+
+        .highlight-box {
+            background: rgba(88, 166, 255, 0.08);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .highlight-box.info {
+            background: rgba(63, 185, 80, 0.08);
+            border-color: rgba(63, 185, 80, 0.2);
+        }
+
+        .highlight-box.warning {
+            background: rgba(210, 153, 34, 0.08);
+            border-color: rgba(210, 153, 34, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, border-color 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-card.stars .value { color: var(--accent-orange); }
+        .stat-card.forks .value { color: var(--accent-blue); }
+        .stat-card.portfolios .value { color: var(--accent-green); }
+        .stat-card.watchers .value { color: var(--accent-purple); }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 16px;
+            margin-bottom: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-blue);
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: background 0.2s;
+        }
+
+        .feature-list li:hover {
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .feature-list li strong {
+            color: var(--text-primary);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 16px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table td {
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .score-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .score-row .label {
+            width: 120px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .score-row .bar-bg {
+            flex: 1;
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .score-row .bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s ease;
+        }
+
+        .score-row .score-value {
+            width: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .overall-score {
+            text-align: center;
+            padding: 30px;
+            margin: 20px 0;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .overall-score .big-score {
+            font-size: 64px;
+            font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .overall-score .score-label {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .tag.blue { background: rgba(88,166,255,0.1); color: var(--accent-blue); border-color: rgba(88,166,255,0.3); }
+        .tag.green { background: rgba(63,185,80,0.1); color: var(--accent-green); border-color: rgba(63,185,80,0.3); }
+        .tag.orange { background: rgba(210,153,34,0.1); color: var(--accent-orange); border-color: rgba(210,153,34,0.3); }
+        .tag.purple { background: rgba(188,140,255,0.1); color: var(--accent-purple); border-color: rgba(188,140,255,0.3); }
+        .tag.cyan { background: rgba(57,210,192,0.1); color: var(--accent-cyan); border-color: rgba(57,210,192,0.3); }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .scenario-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .scenario-card h4 {
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+        }
+
+        .scenario-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .section { padding: 20px; }
+            .report-header { padding: 32px 20px; }
+            .report-header h1 { font-size: 24px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .comparison-table { font-size: 12px; }
+            .comparison-table th, .comparison-table td { padding: 10px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Report Header -->
+<div class="report-header">
+    <div class="badge">GitHub Trending Deep Analysis</div>
+    <h1>emmabostian/developer-portfolios</h1>
+    <p class="subtitle">全球最大开发者作品集灵感合集 — 1683+ 优秀开发者作品集的社区策展项目</p>
+    <div class="meta-info">
+        <div class="meta-item"><span class="icon">&#128064;</span> 分析日期: 2026-06-01</div>
+        <div class="meta-item"><span class="icon">&#127760;</span> GitHub: github.com/emmabostian/developer-portfolios</div>
+        <div class="meta-item"><span class="icon">&#128100;</span> 作者: Emma Bostian (Spotify)</div>
+    </div>
+</div>
+
+<!-- Key Stats -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(210,153,34,0.15);">&#128202;</span>
+        核心数据
+    </h2>
+    <div class="stats-grid">
+        <div class="stat-card stars">
+            <div class="value">~22.9K</div>
+            <div class="label">&#11088; Stars</div>
+        </div>
+        <div class="stat-card forks">
+            <div class="value">~4.5K</div>
+            <div class="label">&#128256; Forks</div>
+        </div>
+        <div class="stat-card portfolios">
+            <div class="value">1,683</div>
+            <div class="label">&#128188; 收录作品集</div>
+        </div>
+        <div class="stat-card watchers">
+            <div class="value">150</div>
+            <div class="label">&#128065; Watchers</div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Overview -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(88,166,255,0.15);">&#128218;</span>
+        项目概述
+    </h2>
+    <p><strong>developer-portfolios</strong> 是由 Spotify 前端工程师 Emma Bostian 创建并维护的社区驱动型策展项目，旨在收集和展示全球优秀开发者的个人作品集网站，为正在构建或改进自己作品集的开发者提供灵感。</p>
+    <div class="highlight-box">
+        <p style="margin:0;"><strong>起源故事：</strong>该项目灵感来源于开发者 Ali Spittel 的一条推文，鼓励开发者展示自己的作品集。Emma 将这一想法发展为一个系统化的 GitHub 仓库，任何开发者都可以通过提交 PR 来添加自己的作品集。</p>
+    </div>
+    <p>截至分析时，项目已收录来自全球的 <strong>1,683 位开发者</strong>的作品集，涵盖前端工程师、后端开发者、全栈工程师、AI/ML 工程师、游戏开发者、DevOps 工程师等几乎所有技术方向。</p>
+    <div class="tag-cloud">
+        <span class="tag blue">社区策展</span>
+        <span class="tag green">开源贡献</span>
+        <span class="tag orange">灵感集合</span>
+        <span class="tag purple">A-Z 分类</span>
+        <span class="tag cyan">全球开发者</span>
+    </div>
+</div>
+
+<!-- Technical Architecture -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(63,185,80,0.15);">&#128736;</span>
+        技术架构与组织方式
+    </h2>
+    <p>作为一个 Awesome List 类型项目，developer-portfolios 的核心并非软件代码，而是结构化内容的组织方式：</p>
+    <ul class="feature-list">
+        <li><strong>README 驱动开发：</strong>整个项目的核心内容承载在 README.md 文件中，按字母 A-Z 分区组织，方便快速浏览</li>
+        <li><strong>PR 贡献机制：</strong>设有完善的 CONTRIBUTING.md 贡献指南，开发者通过 Fork &rarr; 修改 &rarr; PR 的标准流程提交作品集</li>
+        <li><strong>配套网站：</strong>除了 GitHub README 外，还提供了独立的 Developer Portfolios Website，支持随机浏览功能</li>
+        <li><strong>结构化元数据：</strong>每个作品集条目包含开发者姓名、技术方向标签（如 [Full Stack Developer]、[AI Engineer]）和作品集链接</li>
+        <li><strong>持续集成：</strong>社区维护者定期审核和合并 PR，确保内容质量和链接有效性</li>
+    </ul>
+    <div class="highlight-box info">
+        <p style="margin:0;"><strong>组织架构特点：</strong>这种纯内容型项目的维护成本相对较低，但社区参与度极高。项目展示了如何利用 GitHub 的社会化功能（PR、Issue、Fork）来构建一个可持续的众包内容平台。</p>
+    </div>
+</div>
+
+<!-- Core Innovations -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(188,140,255,0.15);&#128161;</span>
+        核心创新点
+    </h2>
+    <ul class="feature-list">
+        <li><strong>规模化的社区策展模式：</strong>作为 GitHub 上同类项目中规模最大的作品集合集（1,683 个作品集），展示了众包模式在灵感型内容策展上的巨大潜力</li>
+        <li><strong>极低参与门槛：</strong>开发者只需在 README 中添加一行文本并提交 PR 即可参与，这种极简贡献机制是项目获得大规模参与的关键</li>
+        <li><strong>按字母分类的浏览模式：</strong>不同于按技术栈分类，采用字母索引让浏览者可以无偏见地接触各种不同风格和方向的作品集</li>
+        <li><strong>随机发现功能：</strong>配套网站提供的 "Random Portfolio" 功能鼓励偶然发现，帮助开发者跳出信息茧房</li>
+        <li><strong>职业发展的社会化证明：</strong>被收录本身就成为了一种微型社交认证，激励开发者持续优化自己的作品集</li>
+        <li><strong>跨技术栈的统一参考：</strong>将前端、后端、全栈、AI/ML、游戏开发等不同方向的作品集统一收录，打破技术方向壁垒</li>
+    </ul>
+</div>
+
+<!-- Application Scenarios -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(57,210,192,0.15);">&#127919;</span>
+        应用场景
+    </h2>
+    <div class="scenario-grid">
+        <div class="scenario-card">
+            <h4>&#127891; 求职准备</h4>
+            <p>正在求职的开发者可以浏览大量真实作品集，了解行业标准和最佳实践，为自己的作品集设计和内容组织提供参考。</p>
+        </div>
+        <div class="scenario-card">
+            <h4>&#127912; UI/UX 设计灵感</h4>
+            <p>设计师和前端开发者可以从 1600+ 个不同风格的作品集中获取布局、配色、交互等方面的设计灵感。</p>
+        </div>
+        <div class="scenario-card">
+            <h4>&#128187; 技术选型参考</h4>
+            <p>通过观察不同作品集使用的技术栈（Next.js、Gatsby、Astro、React 等），帮助开发者选择最适合自己作品集的技术方案。</p>
+        </div>
+        <div class="scenario-card">
+            <h4>&#128101; 个人品牌建设</h4>
+            <p>被收录的开发者作品集将获得社区曝光，有助于个人品牌建设和职业网络拓展。</p>
+        </div>
+        <div class="scenario-card">
+            <h4>&#128218; 教学案例</h4>
+            <p>编程培训机构和 Bootcamp 可以将此项目作为教学资源，向学员展示优秀作品集的标准和多样性。</p>
+        </div>
+        <div class="scenario-card">
+            <h4>&#128269; 招聘筛选</h4>
+            <p>技术招聘人员可以通过该合集了解当前开发者作品集的趋势和水平，更有效地评估候选人。</p>
+        </div>
+    </div>
+</div>
+
+<!-- Competitor Comparison -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(248,81,73,0.15);">&#9878;</span>
+        竞品对比
+    </h2>
+    <p>以下是 GitHub 上同类开发者作品集策展项目以及主流作品集构建工具的对比：</p>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>项目/工具</th>
+                <th>类型</th>
+                <th>规模</th>
+                <th>核心特色</th>
+                <th>适合人群</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>developer-portfolios</strong></td>
+                <td>策展合集</td>
+                <td>1,683 作品集</td>
+                <td>规模最大、字母索引、随机浏览</td>
+                <td>所有开发者</td>
+            </tr>
+            <tr>
+                <td>evavic44/portfolio-ideas</td>
+                <td>策展合集</td>
+                <td>中等规模</td>
+                <td>附带项目理念和设计思路</td>
+                <td>寻找灵感的开发者</td>
+            </tr>
+            <tr>
+                <td>amnashanwar/awesome-portfolios</td>
+                <td>策展合集</td>
+                <td>较小规模</td>
+                <td>聚焦创意设计型作品集</td>
+                <td>设计导向的开发者</td>
+            </tr>
+            <tr>
+                <td>iRaul/creative-portfolios</td>
+                <td>策展合集</td>
+                <td>较小规模</td>
+                <td>精选创意作品集</td>
+                <td>追求视觉创意</td>
+            </tr>
+            <tr>
+                <td>GitHub Pages + Jekyll/Hugo</td>
+                <td>构建工具</td>
+                <td>N/A</td>
+                <td>免费、代码完全控制、开发者友好</td>
+                <td>有技术能力的开发者</td>
+            </tr>
+            <tr>
+                <td>Framer</td>
+                <td>构建工具</td>
+                <td>N/A</td>
+                <td>现代交互设计、零代码</td>
+                <td>注重设计的开发者</td>
+            </tr>
+            <tr>
+                <td>Webflow</td>
+                <td>构建工具</td>
+                <td>N/A</td>
+                <td>高度自定义、CMS 集成</td>
+                <td>追求设计自由度</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="highlight-box warning">
+        <p style="margin:0;"><strong>竞争优势分析：</strong>developer-portfolios 的核心壁垒在于其先发优势和社区网络效应。22.9K Stars 赋予了极高的搜索可见性，而 1,683 个作品集的规模使其成为同类项目中的事实标准。虽然技术上没有壁垒，但社区规模本身就是最大的护城河。</p>
+    </div>
+</div>
+
+<!-- Comprehensive Scoring -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(88,166,255,0.15);">&#11088;</span>
+        综合评分
+    </h2>
+    <div class="score-container">
+        <div class="score-row">
+            <span class="label">社区活跃度</span>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:92%; background:var(--accent-green);"></div>
+            </div>
+            <span class="score-value" style="color:var(--accent-green);">9.2</span>
+        </div>
+        <div class="score-row">
+            <span class="label">内容丰富度</span>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:95%; background:var(--accent-blue);"></div>
+            </div>
+            <span class="score-value" style="color:var(--accent-blue);">9.5</span>
+        </div>
+        <div class="score-row">
+            <span class="label">实用性</span>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:88%; background:var(--accent-orange);"></div>
+            </div>
+            <span class="score-value" style="color:var(--accent-orange);">8.8</span>
+        </div>
+        <div class="score-row">
+            <span class="label">维护质量</span>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:80%; background:var(--accent-purple);"></div>
+            </div>
+            <span class="score-value" style="color:var(--accent-purple);">8.0</span>
+        </div>
+        <div class="score-row">
+            <span class="label">技术深度</span>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:35%; background:var(--accent-cyan);"></div>
+            </div>
+            <span class="score-value" style="color:var(--accent-cyan);">3.5</span>
+        </div>
+        <div class="score-row">
+            <span class="label">创新性</span>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width:55%; background:var(--accent-red);"></div>
+            </div>
+            <span class="score-value" style="color:var(--accent-red);">5.5</span>
+        </div>
+    </div>
+    <div class="overall-score">
+        <div class="big-score">8.2</div>
+        <div class="score-label">综合评分（满分 10 分）</div>
+    </div>
+    <div class="highlight-box">
+        <p style="margin:0;"><strong>评分说明：</strong>作为一个社区策展型资源项目，developer-portfolios 在内容丰富度和社区活跃度上表现卓越。低技术深度和创新性评分是项目性质决定的 — 它的价值在于资源整合而非技术创新。对于需要作品集灵感的开发者来说，这是一个 10/10 的参考资源。</p>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="section">
+    <h2>
+        <span class="section-icon" style="background:rgba(57,210,192,0.15);">&#128203;</span>
+        总结与建议
+    </h2>
+    <p><strong>developer-portfolios</strong> 是 GitHub 上最具影响力的开发者作品集灵感合集，由 Spotify 工程师 Emma Bostian 发起并维护。项目通过极低的贡献门槛和高效的组织方式，积累了 1,683 个来自全球不同技术方向的作品集，成为开发者构建个人作品集的首选参考资源。</p>
+    <p><strong>适合人群：</strong>所有正在创建或优化个人作品集的开发者，尤其是求职中的初级和中高级工程师。</p>
+    <p><strong>推荐用法：</strong>先使用 "Random Portfolio" 功能随机浏览 10-20 个作品集获取整体灵感，再根据自己技术方向有针对性地参考同类作品集的设计和技术实现。</p>
+    <p><strong>参考链接：</strong></p>
+    <ul class="feature-list">
+        <li><strong>GitHub 仓库：</strong><a href="https://github.com/emmabostian/developer-portfolios" style="color:var(--accent-blue);">github.com/emmabostian/developer-portfolios</a></li>
+        <li><strong>作者 GitHub：</strong><a href="https://github.com/emmabostian" style="color:var(--accent-blue);">github.com/emmabostian</a></li>
+        <li><strong>贡献指南：</strong><a href="https://github.com/emmabostian/developer-portfolios/blob/master/CONTRIBUTING.md" style="color:var(--accent-blue);">CONTRIBUTING.md</a></li>
+    </ul>
+</div>
+
+<div class="footer">
+    <p>由 AI 深度分析引擎生成 | 分析日期: 2026-06-01 | 数据来源: GitHub、WebSearch</p>
+    <p>Powered by <a href="https://github.com/emmabostian/developer-portfolios">developer-portfolios</a></p>
+</div>
+
+</body>
+</html>
