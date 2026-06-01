@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenBMB/VoxCPM 深度分析报告</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --accent: #f472b6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 2rem;
+        }
+
+        .container { max-width: 960px; margin: 0 auto; }
+
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 60%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #c7d2fe, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .header .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            position: relative;
+        }
+
+        .header .badges {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-primary { background: rgba(99, 102, 241, 0.2); color: var(--primary-light); border: 1px solid rgba(99, 102, 241, 0.3); }
+        .badge-success { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-info { background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-accent { background: rgba(244, 114, 182, 0.15); color: var(--accent); border: 1px solid rgba(244, 114, 182, 0.3); }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .meta-card {
+            background: var(--bg-card);
+            padding: 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .meta-card:hover {
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+        }
+
+        .meta-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        .meta-card .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section h2 .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .section p { color: var(--text-muted); margin-bottom: 1rem; }
+        .section ul { padding-left: 1.5rem; color: var(--text-muted); }
+        .section li { margin-bottom: 0.5rem; }
+
+        .highlight-box {
+            background: rgba(99, 102, 241, 0.08);
+            border-left: 3px solid var(--primary);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table td { color: var(--text-muted); font-size: 0.9rem; }
+
+        .comparison-table tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .score-section {
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto;
+            position: relative;
+        }
+
+        .score-circle .score-num {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .score-circle .score-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .score-bar-container {
+            margin: 0.5rem 0;
+        }
+
+        .score-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .score-bar-label span:first-child { color: var(--text); }
+        .score-bar-label span:last-child { color: var(--primary-light); font-weight: 600; }
+
+        .score-bar {
+            height: 8px;
+            background: rgba(99, 102, 241, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            transition: width 1s ease;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .scenario-card {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            transition: transform 0.2s;
+        }
+
+        .scenario-card:hover { transform: translateY(-2px); }
+        .scenario-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--primary-light); }
+        .scenario-card p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+        .innovation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .innovation-list li {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.75rem;
+            transition: background 0.2s;
+        }
+
+        .innovation-list li:hover { background: rgba(99, 102, 241, 0.1); }
+        .innovation-list li strong { color: var(--primary-light); }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .tag-list {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            padding: 0.2rem 0.6rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--primary-light);
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .header h1 { font-size: 1.6rem; }
+            .section { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>OpenBMB/VoxCPM</h1>
+            <p class="subtitle">Tokenizer-Free 多语言语音合成系统 | 基于 MiniCPM-4 的扩散自回归 TTS 模型</p>
+            <div class="badges">
+                <span class="badge badge-primary">TTS</span>
+                <span class="badge badge-success">Apache 2.0</span>
+                <span class="badge badge-info">20亿参数</span>
+                <span class="badge badge-warning">2026-04 发布</span>
+                <span class="badge badge-accent">20K+ Stars</span>
+            </div>
+        </div>
+
+        <!-- Meta Grid -->
+        <div class="meta-grid">
+            <div class="meta-card">
+                <div class="value">2B</div>
+                <div class="label">模型参数</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">200万+</div>
+                <div class="label">训练音频(小时)</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">30+</div>
+                <div class="label">支持语言</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">48kHz</div>
+                <div class="label">输出音质</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">0.15</div>
+                <div class="label">RTF 推理速度</div>
+            </div>
+            <div class="meta-card">
+                <div class="value">9种</div>
+                <div class="label">中文方言</div>
+            </div>
+        </div>
+
+        <!-- Section 1: Project Overview -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(99,102,241,0.2);">&#x1F4D6;</span> 项目概述</h2>
+            <p>
+                <strong>VoxCPM</strong> 是由清华大学 NLP 团队与 ModelBest Inc. 联合创建的研究实验室 <strong>OpenBMB</strong> 开发的开源文本转语音（TTS）系统。其最新版本 <strong>VoxCPM2</strong> 于 2026 年 4 月发布，采用突破性的 <strong>无分词器（Tokenizer-Free）架构</strong>，通过端到端扩散自回归建模直接生成连续语音表示，彻底颠覆了传统 TTS 的多阶段流水线范式。
+            </p>
+            <div class="highlight-box">
+                VoxCPM2 基于 MiniCPM-4 大语言模型基座构建，拥有 20 亿参数，在超过 200 万小时的多语种音频数据上训练，支持 30 种全球语言及 9 种中文方言，能够输出 48kHz 录音室级音质，实时因子（RTF）低至 0.15，在语音相似度基准测试中超越了商业产品 ElevenLabs。
+            </div>
+            <div class="tag-list">
+                <span class="tag">语音合成</span>
+                <span class="tag">扩散模型</span>
+                <span class="tag">自回归</span>
+                <span class="tag">声音克隆</span>
+                <span class="tag">多语言</span>
+                <span class="tag">MiniCPM-4</span>
+                <span class="tag">零样本学习</span>
+            </div>
+        </div>
+
+        <!-- Section 2: Technical Architecture -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(34,197,94,0.2);">&#x1F528;</span> 技术架构</h2>
+            <p>VoxCPM2 的技术架构是其核心竞争力所在，以下是关键技术组件的详细分析：</p>
+
+            <h3 style="color: var(--primary-light); margin: 1.2rem 0 0.6rem; font-size: 1rem;">1. 无分词器（Tokenizer-Free）设计</h3>
+            <p>
+                传统 TTS 系统通常需要经过文本→音素/字素分词→声学特征→声码器的多阶段流水线。VoxCPM2 革命性地去除了离散语音分词器，直接从文本输入生成连续语音表示。这一设计消除了分词信息瓶颈，保留了更丰富的声学细节，从根本上提升了合成语音的自然度和表现力。
+            </p>
+
+            <h3 style="color: var(--primary-light); margin: 1.2rem 0 0.6rem; font-size: 1rem;">2. 扩散自回归（Diffusion Autoregressive）建模</h3>
+            <p>
+                结合扩散模型与自回归语言建模的双重优势：自回归机制确保语音帧之间的时序连贯性，扩散过程则在每个时间步内实现高质量、高表现力的语音生成。这种混合架构在合成质量和生成效率之间取得了优秀平衡。
+            </p>
+
+            <h3 style="color: var(--primary-light); margin: 1.2rem 0 0.6rem; font-size: 1rem;">3. 分层语言建模</h3>
+            <p>
+                VoxCPM 1.5 及以上版本通过分层语言建模实现了<strong>隐式语义-声学解耦</strong>，并引入 <strong>FSQ（有限标量量化）</strong> 约束。高层负责语义信息处理，低层处理声学细节，两层协同工作使模型能同时理解文本语义和生成精细语音。
+            </p>
+
+            <h3 style="color: var(--primary-light); margin: 1.2rem 0 0.6rem; font-size: 1rem;">4. 基座模型：MiniCPM-4</h3>
+            <p>
+                VoxCPM2 基于 OpenBMB 自研的 MiniCPM-4 大语言模型构建。MiniCPM-4 的强大语言理解能力为 VoxCPM2 提供了卓越的文本语义理解基础，使模型能够根据文本内容自动调整语气、节奏和情绪表现（上下文感知能力）。
+            </p>
+
+            <h3 style="color: var(--primary-light); margin: 1.2rem 0 0.6rem; font-size: 1rem;">5. 轻量级版本</h3>
+            <p>
+                除 2B 参数标准版外，还提供 <strong>VoxCPM-0.5B</strong> 轻量级版本，仅需 5 亿参数即可在消费级 GPU 上实现专业级语音克隆，RTF 为 0.17，极大地降低了部署门槛。
+            </p>
+        </div>
+
+        <!-- Section 3: Core Innovations -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(245,158,11,0.2);">&#x2728;</span> 核心创新点</h2>
+            <ul class="innovation-list">
+                <li>
+                    <strong>Tokenizer-Free 端到端架构</strong><br>
+                    <span style="color: var(--text-muted);">跳过传统 TTS 的音素分词和离散编码阶段，直接从文本生成连续语音表示，消除了信息瓶颈并保留更丰富的声学细节。</span>
+                </li>
+                <li>
+                    <strong>上下文感知语音生成</strong><br>
+                    <span style="color: var(--text-muted);">基于 LLM 基座的强大语义理解，模型能根据文本内容自动调节语气、节奏和情绪。读诗时温柔婉转，播报新闻时铿锵有力。</span>
+                </li>
+                <li>
+                    <strong>零样本声音克隆（Zero-Shot Voice Cloning）</strong><br>
+                    <span style="color: var(--text-muted);">仅需几秒参考音频即可复刻目标音色，无需目标说话人的训练数据。支持通过自然语言文本标签精细控制克隆音色的说话风格。</span>
+                </li>
+                <li>
+                    <strong>Voice Design 声音设计</strong><br>
+                    <span style="color: var(--text-muted);">支持通过自然语言描述从零开始设计全新的声音角色，为内容创作者提供了前所未有的创作自由度。</span>
+                </li>
+                <li>
+                    <strong>超大规模多语种训练</strong><br>
+                    <span style="color: var(--text-muted);">在超过 200 万小时（含 180 万小时双语语料）的多语种音频数据上训练，覆盖 30 种全球语言和 9 种中文方言，是当前开源 TTS 领域最大的训练规模之一。</span>
+                </li>
+                <li>
+                    <strong>极致推理效率</strong><br>
+                    <span style="color: var(--text-muted);">2B 模型 RTF 仅 0.15，0.5B 轻量版 RTF 0.17，均可在消费级硬件上实现实时或超实时语音合成。</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Section 4: Application Scenarios -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(59,130,246,0.2);">&#x1F3AF;</span> 应用场景</h2>
+            <div class="scenario-grid">
+                <div class="scenario-card">
+                    <h3>&#x1F3A4; 智能客服与虚拟助手</h3>
+                    <p>为企业构建多语言智能语音客服系统，支持个性化语音助手的定制化语音输出，提升用户体验。</p>
+                </div>
+                <div class="scenario-card">
+                    <h3>&#x1F3AC; 内容创作与媒体制作</h3>
+                    <p>有声读物、播客、短视频配音。通过 Voice Design 快速生成分角色、多语言内容，无需真人演员即可沉淀品牌声音资产。</p>
+                </div>
+                <div class="scenario-card">
+                    <h3>&#x1F3AE; 游戏开发与娱乐</h3>
+                    <p>为游戏角色生成个性化语音效果，支持大规模 NPC 语音生成和互动娱乐场景的语音设计。</p>
+                </div>
+                <div class="scenario-card">
+                    <h3>&#x1F4DA; 教育培训</h3>
+                    <p>教育内容的语音化处理，支持多语种教学材料生成，为在线教育平台提供高质量语音服务。</p>
+                </div>
+                <div class="scenario-card">
+                    <h3>&#x267F; 无障碍服务</h3>
+                    <p>为视障用户提供高质量文本朗读服务，支持多种语言和方言，提升信息的无障碍可及性。</p>
+                </div>
+                <div class="scenario-card">
+                    <h3>&#x1F310; 多语言全球化部署</h3>
+                    <p>支持 30+ 语言和 9 种中文方言的跨语种语音合成，满足全球化产品和服务的本地化语音需求。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Competitor Comparison -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(244,114,182,0.2);">&#x2696;</span> 竞品对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>VoxCPM2</th>
+                        <th>ElevenLabs</th>
+                        <th>F5-TTS</th>
+                        <th>ChatTTS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>开源</strong></td>
+                        <td style="color:var(--success);">完全开源 (Apache 2.0)</td>
+                        <td style="color:var(--warning);">商业闭源</td>
+                        <td style="color:var(--success);">开源</td>
+                        <td style="color:var(--success);">开源</td>
+                    </tr>
+                    <tr>
+                        <td><strong>架构</strong></td>
+                        <td>扩散自回归(无分词器)</td>
+                        <td>未公开</td>
+                        <td>Flow Matching</td>
+                        <td>自回归</td>
+                    </tr>
+                    <tr>
+                        <td><strong>参数规模</strong></td>
+                        <td>2B / 0.5B</td>
+                        <td>未公开</td>
+                        <td>~1B</td>
+                        <td>~0.5B</td>
+                    </tr>
+                    <tr>
+                        <td><strong>支持语言</strong></td>
+                        <td>30+ 语言 + 9 方言</td>
+                        <td>29 语言</td>
+                        <td>多语言</td>
+                        <td>中英文为主</td>
+                    </tr>
+                    <tr>
+                        <td><strong>输出音质</strong></td>
+                        <td>48kHz</td>
+                        <td>44.1kHz</td>
+                        <td>24kHz</td>
+                        <td>24kHz</td>
+                    </tr>
+                    <tr>
+                        <td><strong>声音克隆</strong></td>
+                        <td>零样本 + Voice Design</td>
+                        <td>零样本 + Voice Design</td>
+                        <td>零样本</td>
+                        <td>有限支持</td>
+                    </tr>
+                    <tr>
+                        <td><strong>本地部署</strong></td>
+                        <td style="color:var(--success);">支持</td>
+                        <td style="color:var(--warning);">仅 API</td>
+                        <td style="color:var(--success);">支持</td>
+                        <td style="color:var(--success);">支持</td>
+                    </tr>
+                    <tr>
+                        <td><strong>上下文感知</strong></td>
+                        <td style="color:var(--success);">基于 LLM 强语义理解</td>
+                        <td style="color:var(--success);">支持</td>
+                        <td style="color:var(--warning);">有限</td>
+                        <td style="color:var(--warning);">有限</td>
+                    </tr>
+                    <tr>
+                        <td><strong>使用成本</strong></td>
+                        <td style="color:var(--success);">免费(自部署)</td>
+                        <td style="color:var(--warning);">付费订阅</td>
+                        <td style="color:var(--success);">免费(自部署)</td>
+                        <td style="color:var(--success);">免费(自部署)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top:1rem;">
+                <strong>核心竞争优势：</strong>VoxCPM2 在开源 TTS 领域实现了多个第一 —— 首个无分词器架构的大规模 TTS 模型、首个在语音相似度基准上超越 ElevenLabs 的开源方案、首个支持 48kHz 输出 + Voice Design 的开源 TTS。其基于 LLM 的上下文感知能力也是区别于其他开源方案的关键差异化因素。
+            </div>
+        </div>
+
+        <!-- Section 6: Scoring -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(34,197,94,0.2);">&#x2B50;</span> 综合评分</h2>
+            <div class="score-section">
+                <div class="score-circle" style="background: conic-gradient(var(--primary) 0% 90%, rgba(99,102,241,0.15) 90% 100%);">
+                    <span class="score-num" style="color: var(--primary-light);">9.0</span>
+                    <span class="score-label">/ 10</span>
+                </div>
+            </div>
+            <div style="max-width: 500px; margin: 0 auto;">
+                <div class="score-bar-container">
+                    <div class="score-bar-label"><span>技术创新性</span><span>9.5</span></div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                </div>
+                <div class="score-bar-container">
+                    <div class="score-bar-label"><span>工程质量</span><span>8.5</span></div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+                </div>
+                <div class="score-bar-container">
+                    <div class="score-bar-label"><span>实用价值</span><span>9.0</span></div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%;"></div></div>
+                </div>
+                <div class="score-bar-container">
+                    <div class="score-bar-label"><span>社区活跃度</span><span>8.5</span></div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 85%;"></div></div>
+                </div>
+                <div class="score-bar-container">
+                    <div class="score-bar-label"><span>文档完善度</span><span>9.0</span></div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 90%;"></div></div>
+                </div>
+                <div class="score-bar-container">
+                    <div class="score-bar-label"><span>商业潜力</span><span>9.5</span></div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 1.5rem; text-align: left;">
+                <strong>评语：</strong>VoxCPM2 是 2026 年开源 TTS 领域最具突破性的项目。其无分词器架构代表了 TTS 技术的发展方向，在语音质量、多语言支持和声音克隆能力上均达到了业界领先水平。由清华大学背景团队开发，学术与工程能力兼具，Apache 2.0 开源协议进一步降低了商业应用门槛。该项目有望成为开源语音合成领域的新标杆。
+            </div>
+        </div>
+
+        <!-- Section 7: Resources -->
+        <div class="section">
+            <h2><span class="icon" style="background:rgba(59,130,246,0.2);">&#x1F517;</span> 相关资源</h2>
+            <ul>
+                <li><strong>GitHub 仓库：</strong><a href="https://github.com/OpenBMB/VoxCPM" style="color:var(--primary-light);">github.com/OpenBMB/VoxCPM</a></li>
+                <li><strong>Hugging Face 模型：</strong><a href="https://huggingface.co/openbmb/VoxCPM2" style="color:var(--primary-light);">openbmb/VoxCPM2</a></li>
+                <li><strong>官方文档：</strong><a href="https://voxcpm.readthedocs.io" style="color:var(--primary-light);">voxcpm.readthedocs.io</a></li>
+                <li><strong>官方网站：</strong><a href="https://voxcpm.com" style="color:var(--primary-light);">voxcpm.com</a></li>
+                <li><strong>Demo 演示：</strong><a href="https://openbmb.github.io/VoxCPM-demopage/" style="color:var(--primary-light);">VoxCPM Demo Page</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>分析报告生成时间：2026-06-01 | 数据来源：GitHub、WebSearch、Hugging Face</p>
+        </div>
+    </div>
+</body>
+</html>
