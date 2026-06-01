@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析：microsoft/markitdown</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #1a1f36 40%, #0f172a 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            color: var(--accent-blue);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            max-width: 700px;
+            margin: 0 auto 24px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stat-value.stars { color: var(--accent-orange); }
+        .stat-value.forks { color: var(--accent-blue); }
+        .stat-value.rank { color: var(--accent-green); }
+        .stat-value.growth { color: var(--accent-purple); }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .icon {
+            font-size: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+
+        .card p, .card li {
+            color: var(--text-secondary);
+            font-size: 14.5px;
+        }
+
+        .card ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+
+        .card li {
+            margin-bottom: 6px;
+        }
+
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .format-tag {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent-blue);
+            transition: all 0.2s;
+        }
+
+        .format-tag:hover {
+            background: rgba(88, 166, 255, 0.2);
+            border-color: var(--accent-blue);
+        }
+
+        .innovation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .innovation-list li {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 48px;
+        }
+
+        .innovation-list li::before {
+            content: attr(data-num);
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .innovation-list li strong {
+            color: var(--text-primary);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            color: var(--accent-blue);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        .comparison-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .comparison-table .highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .score-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .score-card .score-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .score-card .score-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .overall-score {
+            background: linear-gradient(135deg, var(--bg-card), rgba(88, 166, 255, 0.08));
+            border: 2px solid var(--accent-blue);
+            border-radius: 14px;
+            padding: 32px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .overall-score .big-score {
+            font-size: 56px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .overall-score .score-text {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-top: 4px;
+        }
+
+        .overall-score .score-desc {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 8px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 10px;
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 13px;
+            color: var(--accent-green);
+            overflow-x: auto;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .scenario-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .scenario-item h4 {
+            color: var(--accent-cyan);
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .scenario-item p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 26px; }
+            .stats-row { gap: 16px; }
+            .score-section { grid-template-columns: 1fr; }
+            .scenario-grid { grid-template-columns: 1fr; }
+            .format-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-badge">GitHub Trending · 2026-06-02</div>
+    <h1>microsoft/markitdown</h1>
+    <p class="subtitle">Microsoft 出品的轻量级 Python 工具，将多种文件格式转换为 LLM 友好的 Markdown 格式，是 AI 时代的文档转换基础设施</p>
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-value stars">133.5k+</div>
+            <div class="stat-label">GitHub Stars</div>
+        </div>
+        <div class="item">
+            <div class="stat-value forks">8.1k+</div>
+            <div class="stat-label">Forks</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value rank">#63</div>
+            <div class="stat-label">全球排名</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value growth">+813/周</div>
+            <div class="stat-label">星标增长</div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">📋</span> 项目概述</h2>
+        <div class="card">
+            <p>MarkItDown 是由 Microsoft AutoGen 团队开发并开源的 Python 工具库，专注于将各种文件和办公文档格式转换为结构化的 Markdown 文本。其核心定位不是追求像素级完美的排版还原，而是为 LLM（大语言模型）和文本分析管线提供干净、结构化的文本输入。</p>
+            <p style="margin-top:12px;">自 2024 年底开源以来，项目经历了爆发式增长，在短短一年半内从零飙升至 133k+ Stars，成为 GitHub 全球排名第 63 的项目，也是 Microsoft 近年来最成功的开源项目之一。</p>
+        </div>
+        <div class="card">
+            <h3>基础信息</h3>
+            <ul>
+                <li><strong>开发团队：</strong>Microsoft AutoGen Team</li>
+                <li><strong>编程语言：</strong>Python</li>
+                <li><strong>开源协议：</strong>MIT License</li>
+                <li><strong>包管理：</strong>PyPI (pip install markitdown)</li>
+                <li><strong>生态扩展：</strong>VS Code 插件、Obsidian 插件、C# 移植版</li>
+                <li><strong>贡献者：</strong>80+</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 支持格式 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">📁</span> 支持的文件格式</h2>
+        <div class="card">
+            <p>MarkItDown 支持 15+ 种主流文件格式，覆盖办公文档、数据文件、多媒体等类别：</p>
+            <div class="format-grid">
+                <div class="format-tag">PDF (.pdf)</div>
+                <div class="format-tag">Word (.docx)</div>
+                <div class="format-tag">Excel (.xlsx)</div>
+                <div class="format-tag">PPT (.pptx)</div>
+                <div class="format-tag">HTML (.html)</div>
+                <div class="format-tag">图片 (.jpg/.png)</div>
+                <div class="format-tag">音频 (OCR)</div>
+                <div class="format-tag">CSV (.csv)</div>
+                <div class="format-tag">JSON (.json)</div>
+                <div class="format-tag">XML (.xml)</div>
+                <div class="format-tag">EPub (.epub)</div>
+                <div class="format-tag">ZIP (.zip)</div>
+                <div class="format-tag">URL 网页</div>
+                <div class="format-tag">纯文本 (.txt)</div>
+                <div class="format-tag">Outlook (.msg)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">🏗️</span> 技术架构</h2>
+        <div class="card">
+            <h3>架构设计</h3>
+            <p>MarkItDown 采用轻量级模块化架构，每种文件格式对应一个独立的转换器（Converter），通过统一接口进行调度。核心设计理念是"管道式处理"——文件输入经过格式检测、内容提取、结构化转换三个阶段，最终输出干净的 Markdown。</p>
+            <div class="code-block">
+# 典型使用方式
+from markitdown import MarkItDown
+
+md = MarkItDown()
+result = md.convert("presentation.pptx")
+print(result.text_content)  # 输出 Markdown 文本
+
+# CLI 方式
+# markitdown input.docx -o output.md
+            </div>
+        </div>
+        <div class="card">
+            <h3>核心依赖</h3>
+            <ul>
+                <li><strong>PDF 处理：</strong>pdfminer.six — 纯 Python 的 PDF 文本提取</li>
+                <li><strong>DOCX 处理：</strong>mammoth — 先转换为 HTML，再转为 Markdown</li>
+                <li><strong>XLSX 处理：</strong>openpyxl — Excel 文件解析</li>
+                <li><strong>PPTX 处理：</strong>python-pptx — PowerPoint 文件解析</li>
+                <li><strong>图片 OCR：</strong>可选的 OCR 后端，支持 EXIF 元数据提取</li>
+                <li><strong>音频转写：</strong>集成语音识别能力</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>设计特点</h3>
+            <ul>
+                <li><strong>轻量无重依赖：</strong>核心安装包体积小，可选依赖按需加载</li>
+                <li><strong>LLM 优先设计：</strong>保留文档语义结构（标题、表格、列表），而非视觉排版</li>
+                <li><strong>可扩展插件系统：</strong>支持自定义转换器注册</li>
+                <li><strong>CLI + API 双模式：</strong>既可作为 Python 库集成，也可命令行独立使用</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">💡</span> 核心创新点</h2>
+        <ul class="innovation-list">
+            <li data-num="1">
+                <strong>LLM-First 设计哲学</strong><br>
+                <p style="color:var(--text-secondary);margin-top:4px;">与 Pandoc 等通用文档转换工具不同，MarkItDown 从设计之初就面向 LLM 场景优化。它不追求视觉还原度，而是保留语义结构——标题层级、表格数据、列表关系——这正是 LLM 处理文档时最需要的信息。</p>
+            </li>
+            <li data-num="2">
+                <strong>一站式多格式支持</strong><br>
+                <p style="color:var(--text-secondary);margin-top:4px;">在 MarkItDown 之前，开发者需要组合使用 pdfminer、mammoth、openpyxl 等多个库来处理不同格式。MarkItDown 通过统一接口整合了 15+ 种格式的转换能力，极大降低了集成复杂度。</p>
+            </li>
+            <li data-num="3">
+                <strong>与 Microsoft AI 生态深度整合</strong><br>
+                <p style="color:var(--text-secondary);margin-top:4px;">作为 AutoGen 团队的项目，MarkItDown 天然与 AutoGen 多智能体框架、Azure AI 服务等 Microsoft AI 生态组件无缝集成，形成了完整的文档智能处理链路。</p>
+            </li>
+            <li data-num="4">
+                <strong>多媒体内容统一处理</strong><br>
+                <p style="color:var(--text-secondary);margin-top:4px;">除了传统文档格式，MarkItDown 还支持图片 OCR、音频转写等多媒体内容的文本化处理，真正实现了"任何文件到 Markdown"的愿景。</p>
+            </li>
+            <li data-num="5">
+                <strong>繁荣的生态扩展</strong><br>
+                <p style="color:var(--text-secondary);margin-top:4px;">社区已为 MarkItDown 开发了 VS Code 插件、Obsidian 插件和 C# 移植版，形成了丰富的工具生态，将能力延伸到各种工作流中。</p>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">🎯</span> 应用场景</h2>
+        <div class="scenario-grid">
+            <div class="scenario-item">
+                <h4>RAG 知识库构建</h4>
+                <p>将企业内部 PDF/DOCX/PPTX 文档批量转换为 Markdown，构建 LLM 可检索的知识库。</p>
+            </div>
+            <div class="scenario-item">
+                <h4>LLM 文档问答</h4>
+                <p>将用户上传的各类文件实时转换为 Markdown，注入 LLM 上下文进行问答。</p>
+            </div>
+            <div class="scenario-item">
+                <h4>数据 ETL 管线</h4>
+                <p>在大规模文本分析管线中，作为统一的文档预处理层，将异构文件标准化。</p>
+            </div>
+            <div class="scenario-item">
+                <h4>Agent 工具链</h4>
+                <p>作为 AI Agent 的文档读取工具，让 Agent 能够"理解"各种格式的文件内容。</p>
+            </div>
+            <div class="scenario-item">
+                <h4>内容迁移</h4>
+                <p>将 Word/HTML/PDF 等格式的内容批量迁移至 Markdown 格式的 CMS 或文档系统。</p>
+            </div>
+            <div class="scenario-item">
+                <h4>知识管理</h4>
+                <p>在 Obsidian 等笔记工具中，借助插件将各种附件直接转换为 Markdown 笔记。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">⚔️</span> 竞品对比</h2>
+        <div class="card" style="overflow-x:auto;">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>MarkItDown</th>
+                        <th>Pandoc</th>
+                        <th>Marker</th>
+                        <th>MinerU</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>定位</strong></td>
+                        <td class="highlight">LLM 文档预处理</td>
+                        <td>通用文档转换</td>
+                        <td>PDF 转 Markdown</td>
+                        <td>PDF 版面解析</td>
+                    </tr>
+                    <tr>
+                        <td><strong>支持格式</strong></td>
+                        <td class="highlight">15+ 种</td>
+                        <td>40+ 种</td>
+                        <td>仅 PDF</td>
+                        <td>仅 PDF</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stars</strong></td>
+                        <td class="highlight">133k+</td>
+                        <td>37k+</td>
+                        <td>20k+</td>
+                        <td>25k+</td>
+                    </tr>
+                    <tr>
+                        <td><strong>语言</strong></td>
+                        <td>Python</td>
+                        <td>Haskell</td>
+                        <td>Python</td>
+                        <td>Python</td>
+                    </tr>
+                    <tr>
+                        <td><strong>表格保留</strong></td>
+                        <td class="highlight">优秀</td>
+                        <td>优秀</td>
+                        <td>良好</td>
+                        <td>优秀</td>
+                    </tr>
+                    <tr>
+                        <td><strong>图片 OCR</strong></td>
+                        <td class="highlight">支持</td>
+                        <td>有限</td>
+                        <td>支持</td>
+                        <td>支持</td>
+                    </tr>
+                    <tr>
+                        <td><strong>音频转写</strong></td>
+                        <td class="highlight">支持</td>
+                        <td>不支持</td>
+                        <td>不支持</td>
+                        <td>不支持</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LLM 集成</strong></td>
+                        <td class="highlight">原生支持</td>
+                        <td>需额外封装</td>
+                        <td>需额外封装</td>
+                        <td>需额外封装</td>
+                    </tr>
+                    <tr>
+                        <td><strong>学习成本</strong></td>
+                        <td class="highlight">极低</td>
+                        <td>中等</td>
+                        <td>低</td>
+                        <td>中等</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PDF 复杂版面</strong></td>
+                        <td>一般</td>
+                        <td>一般</td>
+                        <td>良好</td>
+                        <td class="highlight">优秀</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h3>对比分析</h3>
+            <p>MarkItDown 的核心竞争力在于<strong>"广度 + LLM 优先"</strong>的组合。Pandoc 支持更多格式但非 LLM 场景专用；Marker 和 MinerU 在 PDF 处理上更深但格式覆盖面窄。MarkItDown 在"一站式 LLM 文档预处理"这个细分赛道上几乎没有直接竞争对手。</p>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2 class="section-title"><span class="icon">⭐</span> 综合评分</h2>
+        <div class="score-section">
+            <div class="score-card">
+                <div class="score-label">技术创新</div>
+                <div class="score-value" style="color:var(--accent-blue)">8.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:80%;background:var(--accent-blue)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-label">实用性</div>
+                <div class="score-value" style="color:var(--accent-green)">9.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--accent-green)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-label">代码质量</div>
+                <div class="score-value" style="color:var(--accent-purple)">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--accent-purple)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-label">社区活跃度</div>
+                <div class="score-value" style="color:var(--accent-orange)">9.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--accent-orange)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-label">生态扩展性</div>
+                <div class="score-value" style="color:var(--accent-cyan)">8.5</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--accent-cyan)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="score-label">文档完善度</div>
+                <div class="score-value" style="color:var(--accent-green)">8.0</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:80%;background:var(--accent-green)"></div></div>
+            </div>
+        </div>
+
+        <div class="overall-score">
+            <div class="big-score">8.6 / 10</div>
+            <div class="score-text">强烈推荐关注</div>
+            <div class="score-desc">MarkItDown 是 AI 时代文档处理的基础设施工具。它准确抓住了"LLM 需要 Markdown 格式输入"这一核心痛点，以极简的 API 和广泛格式支持赢得了巨大社区认可。对于任何涉及 LLM 文档处理的项目来说，MarkItDown 都是当前最佳选择。</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>GitHub Trending 深度分析 · 生成时间：2026-06-02</p>
+    <p style="margin-top:4px;">数据来源：GitHub、PyPI、Web 搜索</p>
+</div>
+
+</body>
+</html>
