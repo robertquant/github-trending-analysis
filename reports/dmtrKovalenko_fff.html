@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告 - dmtrKovalenko/fff</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-orange: #f0883e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+        .header .logo {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .header .subtitle {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .header .meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.88em;
+            color: var(--text-secondary);
+        }
+        .meta-tag .icon { font-size: 1em; }
+
+        /* Score Section */
+        .score-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 16px;
+            text-align: center;
+        }
+        .score-card .score-value {
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .score-card .score-label {
+            font-size: 0.82em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-excellent .score-value { color: var(--accent-green); }
+        .score-good .score-value { color: var(--accent-blue); }
+        .score-moderate .score-value { color: var(--accent-yellow); }
+
+        /* Overall Score */
+        .overall-score {
+            background: linear-gradient(135deg, #1a1e2e, #2a1e1e);
+            border: 1px solid var(--accent-orange);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .overall-score .big-score {
+            font-size: 4em;
+            font-weight: 900;
+            color: var(--accent-orange);
+            line-height: 1;
+        }
+        .overall-score .big-label {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 48px;
+        }
+        .section h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2 .section-icon {
+            font-size: 1.2em;
+        }
+        .section h3 {
+            font-size: 1.15em;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: var(--accent-blue);
+        }
+        .section p {
+            margin-bottom: 14px;
+            color: var(--text-primary);
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .feature-card .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-orange);
+            font-size: 1em;
+        }
+        .feature-card .feature-desc {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .arch-layer {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .arch-box {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.88em;
+            font-weight: 600;
+            border: 1px solid;
+        }
+        .arch-box.app { background: rgba(240, 136, 62, 0.15); border-color: var(--accent-orange); color: var(--accent-orange); }
+        .arch-box.sdk { background: rgba(88, 166, 255, 0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+        .arch-box.core { background: rgba(63, 185, 80, 0.15); border-color: var(--accent-green); color: var(--accent-green); }
+        .arch-box.algo { background: rgba(188, 140, 255, 0.15); border-color: var(--accent-purple); color: var(--accent-purple); }
+        .arch-arrow {
+            font-size: 1.4em;
+            color: var(--text-secondary);
+            margin: 4px 0;
+        }
+        .arch-label {
+            font-size: 0.78em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9em;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td { color: var(--text-primary); }
+        tr:hover td { background: rgba(88, 166, 255, 0.05); }
+
+        /* Highlight box */
+        .highlight-box {
+            background: rgba(240, 136, 62, 0.08);
+            border-left: 3px solid var(--accent-orange);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .highlight-box.blue {
+            background: rgba(88, 166, 255, 0.08);
+            border-left-color: var(--accent-blue);
+        }
+        .highlight-box.green {
+            background: rgba(63, 185, 80, 0.08);
+            border-left-color: var(--accent-green);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: 600;
+        }
+        .badge-green { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .badge-blue { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .badge-yellow { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .badge-red { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 48px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        /* Code block */
+        code {
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-size: 0.88em;
+        }
+        pre code { background: none; padding: 0; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 20px 16px; }
+            .header h1 { font-size: 1.8em; }
+            .score-section { grid-template-columns: repeat(2, 1fr); }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">⚡</div>
+            <h1>dmtrKovalenko/fff</h1>
+            <div class="subtitle">The Fastest and the Most Accurate File Search Toolkit</div>
+            <div class="subtitle">最快、最精准的文件搜索工具集 — 面向 AI Agent、Neovim、Rust、C 和 NodeJS</div>
+            <div class="meta">
+                <span class="meta-tag"><span class="icon">⭐</span> 7,300+ Stars</span>
+                <span class="meta-tag"><span class="icon">🍴</span> 299 Forks</span>
+                <span class="meta-tag"><span class="icon">👥</span> 72 贡献者</span>
+                <span class="meta-tag"><span class="icon">🏷️</span> v0.8.4</span>
+                <span class="meta-tag"><span class="icon">📜</span> MIT License</span>
+                <span class="meta-tag"><span class="icon">🦀</span> Rust 63.7%</span>
+            </div>
+        </div>
+
+        <!-- Overall Score -->
+        <div class="overall-score">
+            <div class="big-score">8.7</div>
+            <div class="big-label">综合评分 / 10</div>
+        </div>
+
+        <!-- Score Breakdown -->
+        <div class="score-section">
+            <div class="score-card score-excellent">
+                <div class="score-value">9.5</div>
+                <div class="score-label">技术创新</div>
+            </div>
+            <div class="score-card score-excellent">
+                <div class="score-value">9.0</div>
+                <div class="score-label">性能表现</div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-value">8.5</div>
+                <div class="score-label">实用价值</div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-value">8.0</div>
+                <div class="score-label">生态集成</div>
+            </div>
+            <div class="score-card score-good">
+                <div class="score-value">8.5</div>
+                <div class="score-label">代码质量</div>
+            </div>
+            <div class="score-card score-moderate">
+                <div class="score-value">7.5</div>
+                <div class="score-label">社区成熟度</div>
+            </div>
+        </div>
+
+        <!-- 1. Project Overview -->
+        <div class="section">
+            <h2><span class="section-icon">📋</span> 一、项目概述</h2>
+            <p>
+                <strong>FFF</strong>（Freakin' Fast (Fuzzy) File Finder）是由 <strong>Dmitriy Kovalenko</strong> 开发的高性能文件搜索工具集。
+                项目以 Rust 为核心语言，提供了一套完整的文件搜索和代码内容搜索 SDK，专为 AI 编程助手、Neovim 编辑器和长运行时应用场景设计。
+            </p>
+            <p>
+                与传统的命令行搜索工具（如 ripgrep、fzf）不同，FFF 采用<strong>库优先（Library-first）</strong>的架构设计，
+                将文件索引、缓存和搜索能力常驻于进程内存中。这意味着在同一个会话中进行数百次搜索时，无需反复 fork 进程、重新读取 .gitignore 或重建状态，
+                从而实现<strong>亚 10ms 级</strong>的搜索响应时间。
+            </p>
+            <div class="highlight-box">
+                <strong>核心定位：</strong>FFF 不是 CLI 工具，而是一个可嵌入的搜索库。它的价值在于为长运行时程序（AI Agent、编辑器插件、IDE 扩展）
+                提供比传统 CLI 工具快数个数量级的文件搜索能力。在 Chromium 级别（50 万文件）的大型仓库中，单次 ripgrep 调用需要 3-9 秒，而 FFF 查询仅需不到 10ms。
+            </div>
+        </div>
+
+        <!-- 2. Technical Architecture -->
+        <div class="section">
+            <h2><span class="section-icon">🏗️</span> 二、技术架构</h2>
+
+            <h3>2.1 分层架构</h3>
+            <div class="arch-diagram">
+                <div class="arch-label">应用层</div>
+                <div class="arch-layer">
+                    <div class="arch-box app">fff.nvim (Neovim 插件)</div>
+                    <div class="arch-box app">fff-mcp (MCP Server)</div>
+                    <div class="arch-box app">pi-fff (Pi Agent 扩展)</div>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-label">SDK 层</div>
+                <div class="arch-layer">
+                    <div class="arch-box sdk">fff-search (Rust crate)</div>
+                    <div class="arch-box sdk">libfff_c (C FFI)</div>
+                    <div class="arch-box sdk">@ff-labs/fff-node (Node.js)</div>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-label">核心引擎层</div>
+                <div class="arch-layer">
+                    <div class="arch-box core">文件索引引擎</div>
+                    <div class="arch-box core">内容搜索引擎</div>
+                    <div class="arch-box core">Frecency 排序系统</div>
+                    <div class="arch-box core">后台文件监视器</div>
+                </div>
+                <div class="arch-arrow">▼</div>
+                <div class="arch-label">算法层</div>
+                <div class="arch-layer">
+                    <div class="arch-box algo">frizbee (SIMD 模糊匹配)</div>
+                    <div class="arch-box algo">Smith-Waterman 仿射间隙</div>
+                    <div class="arch-box algo">Aho-Corasick 多模式搜索</div>
+                    <div class="arch-box algo">SIMD memmem 文本匹配</div>
+                </div>
+            </div>
+
+            <h3>2.2 仓库结构</h3>
+            <table>
+                <tr><th>目录/模块</th><th>说明</th></tr>
+                <tr><td><code>crates/fff-search</code></td><td>Rust 核心搜索库</td></tr>
+                <tr><td><code>crates/fff-grep</code></td><td>内容搜索引擎</td></tr>
+                <tr><td><code>crates/fff-query-parser</code></td><td>查询语言解析器</td></tr>
+                <tr><td><code>crates/fff-c</code></td><td>C FFI 接口库（.so/.dylib/.dll）</td></tr>
+                <tr><td><code>crates/fff-nvim</code></td><td>Lua/mlua 绑定（Neovim 插件用）</td></tr>
+                <tr><td><code>crates/fff-mcp</code></td><td>MCP 服务器二进制</td></tr>
+                <tr><td><code>packages/fff-node</code></td><td>Node.js/Bun SDK</td></tr>
+                <tr><td><code>packages/pi-fff</code></td><td>Pi Agent 扩展</td></tr>
+                <tr><td><code>lua/</code></td><td>Neovim 插件 UI 代码</td></tr>
+            </table>
+
+            <h3>2.3 核心技术特性</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">🔄 Frecency 排名</div>
+                    <div class="feature-desc">每个索引文件携带访问评分和修改评分，搜索结果按频率+最近访问加权排序，类似 VS Code 的最近打开列表但应用于每一次搜索。</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">🛡️ 容错模糊匹配</div>
+                    <div class="feature-desc">基于 Smith-Waterman 仿射间隙算法的模糊评分，支持拼写容错。搜索 <code>IsOffTheRecord</code> 可匹配 snake_case 变体，零匹配查询自动回退到模糊搜索。</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">⚡ SIMD 加速</div>
+                    <div class="feature-desc">全链路 SIMD 优化：路径搜索使用 SIMD 加速模糊匹配，内容搜索使用 SIMD memmem，多模式搜索使用 SIMD Aho-Corasick，排序也是零分配的 SIMD 实现。</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">👁️ 后台文件监视</div>
+                    <div class="feature-desc">索引随文件变化实时更新，热路径上无需重新扫描。通过 libgit2 直接获取 Git 状态，避免额外 shell 调用。</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">🧠 定义分类器</div>
+                    <div class="feature-desc">Rust 端字节级扫描器，可识别 <code>struct</code>、<code>fn</code>、<code>class</code>、<code>def</code>、<code>impl</code> 等代码定义行，无需正则开销。</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">📄 内存映射缓存</div>
+                    <div class="feature-desc">轻量级内存内容索引，约 360 字节/文件。10 万文件仓库约占 36 MB。可选用 mmap 替代匿名内存以进一步降低内存压力。</div>
+                </div>
+            </div>
+
+            <h3>2.4 性能优化策略</h3>
+            <div class="highlight-box blue">
+                <p><strong>为什么比 CLI 快？</strong></p>
+                <p>ripgrep 和 fzf 每次调用都需要 fork 进程、重新读取 .gitignore、重新 stat 目录、重建内存状态。这在单次终端搜索时无感，但在 AI Agent 或编辑器每秒执行数十次搜索的场景下，3-9 秒的启动开销是不可接受的。</p>
+                <p>FFF 通过长驻进程 + 热缓存 + 后台增量索引，将搜索延迟从「秒级」压缩到「亚 10ms 级」。</p>
+            </div>
+            <table>
+                <tr><th>优化维度</th><th>具体实现</th></tr>
+                <tr><td>内存分配</td><td>使用 mimalloc 高效分配器，单块连续 arena 存储字符串片段，大幅提升 CPU 缓存命中率</td></tr>
+                <tr><td>并行搜索</td><td>多线程搜索管线，不受编排逻辑干扰</td></tr>
+                <tr><td>平台优化</td><td>Linux 使用 getdents64，Windows 使用 NTFS API 等平台特定系统调用</td></tr>
+                <tr><td>内存管理</td><td>可配置 mmap 内容缓存，限制虚拟内存用量</td></tr>
+                <tr><td>查询语言</td><td>内置约束解析器支持 glob 过滤、Git 状态过滤、目录排除等预处理</td></tr>
+            </table>
+        </div>
+
+        <!-- 3. Core Innovation -->
+        <div class="section">
+            <h2><span class="section-icon">💡</span> 三、核心创新点</h2>
+
+            <h3>创新 1：库优先的搜索架构</h3>
+            <p>
+                传统文件搜索工具（grep、find、fzf）的设计范式是 CLI 优先 — 单次调用、单次返回、无状态。
+                FFF 反转了这个范式：它是一个<strong>有状态的搜索库</strong>，在初始化时完成一次文件系统遍历和 .gitignore 解析，
+                之后所有搜索都命中热缓存。这为 AI Agent 和编辑器场景带来了根本性的性能飞跃。
+            </p>
+
+            <h3>创新 2：三合一内容搜索模式</h3>
+            <p>
+                FFF 的内容搜索引擎支持三种模式并自动切换：
+            </p>
+            <table>
+                <tr><th>模式</th><th>算法</th><th>适用场景</th></tr>
+                <tr><td><span class="badge badge-green">Plain</span></td><td>SIMD memmem</td><td>精确文本搜索，速度最快</td></tr>
+                <tr><td><span class="badge badge-blue">Regex</span></td><td>Rust regex crate</td><td>正则表达式搜索</td></tr>
+                <tr><td><span class="badge badge-purple" style="background:rgba(188,140,255,0.2);color:var(--accent-purple)">Fuzzy</span></td><td>Smith-Waterman</td><td>容错搜索，零匹配时自动回退</td></tr>
+            </table>
+            <p>系统自动检测模式：如果 plain 搜索返回零结果，自动重试为 fuzzy 搜索并返回最佳近似匹配。</p>
+
+            <h3>创新 3：Frecency + Git 感知排序</h3>
+            <p>
+                FFF 的搜索结果不仅按匹配度排序，还融合了「频率 + 最近访问」评分和 Git 状态标注。
+                你经常打开的文件、最近修改过的文件在搜索结果中排名更高。Git 状态（已修改、已暂存、未跟踪、已忽略）
+                直接缓存在索引中，无需额外调用 <code>git status</code>。
+            </p>
+
+            <h3>创新 4：MCP 协议原生集成</h3>
+            <p>
+                FFF 是首批原生支持 <strong>Model Context Protocol (MCP)</strong> 的文件搜索工具之一。
+                通过 MCP 服务器，任何兼容 MCP 的 AI Agent（Claude Code、Cursor、Cline、OpenCode 等）
+                都可以直接使用 <code>ffgrep</code>、<code>fffind</code>、<code>fff-multi-grep</code> 工具，
+                实现<strong>更少的 grep 往返、更少的上下文浪费、更快的答案生成</strong>。
+            </p>
+
+            <h3>创新 5：多模式 OR 搜索</h3>
+            <p>
+                内置 SIMD Aho-Corasick 算法，支持「同时搜索 20 个标识符」的批量搜索模式，
+                比正则表达式交替匹配更快，比 20 次独立 ripgrep 调用快数个数量级。
+            </p>
+        </div>
+
+        <!-- 4. Application Scenarios -->
+        <div class="section">
+            <h2><span class="section-icon">🎯</span> 四、应用场景</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">🤖 AI 编程助手</div>
+                    <div class="feature-desc">
+                        通过 MCP 协议，AI Agent（Claude Code、Cursor、Cline）可用 FFF 进行高效的文件搜索和内容搜索。
+                        减少工具调用次数、节省 Token、加快响应速度。尤其适合大型代码库（如 Chromium 50 万文件级别）的 Agent 工作流。
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">📝 Neovim 编辑器</div>
+                    <div class="feature-desc">
+                        作为 Neovim 插件（fff.nvim）使用，提供模糊文件查找器、实时内容搜索、多模式 grep、
+                        预览面板、快速修复列表集成等功能。支持 Linux 内核级别（10 万文件、8GB）的大型仓库。
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">🔧 IDE / 编辑器扩展</div>
+                    <div class="feature-desc">
+                        通过 Node.js SDK 或 C FFI 库，可嵌入到任何 IDE 或编辑器扩展中，替代内置的文件搜索实现。
+                        提供 Cursor 分页、类型化结果对象等现代 API。
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">⚡ CI/CD 和预提交检查</div>
+                    <div class="feature-desc">
+                        在需要反复搜索同一仓库的自动化场景中，FFF 作为长驻库可显著加速搜索密集型任务，
+                        如代码审查机器人、自动重构工具、预提交代码质量检查等。
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">🏗️ 自定义开发工具</div>
+                    <div class="feature-desc">
+                        通过 Rust crate 直接集成到自定义构建系统、代码分析工具、文档生成器等需要文件搜索能力的工具中。
+                        <code>fff-search</code> crate 提供最低开销的接入方式。
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">🌐 Pi Agent 生态</div>
+                    <div class="feature-desc">
+                        作为 Pi Agent 的官方扩展（pi-fff），提供三种运行模式：工具+UI、仅工具、完全覆盖。
+                        可替代 Pi 的内置 grep、find、multi_grep 工具。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Competitive Analysis -->
+        <div class="section">
+            <h2><span class="section-icon">⚖️</span> 五、竞品对比</h2>
+
+            <table>
+                <tr>
+                    <th>维度</th>
+                    <th>FFF</th>
+                    <th>ripgrep</th>
+                    <th>fzf</th>
+                    <th>Telescope</th>
+                </tr>
+                <tr>
+                    <td><strong>定位</strong></td>
+                    <td>搜索库 / SDK</td>
+                    <td>CLI 搜索工具</td>
+                    <td>CLI 模糊查找器</td>
+                    <td>Neovim 模糊查找器</td>
+                </tr>
+                <tr>
+                    <td><strong>架构模式</strong></td>
+                    <td>长驻进程 + 热缓存</td>
+                    <td>单次调用无状态</td>
+                    <td>单次调用无状态</td>
+                    <td>Neovim 插件</td>
+                </tr>
+                <tr>
+                    <td><strong>语言</strong></td>
+                    <td>Rust</td>
+                    <td>Rust</td>
+                    <td>Go</td>
+                    <td>Lua</td>
+                </tr>
+                <tr>
+                    <td><strong>模糊匹配</strong></td>
+                    <td>Smith-Waterman + SIMD</td>
+                    <td>不支持</td>
+                    <td>自定义算法</td>
+                    <td>依赖 fzf/内置</td>
+                </tr>
+                <tr>
+                    <td><strong>容错搜索</strong></td>
+                    <td><span class="badge badge-green">原生支持</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                    <td><span class="badge badge-yellow">有限支持</span></td>
+                    <td><span class="badge badge-yellow">有限支持</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Frecency 排序</strong></td>
+                    <td><span class="badge badge-green">原生支持</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                    <td><span class="badge badge-yellow">需插件</span></td>
+                    <td><span class="badge badge-yellow">需插件</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Git 状态感知</strong></td>
+                    <td><span class="badge badge-green">原生支持</span></td>
+                    <td><span class="badge badge-yellow">有限</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                </tr>
+                <tr>
+                    <td><strong>MCP 支持</strong></td>
+                    <td><span class="badge badge-green">原生支持</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                    <td><span class="badge badge-red">不支持</span></td>
+                </tr>
+                <tr>
+                    <td><strong>重复搜索性能</strong></td>
+                    <td>亚 10ms（热缓存）</td>
+                    <td>3-9 秒（每次冷启动）</td>
+                    <td>毫秒-秒级</td>
+                    <td>百毫秒级</td>
+                </tr>
+                <tr>
+                    <td><strong>多语言 SDK</strong></td>
+                    <td>Rust / C / Node.js / Lua</td>
+                    <td>CLI only</td>
+                    <td>CLI + Vim 绑定</td>
+                    <td>Lua only</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Agent 友好</strong></td>
+                    <td><span class="badge badge-green">核心设计目标</span></td>
+                    <td><span class="badge badge-red">需外部封装</span></td>
+                    <td><span class="badge badge-red">不适用</span></td>
+                    <td><span class="badge badge-red">不适用</span></td>
+                </tr>
+                <tr>
+                    <td><strong>内存占用</strong></td>
+                    <td>较高（索引常驻）</td>
+                    <td>极低（无状态）</td>
+                    <td>低</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td><strong>单次 CLI 搜索</strong></td>
+                    <td>非设计目标</td>
+                    <td><span class="badge badge-green">最佳选择</span></td>
+                    <td><span class="badge badge-green">优秀</span></td>
+                    <td>N/A</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box green">
+                <strong>定位差异：</strong>FFF 不是 ripgrep 或 fzf 的替代品，而是互补品。如果你只需要从终端执行一次 grep，<code>rg</code> 仍然是最佳选择。
+                但如果你需要在同一进程中执行数十次搜索（AI Agent、编辑器、IDE 扩展），FFF 从第二次调用开始就比 ripgrep 更快。
+            </div>
+        </div>
+
+        <!-- 6. Pros and Cons -->
+        <div class="section">
+            <h2><span class="section-icon">📊</span> 六、优势与局限</h2>
+            <div class="feature-grid">
+                <div class="feature-card" style="border-color: rgba(63, 185, 80, 0.3);">
+                    <div class="feature-title" style="color: var(--accent-green);">✅ 优势</div>
+                    <div class="feature-desc">
+                        <ul style="padding-left: 18px; line-height: 2;">
+                            <li>长驻进程架构带来数量级性能提升</li>
+                            <li>原生 MCP 支持，AI Agent 场景领先</li>
+                            <li>Frecency + Git 感知排序，搜索结果更智能</li>
+                            <li>容错模糊匹配，用户体验友好</li>
+                            <li>多语言 SDK（Rust / C / Node.js / Lua）</li>
+                            <li>活跃开发，647+ 个 Release，72 位贡献者</li>
+                            <li>Neovim 生态中最受欢迎的搜索插件之一</li>
+                            <li>定义分类器减少 Agent 上下文浪费</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="feature-card" style="border-color: rgba(248, 81, 73, 0.3);">
+                    <div class="feature-title" style="color: var(--accent-red);">⚠️ 局限</div>
+                    <div class="feature-desc">
+                        <ul style="padding-left: 18px; line-height: 2;">
+                            <li>内存占用较高（索引常驻内存），大型仓库需数百 MB</li>
+                            <li>不支持 CLI 直接使用（有 Issue #290 请求但尚未实现）</li>
+                            <li>Windows 支持仍在完善中（安装脚本目前主要面向 Unix）</li>
+                            <li>部分性能声明（"100x faster"）在社区中受到质疑</li>
+                            <li>项目较年轻（2025 年 8 月开始），长期稳定性待验证</li>
+                            <li>不适用于单次搜索场景（此时 ripgrep 更合适）</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Summary -->
+        <div class="section">
+            <h2><span class="section-icon">📝</span> 七、总结</h2>
+            <div class="highlight-box">
+                <p>
+                    <strong>FFF</strong> 是一个定位精准、技术创新度高的项目。它不是简单地「再做一次 ripgrep」，
+                    而是准确抓住了 AI Agent 和长运行时编辑器场景下传统 CLI 工具的根本性能瓶颈，
+                    通过「有状态搜索库」的架构创新，实现了从秒级到亚 10ms 级的跨越。
+                </p>
+                <p>
+                    随着 AI 编程助手（Claude Code、Cursor、Cline 等）的爆发式增长，FFF 原生支持 MCP 协议的前瞻性布局
+                    使其成为这一波 AI 开发工具浪潮中的关键基础设施。对于需要在同一代码库中执行大量搜索的开发工具和 AI Agent 而言，
+                    FFF 提供了一个极有价值的性能优化选项。
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>📅 分析日期：2026-06-03 | 数据来源：GitHub、Reddit、Hacker News、LinkedIn</p>
+            <p>dmtrKovalenko/fff 深度分析报告 — 由 AI 自动生成</p>
+        </div>
+    </div>
+</body>
+</html>
