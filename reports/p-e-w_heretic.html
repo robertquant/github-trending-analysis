@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：Heretic - 全自动LLM审查移除工具</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #1c2128;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #bc8cff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 2rem;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #161b22 0%, #1c2128 50%, #161b22 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #f85149, #d29922);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+        .header .meta {
+            margin-top: 1.2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .badge-red { background: rgba(248,81,73,0.15); color: var(--accent-red); border: 1px solid rgba(248,81,73,0.3); }
+        .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); border: 1px solid rgba(88,166,255,0.3); }
+        .badge-green { background: rgba(63,185,80,0.15); color: var(--accent-green); border: 1px solid rgba(63,185,80,0.3); }
+        .badge-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); border: 1px solid rgba(188,140,255,0.3); }
+
+        /* Section */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h3 { font-size: 1.15rem; margin: 1.2rem 0 0.6rem; color: var(--accent-blue); }
+        .section p { margin-bottom: 0.8rem; color: var(--text-secondary); }
+        .section strong { color: var(--text-primary); }
+
+        /* Score */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .score-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .score-card .label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.4rem; }
+        .score-card .value { font-size: 2rem; font-weight: 700; }
+        .score-card .bar {
+            margin-top: 0.5rem;
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        th, td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--accent-blue); font-weight: 600; }
+        td { color: var(--text-secondary); }
+        tr:hover td { background: rgba(88,166,255,0.04); }
+
+        /* Code */
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88rem;
+            color: var(--accent-green);
+        }
+        pre {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 0.8rem 0;
+        }
+        pre code { padding: 0; background: none; }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+        .tag {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.25rem 0.65rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        /* Quote */
+        blockquote {
+            border-left: 3px solid var(--accent-orange);
+            padding: 0.8rem 1.2rem;
+            margin: 0.8rem 0;
+            background: rgba(210,153,34,0.06);
+            border-radius: 0 8px 8px 0;
+        }
+        blockquote p { color: var(--text-secondary); font-style: italic; margin: 0; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Heretic</h1>
+        <p class="subtitle">全自动 Transformer 语言模型审查移除工具</p>
+        <div class="meta">
+            <span class="badge badge-red">p-e-w/heretic</span>
+            <span class="badge badge-blue">AGPL-3.0</span>
+            <span class="badge badge-green">Python</span>
+            <span class="badge badge-purple">AI Safety Research</span>
+        </div>
+        <div class="meta" style="margin-top:0.6rem">
+            <span class="badge badge-blue">GitHub Trending #1 Repository of the Day</span>
+            <span class="badge badge-green">社区已创建 3000+ 衍生模型</span>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2>&#x1F4D6; 项目概述</h2>
+        <p><strong>Heretic</strong> 是由 Philipp Emanuel Weidmann 开发的开源工具，用于<strong>全自动移除</strong>基于 Transformer 架构的语言模型中的"安全对齐"（Safety Alignment）机制——即模型的审查/拒绝回答行为。与传统需要昂贵后训练（post-training）或微调的方法不同，Heretic 通过数学手段直接修改模型权重，实现<strong>无需 GPU 集群</strong>即可完成的审查移除。</p>
+        <p>该项目在 GitHub 上迅速走红，被评为<strong> Trendshift 当日 #1 仓库</strong>。社区已基于 Heretic 创建了<strong>超过 3000 个衍生模型</strong>，并在 Hugging Face 上公开发布。</p>
+        <h3>核心信息</h3>
+        <table>
+            <tr><th>属性</th><th>详情</th></tr>
+            <tr><td>作者</td><td>Philipp Emanuel Weidmann (p-e-w)</td></tr>
+            <tr><td>许可证</td><td>AGPL-3.0</td></tr>
+            <tr><td>主要语言</td><td>Python</td></tr>
+            <tr><td>运行时间</td><td>RTX 3090 上约 20-30 分钟（Qwen3-4B）</td></tr>
+            <tr><td>依赖</td><td>PyTorch 2.2+, Optuna</td></tr>
+            <tr><td>支持模型</td><td>大部分 Dense 模型、多模态模型、MoE 架构、Qwen3.5 等混合模型</td></tr>
+        </table>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2>&#x1F527; 技术架构</h2>
+
+        <h3>1. 方向性消融（Directional Ablation / Abliteration）</h3>
+        <p>Heretic 的核心技术基于 <strong>Arditi et al. (2024)</strong> 提出的 abliteration 方法。其原理是：</p>
+        <ul style="margin:0.5rem 0 1rem 1.5rem; color:var(--text-secondary);">
+            <li>使用一组"有害"（harmful）和"无害"（harmless）提示词，分别提取模型在第一 token 输出时各 Transformer 层的残差向量</li>
+            <li>计算两类残差向量的<strong>均值差</strong>（difference of means），得到"拒绝方向"（refusal direction）</li>
+            <li>对模型中每个 Transformer 组件（attention out-projection 和 MLP down-projection）的权重矩阵，沿拒绝方向进行<strong>正交化</strong>，抑制该方向的传播</li>
+        </ul>
+
+        <h3>2. Optuna TPE 参数优化器</h3>
+        <p>Heretic 的关键创新在于将 abliteration 参数化，并使用 <strong>Optuna 的 TPE（Tree-structured Parzen Estimator）</strong>算法自动搜索最优参数组合。优化目标是<strong>联合最小化</strong>：</p>
+        <ul style="margin:0.5rem 0 1rem 1.5rem; color:var(--text-secondary);">
+            <li>模型对"有害"提示的拒绝次数</li>
+            <li>修改后模型与原始模型在"无害"提示上的<strong>KL 散度</strong>（衡量模型能力保留程度）</li>
+        </ul>
+
+        <h3>3. 可优化参数详解</h3>
+        <table>
+            <tr><th>参数</th><th>作用</th></tr>
+            <tr><td><code>direction_index</code></td><td>选择使用哪一层的拒绝方向，支持浮点数插值</td></tr>
+            <tr><td><code>max_weight</code> / <code>min_weight</code></td><td>控制消融权重核的形状和幅度</td></tr>
+            <tr><td><code>max_weight_position</code></td><td>最大权重在层中的位置</td></tr>
+            <tr><td><code>min_weight_distance</code></td><td>最小权重与最大权重的距离</td></tr>
+        </table>
+
+        <h3>4. 三大技术创新</h3>
+        <blockquote><p><strong>灵活的消融权重核</strong>：非恒定权重形状 + 自动优化，相比手动调参获得更好的合规性/质量权衡。</p></blockquote>
+        <blockquote><p><strong>浮点拒绝方向索引</strong>：支持相邻层拒绝方向的线性插值，解锁了超出原始方向向量的搜索空间。</p></blockquote>
+        <blockquote><p><strong>分组件参数</strong>：Attention 和 MLP 组件使用独立消融参数，因为 MLP 干预通常对模型能力损害更大。</p></blockquote>
+
+        <h3>5. 高级消融技术</h3>
+        <table>
+            <tr><th>技术</th><th>说明</th></tr>
+            <tr><td>正交消融</td><td>标准拒绝方向移除方法</td></tr>
+            <tr><td>幅度保持正交消融（Derestriction）</td><td>保留更多模型能力的同时移除拒绝行为</td></tr>
+            <tr><td>Pre-bias / Router-bias</td><td>影响 MoE 模型中的专家路由，可与残差正交化叠加</td></tr>
+        </table>
+    </div>
+
+    <!-- 性能基准 -->
+    <div class="section">
+        <h2>&#x1F4CA; 性能基准</h2>
+        <p>以 <strong>Gemma-3-12B-IT</strong> 为例的对比数据（PyTorch 2.8, RTX 5090）：</p>
+        <table>
+            <tr><th>模型版本</th><th>有害提示拒绝次数（/100）</th><th>KL 散度</th></tr>
+            <tr><td>原始模型</td><td>97</td><td>0（基准）</td></tr>
+            <tr><td>mlabonne/gemma-3-12b-it-abliterated-v2</td><td>3</td><td>1.04</td></tr>
+            <tr><td>huihui-ai/gemma-3-12b-it-abliterated</td><td>3</td><td>0.45</td></tr>
+            <tr style="background:rgba(63,185,80,0.08)"><td><strong>p-e-w/gemma-3-12b-it-heretic</strong></td><td><strong>3</strong></td><td><strong>0.16</strong></td></tr>
+        </table>
+        <p>Heretic 版本在<strong>相同拒绝抑制水平</strong>下，KL 散度仅为手工调参版本的 <strong>15-36%</strong>，表明对原始模型能力的损害显著更低。</p>
+
+        <h3>社区用户评价</h3>
+        <blockquote><p>"Heretic GPT 20b seems to be the best uncensored model I have tried yet. It doesn't destroy the model's intelligence."</p></blockquote>
+        <blockquote><p>"Has been the best unquantized abliterated model that I have been able to run on 16GB VRAM."</p></blockquote>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2>&#x1F3AF; 应用场景</h2>
+        <table>
+            <tr><th>场景</th><th>说明</th></tr>
+            <tr><td>AI 安全研究</td><td>研究模型安全对齐的脆弱性，理解拒绝行为的内部机制</td></tr>
+            <tr><td>模型可解释性</td><td>利用残差向量可视化和几何分析功能研究 Transformer 内部表示</td></tr>
+            <tr><td>创意写作与角色扮演</td><td>移除过于保守的内容过滤，获得更灵活的创作辅助</td></tr>
+            <tr><td>红队测试</td><td>评估模型在移除安全对齐后的行为边界</td></tr>
+            <tr><td>本地化部署</td><td>创建适合特定行业或地区内容标准的不受限模型</td></tr>
+        </table>
+        <h3>研究功能</h3>
+        <p>安装 <code>heretic-llm[research]</code> 后可使用：</p>
+        <ul style="margin:0.5rem 0 0 1.5rem; color:var(--text-secondary);">
+            <li><strong>残差向量可视化</strong>（<code>--plot-residuals</code>）：PaCMAP 投影 + 逐层动画 GIF</li>
+            <li><strong>残差几何分析</strong>（<code>--print-residual-geometry</code>）：余弦相似度、L2 范数、轮廓系数等量化指标</li>
+        </ul>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2>&#x2694;&#xFE0F; 竞品对比</h2>
+        <p>根据 <strong>arXiv:2512.13655</strong> 的学术论文《Comparative Analysis of LLM Abliteration Methods》，对 16 个 7B-14B 指令微调模型的跨架构评估：</p>
+        <table>
+            <tr><th>工具</th><th>自动化程度</th><th>参数优化</th><th>KL 散度保持</th><th>模型兼容性</th><th>特色</th></tr>
+            <tr style="background:rgba(63,185,80,0.08)"><td><strong>Heretic</strong></td><td>全自动</td><td>Optuna TPE</td><td>最优</td><td>广泛</td><td>浮点方向索引、分组件参数</td></tr>
+            <tr><td>ErisForge</td><td>半自动</td><td>有限</td><td>中等</td><td>中等</td><td>Python 库形式</td></tr>
+            <tr><td>DECCP</td><td>半自动</td><td>有限</td><td>中等</td><td>中等</td><td>—</td></tr>
+            <tr><td>FailSpy</td><td>半自动</td><td>有限</td><td>中等</td><td>中等</td><td>—</td></tr>
+            <tr><td>AutoAbliteration</td><td>半自动</td><td>手动</td><td>一般</td><td>有限</td><td>—</td></tr>
+            <tr><td>abliterator.py</td><td>手动</td><td>无</td><td>取决于经验</td><td>有限</td><td>最基础实现</td></tr>
+        </table>
+        <p>Heretic 是目前<strong>唯一实现全自动参数优化</strong>的 abliteration 工具，也是学术论文中评估表现最优的工具之一。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2>&#x2B50; 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-card">
+                <div class="label">技术创新</div>
+                <div class="value" style="color:var(--accent-green)">9.2</div>
+                <div class="bar"><div class="bar-fill" style="width:92%;background:var(--accent-green)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">工程质量</div>
+                <div class="value" style="color:var(--accent-blue)">8.8</div>
+                <div class="bar"><div class="bar-fill" style="width:88%;background:var(--accent-blue)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">易用性</div>
+                <div class="value" style="color:var(--accent-purple)">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%;background:var(--accent-purple)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">社区活跃度</div>
+                <div class="value" style="color:var(--accent-orange)">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%;background:var(--accent-orange)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">学术影响力</div>
+                <div class="value" style="color:var(--accent-green)">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%;background:var(--accent-green)"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">综合评价</div>
+                <div class="value" style="color:var(--accent-red)">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%;background:var(--accent-red)"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用方式 -->
+    <div class="section">
+        <h2>&#x1F680; 快速上手</h2>
+        <pre><code>pip install -U heretic-llm
+heretic Qwen/Qwen3-4B-Instruct-2507</code></pre>
+        <p>仅需两行命令即可开始。Heretic 会自动基准测试系统性能、确定最优批大小、运行 Optuna 优化搜索最佳消融参数。</p>
+        <h3>量化模式（低显存）</h3>
+        <pre><code>heretic --model Qwen/Qwen3-4B-Instruct-2507 --quantization bnb_4bit</code></pre>
+        <p>通过 <code>bnb_4bit</code> 量化，可大幅降低 VRAM 需求（v1.2 版本降低约 70%）。</p>
+    </div>
+
+    <!-- 技术标签 -->
+    <div class="section">
+        <h2>&#x1F3F7; 技术标签</h2>
+        <div class="tags">
+            <span class="tag">Directional Ablation</span>
+            <span class="tag">Abliteration</span>
+            <span class="tag">Optuna TPE</span>
+            <span class="tag">Safety Alignment</span>
+            <span class="tag">Transformer Internals</span>
+            <span class="tag">Model Interpretability</span>
+            <span class="tag">PyTorch</span>
+            <span class="tag">Quantization (bitsandbytes)</span>
+            <span class="tag">PaCMAP</span>
+            <span class="tag">KL Divergence</span>
+            <span class="tag">MoE Support</span>
+            <span class="tag">Multi-GPU</span>
+            <span class="tag">Apple Silicon (MPS)</span>
+            <span class="tag">Hugging Face Integration</span>
+        </div>
+    </div>
+
+    <!-- 参考链接 -->
+    <div class="section">
+        <h2>&#x1F517; 参考链接</h2>
+        <table>
+            <tr><th>资源</th><th>链接</th></tr>
+            <tr><td>GitHub 仓库</td><td>https://github.com/p-e-w/heretic</td></tr>
+            <tr><td>学术论文</td><td>https://arxiv.org/abs/2512.13655</td></tr>
+            <tr><td>Reddit 讨论</td><td>https://www.reddit.com/r/LocalLLaMA/comments/1oymku1/</td></tr>
+            <tr><td>Arditi et al. 2024 原始论文</td><td>方向性消融理论基础</td></tr>
+            <tr><td>Maxime Labonne 文章</td><td>Abliteration 实践指南</td></tr>
+            <tr><td>Jim Lai 文章</td><td>Projected Abliteration 与 Norm-Preserving Biprojected Abliteration</td></tr>
+        </table>
+    </div>
+
+    <!-- 免责声明 -->
+    <div class="section" style="border-color: rgba(248,81,73,0.3);">
+        <h2 style="color:var(--accent-red)">&#x26A0;&#xFE0F; 免责声明</h2>
+        <p>本报告仅作为技术分析，不构成使用建议。移除模型安全对齐可能违反模型使用条款，并可能产生法律和伦理风险。请确保在合法合规的前提下使用相关工具。</p>
+    </div>
+
+    <div class="footer">
+        <p>分析日期：2026-06-03 | 数据来源：GitHub、arXiv、Reddit、Hugging Face</p>
+    </div>
+
+</div>
+</body>
+</html>
