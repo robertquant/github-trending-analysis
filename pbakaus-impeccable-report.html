@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impeccable 深度分析报告 | pbakaus/impeccable</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface-2: #1a1a26;
+            --border: #2a2a3a;
+            --text: #e4e4ed;
+            --text-muted: #8888a0;
+            --accent: #6c5ce7;
+            --accent-light: #a29bfe;
+            --accent-glow: rgba(108, 92, 231, 0.15);
+            --success: #00cec9;
+            --warning: #fdcb6e;
+            --danger: #ff7675;
+            --gradient-1: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            --gradient-2: linear-gradient(135deg, #00cec9, #81ecec);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--accent-glow);
+            color: var(--accent-light);
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 700px;
+            margin: 0 auto 1.2rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .section {
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #fff;
+        }
+
+        .section h2 .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .section p, .section li {
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .section ul, .section ol {
+            padding-left: 1.5rem;
+        }
+
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+            .hero h1 { font-size: 1.6rem; }
+        }
+
+        .card {
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 1.3rem;
+            border: 1px solid var(--border);
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            color: var(--accent-light);
+            margin-bottom: 0.7rem;
+        }
+
+        .card ul {
+            font-size: 0.88rem;
+        }
+
+        .score-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .score-item {
+            text-align: center;
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 1.2rem 0.8rem;
+            border: 1px solid var(--border);
+        }
+
+        .score-item .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-item .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .score-item .bar {
+            height: 4px;
+            background: var(--surface);
+            border-radius: 2px;
+            margin-top: 0.6rem;
+            overflow: hidden;
+        }
+
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        .s-green .value, .s-green .bar-fill { color: #00cec9; background: #00cec9; }
+        .s-blue .value, .s-blue .bar-fill { color: #74b9ff; background: #74b9ff; }
+        .s-purple .value, .s-purple .bar-fill { color: #a29bfe; background: #a29bfe; }
+        .s-yellow .value, .s-yellow .bar-fill { color: #fdcb6e; background: #fdcb6e; }
+        .s-pink .value, .s-pink .bar-fill { color: #fd79a8; background: #fd79a8; }
+
+        .cmd-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .cmd-table th {
+            text-align: left;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 2px solid var(--border);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .cmd-table td {
+            padding: 0.5rem 0.8rem;
+            border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+        }
+
+        .cmd-table code {
+            background: var(--accent-glow);
+            color: var(--accent-light);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .vs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .vs-grid { grid-template-columns: 1fr; }
+        }
+
+        .vs-card {
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+        }
+
+        .vs-card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .vs-card p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .vs-card .tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .tag-green { background: rgba(0,206,201,0.15); color: #00cec9; }
+        .tag-yellow { background: rgba(253,203,110,0.15); color: #fdcb6e; }
+        .tag-blue { background: rgba(116,185,255,0.15); color: #74b9ff; }
+
+        .highlight-box {
+            background: var(--accent-glow);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin: 1rem 0;
+            font-size: 0.92rem;
+        }
+
+        .highlight-box strong { color: var(--accent-light); }
+
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-badge">GitHub Trending 深度分析</div>
+    <h1>Impeccable</h1>
+    <p class="subtitle">为 AI 编程助手注入专业设计语言的开源设计技能框架 — 让 AI 生成的 UI 不再千篇一律</p>
+    <div class="hero-meta">
+        <span>📦 pbakaus/impeccable</span>
+        <span>👤 Paul Bakaus</span>
+        <span>📜 Apache 2.0</span>
+        <span>🌐 JavaScript / Node.js</span>
+        <span>📅 分析日期: 2026-06-03</span>
+    </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(108,92,231,0.2);color:#a29bfe;">📋</span> 项目概述</h2>
+    <p><strong>Impeccable</strong> 是由前 Google 开发者倡导者、jQuery UI 创始人 <strong>Paul Bakaus</strong> 创建的开源项目，旨在为 AI 编程助手（Claude Code、Cursor、Gemini CLI、Codex CLI 等）提供一套完整的专业设计语言和技能框架。</p>
+    <div class="highlight-box">
+        <strong>核心问题：</strong>所有 AI 模型都基于相同的 SaaS 模板训练，导致生成的 UI 千篇一律 — Inter 字体、紫蓝渐变、卡片套卡片、灰色文字配彩色背景。Impeccable 通过提供结构化的设计词汇和 27 条反模式规则来系统性地解决这一问题。
+    </div>
+    <p style="margin-top:1rem;">项目继承自 Anthropic 官方的 <code>frontend-design</code> 技能，在其基础上大幅扩展了专业设计知识、更精细的控制选项和跨平台兼容性。</p>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(0,206,201,0.2);color:#00cec9;">🏗️</span> 技术架构</h2>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>7 大领域参考文件</h3>
+            <ul>
+                <li><strong>Typography</strong> — 字体系统、字体配对、模块化缩放、OpenType</li>
+                <li><strong>Color & Contrast</strong> — OKLCH 色彩空间、着色中性色、暗色模式、无障碍</li>
+                <li><strong>Spatial Design</strong> — 间距系统、网格、视觉层次</li>
+                <li><strong>Motion Design</strong> — 缓动曲线、交错动画、减少动画偏好</li>
+                <li><strong>Interaction Design</strong> — 表单、焦点状态、加载模式</li>
+                <li><strong>Responsive Design</strong> — 移动优先、流式设计、容器查询</li>
+                <li><strong>UX Writing</strong> — 按钮标签、错误消息、空状态</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>三层检测系统</h3>
+            <ul>
+                <li><strong>确定性反模式规则 (27条)</strong> — 无需 LLM，纯规则引擎检测 UI 问题</li>
+                <li><strong>LLM 审查 (12条规则)</strong> — 利用 AI 进行深度设计审查</li>
+                <li><strong>CLI 检测器</strong> — 支持本地文件、HTML 文件、URL (Puppeteer) 扫描</li>
+            </ul>
+            <p style="margin-top:0.8rem;font-size:0.85rem;color:var(--text-muted);">CLI 检测覆盖 24 类问题：AI slop（侧边栏边框、紫蓝渐变、弹性缓动）和通用设计质量（行长、间距过紧、触控目标过小、跳过标题等）</p>
+        </div>
+    </div>
+
+    <h3 style="margin-top:1.5rem;margin-bottom:0.8rem;color:#fff;font-size:1rem;">支持的工具平台</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;">
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Claude Code</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Cursor</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Gemini CLI</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Codex CLI</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">GitHub Copilot</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">OpenCode</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Trae</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Kiro</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Rovo Dev</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Qoder</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.82rem;">Pi</span>
+    </div>
+</div>
+
+<!-- 23个设计命令 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(253,203,110,0.2);color:#fdcb6e;">⚡</span> 23 个设计命令详解</h2>
+    <table class="cmd-table">
+        <thead>
+            <tr><th>命令</th><th>功能</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>/impeccable craft</code></td><td>完整的"塑造-构建"流程，含视觉迭代</td></tr>
+            <tr><td><code>/impeccable init</code></td><td>一次性初始化：收集设计上下文，生成 PRODUCT.md 和 DESIGN.md</td></tr>
+            <tr><td><code>/impeccable shape</code></td><td>在写代码之前规划 UX/UI</td></tr>
+            <tr><td><code>/impeccable critique</code></td><td>UX 设计审查：层次感、清晰度、情感共鸣</td></tr>
+            <tr><td><code>/impeccable audit</code></td><td>技术质量检查（无障碍、性能、响应式）</td></tr>
+            <tr><td><code>/impeccable polish</code></td><td>最终打磨，设计系统对齐，交付就绪</td></tr>
+            <tr><td><code>/impeccable bolder</code></td><td>放大过于保守的设计</td></tr>
+            <tr><td><code>/impeccable quieter</code></td><td>收敛过于大胆的设计</td></tr>
+            <tr><td><code>/impeccable distill</code></td><td>精简到核心要素</td></tr>
+            <tr><td><code>/impeccable animate</code></td><td>添加有目的性的动效</td></tr>
+            <tr><td><code>/impeccable colorize</code></td><td>引入战略性色彩</td></tr>
+            <tr><td><code>/impeccable typeset</code></td><td>修复字体选择、层次、大小</td></tr>
+            <tr><td><code>/impeccable layout</code></td><td>修复布局、间距、视觉节奏</td></tr>
+            <tr><td><code>/impeccable harden</code></td><td>错误处理、国际化、文本溢出、边缘情况</td></tr>
+            <tr><td><code>/impeccable onboard</code></td><td>首次运行流程、空状态、激活路径</td></tr>
+            <tr><td><code>/impeccable delight</code></td><td>添加令人愉悦的交互细节</td></tr>
+            <tr><td><code>/impeccable overdrive</code></td><td>添加技术超凡效果</td></tr>
+            <tr><td><code>/impeccable clarify</code></td><td>优化不清晰的 UX 文案</td></tr>
+            <tr><td><code>/impeccable adapt</code></td><td>适配不同设备</td></tr>
+            <tr><td><code>/impeccable optimize</code></td><td>性能优化</td></tr>
+            <tr><td><code>/impeccable live</code></td><td>浏览器中的可视化变体迭代模式</td></tr>
+            <tr><td><code>/impeccable document</code></td><td>从现有代码生成 DESIGN.md</td></tr>
+            <tr><td><code>/impeccable extract</code></td><td>提取可复用组件和 Token 到设计系统</td></tr>
+        </tbody>
+    </table>
+    <p style="margin-top:1rem;font-size:0.85rem;color:var(--text-muted);">使用 <code>/impeccable pin &lt;command&gt;</code> 可创建独立快捷方式（如 <code>pin audit</code> 创建 <code>/audit</code>）</p>
+</div>
+
+<!-- 核心创新点 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(255,118,117,0.2);color:#ff7675;">💡</span> 核心创新点</h2>
+    <div class="grid-2">
+        <div class="card">
+            <h3>1. 人机共享设计语言</h3>
+            <p>不再是模糊的 "make it pretty"，而是通过 <code>/bolder</code>、<code>/quieter</code>、<code>/distill</code> 等精确的设计指令，让人与 AI 之间建立真正有效的设计沟通。</p>
+        </div>
+        <div class="card">
+            <h3>2. 确定性反模式检测</h3>
+            <p>27 条规则无需 LLM 或 API Key，纯规则引擎即可检测 "AI slop"。可在 CI/CD 流水线中直接集成，实现自动化设计质量把关。</p>
+        </div>
+        <div class="card">
+            <h3>3. 品牌 vs 产品寄存器</h3>
+            <p>根据项目类型（品牌导向 vs 产品导向）自动调整设计默认值，确保输出结果与项目定位一致。</p>
+        </div>
+        <div class="card">
+            <h3>4. 跨工具统一体验</h3>
+            <p>一套设计语言同时支持 11+ AI 编程工具，消除工具切换带来的设计一致性损失。</p>
+        </div>
+        <div class="card">
+            <h3>5. 实时浏览器迭代</h3>
+            <p><code>/impeccable live</code> 模式允许直接在浏览器中可视化地迭代 UI 元素，实现"所见即所得"的设计流程。</p>
+        </div>
+        <div class="card">
+            <h3>6. CLI 检测器 + URL 扫描</h3>
+            <p>支持 Puppeteer 驱动的 URL 扫描和 <code>--fast</code> 正则模式，可对线上产品进行设计审计。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(116,185,255,0.2);color:#74b9ff;">🎯</span> 应用场景</h2>
+    <div class="grid-2">
+        <div class="card">
+            <h3>独立开发者 / 小团队</h3>
+            <p>没有专职设计师的团队，通过 Impeccable 让 AI 编程助手产出专业级 UI，显著提升产品视觉品质。一次 <code>/impeccable polish</code> 即可将原型级界面提升至可交付水平。</p>
+        </div>
+        <div class="card">
+            <h3>企业 CI/CD 流水线</h3>
+            <p>在 CI 中集成 <code>npx impeccable detect --json</code>，自动检测代码中的设计反模式，防止 "AI slop" 进入生产环境。</p>
+        </div>
+        <div class="card">
+            <h3>设计系统维护</h3>
+            <p>使用 <code>/impeccable extract</code> 和 <code>/impeccable document</code> 从现有代码中提取设计 Token 和组件，自动维护设计系统文档。</p>
+        </div>
+        <div class="card">
+            <h3>设计教育 / 新人培训</h3>
+            <p>23 个命令本身就是一套完整的设计方法论。开发者在使用过程中自然学习字体配对、OKLCH 色彩、动效原理等专业知识。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 竞品对比 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(253,121,168,0.2);color:#fd79a8;">⚔️</span> 竞品对比</h2>
+    <div class="vs-grid">
+        <div class="vs-card">
+            <h4>Anthropic frontend-design</h4>
+            <p>Impeccable 的基础前身。Anthropic 官方技能只提供基础设计指导，缺乏反模式检测、CLI 工具和跨平台支持。</p>
+            <span class="tag tag-green">Impeccable 全面超越</span>
+        </div>
+        <div class="vs-card">
+            <h4>v0 by Vercel</h4>
+            <p>AI 生成 UI 的 SaaS 产品。侧重从零生成，但缺乏对已有代码的设计审计能力和可编程的设计语言。</p>
+            <span class="tag tag-yellow">场景不同，互补</span>
+        </div>
+        <div class="vs-card">
+            <h4>Figma AI / Figma Make</h4>
+            <p>集成在设计工具中的 AI 生成能力。侧重设计阶段而非开发阶段，与 Impeccable 的"编码阶段设计"互补。</p>
+            <span class="tag tag-blue">定位互补</span>
+        </div>
+        <div class="vs-card">
+            <h4>stop-slop / hardikpandya</h4>
+            <p>类似反模式检测工具，但规则库更小，不支持 CLI URL 扫描，无设计命令体系。</p>
+            <span class="tag tag-green">Impeccable 更全面</span>
+        </div>
+        <div class="vs-card">
+            <h4>Cursor / Claude Code 原生能力</h4>
+            <p>AI 工具本身有基础 UI 生成能力，但缺乏专业设计知识和结构化设计流程。Impeccable 作为技能层增强这些工具。</p>
+            <span class="tag tag-green">Impeccable 为其增值</span>
+        </div>
+        <div class="vs-card">
+            <h4>taste-skill / Leonxlnx</h4>
+            <p>另一个设计技能包，但命令集更少，缺乏反模式检测系统和 CLI 工具。</p>
+            <span class="tag tag-green">Impeccable 功能更丰富</span>
+        </div>
+    </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(108,92,231,0.2);color:#a29bfe;">⭐</span> 综合评分</h2>
+    <div class="score-panel">
+        <div class="score-item s-green">
+            <div class="label">创新性</div>
+            <div class="value">9.0</div>
+            <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-item s-blue">
+            <div class="label">实用性</div>
+            <div class="value">9.5</div>
+            <div class="bar"><div class="bar-fill" style="width:95%"></div></div>
+        </div>
+        <div class="score-item s-purple">
+            <div class="label">技术深度</div>
+            <div class="value">8.5</div>
+            <div class="bar"><div class="bar-fill" style="width:85%"></div></div>
+        </div>
+        <div class="score-item s-yellow">
+            <div class="label">社区生态</div>
+            <div class="value">8.0</div>
+            <div class="bar"><div class="bar-fill" style="width:80%"></div></div>
+        </div>
+        <div class="score-item s-pink">
+            <div class="label">文档质量</div>
+            <div class="value">9.0</div>
+            <div class="bar"><div class="bar-fill" style="width:90%"></div></div>
+        </div>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;">
+        <span style="font-size:1.8rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">综合评分: 8.8 / 10</span>
+    </div>
+</div>
+
+<!-- 总结 -->
+<div class="section">
+    <h2><span class="icon" style="background:rgba(0,206,201,0.2);color:#00cec9;">📝</span> 总结</h2>
+    <p>Impeccable 是目前 AI 编程领域最具创新性的设计工具之一。它精准地识别了一个真实痛点 — AI 生成的 UI 千篇一律 — 并提供了一套完整、可操作、可自动化的解决方案。</p>
+    <p style="margin-top:0.8rem;"><strong>核心价值：</strong>将专业设计知识从"隐式经验"转化为"显式语言"，让 AI 编程助手从"代码工具"进化为"设计伙伴"。</p>
+    <p style="margin-top:0.8rem;"><strong>适合人群：</strong>使用 AI 编程工具（尤其是 Claude Code / Cursor）的前端开发者、独立开发者、以及希望提升 UI 品质但没有专职设计师的团队。</p>
+    <div class="highlight-box" style="margin-top:1rem;">
+        <strong>一句话评价：</strong>Impeccable 不是又一个 UI 框架，它是一种全新的思路 — 教会 AI 什么是好的设计。
+    </div>
+</div>
+
+<div class="footer">
+    <p>报告生成时间: 2026-06-03 | 数据来源: GitHub、WebSearch | 分析引擎: Claude AI</p>
+</div>
+
+</body>
+</html>
