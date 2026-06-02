@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>oh-my-pi 深度分析报告 | GitHub Trending 2026</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1117 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-purple), var(--accent-green));
+        }
+        .header h1 { font-size: 2em; margin-bottom: 8px; }
+        .header .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        .header .meta {
+            display: flex; flex-wrap: wrap; gap: 16px;
+            margin-top: 20px; color: var(--text-secondary);
+        }
+        .meta-item {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 14px; border-radius: 20px; font-size: 0.9em;
+        }
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section h3 { font-size: 1.15em; margin: 20px 0 10px; color: var(--accent); }
+        .section p { margin-bottom: 12px; color: var(--text-secondary); }
+        .section ul { padding-left: 20px; margin-bottom: 12px; }
+        .section li { margin-bottom: 6px; color: var(--text-secondary); }
+        .section li strong { color: var(--text); }
+        .tag {
+            display: inline-block;
+            background: rgba(88,166,255,0.15);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        .tag.green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .tag.purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+        .tag.orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .score-card .score {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        .score-card .label { color: var(--text-secondary); font-size: 0.9em; }
+        .score-card .bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill { height: 100%; border-radius: 3px; }
+        .score-s9 .score { color: var(--accent-green); }
+        .score-s9 .bar-fill { background: var(--accent-green); }
+        .score-s8 .score { color: var(--accent); }
+        .score-s8 .bar-fill { background: var(--accent); }
+        .score-s7 .score { color: var(--accent-orange); }
+        .score-s7 .bar-fill { background: var(--accent-orange); }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table th {
+            color: var(--text);
+            font-weight: 600;
+            background: rgba(255,255,255,0.03);
+        }
+        .comparison-table td { color: var(--text-secondary); }
+        .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .highlight-box {
+            background: rgba(88,166,255,0.08);
+            border-left: 4px solid var(--accent);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .highlight-box p { color: var(--text); margin-bottom: 0; }
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 24px;
+            font-size: 0.85em;
+        }
+        code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>oh-my-pi</h1>
+        <div class="subtitle">AI Coding Agent for the Terminal — Hash-Anchored Edits, Optimized Tool Harness</div>
+        <div class="meta">
+            <div class="meta-item">can1357</div>
+            <div class="meta-item">~8,900 Stars</div>
+            <div class="meta-item">TypeScript / Node.js</div>
+            <div class="meta-item">MIT License</div>
+            <div class="meta-item">2026-06 Trending</div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2>项目概述</h2>
+        <p><strong>oh-my-pi</strong> 是由安全研究员 Can Boluk（can1357）开发的开源终端 AI 编程代理。它基于 Pi agent harness 构建，是一个"batteries-included"的增强版本，旨在为开发者提供一种极简、高效且高度可定制的 AI 辅助编程体验。</p>
+        <p>与传统的 IDE 插件式 AI 工具不同，oh-my-pi 坚持纯粹的终端哲学——通过命令行界面实现完整的 AI 代理功能，包括代码编辑、文件搜索、LSP 语言服务、浏览器集成、子代理调度等。</p>
+
+        <div class="highlight-box">
+            <p>核心理念：<strong>让 AI 的代码编辑"一次命中"</strong>——通过内容哈希锚定（hash-anchored edits）替代传统的行号定位，从根本上解决了 AI 编辑中常见的空白符冲突、字符串匹配失败等问题。</p>
+        </div>
+
+        <h3>关键数据</h3>
+        <ul>
+            <li><strong>GitHub Stars：</strong>~8,900（截至 2026 年 6 月，持续增长中）</li>
+            <li><strong>支持模型：</strong>Claude、GPT、Gemini、DeepSeek、本地模型</li>
+            <li><strong>内置工具：</strong>32+ 个内置 action，涵盖编辑、搜索、LSP、浏览器等</li>
+            <li><strong>衍生关系：</strong>Fork 自 <code>earendil-works/pi</code>（~26,300 Stars），在其基础上大幅增强</li>
+        </ul>
+
+        <h3>作者背景</h3>
+        <p><strong>Can Boluk</strong>（@_can1357）是一位安全研究员和逆向工程师，专注于 Windows 内核开发、底层编程、静态程序分析和密码学。正是这种深厚的系统级编程背景，赋予了 oh-my-pi 在可靠性和工程精度上的独特优势。</p>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2>技术架构</h2>
+        <p>oh-my-pi 的架构围绕"优化工具利用"（Optimized Tool Harness）展开，核心由以下几个模块组成：</p>
+
+        <h3>1. Hash-Anchored Edits（哈希锚定编辑）</h3>
+        <p>这是 oh-my-pi 最核心的技术创新。传统 AI 代码编辑器通过行号或精确字符串匹配来定位编辑位置，这容易因空白符差异、缩进不匹配等原因导致编辑失败。oh-my-pi 的方案是：</p>
+        <ul>
+            <li>为文件中的每一行/代码块计算<strong>内容哈希</strong>作为唯一标识符</li>
+            <li>LLM 不再需要重新输出要修改的行，只需引用哈希锚并提供替换内容</li>
+            <li>从根本上消除了空白符战争（whitespace battles）和字符串未找到（string-not-found）错误</li>
+            <li>显著减少 token 消耗——模型只输出锚点引用 + 新内容，而非重述整个上下文</li>
+        </ul>
+
+        <h3>2. 智能文件读取（Smart File Reads）</h3>
+        <p>oh-my-pi 的文件读取不是简单地将文件内容原样输出，而是智能摘要——总结文件内容而非直接 dump，使 LLM 能更高效地理解代码库。</p>
+
+        <h3>3. 瞬时搜索（Instant Search）</h3>
+        <p>内置优化的搜索工具，支持代码级语义搜索，返回结果速度快且精准。</p>
+
+        <h3>4. 持久化记忆系统（Persistent Memory）</h3>
+        <p>oh-my-pi 实现了跨会话的记忆管理：</p>
+        <ul>
+            <li><code>retain</code>：在运行过程中写入事实/记忆</li>
+            <li><code>recall</code>：在会话开始时检索存储的记忆</li>
+            <li><code>reflect</code>：让代理对自身知识进行反思</li>
+            <li><strong>会话压缩</strong>：将每次会话压缩为精炼的知识模型，在下次会话首轮即加载</li>
+        </ul>
+
+        <h3>5. 子代理系统（Subagents）</h3>
+        <p>支持生成子代理处理复杂任务，实现任务的并行分解和调度。</p>
+
+        <h3>6. 多模型支持</h3>
+        <p>兼容 Claude、GPT、Gemini、DeepSeek 等主流模型，也支持本地部署的开源模型。通过自定义 <code>models.yml</code> 配置即可接入新模型。</p>
+
+        <h3>技术栈</h3>
+        <div>
+            <span class="tag">TypeScript</span>
+            <span class="tag">Node.js</span>
+            <span class="tag green">LSP</span>
+            <span class="tag purple">Browser Automation</span>
+            <span class="tag orange">Python Support</span>
+            <span class="tag">MCP</span>
+        </div>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2>核心创新点</h2>
+
+        <h3>1. Hash-Anchored Edits — 解决 AI 编辑的可靠性难题</h3>
+        <p>这是 oh-my-pi 对 AI 编程领域的最大贡献。在 AI 代码编辑场景中，最大的痛点之一就是 AI 生成的 diff/patch 无法正确应用——行号偏移、空白符不匹配、编码差异等问题导致大量编辑失败。oh-my-pi 的哈希锚定方案从根本上解决了这个问题。</p>
+        <div class="highlight-box">
+            <p>社区反馈：Pi 原始维护者 Mario Zechner 亲自验证，使用哈希行方案完成了约 1,300 次编辑，证明了该方案的实际可靠性。</p>
+        </div>
+
+        <h3>2. Token 效率优化</h3>
+        <p>通过锚点引用替代全文重述，大幅降低了每次编辑的 token 消耗。在长会话和大规模代码库编辑场景下，token 节省尤为显著。</p>
+
+        <h3>3. 极致可定制性</h3>
+        <p>社区评价 oh-my-pi 为"extremely hackable with sensible defaults"——可以禁用不需要的组件，接入自定义认证、子代理、MCP 服务器等。这种"合理的默认值 + 深度可定制"的设计哲学使其既适合新手快速上手，也满足高级用户的定制需求。</p>
+
+        <h3>4. 安全研究者视角的系统设计</h3>
+        <p>作者 Can Bolük 的安全研究背景体现在项目的多个层面：精确的编辑机制、对可靠性的极致追求、以及对系统行为的可预测性。这使得 oh-my-pi 在同类工具中具有独特的工程品质。</p>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2>应用场景</h2>
+        <ul>
+            <li><strong>日常开发辅助：</strong>终端环境下的 AI pair programming，快速编辑、重构、调试</li>
+            <li><strong>大型代码库导航：</strong>智能文件摘要和瞬时搜索，快速理解陌生代码库</li>
+            <li><strong>多文件批量编辑：</strong>利用哈希锚定的可靠性，在多文件间进行大规模重构</li>
+            <li><strong>自动化代码任务：</strong>通过子代理系统实现复杂任务的自动化执行</li>
+            <li><strong>SSH 远程开发：</strong>纯终端界面，完美适配远程服务器和无 GUI 环境</li>
+            <li><strong>安全审计辅助：</strong>结合 LLM 的代码理解能力和安全研究者的工作流</li>
+            <li><strong>自定义 AI 工作流：</strong>作为可编程的 AI agent 底座，构建定制化开发工具链</li>
+        </ul>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2>竞品对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>oh-my-pi</th>
+                    <th>Claude Code</th>
+                    <th>Cursor</th>
+                    <th>Aider</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>形态</strong></td>
+                    <td>终端 CLI</td>
+                    <td>终端 CLI</td>
+                    <td>IDE（VS Code Fork）</td>
+                    <td>终端 CLI</td>
+                </tr>
+                <tr>
+                    <td><strong>编辑方式</strong></td>
+                    <td>哈希锚定</td>
+                    <td>搜索替换</td>
+                    <td>Diff/Inline</td>
+                    <td>Search & Replace</td>
+                </tr>
+                <tr>
+                    <td><strong>模型支持</strong></td>
+                    <td>多模型</td>
+                    <td>仅 Claude</td>
+                    <td>多模型</td>
+                    <td>多模型</td>
+                </tr>
+                <tr>
+                    <td><strong>可定制性</strong></td>
+                    <td>极高</td>
+                    <td>中等</td>
+                    <td>低</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td><strong>持久记忆</strong></td>
+                    <td>内置</td>
+                    <td>内置（CLAUDE.md）</td>
+                    <td>有限</td>
+                    <td>有限</td>
+                </tr>
+                <tr>
+                    <td><strong>子代理</strong></td>
+                    <td>支持</td>
+                    <td>支持</td>
+                    <td>有限</td>
+                    <td>不支持</td>
+                </tr>
+                <tr>
+                    <td><strong>学习曲线</strong></td>
+                    <td>中等</td>
+                    <td>低</td>
+                    <td>低</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td><strong>开源</strong></td>
+                    <td>是（MIT）</td>
+                    <td>是</td>
+                    <td>否</td>
+                    <td>是</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>对比分析</h3>
+        <ul>
+            <li><strong>vs Claude Code：</strong>Claude Code 开箱即用、上手门槛低，但仅支持 Anthropic 模型。oh-my-pi 的编辑可靠性更高（哈希锚定），且支持更多模型。社区有用户从 Claude Code 切换到 oh-my-pi 后反馈"agent 记忆适应更新后更好"。</li>
+            <li><strong>vs Cursor：</strong>Cursor 在 IDE 集成体验上无可比拟，适合偏好图形界面的开发者。oh-my-pi 则更适合 Unix 哲学信徒和终端重度用户。社区评价"Pi wins for unix-style CLI workflows that get out of the way"。</li>
+            <li><strong>vs Aider：</strong>两者都是终端工具，但 oh-my-pi 的哈希锚定编辑在可靠性上更胜一筹，且子代理系统和持久记忆功能更为完善。</li>
+        </ul>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2>综合评分</h2>
+        <p>基于项目技术深度、创新性、社区活跃度、实用性和发展潜力等维度进行综合评估。</p>
+        <div class="score-grid">
+            <div class="score-card score-s9">
+                <div class="label">技术创新</div>
+                <div class="score">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card score-s8">
+                <div class="label">代码质量</div>
+                <div class="score">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width: 85%"></div></div>
+            </div>
+            <div class="score-card score-s9">
+                <div class="label">实用性</div>
+                <div class="score">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card score-s8">
+                <div class="label">社区活跃度</div>
+                <div class="score">8.0</div>
+                <div class="bar"><div class="bar-fill" style="width: 80%"></div></div>
+            </div>
+            <div class="score-card score-s9">
+                <div class="label">发展潜力</div>
+                <div class="score">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card score-s8">
+                <div class="label">文档完整性</div>
+                <div class="score">7.5</div>
+                <div class="bar"><div class="bar-fill" style="width: 75%"></div></div>
+            </div>
+        </div>
+
+        <div class="highlight-box" style="margin-top: 24px;">
+            <p><strong>综合评分：8.5 / 10</strong> — oh-my-pi 凭借哈希锚定编辑这一突破性创新，在 AI 编程代理领域建立了独特的技术壁垒。作者深厚的安全研究背景赋予了项目独特的工程品质，高度可定制的架构使其既适合日常使用，也可作为构建更复杂 AI 开发工具的平台。主要改进空间在于文档和社区生态建设。</p>
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="section">
+        <h2>总结</h2>
+        <p>oh-my-pi 代表了 AI 编程代理领域的一个重要方向——不是追求花哨的 IDE 集成，而是回归终端的本质，通过技术创新（哈希锚定编辑）解决 AI 代码编辑的核心痛点。在 2026 年 AI coding agent 百花齐放的竞争中，oh-my-pi 以其独特的技术路线和极致的可定制性，赢得了开发者社区的广泛认可。</p>
+        <p>对于追求编辑可靠性、偏好终端工作流、需要多模型支持或高度定制的开发者来说，oh-my-pi 是目前最值得关注的终端 AI 编程代理之一。</p>
+    </div>
+
+    <div class="footer">
+        <p>分析日期：2026-06-03 | 数据来源：GitHub、Hacker News、Reddit、SkillsLLM、OSSInsight</p>
+        <p>Generated by GitHub Trending Deep Analyzer</p>
+    </div>
+
+</div>
+</body>
+</html>
