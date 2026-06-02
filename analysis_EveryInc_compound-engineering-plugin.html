@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告 - EveryInc/compound-engineering-plugin</title>
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #A29BFE;
+            --bg: #0F0F1A;
+            --bg-card: #1A1A2E;
+            --bg-card-hover: #222240;
+            --text: #E8E8F0;
+            --text-secondary: #A0A0B8;
+            --border: #2D2D4A;
+            --accent-green: #00D68F;
+            --accent-orange: #FF9F43;
+            --accent-blue: #54A0FF;
+            --accent-red: #FF6B6B;
+            --accent-purple: #A29BFE;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1A1A2E 0%, #2D1B69 50%, #1A1A2E 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(108,92,231,0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .header-badge {
+            display: inline-block;
+            background: rgba(108,92,231,0.2);
+            border: 1px solid rgba(108,92,231,0.4);
+            color: var(--primary-light);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .header .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 14px;
+        }
+        .header .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+        .header .meta .star { color: #FFD700; }
+        .header .meta .fork { color: var(--accent-blue); }
+
+        /* Score Card */
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .score-card h2 { font-size: 20px; margin-bottom: 24px; color: var(--accent-green); }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+        .score-item {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 20px 12px;
+            border: 1px solid var(--border);
+        }
+        .score-item .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .score-item .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .score-item .bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+        .score-total {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .score-total .value {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-green), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .score-total .label { font-size: 16px; color: var(--text-secondary); }
+
+        /* Section Cards */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2 .icon { font-size: 22px; }
+        .section h3 {
+            font-size: 16px;
+            margin: 16px 0 8px;
+            color: var(--primary-light);
+        }
+        .section p { color: var(--text-secondary); margin-bottom: 12px; }
+        .section ul, .section ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+        .section li { margin-bottom: 6px; }
+
+        /* Workflow Table */
+        .workflow-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 16px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .workflow-table th {
+            background: rgba(108,92,231,0.15);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            color: var(--primary-light);
+        }
+        .workflow-table td {
+            padding: 10px 16px;
+            font-size: 14px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .workflow-table tr:hover td { background: var(--bg-card-hover); }
+        .cmd { color: var(--accent-green); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+
+        /* Platform Tags */
+        .platform-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .platform-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .platform-tag.claude { background: rgba(108,92,231,0.2); color: #A29BFE; }
+        .platform-tag.codex { background: rgba(0,214,143,0.15); color: #00D68F; }
+        .platform-tag.cursor { background: rgba(84,160,255,0.15); color: #54A0FF; }
+        .platform-tag.copilot { background: rgba(255,159,67,0.15); color: #FF9F43; }
+        .platform-tag.other { background: rgba(255,255,255,0.08); color: #A0A0B8; }
+
+        /* Comparison */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .comparison-item {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .comparison-item h4 { font-size: 15px; margin-bottom: 10px; color: #fff; }
+        .comparison-item .pros { color: var(--accent-green); }
+        .comparison-item .cons { color: var(--accent-orange); }
+        .comparison-item ul { margin-left: 16px; font-size: 14px; }
+        .comparison-item li { margin-bottom: 4px; }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: rgba(108,92,231,0.1);
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-size: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .footer a { color: var(--primary-light); text-decoration: none; }
+
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .header, .section, .score-card { padding: 20px; }
+            .header h1 { font-size: 22px; }
+            .score-item .value { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-badge">GitHub Trending 深度分析</div>
+        <h1>EveryInc/compound-engineering-plugin</h1>
+        <div class="subtitle">AI 技能与代理集合，让每一次工程工作都比上一次更轻松</div>
+        <div class="meta">
+            <span class="star">&#9733; 17.1k Stars</span>
+            <span class="fork">&#9282; 1.3k Forks</span>
+            <span>&#128100; 66 Contributors</span>
+            <span>&#128230; v3.0.1 (2026-04)</span>
+            <span>&#9898; MIT License</span>
+            <span>&#128187; TypeScript / Bun</span>
+        </div>
+    </div>
+
+    <!-- Score -->
+    <div class="score-card">
+        <h2>&#127942; 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="value" style="color: var(--accent-green);">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="value" style="color: var(--accent-blue);">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%; background: var(--accent-blue);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">技术深度</div>
+                <div class="value" style="color: var(--accent-purple);">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%; background: var(--accent-purple);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="value" style="color: var(--accent-orange);">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%; background: var(--accent-orange);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="label">生态兼容性</div>
+                <div class="value" style="color: var(--accent-green);">9.5</div>
+                <div class="bar"><div class="bar-fill" style="width:95%; background: var(--accent-green);"></div></div>
+            </div>
+        </div>
+        <div class="score-total">
+            <div class="value">9.1 / 10</div>
+            <div class="label">综合加权得分 &#8226; 极力推荐</div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="section">
+        <h2><span class="icon">&#128218;</span> 项目概述</h2>
+        <p><strong>compound-engineering-plugin</strong> 是由 Every.to 团队开发的一款开源 AI 编程增强插件，核心理念是"每一次工程工作都应让下一次变得更容易，而非更难"。它通过结构化的规划、审查与知识积累循环，让 AI 编程代理（如 Claude Code、Cursor、Codex 等）在使用过程中不断学习和改进，实现工程效率的"复利增长"。</p>
+
+        <div class="highlight-box">
+            <strong>核心哲学：</strong>传统开发不断积累技术债务，每个功能增加复杂度。Compound Engineering 颠覆这一模式 —— 80% 用于规划与审查，20% 用于执行。好的头脑风暴让计划更精确，好的计划让执行更小，好的审查捕获模式而非仅仅是 Bug，好的复合笔记意味着下一个代理不需要从零开始学习。
+        </div>
+
+        <h3>关键数据</h3>
+        <table class="workflow-table">
+            <tr><th>指标</th><th>数据</th></tr>
+            <tr><td>GitHub Stars</td><td>~17,100</td></tr>
+            <tr><td>Forks</td><td>~1,300</td></tr>
+            <tr><td>贡献者</td><td>66</td></tr>
+            <tr><td>技能 (Skills)</td><td>37 个</td></tr>
+            <tr><td>代理 (Agents)</td><td>51 个</td></tr>
+            <tr><td>最新版本</td><td>v3.0.1 (2026年4月)</td></tr>
+            <tr><td>上下文消耗</td><td>~36k tokens</td></tr>
+            <tr><td>许可证</td><td>MIT</td></tr>
+            <tr><td>技术栈</td><td>TypeScript / Bun</td></tr>
+        </table>
+    </div>
+
+    <!-- Technical Architecture -->
+    <div class="section">
+        <h2><span class="icon">&#9881;</span> 技术架构</h2>
+        <p>插件采用 <strong>Agent-Native Architecture</strong>（代理原生架构），即应用程序由代理来完成任务，而非执行预定义的代码路径。整体架构基于 Bun/TypeScript 构建，包含插件格式转换器，可将 Claude Code 插件转换为多种目标格式。</p>
+
+        <h3>三层架构</h3>
+        <ol>
+            <li><strong>Skills 层（技能层）</strong> — 37 个技能，每个技能对应一个具体的开发任务命令，如头脑风暴、规划、代码审查等。用户通过斜杠命令调用。</li>
+            <li><strong>Agents 层（代理层）</strong> — 51 个专用代理，在技能背后运行，负责并行处理、研究、审查、调试等复杂工作流。技能可以委派（delegate）给代理执行子任务。</li>
+            <li><strong>Infrastructure 层（基础设施层）</strong> — MCP Server、插件市场元数据、格式转换引擎、缓存与本地开发工具链。</li>
+        </ol>
+
+        <h3>核心技术组件</h3>
+        <ul>
+            <li><strong>Plugin Marketplace System</strong> — 支持 Claude Code 原生插件市场分发</li>
+            <li><strong>Format Converter</strong> — Bun CLI 工具，将插件转换为 OpenCode、Codex、Copilot、Gemini、Kiro、Pi、Qwen 等目标格式</li>
+            <li><strong>Agent Delegation</strong> — 技能可将子任务委派给专用代理并行执行，提高复杂工作流效率</li>
+            <li><strong>MCP Server</strong> — 提供扩展的工具集成能力</li>
+            <li><strong>Knowledge Compounding</strong> — 通过 <code>STRATEGY.md</code>、脑暴文档、复合笔记等结构化知识产物，实现知识积累</li>
+        </ul>
+
+        <h3>支持的 AI 编程工具</h3>
+        <div class="platform-tags">
+            <span class="platform-tag claude">Claude Code</span>
+            <span class="platform-tag codex">OpenAI Codex</span>
+            <span class="platform-tag cursor">Cursor</span>
+            <span class="platform-tag copilot">GitHub Copilot</span>
+            <span class="platform-tag other">OpenCode</span>
+            <span class="platform-tag other">Pi</span>
+            <span class="platform-tag other">Gemini CLI</span>
+            <span class="platform-tag other">Kiro CLI</span>
+            <span class="platform-tag other">Qwen Code</span>
+            <span class="platform-tag other">Factory Droid</span>
+        </div>
+    </div>
+
+    <!-- Core Workflow -->
+    <div class="section">
+        <h2><span class="icon">&#128260;</span> 核心工作流</h2>
+        <p>Compound Engineering 采用迭代式循环工作流，每一轮都在积累知识并优化下一次迭代。完整流程如下：</p>
+
+        <table class="workflow-table">
+            <tr><th>技能命令</th><th>功能</th><th>产出</th></tr>
+            <tr><td><span class="cmd">/ce-strategy</span></td><td>创建或维护 STRATEGY.md，定义产品目标问题、方法、用户画像和关键指标</td><td>STRATEGY.md</td></tr>
+            <tr><td><span class="cmd">/ce-ideate</span></td><td>（可选）生成和评估创意想法，将最强创意导入头脑风暴阶段</td><td>创意排名文档</td></tr>
+            <tr><td><span class="cmd">/ce-brainstorm</span></td><td>交互式 Q&A，深入思考功能需求，产出需求文档</td><td>需求文档</td></tr>
+            <tr><td><span class="cmd">/ce-plan</span></td><td>将功能想法转化为详细实施计划</td><td>实施计划</td></tr>
+            <tr><td><span class="cmd">/ce-work</span></td><td>使用 worktree 和任务追踪执行计划</td><td>代码变更</td></tr>
+            <tr><td><span class="cmd">/ce-debug</span></td><td>系统化复现故障、追踪根因、实施修复</td><td>修复代码</td></tr>
+            <tr><td><span class="cmd">/ce-code-review</span></td><td>多代理代码审查，合并前检查</td><td>审查报告</td></tr>
+            <tr><td><span class="cmd">/ce-compound</span></td><td>将学习成果文档化，使未来工作更轻松</td><td>复合笔记</td></tr>
+            <tr><td><span class="cmd">/ce-product-pulse</span></td><td>生成时间窗口内的产品脉搏报告（使用、性能、错误）</td><td>脉搏报告</td></tr>
+        </table>
+
+        <h3>典型使用示例</h3>
+        <p><strong>功能开发流程：</strong></p>
+        <div class="highlight-box">
+            <span class="cmd">/ce-brainstorm</span> "让后台任务重试更安全"<br>
+            <span class="cmd">/ce-plan</span> docs/brainstorms/background-job-retry-safety-requirements.md<br>
+            <span class="cmd">/ce-work</span><br>
+            <span class="cmd">/ce-code-review</span><br>
+            <span class="cmd">/ce-compound</span>
+        </div>
+        <p><strong>Bug 调查流程：</strong></p>
+        <div class="highlight-box">
+            <span class="cmd">/ce-debug</span> "结账 Webhook 有时创建重复发票"<br>
+            <span class="cmd">/ce-code-review</span><br>
+            <span class="cmd">/ce-compound</span>
+        </div>
+    </div>
+
+    <!-- Core Innovation -->
+    <div class="section">
+        <h2><span class="icon">&#128161;</span> 核心创新点</h2>
+
+        <h3>1. 复利式知识积累</h3>
+        <p>不同于传统的 CLAUDE.md 或 .cursorrules 静态配置文件，Compound Engineering 的知识是动态积累的。每一次 <span class="cmd">/ce-compound</span> 都会产生结构化的学习笔记，这些笔记自动成为下一次会话的上下文，真正实现了"用得越多越好用"的复利效应。</p>
+
+        <h3>2. 多代理协作架构</h3>
+        <p>51 个专用代理可以并行处理不同子任务。例如 <span class="cmd">/ce-code-review</span> 会委派给审查代理，<span class="cmd">/ce-plan</span> 会委派给研究代理。这种多代理架构比单代理模式能更高效地处理复杂工作流。</p>
+
+        <h3>3. 跨平台统一体验</h3>
+        <p>通过格式转换引擎，同一套插件逻辑可以无缝运行在 10 种不同的 AI 编程工具上。开发者无需因为切换工具而改变工作流程。这是目前市场上跨平台覆盖最广的 AI 编程增强插件。</p>
+
+        <h3>4. 80/20 工程哲学</h3>
+        <p>80% 时间用于规划与审查，20% 用于执行。这种看似"慢"的方式实际上通过减少返工和积累知识，使整体速度更快。Andrej Karpathy 对此评价："Programming just changed. A lot."</p>
+
+        <h3>5. Agent-Native 产品思维</h3>
+        <p>不仅是一个工具，更是一种全新的软件开发方法论 —— 将代理视为工程流程的核心角色，而非辅助工具。<span class="cmd">/ce-strategy</span> 和 <span class="cmd">/ce-product-pulse</span> 将产品策略也纳入了代理工作流。</p>
+    </div>
+
+    <!-- Application Scenarios -->
+    <div class="section">
+        <h2><span class="icon">&#127919;</span> 应用场景</h2>
+
+        <h3>1. 个人开发者 / 独立开发者</h3>
+        <p>使用 Compound Engineering 可以在缺乏团队协作的情况下，通过 AI 代理获得规划、审查和知识管理的完整工程流程。适合快速迭代产品原型的独立开发者。</p>
+
+        <h3>2. 小型 AI-Native 团队</h3>
+        <p>3-10 人的团队使用该插件后，每位工程师都能受益于团队积累的复合知识。新成员加入时，代理已经掌握了项目的历史决策和模式。</p>
+
+        <h3>3. 大型工程组织</h3>
+        <p>作为组织级别的 AI 编程标准，统一团队的代码审查标准、规划流程和知识沉淀方式。<span class="cmd">/ce-product-pulse</span> 可以连接产品运营数据到开发工作流。</p>
+
+        <h3>4. 教育与培训</h3>
+        <p>新手开发者可以通过 Compound Engineering 的结构化流程学习最佳实践 —— 头脑风暴 → 规划 → 执行 → 审查 → 总结，比直接开始写代码更能建立良好的工程习惯。</p>
+
+        <h3>5. 跨工具团队</h3>
+        <p>团队成员使用不同的 AI 编程工具（有人用 Claude Code，有人用 Cursor，有人用 Copilot）时，Compound Engineering 提供统一的工作流和知识积累机制。</p>
+    </div>
+
+    <!-- Competitive Comparison -->
+    <div class="section">
+        <h2><span class="icon">&#9878;</span> 竞品对比</h2>
+
+        <div class="comparison-grid">
+            <div class="comparison-item">
+                <h4>Compound Engineering Plugin</h4>
+                <div class="pros">&#10004; 优势</div>
+                <ul>
+                    <li>37 技能 + 51 代理，功能最全面</li>
+                    <li>跨 10 个平台支持</li>
+                    <li>动态知识复利积累</li>
+                    <li>完整工程工作流覆盖</li>
+                </ul>
+                <div class="cons" style="margin-top:8px;">&#9888; 不足</div>
+                <ul>
+                    <li>上下文消耗 ~36k tokens</li>
+                    <li>学习成本相对较高</li>
+                    <li>不开源贡献（作者不接受 PR）</li>
+                </ul>
+            </div>
+            <div class="comparison-item">
+                <h4>Cursor Rules (.cursorrules)</h4>
+                <div class="pros">&#10004; 优势</div>
+                <ul>
+                    <li>零上下文开销</li>
+                    <li>简单直观</li>
+                    <li>与 Cursor 深度集成</li>
+                </ul>
+                <div class="cons" style="margin-top:8px;">&#9888; 不足</div>
+                <ul>
+                    <li>仅限 Cursor 平台</li>
+                    <li>静态规则，无学习积累</li>
+                    <li>不支持多代理协作</li>
+                </ul>
+            </div>
+            <div class="comparison-item">
+                <h4>CLAUDE.md 自定义指令</h4>
+                <div class="pros">&#10004; 优势</div>
+                <ul>
+                    <li>Claude Code 原生支持</li>
+                    <li>完全自定义</li>
+                    <li>轻量无依赖</li>
+                </ul>
+                <div class="cons" style="margin-top:8px;">&#9888; 不足</div>
+                <ul>
+                    <li>需手动维护更新</li>
+                    <li>无自动知识积累</li>
+                    <li>功能取决于用户编写质量</li>
+                </ul>
+            </div>
+            <div class="comparison-item">
+                <h4>Cursor Memory Bank</h4>
+                <div class="pros">&#10004; 优势</div>
+                <ul>
+                    <li>专注记忆管理</li>
+                    <li>结构化知识存储</li>
+                    <li>轻量级方案</li>
+                </ul>
+                <div class="cons" style="margin-top:8px;">&#9888; 不足</div>
+                <ul>
+                    <li>仅覆盖记忆维度</li>
+                    <li>缺乏规划/审查工作流</li>
+                    <li>无多代理架构</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong>关键差异化：</strong>Compound Engineering Plugin 是目前唯一提供<strong>完整工程生命周期覆盖</strong>（策略 → 创意 → 脑暴 → 规划 → 执行 → 调试 → 审查 → 复合 → 产品脉搏）且支持<strong>跨 10 个平台</strong>的 AI 编程增强方案。竞品大多只覆盖其中某个环节。
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section">
+        <h2><span class="icon">&#128202;</span> 总结与展望</h2>
+
+        <h3>优势</h3>
+        <ul>
+            <li><strong>方法论先行</strong>：不是简单的 AI 工具，而是一套经过实践验证的工程方法论（Every.to 团队在构建 Cora 产品过程中迭代而成）</li>
+            <li><strong>复利效应</strong>：使用越多，积累的知识越多，效率提升越明显 —— 这是传统工具无法实现的</li>
+            <li><strong>生态广泛</strong>：10 个平台支持确保团队不会被锁定在单一工具上</li>
+            <li><strong>活跃迭代</strong>：从 v1.0 到 v3.0.1 持续快速演进，社区反馈积极</li>
+        </ul>
+
+        <h3>潜在风险</h3>
+        <ul>
+            <li><strong>上下文消耗</strong>：~36k tokens 的上下文开销对于上下文窗口有限的场景可能是负担</li>
+            <li><strong>闭源贡献模式</strong>：作者明确不接受外部 PR，社区参与度受限</li>
+            <li><strong>被原生功能替代的风险</strong>：部分复合工程实践可能被 Claude Code 等工具原生吸收</li>
+        </ul>
+
+        <h3>推荐指数</h3>
+        <p>对于<strong>使用 AI 编程工具的中高级开发者</strong>，强烈推荐尝试。尤其适合已经使用 Claude Code 或 Cursor 的开发者，可以显著提升工作流的系统性和知识积累能力。对于初学者，建议先熟悉基础 AI 编程工具后再引入此插件。</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>分析日期：2026-06-03 &bull; 数据来源：GitHub、WebSearch &bull; 由 AI 深度分析引擎生成</p>
+        <p><a href="https://github.com/EveryInc/compound-engineering-plugin" target="_blank">GitHub 仓库</a> &bull;
+           <a href="https://every.to/guides/compound-engineering" target="_blank">官方指南</a></p>
+    </div>
+
+</div>
+</body>
+</html>
