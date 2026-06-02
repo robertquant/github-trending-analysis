@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告：revfactory/harness — Claude Code 的团队架构工厂</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #f78166;
+    --accent2: #58a6ff;
+    --green: #3fb950;
+    --purple: #bc8cff;
+    --orange: #f0883e;
+    --yellow: #e3b341;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; line-height: 1.7; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Header */
+  .header { text-align: center; padding: 48px 0 36px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  .header .badge { display: inline-block; background: linear-gradient(135deg, var(--accent), var(--purple)); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+  .header h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header .subtitle { font-size: 18px; color: var(--text-secondary); }
+  .header .meta { margin-top: 20px; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+  .header .meta span { font-size: 14px; color: var(--text-secondary); }
+  .header .meta span strong { color: var(--text); }
+
+  /* Score Card */
+  .score-card { background: linear-gradient(135deg, #1a1f2e, #1c2333); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .score-ring { width: 140px; height: 140px; margin: 0 auto 16px; position: relative; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 42px; font-weight: 800; color: var(--green); }
+  .score-card h2 { font-size: 20px; margin-bottom: 16px; }
+  .score-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-top: 20px; }
+  .score-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .score-item .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+  .score-item .value { font-size: 24px; font-weight: 700; }
+  .score-item .value.green { color: var(--green); }
+  .score-item .value.blue { color: var(--accent2); }
+  .score-item .value.purple { color: var(--purple); }
+  .score-item .value.orange { color: var(--orange); }
+  .score-item .value.yellow { color: var(--yellow); }
+
+  /* Section */
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); display: inline-block; }
+  .section h3 { font-size: 17px; font-weight: 600; margin: 20px 0 10px; color: var(--accent2); }
+  .section p { margin-bottom: 12px; color: var(--text-secondary); }
+  .section ul, .section ol { margin: 8px 0 16px 24px; color: var(--text-secondary); }
+  .section li { margin-bottom: 6px; }
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card .icon { font-size: 28px; margin-bottom: 8px; }
+  .card h4 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--card); text-align: left; padding: 12px 16px; border: 1px solid var(--border); font-weight: 600; color: var(--accent2); }
+  td { padding: 10px 16px; border: 1px solid var(--border); color: var(--text-secondary); }
+  tr:hover td { background: rgba(88,166,255,0.05); }
+
+  /* Highlight box */
+  .highlight { background: linear-gradient(135deg, rgba(247,129,102,0.1), rgba(188,140,255,0.1)); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; margin: 16px 0; }
+  .highlight p { color: var(--text); margin: 0; }
+
+  /* Code block */
+  .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; overflow-x: auto; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Flow */
+  .flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+  .flow-step { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; text-align: center; }
+  .flow-arrow { color: var(--accent); font-size: 18px; }
+
+  /* AB Test */
+  .ab-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .ab-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+  .ab-card .big-num { font-size: 36px; font-weight: 800; margin: 8px 0; }
+  .ab-card .big-num.green { color: var(--green); }
+  .ab-card .big-num.red { color: var(--accent); }
+  .ab-card .big-num.blue { color: var(--accent2); }
+  .ab-card .desc { font-size: 13px; color: var(--text-secondary); }
+
+  /* Comparison bar */
+  .comp-bar { margin: 12px 0; }
+  .comp-bar .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .comp-bar .bar-label span:first-child { color: var(--text); font-weight: 600; }
+  .comp-bar .bar-label span:last-child { color: var(--text-secondary); }
+  .comp-bar .bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .comp-bar .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px 0 20px; border-top: 1px solid var(--border); margin-top: 40px; color: var(--text-secondary); font-size: 13px; }
+
+  @media (max-width: 640px) {
+    .header h1 { font-size: 26px; }
+    .ab-grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">GitHub Trending 深度分析</div>
+    <h1>revfactory/harness</h1>
+    <div class="subtitle">Claude Code 的团队架构工厂 — 一句话生成专业 AI Agent 团队</div>
+    <div class="meta">
+      <span>⭐ <strong>3,500+</strong> Stars</span>
+      <span>📄 <strong>Apache 2.0</strong></span>
+      <span>🏷️ <strong>v1.2.0</strong></span>
+      <span>📅 <strong>2026-03-26</strong> 创建</span>
+      <span>👤 <strong>Minho Hwang</strong> (Kakao)</span>
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div class="score-card">
+    <h2>综合评分</h2>
+    <div class="score-ring">
+      <svg width="140" height="140">
+        <circle cx="70" cy="70" r="60" stroke="#30363d" stroke-width="10" fill="none"/>
+        <circle cx="70" cy="70" r="60" stroke="#3fb950" stroke-width="10" fill="none"
+                stroke-dasharray="339.29" stroke-dashoffset="30.54" stroke-linecap="round"/>
+      </svg>
+      <div class="score-text">91</div>
+    </div>
+    <div class="score-breakdown">
+      <div class="score-item"><div class="label">技术创新</div><div class="value green">9.5</div></div>
+      <div class="score-item"><div class="label">实用性</div><div class="value blue">9.0</div></div>
+      <div class="score-item"><div class="label">生态成熟度</div><div class="value purple">8.5</div></div>
+      <div class="score-item"><div class="label">社区活跃度</div><div class="value orange">9.0</div></div>
+      <div class="score-item"><div class="label">文档质量</div><div class="value yellow">9.5</div></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2>项目概述</h2>
+    <p><strong>revfactory/harness</strong> 是一个为 Claude Code 设计的 <strong>Meta-Skill（元技能）</strong>插件，定位为<strong>「团队架构工厂」</strong>。它的核心理念极其简洁——用户只需用一句话描述自己的领域需求，Harness 就能自动生成完整的多智能体团队架构，包括专业化的 Agent 定义和它们所需的技能集。</p>
+    <div class="highlight">
+      <p>💡 <strong>核心价值主张：</strong>将复杂的多 Agent 系统搭建工作，从手工编写、容易出错、难以保持一致性的繁琐过程，变成一行命令即可完成的自动化流程。根据作者的 A/B 测试，使用 Harness 后代码任务质量平均提升 <strong>60%</strong>（49.5 → 79.3 分）。</p>
+    </div>
+    <p>该项目位于 Claude Code 生态系统的 <strong>L3 Meta-Factory 层</strong>，具体属于 <strong>Team-Architecture Factory 子层</strong>——即「生成其他 Harness 的 Harness」。这不是一个普通的工具插件，而是一个<strong>架构级别的设计器</strong>。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2>技术架构</h2>
+
+    <h3>六阶段工作流</h3>
+    <div class="flow">
+      <div class="flow-step">Phase 1<br>领域分析</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Phase 2<br>团队架构设计</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Phase 3<br>Agent 定义生成</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Phase 4<br>技能生成</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Phase 5<br>集成与编排</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Phase 6<br>验证与测试</div>
+    </div>
+
+    <h3>六种架构模式</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🔗</div>
+        <h4>Pipeline（流水线）</h4>
+        <p>顺序依赖任务，前一 Agent 的输出作为后一 Agent 的输入。适用于有明确工序的流程。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔀</div>
+        <h4>Fan-out/Fan-in（扇出/扇入）</h4>
+        <p>并行处理独立任务，结果汇聚合并。适用于可并行化的批量分析场景。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🎯</div>
+        <h4>Expert Pool（专家池）</h4>
+        <p>根据上下文动态选择最合适的专家 Agent 执行。适用于需要按需调配的场景。</p>
+      </div>
+      <div class="card">
+        <div class="icon">📝</div>
+        <h4>Producer-Reviewer（生产-审查）</h4>
+        <p>生成与质量审查分离，确保输出质量。适用于代码审查、文档校对等。</p>
+      </div>
+      <div class="card">
+        <div class="icon">👁️</div>
+        <h4>Supervisor（监督者）</h4>
+        <p>中央 Agent 动态分配任务，统筹全局。适用于复杂项目管理。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🏗️</div>
+        <h4>Hierarchical Delegation（层级委派）</h4>
+        <p>自顶向下的递归委派，支持多层级分解。适用于大规模复杂系统。</p>
+      </div>
+    </div>
+
+    <h3>执行模式</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>模式</th><th>描述</th><th>适用场景</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Agent Teams</strong>（默认）</td><td>TeamCreate + SendMessage + TaskCreate</td><td>2+ Agent 需要协作的场景</td></tr>
+          <tr><td><strong>Subagents</strong></td><td>直接 Agent 工具调用</td><td>一次性任务，无需 Agent 间通信</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>生成的输出结构</h3>
+    <div class="code-block">
+your-project/
+├── .claude/
+│   ├── agents/          # Agent 定义文件
+│   │   ├── analyst.md   # 分析师 Agent
+│   │   ├── builder.md   # 构建者 Agent
+│   │   └── qa.md        # 质量保证 Agent
+│   └── skills/          # 技能文件
+│       ├── analyze/
+│       │   └── SKILL.md
+│       └── build/
+│           ├── SKILL.md
+│           └── references/
+    </div>
+
+    <h3>安装方式</h3>
+    <div class="code-block">
+# 通过 Plugin Marketplace 安装
+/plugin marketplace add revfactory/harness
+/plugin install harness@harness-marketplace
+
+# 或直接复制为全局技能
+cp -r skills/harness ~/.claude/skills/harness
+    </div>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2>核心创新点</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🧠</div>
+        <h4>L3 Meta-Factory 定位</h4>
+        <p>不是直接提供技能，而是<strong>生成技能和团队的工厂</strong>。这是 Claude Code 生态中最高层次的抽象——Harness 生成其他 Harness。</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h4>一句话生成完整团队</h4>
+        <p>用户只需输入 "Build a harness for..." 加领域描述，即可自动完成从架构选择到技能生成的全流程，极大降低多 Agent 系统的搭建门槛。</p>
+      </div>
+      <div class="card">
+        <div class="icon">📊</div>
+        <h4>数据驱动验证</h4>
+        <p>罕见的带有严格 A/B 测试数据的开源项目。15 项任务对照组实验，质量评分从 49.5 提升至 79.3，胜率 100%，方差降低 32%。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔄</div>
+        <h4>渐进式披露设计</h4>
+        <p>自动生成的技能采用 Progressive Disclosure 模式，高效管理 Agent 的上下文窗口，避免信息过载。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🌐</div>
+        <h4>多语言与跨运行时</h4>
+        <p>原生支持英文、韩文、日文。同时有 Codex 移植版（meta-harness）和跨运行时脚手架（harness-init），展现生态扩展意识。</p>
+      </div>
+      <div class="card">
+        <div class="icon">📈</div>
+        <h4>效果随复杂度递增</h4>
+        <p>A/B 测试最引人注目的发现：任务越难，Harness 带来的提升越大。基础任务 +23.8%，进阶 +29.6%，专家级 +36.2%。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A/B Test Results -->
+  <div class="section">
+    <h2>A/B 测试数据</h2>
+    <p>基于 15 项软件工程任务的对照实验（来源：<strong>revfactory/claude-code-harness</strong>，论文：Hwang, M. 2026）</p>
+    <div class="ab-grid">
+      <div class="ab-card">
+        <div class="desc">无 Harness 平均质量分</div>
+        <div class="big-num red">49.5</div>
+      </div>
+      <div class="ab-card">
+        <div class="desc">有 Harness 平均质量分</div>
+        <div class="big-num green">79.3</div>
+      </div>
+      <div class="ab-card">
+        <div class="desc">质量提升幅度</div>
+        <div class="big-num blue">+60%</div>
+      </div>
+    </div>
+    <div class="comp-bar">
+      <div class="bar-label"><span>胜率</span><span>15/15 (100%)</span></div>
+      <div class="bar"><div class="bar-fill" style="width:100%; background: var(--green);"></div></div>
+    </div>
+    <div class="comp-bar">
+      <div class="bar-label"><span>方差降低</span><span>-32%</span></div>
+      <div class="bar"><div class="bar-fill" style="width:68%; background: var(--accent2);"></div></div>
+    </div>
+    <p style="margin-top:12px; font-size:13px; color:var(--text-secondary);">⚠️ 注意：以上数据为作者自行测量的 A/B 测试结果（n=15），第三方复现实验尚待进行。项目建议用户进行 2-4 周的内部试点来验证自身场景的效果。</p>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2>应用场景</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>场景</th><th>推荐架构</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>深度研究</td><td>Expert Pool</td><td>多角度搜索、交叉验证、综合报告生成</td></tr>
+          <tr><td>全栈 Web 开发</td><td>Pipeline</td><td>设计 → 前端 → 后端 → QA 的协调流水线</td></tr>
+          <tr><td>漫画/网漫制作</td><td>Producer-Reviewer</td><td>故事、角色、分镜、对话的迭代审校</td></tr>
+          <tr><td>YouTube 内容策划</td><td>Supervisor</td><td>热点研究、脚本、SEO、缩略图统筹</td></tr>
+          <tr><td>代码审查与重构</td><td>Fan-out/Fan-in</td><td>并行检查架构、安全、性能、代码风格</td></tr>
+          <tr><td>技术文档生成</td><td>Pipeline</td><td>端点分析 → 描述编写 → 示例生成 → 完整性审查</td></tr>
+          <tr><td>数据管道设计</td><td>Hierarchical</td><td>Schema → ETL → 验证 → 监控的层级委派</td></tr>
+          <tr><td>营销活动</td><td>Producer-Reviewer</td><td>市场研究 → 文案 → 视觉设计 → A/B 测试</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2>竞品对比</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>项目</th><th>层级定位</th><th>核心能力</th><th>与 Harness 的关系</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>coleam00/Archon</strong></td>
+            <td>L3 Runtime-Config Factory</td>
+            <td>确定性、可重复的运行时配置生成</td>
+            <td>同层邻居，互补关系：Archon 管运行时，Harness 管团队架构</td>
+          </tr>
+          <tr>
+            <td><strong>LangGraph</strong></td>
+            <td>不同赛道</td>
+            <td>状态图编排，LLM 无关</td>
+            <td>LangGraph 适合长时间运行、状态可恢复的编排；Harness 专注于快速 Claude Code 原生团队设计</td>
+          </tr>
+          <tr>
+            <td><strong>SaehwanPark/meta-harness</strong></td>
+            <td>L3 Codex Runtime Port</td>
+            <td>Harness 概念的 Codex 移植</td>
+            <td>同概念不同运行时，Codex 用户的选择</td>
+          </tr>
+          <tr>
+            <td><strong>affaan-m/ECC</strong></td>
+            <td>L2 跨 Harness 工作流</td>
+            <td>标准化跨 Harness 的技能/规则/钩子</td>
+            <td>不同层级，可串联使用：Harness 生成 → ECC 标准化</td>
+          </tr>
+          <tr>
+            <td><strong>wshobson/agents</strong></td>
+            <td>组件目录</td>
+            <td>182 个 Agent、149 个技能的目录</td>
+            <td>零件供应商 vs 团队设计器：可从目录选零件组装到 Harness 生成的团队中</td>
+          </tr>
+          <tr>
+            <td><strong>OpenAI Codex</strong></td>
+            <td>不同平台</td>
+            <td>OpenAI 生态的自主编程 Agent</td>
+            <td>平台竞争关系，Codex 用户可用 meta-harness 替代</td>
+          </tr>
+          <tr>
+            <td><strong>Cursor Background Agents</strong></td>
+            <td>不同平台</td>
+            <td>IDE 原生的后台 Agent</td>
+            <td>生态互补，Cursor 用户可在不同层面对接</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 生态位 -->
+  <div class="section">
+    <h2>生态位分析</h2>
+    <div class="highlight">
+      <p>Harness 的差异化优势在于其<strong>「架构设计」定位</strong>。市面上大多数 Agent 工具要么是运行时框架（LangGraph、CrewAI），要么是具体技能目录（wshobson/agents）。Harness 填补了一个独特的空白——<strong>如何系统性地设计多 Agent 团队的组织架构</strong>。这类似于软件开发中「架构师」与「程序员」的分工：Harness 做架构设计，其他工具做具体执行。</p>
+    </div>
+  </div>
+
+  <!-- 优势与风险 -->
+  <div class="section">
+    <h2>优势与风险</h2>
+    <div class="cards">
+      <div class="card" style="border-left: 3px solid var(--green);">
+        <h4 style="color: var(--green);">✅ 优势</h4>
+        <ul style="font-size:14px; color:var(--text-secondary); margin-top:8px;">
+          <li>首创「团队架构工厂」概念，定位独特</li>
+          <li>6 种架构模式覆盖主流多 Agent 场景</li>
+          <li>有量化 A/B 测试数据支撑（业界罕见）</li>
+          <li>效果随任务复杂度递增，天花板高</li>
+          <li>文档质量极高（多语言、FAQ、生态说明）</li>
+          <li>Apache 2.0 开源许可，商业友好</li>
+          <li>Harness-100 提供 100 个即用型团队模板</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left: 3px solid var(--accent);">
+        <h4 style="color: var(--accent);">⚠️ 风险与局限</h4>
+        <ul style="font-size:14px; color:var(--text-secondary); margin-top:8px;">
+          <li>仅支持 Claude Code 平台（需实验性功能 flag）</li>
+          <li>A/B 测试为作者自行测量，第三方验证待定</li>
+          <li>依赖 Claude Code Agent Teams 实验性功能</li>
+          <li>HTML 项目形态，非传统代码库</li>
+          <li>项目较新（2026-03 创建），长期维护待观察</li>
+          <li>Meta-Factory 概念对新手有一定学习曲线</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="section">
+    <h2>总结</h2>
+    <p>revfactory/harness 是 2026 年 AI Agent 编排领域最具创新性的项目之一。它不试图成为又一个运行时框架或技能目录，而是开创性地定义了<strong>「团队架构工厂」</strong>这一新品类。通过六种经过验证的架构模式、自动化生成流程和有数据支撑的效果验证，Harness 为多 Agent 系统的设计提供了系统化的方法论。</p>
+    <p>对于已经在使用 Claude Code 的开发者来说，这是一个值得立即试用的工具。对于关注 AI Agent 生态的观察者来说，Harness 代表了 Agent 工具从「执行层」向「设计层」演进的重要趋势。</p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>报告生成时间：2026-06-03 | 数据来源：GitHub、WebSearch、项目 README</p>
+    <p style="margin-top:8px;">revfactory/harness 深度分析报告 — 由 AI 自动生成</p>
+  </div>
+
+</div>
+</body>
+</html>
