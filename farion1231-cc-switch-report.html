@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CC-Switch 深度分析报告</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2333;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-purple: #bc8cff;
+    --accent-red: #f85149;
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 60px 24px 40px;
+    background: linear-gradient(180deg, rgba(88,166,255,0.08) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 2.4em;
+    font-weight: 700;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  .header .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+  .header .meta {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+  .meta-item .value { color: var(--accent-blue); font-weight: 600; }
+
+  /* Score Card */
+  .score-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+  .score-card h2 { margin-bottom: 24px; font-size: 1.3em; }
+  .score-ring {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent-green) 0% 86%, var(--border-color) 86% 100%);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    position: relative;
+  }
+  .score-ring::after {
+    content: '';
+    position: absolute;
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: var(--bg-card);
+  }
+  .score-value {
+    position: relative;
+    z-index: 1;
+    font-size: 2.2em;
+    font-weight: 700;
+    color: var(--accent-green);
+  }
+  .score-label { color: var(--text-secondary); font-size: 0.95em; }
+  .score-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .score-item {
+    background: var(--bg-secondary);
+    padding: 14px;
+    border-radius: 10px;
+  }
+  .score-item .label { font-size: 0.82em; color: var(--text-secondary); }
+  .score-item .bar {
+    height: 6px; background: var(--border-color); border-radius: 3px; margin-top: 8px;
+  }
+  .score-item .bar-fill { height: 100%; border-radius: 3px; }
+  .score-item .num { font-size: 1.2em; font-weight: 600; margin-top: 4px; }
+
+  /* Section */
+  .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+  .section h2 {
+    font-size: 1.25em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h2 .icon { font-size: 1.2em; }
+  .section p { color: var(--text-secondary); margin-bottom: 12px; }
+  .section ul { padding-left: 20px; color: var(--text-secondary); }
+  .section li { margin-bottom: 8px; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.82em;
+    margin: 3px 4px 3px 0;
+  }
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+  .tag-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+  .tag-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+
+  /* Tech Stack Grid */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .tech-item {
+    background: var(--bg-secondary);
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-left: 3px solid var(--accent-blue);
+  }
+  .tech-item .tech-name { font-weight: 600; font-size: 0.95em; }
+  .tech-item .tech-desc { font-size: 0.82em; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Comparison Table */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 0.9em;
+  }
+  .comparison-table th, .comparison-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .comparison-table th {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: uppercase;
+  }
+  .comparison-table td { color: var(--text-secondary); }
+  .comparison-table tr:hover td { background: rgba(88,166,255,0.04); }
+  .highlight { color: var(--accent-green); font-weight: 600; }
+
+  /* Innovation Cards */
+  .innovation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .innovation-card {
+    background: var(--bg-secondary);
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+  .innovation-card h3 {
+    font-size: 1em;
+    margin-bottom: 8px;
+    color: var(--accent-blue);
+  }
+  .innovation-card p { font-size: 0.88em; margin-bottom: 0; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    border-top: 1px solid var(--border-color);
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>CC-Switch</h1>
+  <p class="subtitle">跨平台 AI 编程 CLI 一站式管理工具</p>
+  <div class="meta">
+    <div class="meta-item">⭐ Stars: <span class="value">75,000+</span></div>
+    <div class="meta-item">🔧 版本: <span class="value">v3.12.3</span></div>
+    <div class="meta-item">💻 平台: <span class="value">Windows / macOS / Linux</span></div>
+    <div class="meta-item">📦 语言: <span class="value">Rust + TypeScript</span></div>
+    <div class="meta-item">📄 协议: <span class="value">开源</span></div>
+  </div>
+  <div style="margin-top: 16px;">
+    <span class="tag tag-blue">Claude Code</span>
+    <span class="tag tag-green">Codex CLI</span>
+    <span class="tag tag-purple">Gemini CLI</span>
+    <span class="tag tag-orange">OpenCode</span>
+    <span class="tag tag-blue">OpenClaw</span>
+    <span class="tag tag-green">Hermes Agent</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 综合评分 -->
+  <div class="score-card">
+    <h2>综合评分</h2>
+    <div class="score-ring">
+      <span class="score-value">8.6</span>
+    </div>
+    <p class="score-label">满分 10 分 — AI 开发工具基础设施领域的标杆项目</p>
+    <div class="score-breakdown">
+      <div class="score-item">
+        <div class="label">技术创新</div>
+        <div class="num" style="color:var(--accent-blue)">8.5</div>
+        <div class="bar"><div class="bar-fill" style="width:85%;background:var(--accent-blue)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">实用价值</div>
+        <div class="num" style="color:var(--accent-green)">9.2</div>
+        <div class="bar"><div class="bar-fill" style="width:92%;background:var(--accent-green)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">社区活跃度</div>
+        <div class="num" style="color:var(--accent-purple)">9.0</div>
+        <div class="bar"><div class="bar-fill" style="width:90%;background:var(--accent-purple)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">代码质量</div>
+        <div class="num" style="color:var(--accent-orange)">8.2</div>
+        <div class="bar"><div class="bar-fill" style="width:82%;background:var(--accent-orange)"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="label">文档完善度</div>
+        <div class="num" style="color:var(--accent-blue)">8.8</div>
+        <div class="bar"><div class="bar-fill" style="width:88%;background:var(--accent-blue)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2><span class="icon">📋</span> 项目概述</h2>
+    <p><strong>CC-Switch</strong>（全称 Claude Code Switch）是一个跨平台桌面应用，由开发者 <strong>Jason Young（farion1231）</strong> 创建，旨在解决一个日益突出的开发者痛点：当开发者同时使用多个 AI 编程 CLI 工具（如 Claude Code、Codex、Gemini CLI 等）时，需要分别手动编辑各自的配置文件、API 密钥和 MCP 服务器设置，极其繁琐。</p>
+    <p>CC-Switch 通过提供统一的图形界面，让开发者可以一键切换不同 AI CLI 工具的 API Provider（支持 50+ 供应商预设）、统一管理 MCP Server 配置、以及管理系统提示词，无需手动编辑任何配置文件。</p>
+    <p>该项目在 GitHub 上已获得超过 <strong>75,000 颗 Star</strong>，长期占据 GitHub Trending 榜首，是目前 AI 开发者工具生态中最受瞩目的基础设施项目之一。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2><span class="icon">🏗️</span> 技术架构</h2>
+    <p>CC-Switch 采用现代化的双层架构设计，后端使用 Rust 保证性能与安全，前端使用 React 生态提供流畅的用户体验。</p>
+    <div class="tech-grid">
+      <div class="tech-item">
+        <div class="tech-name">Tauri 2 (Rust)</div>
+        <div class="tech-desc">跨平台桌面应用框架，替代 Electron，内存占用极低，安全性强</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-name">React 18 + TypeScript</div>
+        <div class="tech-desc">现代化前端框架，类型安全，组件化开发</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-name">Tailwind CSS</div>
+        <div class="tech-desc">原子化 CSS 框架，保证 UI 一致性和响应式设计</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-name">MCP 协议</div>
+        <div class="tech-desc">Model Context Protocol 支持，统一管理 AI 工具的上下文服务器</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-name">系统托盘集成</div>
+        <div class="tech-desc">原生系统托盘操作，常驻后台，随时切换</div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-name">GitHub 集成</div>
+        <div class="tech-desc">v3.7+ 支持从 GitHub 仓库自动扫描技能生态</div>
+      </div>
+    </div>
+    <p style="margin-top:16px"><strong>架构亮点：</strong></p>
+    <ul>
+      <li>选择 Tauri 2 而非 Electron，安装包体积更小（通常 &lt; 10MB vs Electron 的 100MB+），内存占用更低</li>
+      <li>Rust 后端提供了原生级别的系统调用能力，确保配置文件的读写安全和高效</li>
+      <li>支持 macOS 代码签名（v3.12.3+），解决了 Tauri 应用在 macOS 上的分发信任问题</li>
+      <li>提供 Homebrew Tap 安装方式（macOS），方便开发者快速部署</li>
+    </ul>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2><span class="icon">💡</span> 核心创新点</h2>
+    <div class="innovation-grid">
+      <div class="innovation-card">
+        <h3>一键 Provider 切换</h3>
+        <p>内置 50+ API 供应商预设，支持 Claude、OpenAI、Gemini 等主流模型，价格低至官方费率的 7%。开发者无需手动编辑 JSON 配置文件。</p>
+      </div>
+      <div class="innovation-card">
+        <h3>统一 MCP 服务器管理</h3>
+        <p>所有 AI CLI 工具的 MCP（Model Context Protocol）服务器配置在一个界面内统一管理，避免重复配置，降低出错率。</p>
+      </div>
+      <div class="innovation-card">
+        <h3>多工具统一管理</h3>
+        <p>一个应用同时管理 Claude Code、Codex、Gemini CLI、OpenCode、OpenClaw、Hermes Agent 六大 AI CLI 工具，消除多工具管理的碎片化问题。</p>
+      </div>
+      <div class="innovation-card">
+        <h3>GitHub Copilot 反向代理</h3>
+        <p>v3.12.3 新增 GitHub Copilot 反向代理支持，配有专用 Auth Center，进一步扩展了对主流 AI 编码工具的兼容性。</p>
+      </div>
+      <div class="innovation-card">
+        <h3>技能生态平台</h3>
+        <p>v3.7 引入完整的技能生态系统，支持从 GitHub 仓库自动扫描和安装技能（约 2,000 行代码），构建了可扩展的插件化架构。</p>
+      </div>
+      <div class="innovation-card">
+        <h3>多形态产品矩阵</h3>
+        <p>除桌面版外，还衍生出 CLI 版本（cc-switch-cli，Rust 编写）和 Web 版本（cc-switch-web），覆盖服务器、浏览器等多使用场景。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2><span class="icon">🎯</span> 应用场景</h2>
+    <ul>
+      <li><strong>多模型切换开发</strong> — 开发者在不同任务中需要使用不同的 AI 模型（如 Claude 做复杂推理、GPT 做快速补全、Gemini 做多模态分析），CC-Switch 实现一键切换，无需中断工作流</li>
+      <li><strong>成本优化</strong> — 通过支持第三方 API 供应商，价格低至官方 7%，帮助团队和独立开发者大幅降低 AI 编码成本</li>
+      <li><strong>团队标准化配置</strong> — 团队负责人可通过统一 MCP 配置和系统提示词，确保所有成员使用一致的 AI 工具配置</li>
+      <li><strong>服务器/CI 环境</strong> — CLI 版本适用于无 GUI 的服务器环境和自动化脚本中快速配置 AI 工具</li>
+      <li><strong>API 供应商管理</strong> — 同时使用多个 API Key 或供应商的开发者，可在图形界面中方便地管理和切换</li>
+      <li><strong>AI 编程初学者入门</strong> — 为不熟悉 CLI 配置文件的新用户提供图形化引导，降低 AI 编程工具的入门门槛</li>
+    </ul>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2><span class="icon">⚔️</span> 竞品对比</h2>
+    <p>在 AI CLI 管理工具这一细分领域，CC-Switch 几乎没有完全对标的竞品，但以下对比展示了其独特定位：</p>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>CC-Switch</th>
+          <th>手动配置</th>
+          <th>IDE 插件（如 Continue）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>管理范围</td>
+          <td class="highlight">6+ AI CLI 统一管理</td>
+          <td>各自独立</td>
+          <td>仅 IDE 内使用</td>
+        </tr>
+        <tr>
+          <td>Provider 切换</td>
+          <td class="highlight">一键切换，50+ 预设</td>
+          <td>手动编辑 JSON</td>
+          <td>需配置文件</td>
+        </tr>
+        <tr>
+          <td>MCP 管理</td>
+          <td class="highlight">统一配置面板</td>
+          <td>每工具单独配置</td>
+          <td>部分支持</td>
+        </tr>
+        <tr>
+          <td>系统提示词</td>
+          <td class="highlight">统一管理</td>
+          <td>手动编辑</td>
+          <td>有限支持</td>
+        </tr>
+        <tr>
+          <td>跨平台</td>
+          <td class="highlight">Win/Mac/Linux + CLI + Web</td>
+          <td>—</td>
+          <td>依赖 IDE</td>
+        </tr>
+        <tr>
+          <td>学习成本</td>
+          <td class="highlight">低（图形界面）</td>
+          <td>高</td>
+          <td>中</td>
+        </tr>
+        <tr>
+          <td>性能</td>
+          <td class="highlight">轻量（Tauri/Rust）</td>
+          <td>—</td>
+          <td>中（Electron/插件）</td>
+        </tr>
+        <tr>
+          <td>生态成熟度</td>
+          <td>快速成长中</td>
+          <td>—</td>
+          <td class="highlight">较成熟</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><strong>核心竞争优势：</strong>CC-Switch 是目前唯一专注于「AI CLI 工具统一管理」这一垂直场景的产品。它不是另一个 AI 编码工具，而是管理所有 AI 编码工具的「元工具」。这种定位使其在 AI 开发工具生态中占据了独特且不可替代的位置。</p>
+  </div>
+
+  <!-- 风险与挑战 -->
+  <div class="section">
+    <h2><span class="icon">⚠️</span> 风险与挑战</h2>
+    <ul>
+      <li><strong>上游工具依赖风险</strong> — 依赖 Claude Code、Codex 等工具的配置格式，若上游变更配置结构可能需要频繁适配</li>
+      <li><strong>API 供应商合规性</strong> — 支持第三方低价 API 供应商可能涉及合规和安全性问题，用户需自行评估供应商可信度</li>
+      <li><strong>竞争边界模糊</strong> — 随着 AI IDE（如 Cursor、Windsurf）不断增强功能，可能蚕食部分 CLI 工具的使用场景</li>
+      <li><strong>快速迭代压力</strong> — 新的 AI CLI 工具（如 Amazon Q、JetBrains AI）不断涌现，需要持续扩展兼容性</li>
+    </ul>
+  </div>
+
+  <!-- 总结 -->
+  <div class="section">
+    <h2><span class="icon">📝</span> 总结</h2>
+    <p>CC-Switch 精准地抓住了 AI 编程工具爆发时代的一个关键痛点——<strong>多工具管理的碎片化问题</strong>。通过提供统一的图形界面来管理多个 AI CLI 工具的 API Provider、MCP 服务器和系统提示词，它极大地降低了开发者同时使用多种 AI 编码工具的摩擦力。</p>
+    <p>从技术选型看，Tauri 2 + Rust + React 的组合既保证了轻量高性能，又提供了优秀的用户体验。75K+ 的 Star 数印证了市场对这类「元工具」的强烈需求。</p>
+    <p>随着 AI 编程工具生态的持续繁荣和多样化，CC-Switch 作为连接多个工具的「枢纽」角色，其价值将持续增长。对于同时使用两个或以上 AI CLI 工具的开发者来说，这是一个值得安装的必备工具。</p>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>分析报告生成日期：2026-06-05 | 数据来源：GitHub、WebSearch</p>
+  <p>项目地址：<a href="https://github.com/farion1231/cc-switch" style="color:var(--accent-blue)">github.com/farion1231/cc-switch</a> | 官网：<a href="https://ccswitch.io" style="color:var(--accent-blue)">ccswitch.io</a></p>
+</div>
+
+</body>
+</html>
