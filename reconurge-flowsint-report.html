@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowsint 深度分析报告 | reconurge/flowsint</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --bg-card-hover: #1f2b3d;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
+            --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #06b6d4, #3b82f6);
+            --gradient-3: linear-gradient(135deg, #10b981, #06b6d4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            padding: 80px 0 60px;
+            background: linear-gradient(180deg, rgba(59,130,246,0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-content { position: relative; z-index: 1; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .badge-category {
+            background: rgba(6,182,212,0.15);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6,182,212,0.3);
+        }
+
+        .badge-date {
+            background: rgba(139,92,246,0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(139,92,246,0.3);
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 12px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .meta-icon { font-size: 18px; }
+        .meta-label { color: var(--text-muted); }
+        .meta-value { color: var(--text-primary); font-weight: 600; }
+
+        /* Score Section */
+        .score-section {
+            padding: 50px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .score-card h2 { font-size: 22px; margin-bottom: 30px; color: var(--text-primary); }
+
+        .overall-score {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 0 40px rgba(59,130,246,0.3);
+            margin-bottom: 10px;
+        }
+
+        .score-label { font-size: 14px; color: var(--text-muted); }
+
+        .score-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; margin: 0 auto; }
+
+        .score-bar-item { text-align: left; }
+
+        .score-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .score-bar-name { color: var(--text-secondary); }
+        .score-bar-value { color: var(--text-primary); font-weight: 600; }
+
+        .score-bar-track {
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 50px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .section-icon.blue { background: rgba(59,130,246,0.15); }
+        .section-icon.cyan { background: rgba(6,182,212,0.15); }
+        .section-icon.purple { background: rgba(139,92,246,0.15); }
+        .section-icon.green { background: rgba(16,185,129,0.15); }
+        .section-icon.orange { background: rgba(245,158,11,0.15); }
+        .section-icon.red { background: rgba(239,68,68,0.15); }
+
+        .section h2 { font-size: 24px; font-weight: 700; }
+
+        .section p { color: var(--text-secondary); font-size: 15px; line-height: 1.8; margin-bottom: 16px; }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .arch-layer {
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 280px;
+            border: 1px solid;
+        }
+
+        .arch-layer.l1 { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.3); color: var(--accent-purple); }
+        .arch-layer.l2 { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: var(--accent-blue); }
+        .arch-layer.l3 { background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.3); color: var(--accent-cyan); }
+        .arch-layer.l4 { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--accent-green); }
+        .arch-layer.l5 { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: var(--accent-orange); }
+
+        .arch-arrow { color: var(--text-muted); font-size: 20px; }
+
+        .arch-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: background 0.2s;
+        }
+
+        .card:hover { background: var(--bg-card-hover); }
+
+        .card-icon { font-size: 28px; margin-bottom: 12px; }
+
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .card p { font-size: 14px; color: var(--text-secondary); margin-bottom: 0; }
+
+        /* Enricher Tags */
+        .enricher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .enricher-category {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .enricher-category h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .enricher-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .enricher-tag {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .enricher-tag.blue { background: rgba(59,130,246,0.12); color: var(--accent-blue); }
+        .enricher-tag.cyan { background: rgba(6,182,212,0.12); color: var(--accent-cyan); }
+        .enricher-tag.green { background: rgba(16,185,129,0.12); color: var(--accent-green); }
+        .enricher-tag.purple { background: rgba(139,92,246,0.12); color: var(--accent-purple); }
+        .enricher-tag.orange { background: rgba(245,158,11,0.12); color: var(--accent-orange); }
+        .enricher-tag.pink { background: rgba(236,72,153,0.12); color: var(--accent-pink); }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: rgba(59,130,246,0.08);
+            color: var(--accent-blue);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table td {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:last-child td { border-bottom: none; }
+        .comparison-table .highlight { color: var(--accent-green); font-weight: 600; }
+        .comparison-table .tool-name { color: var(--text-primary); font-weight: 600; }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .tech-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .tech-item .tech-icon { font-size: 24px; margin-bottom: 8px; }
+        .tech-item .tech-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .tech-item .tech-role { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Use Cases */
+        .use-cases { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-top: 20px; }
+
+        .use-case {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .use-case h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        .use-case p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+        /* Footer */
+        .footer {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer a { color: var(--accent-blue); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 28px; }
+            .hero .subtitle { font-size: 16px; }
+            .hero-meta { flex-direction: column; }
+            .score-bars { grid-template-columns: 1fr; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .enricher-grid { grid-template-columns: 1fr; }
+            .tech-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<div class="hero">
+    <div class="container hero-content">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <span class="badge badge-category">OSINT / 网络安全</span>
+            <span class="badge badge-date">2026-06-04 分析</span>
+        </div>
+        <h1>Flowsint</h1>
+        <p class="subtitle">开源图数据库驱动的 OSINT 调查与情报分析平台</p>
+        <p style="color:var(--text-secondary); font-size:15px; max-width:800px;">
+            Flowsint 是一款专为网络安全分析师和调查人员设计的现代化、模块化、基于图数据库的开源情报（OSINT）调查平台。它通过可视化图界面和 30+ 自动化数据丰富器（Enricher），帮助用户高效探索和发现数字实体之间的隐藏关联关系。
+        </p>
+        <div class="hero-meta">
+            <div class="meta-item">
+                <span class="meta-icon">⭐</span>
+                <span class="meta-value">4,000+</span>
+                <span class="meta-label">GitHub Stars</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">📜</span>
+                <span class="meta-value">Apache 2.0</span>
+                <span class="meta-label">开源协议</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">🏗️</span>
+                <span class="meta-value">reconurge</span>
+                <span class="meta-label">组织</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">💻</span>
+                <span class="meta-value">Python / TypeScript</span>
+                <span class="meta-label">主要语言</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">🐳</span>
+                <span class="meta-value">Docker</span>
+                <span class="meta-label">部署方式</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Score Section -->
+<div class="score-section">
+    <div class="container">
+        <div class="score-card">
+            <h2>综合评分</h2>
+            <div class="overall-score">
+                <div class="score-circle">7.8</div>
+                <div class="score-label">/ 10 总分</div>
+            </div>
+            <div class="score-bars">
+                <div class="score-bar-item">
+                    <div class="score-bar-label">
+                        <span class="score-bar-name">技术创新性</span>
+                        <span class="score-bar-value">8.5</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:85%; background: var(--gradient-1);"></div>
+                    </div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="score-bar-label">
+                        <span class="score-bar-name">架构设计</span>
+                        <span class="score-bar-value">8.5</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:85%; background: var(--gradient-2);"></div>
+                    </div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="score-bar-label">
+                        <span class="score-bar-name">实用价值</span>
+                        <span class="score-bar-value">8.0</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:80%; background: var(--gradient-3);"></div>
+                    </div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="score-bar-label">
+                        <span class="score-bar-name">社区活跃度</span>
+                        <span class="score-bar-value">7.0</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:70%; background: linear-gradient(135deg, #f59e0b, #ef4444);"></div>
+                    </div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="score-bar-label">
+                        <span class="score-bar-name">文档完善度</span>
+                        <span class="score-bar-value">7.5</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:75%; background: linear-gradient(135deg, #ec4899, #8b5cf6);"></div>
+                    </div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="score-bar-label">
+                        <span class="score-bar-name">易用性</span>
+                        <span class="score-bar-value">7.5</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:75%; background: linear-gradient(135deg, #3b82f6, #06b6d4);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Overview -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon blue">📋</div>
+            <h2>项目概述</h2>
+        </div>
+        <p>
+            Flowsint 是由 <strong>reconurge</strong> 组织开发的现代化开源 OSINT 调查平台，旨在为网络安全分析师、调查记者、执法机构和数字取证团队提供专业级的图可视化情报分析能力。该项目定位为商业工具 Maltego 的开源替代方案，以 Apache 2.0 协议发布。
+        </p>
+        <p>
+            与传统 OSINT 工具不同，Flowsint 将所有数据存储在用户本地机器上，强调隐私保护和数据主权。它通过模块化的 Enricher（数据丰富器）体系实现自动化情报收集，支持从域名、IP、ASN、社交媒体、加密货币钱包等多种实体类型出发，自动扩展和丰富调查图谱。
+        </p>
+        <p>
+            该项目目前正处于早期活跃开发阶段，已获得 4,000+ GitHub Stars，在 OSINT 社区引起了广泛关注，被认为是最有潜力的 Maltego 开源替代方案之一。
+        </p>
+    </div>
+</div>
+
+<!-- Tech Architecture -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon cyan">🏗️</div>
+            <h2>技术架构</h2>
+        </div>
+        <p>Flowsint 采用模块化单体架构（Modular Monorepo），各模块职责明确，通过清晰的依赖关系层叠组织：</p>
+
+        <div class="arch-diagram">
+            <div class="arch-flow">
+                <div class="arch-layer l1">flowsint-app (前端应用)</div>
+                <div class="arch-desc">TypeScript 构建的现代化交互式图可视化界面，支持数千节点无延迟渲染</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-layer l2">flowsint-api (API 服务层)</div>
+                <div class="arch-desc">FastAPI 提供的 REST API 端点，认证与用户管理，实时事件流</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-layer l3">flowsint-core (核心编排层)</div>
+                <div class="arch-desc">数据库连接(PostgreSQL/Neo4j)、认证授权、Celery 异步任务、配置管理</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-layer l4">flowsint-enrichers (数据丰富引擎)</div>
+                <div class="arch-desc">30+ 自动化 Enricher 模块，覆盖域名/IP/ASN/社交/加密货币等数据源</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-layer l5">flowsint-types (类型定义层)</div>
+                <div class="arch-desc">Pydantic 数据模型，定义 Domain/IP/ASN/Email/Phone/Website/Crypto 等实体类型</div>
+            </div>
+        </div>
+
+        <h3 style="margin-top:30px; font-size:18px; margin-bottom:16px;">技术栈</h3>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-icon">🐍</div>
+                <div class="tech-name">Python</div>
+                <div class="tech-role">后端核心语言</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">⚡</div>
+                <div class="tech-name">FastAPI</div>
+                <div class="tech-role">API 框架</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">🕸️</div>
+                <div class="tech-name">Neo4j</div>
+                <div class="tech-role">图数据库</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">🐘</div>
+                <div class="tech-name">PostgreSQL</div>
+                <div class="tech-role">关系型数据库</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">📋</div>
+                <div class="tech-name">Pydantic</div>
+                <div class="tech-role">数据验证</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">🔄</div>
+                <div class="tech-name">Celery</div>
+                <div class="tech-role">异步任务队列</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">📘</div>
+                <div class="tech-name">TypeScript</div>
+                <div class="tech-role">前端开发</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">🐳</div>
+                <div class="tech-name">Docker</div>
+                <div class="tech-role">容器化部署</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">📦</div>
+                <div class="tech-name">Poetry / uv</div>
+                <div class="tech-role">包管理</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Core Innovations -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon purple">💡</div>
+            <h2>核心创新点</h2>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">🔗</div>
+                <h3>图驱动的关联发现引擎</h3>
+                <p>基于 Neo4j 图数据库构建，将所有 OSINT 实体（域名、IP、邮箱、社交账号、加密钱包等）建模为图节点，通过边关系自动发现和可视化隐藏的关联路径，实现从单一线索到完整关系网络的快速扩展。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">⚙️</div>
+                <h3>模块化 Enricher 体系</h3>
+                <p>30+ 开箱即用的自动化数据丰富器，按实体类型分类（域名/IP/ASN/社交/加密货币等）。用户可通过标准的 Enricher 接口轻松扩展新的数据源，支持将 Transforms 串联（Chain）实现复杂调查工作流自动化。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔒</div>
+                <h3>完全本地化部署与数据主权</h3>
+                <p>所有调查数据存储在用户本地机器上，不依赖任何云端服务。Docker 一键部署（<code>make prod</code>），强调 OSINT 调查中对隐私保护和数据主权的要求，特别适合安全敏感场景。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🧩</div>
+                <h3>清晰的模块化架构</h3>
+                <p>Monorepo 中划分 5 个独立模块（core/types/enrichers/api/app），每个模块有独立的依赖管理和测试套件。这种设计使新功能的添加路径清晰：新类型加到 types，新数据源加到 enrichers，新接口加到 api。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔌</div>
+                <h3>N8n 工作流集成</h3>
+                <p>内置 N8n Connector 集成丰富器，允许与流行的自动化工作流平台 N8n 对接，实现 OSINT 数据管道的自动化编排，扩展了平台与外部生态系统的互操作能力。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🚀</div>
+                <h3>高性能图可视化</h3>
+                <p>前端应用针对大规模图渲染进行了性能优化，即使处理数千节点也能保持流畅交互体验，解决了传统 OSINT 工具在大量数据下界面卡顿的痛点。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enrichers -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon green">🔧</div>
+            <h2>数据丰富器（Enrichers）一览</h2>
+        </div>
+        <p>Enricher 是 Flowsint 的核心自动化引擎。每个 Enricher 接收一个源实体作为输入，通过搜索或转换操作，产出一个或多个目标实体，自动扩展调查图谱。</p>
+
+        <div class="enricher-grid">
+            <div class="enricher-category">
+                <h4>🌐 域名 (Domain)</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag blue">DNS 解析</span>
+                    <span class="enricher-tag blue">反向 DNS</span>
+                    <span class="enricher-tag blue">子域名发现</span>
+                    <span class="enricher-tag blue">WHOIS 查询</span>
+                    <span class="enricher-tag blue">域名历史</span>
+                    <span class="enricher-tag blue">域名转网站</span>
+                    <span class="enricher-tag blue">根域名提取</span>
+                    <span class="enricher-tag blue">域名转 ASN</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>🔢 IP 地址</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag cyan">IP 地理位置</span>
+                    <span class="enricher-tag cyan">IP 网络详情</span>
+                    <span class="enricher-tag cyan">IP 转 ASN</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>📶 ASN / CIDR</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag green">ASN 转 CIDR</span>
+                    <span class="enricher-tag green">CIDR 转 IP</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>📱 社交媒体</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag purple">Maigret 用户名搜索</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>🏢 组织</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag orange">组织转 ASN</span>
+                    <span class="enricher-tag orange">组织详情</span>
+                    <span class="enricher-tag orange">组织转域名</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>₿ 加密货币</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag pink">钱包转交易</span>
+                    <span class="enricher-tag pink">钱包转 NFT</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>🌐 网站</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag blue">网站爬虫</span>
+                    <span class="enricher-tag blue">链接提取</span>
+                    <span class="enricher-tag blue">追踪器识别</span>
+                    <span class="enricher-tag blue">文本提取</span>
+                    <span class="enricher-tag blue">域名提取</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>📧 邮箱 / 📞 电话</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag cyan">Gravatar 查询</span>
+                    <span class="enricher-tag cyan">数据泄露检查</span>
+                    <span class="enricher-tag cyan">关联域名</span>
+                    <span class="enricher-tag cyan">电话泄露检查</span>
+                </div>
+            </div>
+            <div class="enricher-category">
+                <h4>👤 个人 / 🔗 集成</h4>
+                <div class="enricher-tags">
+                    <span class="enricher-tag green">个人转组织</span>
+                    <span class="enricher-tag green">个人转域名</span>
+                    <span class="enricher-tag green">N8n 连接器</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Scenarios -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon orange">🎯</div>
+            <h2>应用场景</h2>
+        </div>
+        <div class="use-cases">
+            <div class="use-case">
+                <h4>🛡️ 威胁情报分析</h4>
+                <p>从恶意 IP 或钓鱼域名出发，自动关联其背后的 ASN、子域名、注册信息和关联 IP，快速构建攻击者基础设施画像。</p>
+            </div>
+            <div class="use-case">
+                <h4>🔍 数字取证调查</h4>
+                <p>执法机构和数字取证团队可从单一线索（邮箱、用户名）出发，通过 Enricher 链式扩展，发现关联的社交媒体账号、数据泄露记录等。</p>
+            </div>
+            <div class="use-case">
+                <h4>📰 调查新闻</h4>
+                <p>记者和调查人员可追踪组织背后的域名注册信息、关联实体、网站追踪器和加密钱包流向，支撑深度调查报道。</p>
+            </div>
+            <div class="use-case">
+                <h4>🏢 企业安全审计</h4>
+                <p>企业安全团队可评估自身数字资产暴露面，发现未授权子域名、关联 IP 段、追踪脚本和数据泄露风险。</p>
+            </div>
+            <div class="use-case">
+                <h4>₿ 加密货币调查</h4>
+                <p>追踪加密货币钱包的交易历史和 NFT 持有情况，辅助反洗钱（AML）和反欺诈调查。</p>
+            </div>
+            <div class="use-case">
+                <h4>🎓 安全研究与教育</h4>
+                <p>作为 OSINT 教学和实践工具，帮助学生和入门安全研究员直观理解实体间的关联关系和信息收集方法论。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Competitive Comparison -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon red">⚔️</div>
+            <h2>竞品对比</h2>
+        </div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>Flowsint</th>
+                    <th>Maltego</th>
+                    <th>SpiderFoot</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="tool-name">授权模式</td>
+                    <td class="highlight">完全开源 (Apache 2.0)</td>
+                    <td>商业软件 (有免费社区版)</td>
+                    <td>开源 (HX 版付费)</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">核心定位</td>
+                    <td>图可视化 OSINT 调查</td>
+                    <td>可视化关联分析平台</td>
+                    <td>自动化 OSINT 侦察</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">图数据库</td>
+                    <td class="highlight">Neo4j (原生图查询)</td>
+                    <td>自研图引擎</td>
+                    <td>SQLite / 无图引擎</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">数据丰富器</td>
+                    <td>30+ 内置 Enricher</td>
+                    <td>100+ Transforms (含付费)</td>
+                    <td>100+ 数据源模块</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">可视化能力</td>
+                    <td>高性能交互式图</td>
+                    <td class="highlight">业界最佳图可视化</td>
+                    <td>基础列表/表格视图</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">部署方式</td>
+                    <td class="highlight">Docker 本地一键部署</td>
+                    <td>桌面客户端</td>
+                    <td>Python / Docker</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">数据隐私</td>
+                    <td class="highlight">完全本地存储</td>
+                    <td>依赖 Transform Hub</td>
+                    <td>本地部署可选</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">扩展性</td>
+                    <td>标准 Enricher 接口</td>
+                    <td>Transform SDK</td>
+                    <td>Python 模块</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">生态系统</td>
+                    <td>早期阶段，快速发展中</td>
+                    <td class="highlight">成熟生态，广泛社区</td>
+                    <td>中等规模社区</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">成本</td>
+                    <td class="highlight">完全免费</td>
+                    <td>社区版免费 / Pro $960+/年</td>
+                    <td>开源免费 / HX $80+/月</td>
+                </tr>
+                <tr>
+                    <td class="tool-name">工作流自动化</td>
+                    <td>Enricher 链式调用 + N8n</td>
+                    <td>Machine 模式批处理</td>
+                    <td>自动化扫描</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top:16px;">
+            <strong>总结：</strong>Flowsint 的核心优势在于完全开源免费、本地化部署保护隐私、基于 Neo4j 的原生图数据库支持。虽然生态成熟度和数据源数量尚不及 Maltego，但其模块化架构和零成本特性使其成为中小型安全团队和个人研究者的理想选择。
+        </p>
+    </div>
+</div>
+
+<!-- Quick Start -->
+<div class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-icon green">🚀</div>
+            <h2>快速上手</h2>
+        </div>
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:24px; margin-top:16px;">
+            <pre style="color: var(--accent-cyan); font-family: 'Fira Code', monospace; font-size: 14px; line-height: 1.8; white-space: pre-wrap;"><code># 克隆仓库
+git clone https://github.com/reconurge/flowsint.git
+cd flowsint
+
+# 一键启动（需要 Docker 和 Make）
+make prod
+
+# 访问 http://localhost:5173/register 创建账户
+# 所有数据存储在本地，无需云端依赖</code></pre>
+        </div>
+        <p style="margin-top:12px; font-size:13px;">
+            <strong>开发环境：</strong>开发者可使用 <code>uv run pytest</code> 在各模块中运行独立测试套件，使用 Poetry 管理依赖。项目欢迎社区贡献新的 Enricher、类型定义和 API 端点。
+        </p>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <div class="container">
+        <p>Flowsint 深度分析报告 | 生成于 2026-06-04</p>
+        <p style="margin-top:8px;">
+            <a href="https://github.com/reconurge/flowsint" target="_blank">GitHub 仓库</a> ·
+            <a href="https://www.flowsint.io/" target="_blank">官方网站</a> ·
+            <a href="https://www.flowsint.io/docs/overview" target="_blank">文档</a> ·
+            <a href="https://ossinsight.io/analyze/reconurge/flowsint" target="_blank">OSSInsight 分析</a>
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
