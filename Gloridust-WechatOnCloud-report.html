@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WechatOnCloud (云微WOC) 深度分析报告</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --accent: #06b6d4;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --tag-bg: #eff6ff;
+            --tag-text: #1d4ed8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
+            padding: 40px 36px;
+            margin-bottom: 28px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: rgba(6,182,212,0.15);
+            border-radius: 50%;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: -40px;
+            width: 150px; height: 150px;
+            background: rgba(37,99,235,0.15);
+            border-radius: 50%;
+        }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; position: relative; z-index: 1; }
+        .header .subtitle { font-size: 16px; color: #94a3b8; margin-bottom: 16px; position: relative; z-index: 1; }
+        .header .meta {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            font-size: 13px; color: #cbd5e1;
+            position: relative; z-index: 1;
+        }
+        .header .meta span { background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; }
+
+        /* Score Card */
+        .score-section {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+        .score-section h2 { font-size: 18px; margin-bottom: 20px; color: var(--text); }
+        .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .score-item {
+            text-align: center;
+            padding: 16px 12px;
+            border-radius: 10px;
+            background: #f1f5f9;
+        }
+        .score-item .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+        .score-item .value { font-size: 28px; font-weight: 700; }
+        .score-item .bar {
+            height: 4px; border-radius: 2px;
+            background: #e2e8f0; margin-top: 8px;
+            overflow: hidden;
+        }
+        .score-item .bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+        .score-total {
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            border-radius: 10px;
+        }
+        .score-total .value { font-size: 40px; font-weight: 800; color: var(--primary); }
+        .score-total .label { font-size: 14px; color: var(--text-secondary); }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+        .card h2 {
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card h2 .icon { font-size: 20px; }
+        .card h3 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; color: var(--primary-dark); }
+        .card p, .card li { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 4px; }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Table */
+        .card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+        .card th, .card td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .card th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .card td { color: var(--text-secondary); }
+
+        /* Architecture diagram */
+        .arch-diagram {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            margin: 16px 0;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            color: #334155;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 10px 10px 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 12px 8px; }
+            .header { padding: 24px 20px; }
+            .header h1 { font-size: 22px; }
+            .card { padding: 20px 16px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>WechatOnCloud (云微 WOC)</h1>
+            <div class="subtitle">在自己的 NAS / 服务器上运行「服务端微信」，多端浏览器共享同一个微信会话</div>
+            <div class="meta">
+                <span>GitHub: Gloridust/WechatOnCloud</span>
+                <span>语言: Shell / JavaScript</span>
+                <span>架构: amd64 / arm64</span>
+                <span>许可: 开源</span>
+                <span>分析日期: 2026-06-04</span>
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="score-section">
+            <h2>📊 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="label">技术创新</div>
+                    <div class="value" style="color: var(--primary);">8.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:85%;background:var(--primary);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">实用价值</div>
+                    <div class="value" style="color: var(--success);">9.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:90%;background:var(--success);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">代码质量</div>
+                    <div class="value" style="color: var(--accent);">7.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:75%;background:var(--accent);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">社区活跃度</div>
+                    <div class="value" style="color: var(--warning);">8.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:80%;background:var(--warning);"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">文档完善度</div>
+                    <div class="value" style="color: #8b5cf6;">8.5</div>
+                    <div class="bar"><div class="bar-fill" style="width:85%;background:#8b5cf6;"></div></div>
+                </div>
+                <div class="score-item">
+                    <div class="label">安全性</div>
+                    <div class="value" style="color: var(--danger);">7.0</div>
+                    <div class="bar"><div class="bar-fill" style="width:70%;background:var(--danger);"></div></div>
+                </div>
+            </div>
+            <div class="score-total">
+                <div class="value">8.1 / 10</div>
+                <div class="label">综合评分 · 优秀</div>
+            </div>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="card">
+            <h2><span class="icon">📋</span> 项目概述</h2>
+            <p>WechatOnCloud（云微 WOC）是一个创新性的开源项目，允许用户在自有 NAS 或服务器上运行"服务端微信"。项目的核心理念是<strong>"云微信，自由连接"</strong>——将微信从本地客户端扩展到云端，实现多设备浏览器共享同一个微信会话。</p>
+            <div class="highlight-box">
+                <strong>核心原理：</strong>每个微信实例 = 一个独立容器，容器内运行 Xvfb 虚拟显示 + 官方原版 Linux 微信，通过 KasmVNC 将画面串流到浏览器。多个浏览器连接同一实例即共享同一微信会话。自研面板作为唯一对外入口，通过 docker.sock 按需创建/销毁实例并反向代理。
+            </div>
+            <div class="tags">
+                <span class="tag">Docker</span>
+                <span class="tag">NAS 自部署</span>
+                <span class="tag">KasmVNC</span>
+                <span class="tag">多实例管理</span>
+                <span class="tag">PWA</span>
+                <span class="tag">RBAC 权限</span>
+                <span class="tag">飞牛 NAS</span>
+            </div>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="card">
+            <h2><span class="icon">🏗️</span> 技术架构</h2>
+            <h3>架构拓扑</h3>
+            <div class="arch-diagram">┌─────────────────────────────────────────────────┐
+│                   宿主 NAS / 服务器                │
+│                                                   │
+│  ┌──────────────┐     ┌──────────────────────┐   │
+│  │  woc-panel   │     │  wechat-on-cloud-N   │   │
+│  │  (管理面板)   │────▶│  (微信实例容器)       │   │
+│  │              │     │  ┌────────────────┐  │   │
+│  │  - Cookie鉴权│     │  │ Xvfb 虚拟显示  │  │   │
+│  │  - 反向代理  │     │  │ 官方Linux微信   │  │   │
+│  │  - 子账号RBAC│     │  │ KasmVNC 串流   │  │   │
+│  │  - PWA支持   │     │  └────────────────┘  │   │
+│  └──────┬───────┘     └──────────────────────┘   │
+│         │ docker.sock                             │
+│         │ (创建/销毁/管理实例)                     │
+└─────────┼─────────────────────────────────────────┘
+          │
+    ┌─────┴─────┐
+    │  浏览器    │  (多端/多用户通过浏览器访问面板)
+    │  :36080   │
+    └───────────┘</div>
+
+            <h3>核心组件</h3>
+            <table>
+                <tr><th>组件</th><th>技术</th><th>职责</th></tr>
+                <tr><td>woc-panel</td><td>Node.js / Web</td><td>管理面板，用户鉴权，实例管理，反向代理</td></tr>
+                <tr><td>wechat-on-cloud</td><td>Docker (Debian base)</td><td>微信运行环境，Xvfb + 原版微信 + KasmVNC</td></tr>
+                <tr><td>KasmVNC</td><td>C++ / WebRTC</td><td>将 X11 桌面串流到浏览器，支持远程输入</td></tr>
+                <tr><td>Xvfb</td><td>X11 虚拟帧缓冲</td><td>在无物理显示器的容器中提供图形环境</td></tr>
+                <tr><td>docker.sock</td><td>Docker Engine API</td><td>面板通过它动态创建/销毁微信实例容器</td></tr>
+            </table>
+
+            <h3>部署方式</h3>
+            <ul>
+                <li><strong>方式 A - 本地构建：</strong>git clone → .env 配置 → ./scripts/build-local.sh → docker compose up -d</li>
+                <li><strong>方式 B - 官方镜像：</strong>git clone → .env 配置 → docker compose up -d（从 GHCR 拉取预构建镜像）</li>
+            </ul>
+            <p>对外仅暴露面板的 <code>36080</code> 端口，微信实例容器仅在 Docker 内部网络中由面板反代，不直接暴露。</p>
+
+            <h3>资源占用</h3>
+            <table>
+                <tr><th>状态</th><th>CPU</th><th>内存 (RSS)</th></tr>
+                <tr><td>单实例空闲</td><td>~0.1–0.2 核</td><td>~0.6 GiB</td></tr>
+                <tr><td>单实例活跃</td><td>~0.5–1 核</td><td>~1–1.5 GiB</td></tr>
+                <tr><td>面板本身</td><td>可忽略</td><td>~0.12 GiB</td></tr>
+            </table>
+            <p><strong>推荐配置：</strong>2核/2GiB 跑 1 个实例；4核/8GiB 跑 3-4 个实例。内存是主要瓶颈。</p>
+        </div>
+
+        <!-- 核心创新点 -->
+        <div class="card">
+            <h2><span class="icon">💡</span> 核心创新点</h2>
+            <h3>1. 服务端微信架构</h3>
+            <p>将微信从本地客户端转变为可云端部署的服务，突破了微信"单设备登录"的限制。通过容器化技术实现了微信的轻量化、隔离化运行，每个微信会话独立互不干扰。</p>
+
+            <h3>2. 微信本体运行时下载</h3>
+            <p>创新性地将微信安装包与 Docker 镜像解耦——镜像不打包微信本体，而是在面板中一键"下载并安装"。镜像体积小、构建快，微信更新也无需重建镜像。</p>
+
+            <h3>3. KasmVNC 凭据安全注入</h3>
+            <p>VNC 连接凭据由面板服务端动态注入到实例容器，<strong>永远不下发到前端浏览器</strong>。用户通过面板的反向代理间接访问 VNC 画面，从根本上杜绝了凭据泄露风险。</p>
+
+            <h3>4. 中文输入法 IME 修复</h3>
+            <p>针对 KasmVNC 的中文输入问题进行了深度修复——仅在输入法"上屏"时刻将成品汉字整串发送进容器，规避了原生实现逐字符差分导致的丢字/卡顿问题。</p>
+
+            <h3>5. 多端协作软锁</h3>
+            <p>同一实例多人操作时自动进入只读模式 + 申请接管机制，通过心跳检测实现操作控制权的动态管理，避免"键鼠打架"。</p>
+
+            <h3>6. PWA 支持</h3>
+            <p>iOS Safari "添加到主屏幕"、桌面 Chrome "安装"，可当作原生 App 使用，移动端体验流畅。</p>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="card">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+            <table>
+                <tr><th>场景</th><th>描述</th><th>适合人群</th></tr>
+                <tr><td>多设备办公</td><td>在电脑、平板、手机浏览器共享同一微信会话，无需反复扫码登录</td><td>办公人员、远程工作者</td></tr>
+                <tr><td>NAS 家庭服务</td><td>在飞牛等 NAS 设备上部署，家庭成员共享管理</td><td>家庭 NAS 用户</td></tr>
+                <tr><td>企业客服</td><td>多客服人员通过浏览器访问同一微信客服号，协作处理消息</td><td>中小企业客服团队</td></tr>
+                <tr><td>AI 自动化接入</td><td>为微信 AI 机器人（如 ChatGPT-on-WeChat）提供稳定的运行环境</td><td>AI 开发者、自动化爱好者</td></tr>
+                <tr><td>跨境/远程微信</td><td>在海外服务器部署微信，通过浏览器访问，解决网络限制问题</td><td>海外华人、跨境电商</td></tr>
+                <tr><td>微信数据备份</td><td>数据卷持久化保存聊天记录，便于备份和迁移</td><td>数据安全意识强的用户</td></tr>
+            </table>
+        </div>
+
+        <!-- 竞品对比 -->
+        <div class="card">
+            <h2><span class="icon">⚔️</span> 竞品对比</h2>
+            <table>
+                <tr><th>维度</th><th>WechatOnCloud (WOC)</th><th>WeChat Selkies</th><th>ChatGPT-on-WeChat</th></tr>
+                <tr><td>核心定位</td><td>服务端微信 + 多实例管理平台</td><td>浏览器访问 Linux 微信</td><td>AI 聊天机器人框架</td></tr>
+                <tr><td>部署方式</td><td>Docker Compose（面板+实例）</td><td>单个 Docker 容器</td><td>Docker / 本地 Python</td></tr>
+                <tr><td>多实例</td><td>✅ 原生支持，面板管理</td><td>❌ 单实例</td><td>❌ 单账号</td></tr>
+                <tr><td>权限管理</td><td>✅ RBAC，管理员+子账号</td><td>❌ 无</td><td>❌ 无</td></tr>
+                <tr><td>微信版本</td><td>官方 Linux 原版（不修改）</td><td>官方 Linux 版</td><td>协议层接入（风险较高）</td></tr>
+                <tr><td>中文输入</td><td>✅ 深度优化（IME 上屏修复）</td><td>⚠️ 需额外配置</td><td>N/A</td></tr>
+                <tr><td>PWA</td><td>✅ 支持</td><td>❌ 不支持</td><td>❌ 不支持</td></tr>
+                <tr><td>AI 集成</td><td>⚠️ 需自行接入</td><td>❌ 不支持</td><td>✅ 原生支持</td></tr>
+                <tr><td>安全设计</td><td>✅ 面板唯一入口，凭据不下发</td><td>⚠️ 直连 VNC</td><td>⚠️ 协议层风险</td></tr>
+                <tr><td>维护团队</td><td>Gloridust 个人</td><td>社区维护</td><td>活跃社区</td></tr>
+            </table>
+            <div class="highlight-box">
+                <strong>竞争优势：</strong>WOC 在多实例管理、权限控制、安全设计方面显著领先。其"不修改微信客户端"的设计理念既保证了合规性，也降低了封号风险。唯一短板是 AI 集成能力，但这也为社区贡献留下了空间。
+            </div>
+        </div>
+
+        <!-- 安全分析 -->
+        <div class="card">
+            <h2><span class="icon">🔒</span> 安全分析</h2>
+            <h3>安全优势</h3>
+            <ul>
+                <li>面板为唯一对外入口，微信实例不直接暴露</li>
+                <li>KasmVNC 凭据服务端注入，浏览器永远拿不到</li>
+                <li>Docker API 仅管理员可触达</li>
+                <li>实例容器名由内部随机 ID 派生，防止注入</li>
+                <li>支持外层套 HTTPS 反代获取 TLS</li>
+            </ul>
+            <h3>风险提示</h3>
+            <ul>
+                <li>面板挂载了 docker.sock，等同于宿主 root 权限，管理端被攻破后果严重</li>
+                <li>默认密码 (admin/wechat) 需及时修改</li>
+                <li>不建议将面板裸暴露公网，应通过 VPN / 内网穿透访问</li>
+                <li>微信登录态存储在容器中，容器被入侵则聊天记录泄露</li>
+            </ul>
+        </div>
+
+        <!-- 路线图 -->
+        <div class="card">
+            <h2><span class="icon">🗺️</span> 发展路线</h2>
+            <table>
+                <tr><th>阶段</th><th>功能</th><th>状态</th></tr>
+                <tr><td>MVP</td><td>Docker + 微信原生版 + KasmVNC，浏览器扫码登录</td><td>✅ 已完成</td></tr>
+                <tr><td>V1</td><td>自研面板、Cookie 鉴权、反代、子账号管理、PWA</td><td>✅ 已完成</td></tr>
+                <tr><td>V2</td><td>微信运行时下载、多实例管理、RBAC 权限</td><td>✅ 已完成</td></tr>
+                <tr><td>V3</td><td>多架构预构建镜像、GHCR 自动发布</td><td>✅ 已完成</td></tr>
+                <tr><td>V4</td><td>中文输入修复、剪贴板中转、多端协作软锁</td><td>✅ 已完成</td></tr>
+                <tr><td>未来</td><td>外层 TLS、陌生设备验证码、审计日志</td><td>🚧 计划中</td></tr>
+                <tr><td>未来</td><td>飞牛 NAS 原生 fpk 打包分发</td><td>🚧 工程就绪</td></tr>
+            </table>
+        </div>
+
+        <!-- 总结 -->
+        <div class="card">
+            <h2><span class="icon">📝</span> 总结</h2>
+            <p>WechatOnCloud 是一个设计精良、实用性极强的开源项目。它通过巧妙的技术方案——Docker 容器化 + KasmVNC 串流 + 自研管理面板——将微信从桌面应用转变为可云端部署的服务，解决了多设备、多用户共享微信会话的痛点。</p>
+            <p>项目的安全意识值得称赞：凭据服务端注入、面板唯一入口、RBAC 权限控制等设计体现了工程师对安全风险的深刻理解。中文输入法的深度修复也展示了对用户体验细节的追求。</p>
+            <p>作为两天内获得 500+ Star 的新兴项目，其社区关注度很高。主要风险在于个人维护的可持续性，以及微信官方政策的不确定性。但总体而言，这是一个值得关注的优秀开源项目，尤其在 NAS 自部署和微信远程办公场景中有着独特价值。</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析报告由 AI 深度分析生成 · 数据来源：GitHub、技术博客、社区讨论 · 报告日期：2026-06-04</p>
+        </div>
+    </div>
+</body>
+</html>
