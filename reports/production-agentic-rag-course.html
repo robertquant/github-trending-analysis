@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告 - jamwithai/production-agentic-rag-course</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px 20px; }
+
+        /* Header */
+        .header {
+            background: var(--gradient-1);
+            color: white;
+            padding: 48px 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .header .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header .subtitle { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
+        .header .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+        .header .meta span { display: flex; align-items: center; gap: 4px; }
+
+        /* Score Card */
+        .score-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .score-card h2 { font-size: 18px; color: var(--text-secondary); margin-bottom: 20px; font-weight: 600; }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 24px rgba(102,126,234,0.3);
+        }
+        .score-circle .number { font-size: 36px; font-weight: 800; line-height: 1; }
+        .score-circle .label { font-size: 12px; opacity: 0.9; }
+        .score-bars { display: grid; gap: 14px; max-width: 500px; margin: 0 auto; }
+        .score-bar-item { display: flex; align-items: center; gap: 12px; }
+        .score-bar-item .name { width: 90px; text-align: right; font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+        .score-bar-item .bar-bg { flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; }
+        .score-bar-item .bar-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+        .score-bar-item .val { width: 36px; font-size: 14px; font-weight: 700; color: var(--text); }
+
+        /* Section */
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section h2 .icon { font-size: 22px; }
+        .section p { margin-bottom: 12px; color: var(--text); font-size: 15px; }
+        .section ul { padding-left: 20px; margin-bottom: 12px; }
+        .section li { margin-bottom: 6px; font-size: 15px; color: var(--text); }
+
+        /* Tech Tags */
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .tech-tag {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid #bfdbfe;
+        }
+        .tech-tag.green { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+        .tech-tag.orange { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+        .tech-tag.purple { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+        .tech-tag.cyan { background: #ecfeff; color: #0891b2; border-color: #a5f3fc; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 32px; margin: 16px 0; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: var(--primary);
+            opacity: 0.3;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 3px solid var(--primary);
+        }
+        .timeline-item .week {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        .timeline-item .title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .timeline-item .desc { font-size: 14px; color: var(--text-secondary); }
+
+        /* Comparison Table */
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        .comparison-table th {
+            background: #f1f5f9;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table tr:last-child td { border-bottom: none; }
+        .comparison-table .highlight { color: var(--primary); font-weight: 600; }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        .highlight-box.green { background: linear-gradient(135deg, #ecfdf5, #f0fdf4); border-color: #a7f3d0; }
+        .highlight-box.orange { background: linear-gradient(135deg, #fffbeb, #fefce8); border-color: #fde68a; }
+        .highlight-box strong { display: block; margin-bottom: 6px; font-size: 15px; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .footer a { color: var(--primary); text-decoration: none; }
+
+        @media (max-width: 640px) {
+            .header { padding: 32px 20px; }
+            .header h1 { font-size: 22px; }
+            .section { padding: 20px 16px; }
+            .score-card { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="badge">GitHub Trending 深度分析</div>
+        <h1>Production Agentic RAG Course</h1>
+        <div class="subtitle">jamwithai/production-agentic-rag-course — 从零构建生产级智能检索增强生成系统</div>
+        <div class="meta">
+            <span>📅 2026-06-04</span>
+            <span>🐍 Python 3.12+</span>
+            <span>📄 MIT License</span>
+            <span>👥 Jam with AI</span>
+        </div>
+    </div>
+
+    <!-- Score Card -->
+    <div class="score-card">
+        <h2>综合评分</h2>
+        <div class="score-circle">
+            <div class="number">9.0</div>
+            <div class="label">/ 10</div>
+        </div>
+        <div class="score-bars">
+            <div class="score-bar-item">
+                <span class="name">技术深度</span>
+                <div class="bar-bg"><div class="bar-fill" style="width:92%;background:var(--gradient-1)"></div></div>
+                <span class="val">9.2</span>
+            </div>
+            <div class="score-bar-item">
+                <span class="name">实用性</span>
+                <div class="bar-bg"><div class="bar-fill" style="width:95%;background:var(--gradient-3)"></div></div>
+                <span class="val">9.5</span>
+            </div>
+            <div class="score-bar-item">
+                <span class="name">创新性</span>
+                <div class="bar-bg"><div class="bar-fill" style="width:88%;background:var(--gradient-2)"></div></div>
+                <span class="val">8.8</span>
+            </div>
+            <div class="score-bar-item">
+                <span class="name">工程质量</span>
+                <div class="bar-bg"><div class="bar-fill" style="width:90%;background:var(--gradient-1)"></div></div>
+                <span class="val">9.0</span>
+            </div>
+            <div class="score-bar-item">
+                <span class="name">文档质量</span>
+                <div class="bar-bg"><div class="bar-fill" style="width:90%;background:var(--gradient-3)"></div></div>
+                <span class="val">9.0</span>
+            </div>
+            <div class="score-bar-item">
+                <span class="name">社区活跃度</span>
+                <div class="bar-bg"><div class="bar-fill" style="width:82%;background:var(--gradient-2)"></div></div>
+                <span class="val">8.2</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2><span class="icon">📋</span> 项目概述</h2>
+        <p>
+            <strong>Production Agentic RAG Course</strong> 是由 <strong>Jam with AI</strong> 团队（Shirin Khosravi Jam 和 Shantanu Ladhwe，两位拥有 17 年以上 AI/ML 经验的工程师）创建的开源教学项目。该项目以构建一个<strong> arXiv 论文智能助手</strong>为主线，通过 7 周渐进式教学，手把手带你从基础设施搭建到最终实现具备自主决策能力的 Agentic RAG 系统。
+        </p>
+        <div class="highlight-box">
+            <strong>核心理念：先夯实搜索基础，再叠加 AI 能力</strong>
+            与大多数直接跳到向量搜索的教程不同，本项目遵循<strong>「专业路径」</strong>：先掌握 BM25 关键词搜索基础，再用向量搜索进行混合检索增强。这正是生产级 RAG 系统的构建方式，而非忽略搜索基础的「AI-first」方案。
+        </div>
+        <p>
+            项目最终产物是一个完整的 AI 研究助手，能自动获取学术论文、理解内容、并通过 Telegram 机器人回答研究问题，支持多步推理、文档评估和自适应检索。
+        </p>
+        <div class="tech-tags">
+            <span class="tech-tag">Python 3.12+</span>
+            <span class="tech-tag green">FastAPI</span>
+            <span class="tech-tag orange">OpenSearch 2.19</span>
+            <span class="tech-tag purple">LangGraph</span>
+            <span class="tech-tag cyan">Docker</span>
+            <span class="tech-tag">PostgreSQL 16</span>
+            <span class="tech-tag green">Apache Airflow 3.0</span>
+            <span class="tech-tag orange">Ollama</span>
+            <span class="tech-tag purple">Redis</span>
+            <span class="tech-tag cyan">Langfuse</span>
+            <span class="tech-tag">Jina AI</span>
+            <span class="tech-tag green">Gradio</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2><span class="icon">🏗️</span> 技术架构</h2>
+        <p>项目采用模块化、分层架构，每周在前一周的基础上渐进式构建，形成完整的生产级技术栈：</p>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="week">Week 1 — 基础设施层</div>
+                <div class="title">Docker Compose + FastAPI + PostgreSQL + OpenSearch + Airflow</div>
+                <div class="desc">搭建完整的微服务基础设施，包含健康检查、自动文档和服务编排</div>
+            </div>
+            <div class="timeline-item">
+                <div class="week">Week 2 — 数据管道层</div>
+                <div class="title">arXiv API + Docling PDF 解析 + Airflow DAG</div>
+                <div class="desc">自动化学术论文获取、解析与存储，支持速率限制和重试机制</div>
+            </div>
+            <div class="timeline-item">
+                <div class="week">Week 3 — 搜索基础层</div>
+                <div class="title">BM25 关键词搜索 + OpenSearch Query DSL</div>
+                <div class="desc">构建专业搜索基础设施，掌握 BM25 算法原理与过滤/排序查询</div>
+            </div>
+            <div class="timeline-item">
+                <div class="week">Week 4 — 语义增强层</div>
+                <div class="title">智能分块 + Jina Embeddings + RRF 混合搜索</div>
+                <div class="desc">基于章节的智能文档分段，融合关键词与语义检索的混合搜索</div>
+            </div>
+            <div class="timeline-item">
+                <div class="week">Week 5 — RAG 管道层</div>
+                <div class="title">Ollama 本地 LLM + SSE 流式响应 + Gradio UI</div>
+                <div class="desc">完整 RAG 流水线，Prompt 优化减少 80%，6x 速度提升，流式输出</div>
+            </div>
+            <div class="timeline-item">
+                <div class="week">Week 6 — 生产运维层</div>
+                <div class="title">Langfuse 追踪 + Redis 缓存</div>
+                <div class="desc">端到端可观测性、性能监控、智能缓存（150-400x 加速）</div>
+            </div>
+            <div class="timeline-item">
+                <div class="week">Week 7 — 智能代理层</div>
+                <div class="title">LangGraph Agent + 文档评分 + 查询重写 + Telegram Bot</div>
+                <div class="desc">自主决策的 Agentic RAG：护栏机制、自适应检索、推理透明度</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2><span class="icon">💡</span> 核心创新点</h2>
+
+        <div class="highlight-box">
+            <strong>1. 「搜索先行」的教学方法论</strong>
+            区别于市面上「上来就向量搜索」的教程，本项目坚持先建立 BM25 搜索基础再叠加 AI 层。这种方法更贴近真实企业的 RAG 构建实践，学习效果更扎实。
+        </div>
+
+        <div class="highlight-box green">
+            <strong>2. 完整的生产级技术栈</strong>
+            从数据摄取（Airflow）到搜索（OpenSearch）到 LLM 推理（Ollama）再到监控（Langfuse）和缓存（Redis），覆盖了 RAG 系统在生产环境中需要的每一个环节，而非简单的 demo 原型。
+        </div>
+
+        <div class="highlight-box orange">
+            <strong>3. 渐进式架构演进</strong>
+            7 周内容设计为层层递进：基础设施 → 数据管道 → 关键词搜索 → 语义搜索 → RAG → 监控 → Agent。学习者可以清晰地理解每个组件的定位和价值，避免「一上来就被复杂性淹没」。
+        </div>
+
+        <div class="highlight-box">
+            <strong>4. Agentic RAG 自主决策架构</strong>
+            Week 7 实现了完整的 Agent 能力：查询验证护栏、文档相关性评分、查询自动重写、自适应多轮检索、推理步骤追踪。这不是简单的 retrieve-then-generate，而是具备反思和调整能力的智能系统。
+        </div>
+
+        <div class="highlight-box green">
+            <strong>5. 本地化 + 零成本运行</strong>
+            通过 Ollama 运行本地 LLM，所有服务在 Docker 中运行，学习成本几乎为零。仅需可选的 Jina API Key（免费额度足够）和 Telegram Token，体现了对学习者的友好设计。
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>学术研究助手</strong> — 自动追踪 arXiv 最新论文，通过自然语言提问获取跨论文的对比和综述</li>
+            <li><strong>企业知识库</strong> — 将课程中的 RAG 架构迁移到企业内部文档、技术文档或政策手册的智能问答</li>
+            <li><strong>技术选型参考</strong> — 学习 OpenSearch + LangGraph + Ollama 的生产组合方案，直接应用于新项目</li>
+            <li><strong>AI 工程师培训</strong> — 适合团队内部培训，从基础设施到 Agent 的全链路 RAG 开发实践</li>
+            <li><strong>面试准备</strong> — 覆盖 2026 年 AI 工程师面试高频知识点：BM25、混合搜索、Agentic RAG、可观测性</li>
+            <li><strong>快速原型开发</strong> — Fork 代码仓库，替换数据源和 LLM，快速搭建任何领域的 RAG 应用</li>
+        </ul>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2><span class="icon">📊</span> 竞品对比</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>本项目 (Jam with AI)</th>
+                    <th>Maven Agentic RAG 课程</th>
+                    <th>HuggingFace Agents Course</th>
+                    <th>LangChain 官方教程</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>价格</strong></td>
+                    <td class="highlight">完全免费</td>
+                    <td>付费（ cohort 制）</td>
+                    <td>免费</td>
+                    <td>免费</td>
+                </tr>
+                <tr>
+                    <td><strong>深度</strong></td>
+                    <td class="highlight">7 周，含基础设施</td>
+                    <td>2 周，偏实战</td>
+                    <td>1 单元，入门级</td>
+                    <td>散点式，框架导向</td>
+                </tr>
+                <tr>
+                    <td><strong>生产级</strong></td>
+                    <td class="highlight">监控/缓存/Agent</td>
+                    <td>FastAPI + React</td>
+                    <td>玩具示例</td>
+                    <td>概念演示</td>
+                </tr>
+                <tr>
+                    <td><strong>搜索基础</strong></td>
+                    <td class="highlight">BM25 → 混合搜索</td>
+                    <td>直接向量搜索</td>
+                    <td>基础检索</td>
+                    <td>向量检索为主</td>
+                </tr>
+                <tr>
+                    <td><strong>Agent 框架</strong></td>
+                    <td>LangGraph</td>
+                    <td>LangGraph</td>
+                    <td>Transformers Agents</td>
+                    <td>LangChain/LangGraph</td>
+                </tr>
+                <tr>
+                    <td><strong>本地运行</strong></td>
+                    <td class="highlight">Ollama 本地 LLM</td>
+                    <td>需云 API</td>
+                    <td>需云 API</td>
+                    <td>需云 API</td>
+                </tr>
+                <tr>
+                    <td><strong>端到端</strong></td>
+                    <td class="highlight">摄取→搜索→RAG→监控→Agent</td>
+                    <td>RAG + Agent</td>
+                    <td>Agent 部分</td>
+                    <td>框架功能演示</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="highlight-box orange">
+            <strong>竞品分析总结</strong>
+            在 2026 年的 Agentic RAG 教育领域，本项目在「免费 + 端到端 + 生产级」三个维度上同时做到极致的几乎没有竞品。其最大差异化在于：(1) 搜索基础优先的教学方法论；(2) 从基础设施到 Agent 的完整覆盖；(3) 本地零成本运行的友好体验。
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="section">
+        <h2><span class="icon">📝</span> 总结</h2>
+        <p>
+            <strong>jamwithai/production-agentic-rag-course</strong> 是目前 GitHub 上最全面、最贴近生产实践的 Agentic RAG 开源课程。它不是又一个快速入门 demo，而是一套精心设计的 7 周学习路径，从 Docker 基础设施到 LangGraph 智能代理，从 BM25 搜索原理到 Redis 缓存优化，每一个环节都经过深思熟虑。
+        </p>
+        <p>
+            特别值得推荐的是其<strong>「搜索先行」</strong>的教学理念——这恰恰是大多数 AI 教程忽视的、但在真实生产环境中至关重要的基础能力。无论你是想系统学习 RAG 的 AI 工程师，还是需要快速搭建生产 RAG 系统的技术团队，这个项目都值得一学。
+        </p>
+        <div class="highlight-box green">
+            <strong>适合人群</strong>
+            AI/ML 工程师（想深入理解生产 RAG 架构）、软件工程师（想构建端到端 AI 应用）、数据科学家（想实现生产级 AI 系统）、技术团队负责人（寻找团队培训材料）
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>报告生成于 2026-06-04 | 数据来源：GitHub、WebSearch</p>
+        <p>
+            <a href="https://github.com/jamwithai/production-agentic-rag-course" target="_blank">GitHub 仓库</a> ·
+            <a href="https://jamwithai.dev/courses/rag/" target="_blank">课程主页</a> ·
+            <a href="https://jamwithai.substack.com" target="_blank">Jam with AI Substack</a>
+        </p>
+    </div>
+
+</div>
+</body>
+</html>
