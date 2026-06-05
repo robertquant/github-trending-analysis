@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>last30days-skill 深度分析报告</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --border-color: #30363d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .badge-trending { background: linear-gradient(135deg, #f85149, #da3633); color: #fff; }
+        .badge-stars { background: linear-gradient(135deg, #d29922, #e3b341); color: #000; }
+        .badge-license { background: var(--bg-tertiary); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .badge-lang { background: var(--bg-tertiary); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        h3 {
+            font-size: 1.15rem;
+            color: var(--accent-purple);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        p { margin-bottom: 1rem; color: var(--text-primary); }
+        .meta-line {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        .meta-line a { color: var(--accent-blue); text-decoration: none; }
+        .meta-line a:hover { text-decoration: underline; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+        }
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        td { background: var(--bg-secondary); }
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .score-bar-container {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            height: 12px;
+            margin: 0.4rem 0 1rem;
+            overflow: hidden;
+        }
+        .score-bar {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.6s ease;
+        }
+        .score-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        .score-label span:last-child {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(188,140,255,0.1));
+            border-left: 4px solid var(--accent-purple);
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+        .highlight-box p { margin-bottom: 0; }
+        .source-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        .source-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .source-item strong { color: var(--accent-blue); display: block; margin-bottom: 0.25rem; }
+        .total-score {
+            text-align: center;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            background: linear-gradient(135deg, rgba(88,166,255,0.15), rgba(188,140,255,0.15));
+            border: 1px solid var(--accent-purple);
+            border-radius: 16px;
+        }
+        .total-score .number {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #3fb950);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .total-score .label { color: var(--text-secondary); font-size: 1.1rem; }
+        ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.4rem; }
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--accent-orange);
+        }
+        blockquote {
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <span class="badge badge-trending">GitHub Trending #1</span>
+    <span class="badge badge-stars">27,000+ Stars</span>
+    <span class="badge badge-license">MIT License</span>
+    <span class="badge badge-lang">Python / Node.js</span>
+</div>
+
+<h1>last30days-skill 深度分析报告</h1>
+
+<p class="meta-line">
+    <strong>项目：</strong><a href="https://github.com/mvanhorn/last30days-skill">mvanhorn/last30days-skill</a>
+    &nbsp;|&nbsp; <strong>作者：</strong>Matt Van Horn (@mvanhorn)
+    &nbsp;|&nbsp; <strong>分析日期：</strong>2026-06-05
+    &nbsp;|&nbsp; <strong>当前版本：</strong>v3 Pipeline
+</p>
+
+<!-- 项目概述 -->
+<h2>一、项目概述</h2>
+
+<p><strong>last30days-skill</strong> 是一个 AI Agent 技能（Skill），定位为<strong>「AI 驱动的社交搜索引擎」</strong>——它不是传统的关键词搜索，而是聚合 Reddit、X（Twitter）、YouTube、TikTok、Instagram、Hacker News、Polymarket、GitHub、Bluesky、Digg、Threads、Pinterest、Perplexity 等十余个平台最近 30 天的内容，按用户的真实互动（点赞、投票、真金白银的预测市场概率）进行评分，最终由 AI Agent 综合生成一份结构化的研究简报。</p>
+
+<blockquote>Google aggregates editors. /last30days searches people.</blockquote>
+
+<p>该项目由独立开发者 Matt Van Horn 创建，最初是为了追踪快速迭代的 AI 行业动态，后来演变为一个通用的多平台趋势研究工具。项目在 GitHub 上线后迅速走红，30 天内获得约 27,000+ Stars，登上 GitHub Trending 日榜第一。</p>
+
+<!-- 技术架构 -->
+<h2>二、技术架构</h2>
+
+<h3>2.1 核心管线（v3 Pipeline）</h3>
+
+<table>
+    <tr><th>阶段</th><th>功能</th><th>说明</th></tr>
+    <tr><td><strong>Phase 1: 预研究</strong></td><td>智能实体解析</td><td>在搜索前先解析话题相关的 X handles、GitHub 用户名、subreddit、YouTube 频道、TikTok 标签等，由 Python 预研究引擎（@j-sperling 设计）完成</td></tr>
+    <tr><td><strong>Phase 2: 并行搜索</strong></td><td>多源并行查询</td><td>同时向所有已配置平台发出搜索请求，每个平台多查询扩展，结果按参与度、相关性、时效性评分</td></tr>
+    <tr><td><strong>Phase 3: 跨源聚类</strong></td><td>故事去重合并</td><td>同一故事在 Reddit、X、YouTube 同时出现时，基于实体重叠检测合并为一个故事簇</td></tr>
+    <tr><td><strong>Phase 4: AI 综合判断</strong></td><td>生成研究简报</td><td>AI Agent 将所有结果综合为一份带引用的结构化报告，包含「Best Takes」（最精彩评论）</td></tr>
+</table>
+
+<h3>2.2 数据源覆盖</h3>
+
+<div class="source-grid">
+    <div class="source-item"><strong>Reddit</strong>免费公共JSON<br>含评论+投票数</div>
+    <div class="source-item"><strong>X / Twitter</strong>浏览器Cookie认证<br>无需API Key</div>
+    <div class="source-item"><strong>YouTube</strong>yt-dlp转录<br>45分钟视频→5句精华</div>
+    <div class="source-item"><strong>TikTok</strong>ScrapeCreators API<br>3.6M播放量的信号</div>
+    <div class="source-item"><strong>Hacker News</strong>开发者共识<br>825 points 的技术讨论</div>
+    <div class="source-item"><strong>Polymarket</strong>真金白银概率<br>非观点而是赔率</div>
+    <div class="source-item"><strong>GitHub</strong>PR速度、Star数<br>Release Notes</div>
+    <div class="source-item"><strong>Digg AI 1000</strong>X高信号新闻聚合<br>无需X认证</div>
+    <div class="source-item"><strong>Bluesky</strong>AT Protocol<br>去中心化社交</div>
+    <div class="source-item"><strong>Perplexity</strong>Sonar Pro<br>带引用的网页搜索</div>
+    <div class="source-item"><strong>Threads</strong>Meta社交层<br>品牌与创作者</div>
+    <div class="source-item"><strong>Pinterest</strong>视觉发现<br>产品与想法Pin</div>
+</div>
+
+<h3>2.3 技术栈</h3>
+
+<table>
+    <tr><th>组件</th><th>技术选型</th></tr>
+    <tr><td>核心语言</td><td>Python 3.12+、Node.js</td></tr>
+    <tr><td>X 搜索</td><td>Node.js vendored Bird client</td></tr>
+    <tr><td>YouTube 转录</td><td>yt-dlp</td></tr>
+    <tr><td>社媒抓取</td><td>ScrapeCreators API（TikTok/Instagram/Threads/Pinterest）</td></tr>
+    <tr><td>网页搜索</td><td>Brave Search API（2,000 免费查询/月）</td></tr>
+    <tr><td>数据存储</td><td>SQLite（趋势监控）、Markdown（研究文件）</td></tr>
+    <tr><td>输出格式</td><td>Markdown、可共享 HTML 简报</td></tr>
+    <tr><td>运行宿主</td><td>Claude Code、Codex CLI、Gemini CLI、Cursor、GitHub Copilot、claude.ai</td></tr>
+    <tr><td>技能规范</td><td>SKILL.md（YAML frontmatter + Markdown）</td></tr>
+    <tr><td>测试</td><td>1,012 个测试用例通过</td></tr>
+    <tr><td>许可证</td><td>MIT</td></tr>
+</table>
+
+<h3>2.4 安装与使用</h3>
+
+<p>安装极其简洁，支持多种 AI 编程助手：</p>
+
+<table>
+    <tr><th>宿主平台</th><th>安装命令</th><th>更新方式</th></tr>
+    <tr><td><strong>Claude Code（推荐）</strong></td><td><code>/plugin marketplace add mvanhorn/last30days-skill</code></td><td>Marketplace 自动更新</td></tr>
+    <tr><td>Codex / Cursor / Gemini CLI 等</td><td><code>npx skills add mvanhorn/last30days-skill -g</code></td><td><code>npx skills update last30days -g</code></td></tr>
+    <tr><td>claude.ai（网页版）</td><td>下载 .skill 文件上传</td><td>手动重新下载上传</td></tr>
+    <tr><td>OpenClaw</td><td><code>clawhub install last30days-official</code></td><td><code>clawhub update</code></td></tr>
+</table>
+
+<!-- 核心创新点 -->
+<h2>三、核心创新点</h2>
+
+<div class="highlight-box">
+    <p><strong>核心突破：</strong>将十几个互不相通的社交平台通过 AI Agent 桥接在一起，用「人的真实互动」代替「编辑的排序」——这是 Google、ChatGPT、Gemini 等单一平台无法提供的搜索维度。</p>
+</div>
+
+<h3>3.1 智能实体解析（v3 杀手级功能）</h3>
+<p>v3 不只是搜索关键词，而是在搜索前先理解话题：<code>/last30days Peter Steinberger</code> 会自动解析出 @steipete（X）、steipete（GitHub）、相关的 subreddit 和 YouTube 频道。这通过 Python 预研究引擎实现，确保搜索从一开始就瞄准正确的人和社区。</p>
+
+<h3>3.2 社交评分体系（Social Scoring）</h3>
+<p>不是 SEO 排序，而是真实的人类行为信号：Reddit upvotes、X likes、YouTube 播放量、TikTok 3.6M views、Polymarket 真金白银的赔率。每一个数据点背后都是真实的人类选择。</p>
+
+<h3>3.3 跨源聚类合并</h3>
+<p>同一故事出现在多个平台时（如一个新闻在 Reddit 讨论、X 转发、YouTube 评论），v3 会自动合并为一个故事簇，避免重复，同时展示多维度的人类反应。</p>
+
+<h3>3.4 Best Takes（最佳评论）</h3>
+<p>独有的幽默/机智评分器——从 Reddit 和 X 的海量评论中选出最有趣、最犀利、最易传播的「金句」，让研究简报不仅有用，还有趣。</p>
+
+<h3>3.5 可共享 HTML 简报</h3>
+<p>一键生成自包含的暗色主题 HTML 文件，可拖进 Slack、邮件、Notion。内联 CSS、无 JavaScript、可离线使用——专为分享而设计。</p>
+
+<h3>3.6 BYOK（Bring Your Own Keys）架构</h3>
+<p>没有中间商。用户携带自己的 API Key 和浏览器 Cookie，数据始终在本地。Reddit + HN + Polymarket + GitHub 零配置即可使用。</p>
+
+<!-- 应用场景 -->
+<h2>四、应用场景</h2>
+
+<table>
+    <tr><th>场景</th><th>示例</th><th>价值</th></tr>
+    <tr>
+        <td><strong>会议准备</strong></td>
+        <td><code>/last30days Peter Steinberger</code></td>
+        <td>30 秒内了解对方近 30 天的所有公开动态：加入哪家公司、发了什么推、社区怎么评价</td>
+    </tr>
+    <tr>
+        <td><strong>产品对比</strong></td>
+        <td><code>/last30days OpenClaw vs Hermes vs Paperclip</code></td>
+        <td>自动发现竞品、并排比较架构/Star数/社区评价</td>
+    </tr>
+    <tr>
+        <td><strong>趋势追踪</strong></td>
+        <td><code>/last30days AI agents</code></td>
+        <td>聚合各平台最新讨论，发现正在爆发但尚未被主流媒体覆盖的趋势</td>
+    </tr>
+    <tr>
+        <td><strong>投资研究</strong></td>
+        <td><code>/last30days Iran vs USA</code></td>
+        <td>结合 Polymarket 预测市场概率 + 社交媒体情绪 + 新闻报道</td>
+    </tr>
+    <tr>
+        <td><strong>旅行规划</strong></td>
+        <td><code>/last30days Universal Epic Universe</code></td>
+        <td>社区真实评价：排队时长、维修中的项目、未公开的规划</td>
+    </tr>
+    <tr>
+        <td><strong>学习新工具</strong></td>
+        <td><code>/last30days Nano Banana Pro prompting</code></td>
+        <td>社区总结的最佳实践，比官方文档更贴近实战</td>
+    </tr>
+    <tr>
+        <td><strong>定时监控</strong></td>
+        <td>SQLite + watchlist.py + briefing.py</td>
+        <td>设定关注清单，自动定时搜索，Slack/Webhook 通知新发现</td>
+    </tr>
+    <tr>
+        <td><strong>ELI5 模式</strong></td>
+        <td>运行后说 "eli5 on"</td>
+        <td>将专业内容重写为通俗易懂的语言，适合快速理解陌生领域</td>
+    </tr>
+</table>
+
+<!-- 竞品对比 -->
+<h2>五、竞品对比</h2>
+
+<table>
+    <tr>
+        <th>维度</th>
+        <th>last30days-skill</th>
+        <th>Google Search</th>
+        <th>ChatGPT / Perplexity</th>
+        <th>Gemini</th>
+    </tr>
+    <tr>
+        <td><strong>Reddit 内容</strong></td>
+        <td>深度抓取，含评论+投票数</td>
+        <td>有限索引</td>
+        <td>仅 Reddit 合作数据</td>
+        <td>无原生 Reddit</td>
+    </tr>
+    <tr>
+        <td><strong>X / Twitter</strong></td>
+        <td>通过浏览器Cookie搜索</td>
+        <td>有限</td>
+        <td>无</td>
+        <td>无</td>
+    </tr>
+    <tr>
+        <td><strong>YouTube 转录</strong></td>
+        <td>完整转录搜索</td>
+        <td>标题描述</td>
+        <td>有限</td>
+        <td>原生 YouTube 集成</td>
+    </tr>
+    <tr>
+        <td><strong>TikTok / Instagram</strong></td>
+        <td>支持（ScrapeCreators）</td>
+        <td>无</td>
+        <td>无</td>
+        <td>无</td>
+    </tr>
+    <tr>
+        <td><strong>预测市场</strong></td>
+        <td>Polymarket 实时赔率</td>
+        <td>无</td>
+        <td>无</td>
+        <td>无</td>
+    </tr>
+    <tr>
+        <td><strong>跨平台聚类</strong></td>
+        <td>自动去重合并</td>
+        <td>无</td>
+        <td>无</td>
+        <td>无</td>
+    </tr>
+    <tr>
+        <td><strong>隐私</strong></td>
+        <td>完全本地，BYOK</td>
+        <td>云端</td>
+        <td>云端</td>
+        <td>云端</td>
+    </tr>
+    <tr>
+        <td><strong>评分维度</strong></td>
+        <td>社交互动+真金白银</td>
+        <td>SEO/PageRank</td>
+        <td>相关性</td>
+        <td>相关性</td>
+    </tr>
+    <tr>
+        <td><strong>价格</strong></td>
+        <td>开源免费（部分数据源需API Key）</td>
+        <td>免费</td>
+        <td>订阅制</td>
+        <td>免费/订阅</td>
+    </tr>
+</table>
+
+<div class="highlight-box">
+    <p><strong>核心差异：</strong>last30days-skill 不是要替代 Google 或 ChatGPT——它解决的是<strong>「社交信号搜索」</strong>这个全新品类。没有任何单一 AI 或搜索引擎能同时触及 Reddit 的真实评论、X 的实时讨论、YouTube 的深度视频、TikTok 的流行文化、Polymarket 的真金预测。它通过 BYOK 架构让用户自己桥接这些围墙花园，这是一个独特的定位。</p>
+</div>
+
+<!-- 综合评分 -->
+<h2>六、综合评分</h2>
+
+<div class="total-score">
+    <div class="number">8.5</div>
+    <div class="label">/ 10 综合评分</div>
+</div>
+
+<div class="score-card">
+    <div class="score-label">
+        <span>创新性 — 概念独特，开辟「社交搜索」新品类</span>
+        <span style="color: var(--accent-green);">9.5 / 10</span>
+    </div>
+    <div class="score-bar-container">
+        <div class="score-bar" style="width: 95%; background: linear-gradient(90deg, #3fb950, #58a6ff);"></div>
+    </div>
+</div>
+
+<div class="score-card">
+    <div class="score-label">
+        <span>实用性 — 会议准备、趋势研究、竞品分析等场景价值极高</span>
+        <span style="color: var(--accent-green);">9.0 / 10</span>
+    </div>
+    <div class="score-bar-container">
+        <div class="score-bar" style="width: 90%; background: linear-gradient(90deg, #3fb950, #58a6ff);"></div>
+    </div>
+</div>
+
+<div class="score-card">
+    <div class="score-label">
+        <span>技术实现 — v3 智能实体解析、跨源聚类、并行管线设计精良</span>
+        <span style="color: var(--accent-green);">8.5 / 10</span>
+    </div>
+    <div class="score-bar-container">
+        <div class="score-bar" style="width: 85%; background: linear-gradient(90deg, #3fb950, #d29922);"></div>
+    </div>
+</div>
+
+<div class="score-card">
+    <div class="score-label">
+        <span>社区活跃度 — 27K+ Stars，1,012 测试，社区贡献者持续增加新数据源</span>
+        <span style="color: var(--accent-green);">9.0 / 10</span>
+    </div>
+    <div class="score-bar-container">
+        <div class="score-bar" style="width: 90%; background: linear-gradient(90deg, #3fb950, #58a6ff);"></div>
+    </div>
+</div>
+
+<div class="score-card">
+    <div class="score-label">
+        <span>易用性 — 一行命令安装，零配置即用，但完整功能需配置多个 API Key</span>
+        <span style="color: var(--accent-orange);">7.5 / 10</span>
+    </div>
+    <div class="score-bar-container">
+        <div class="score-bar" style="width: 75%; background: linear-gradient(90deg, #d29922, #f85149);"></div>
+    </div>
+</div>
+
+<div class="score-card">
+    <div class="score-label">
+        <span>可扩展性 — 支持 50+ Agent 宿主，SKILL.md 标准化，社区持续贡献新数据源</span>
+        <span style="color: var(--accent-green);">8.5 / 10</span>
+    </div>
+    <div class="score-bar-container">
+        <div class="score-bar" style="width: 85%; background: linear-gradient(90deg, #3fb950, #d29922);"></div>
+    </div>
+</div>
+
+<!-- 总结 -->
+<h2>七、总结</h2>
+
+<p><strong>last30days-skill</strong> 是 2026 年 AI Agent 生态中最具代表性的「技能型」工具之一。它不试图成为一个通用搜索引擎，而是精准地切入了一个被忽视的空白：<strong>用社交平台的真实人类互动来衡量信息价值</strong>。</p>
+
+<p>其核心竞争力在于三点：</p>
+<ul>
+    <li><strong>多平台桥接：</strong>通过 BYOK 架构让 AI Agent 同时访问十几个围墙花园式社交平台</li>
+    <li><strong>社交评分：</strong>用 upvotes、likes、播放量、真金赔率替代传统 SEO 排序</li>
+    <li><strong>AI 综合：</strong>将海量碎片化社交信号整合为一份可操作的研究简报</li>
+</ul>
+
+<p>风险在于对第三方平台 API 的依赖（平台可能随时更改规则），以及完整功能需要用户自行配置多个 API Key 的门槛。但作为 MIT 开源项目，它已经建立了一个活跃的社区和可扩展的架构，这使其具有良好的持续进化能力。</p>
+
+<div class="footer">
+    <p>GitHub 深度分析报告 &middot; 生成时间：2026-06-05 &middot; 数据来源：GitHub、WebSearch、项目文档</p>
+</div>
+
+</body>
+</html>
