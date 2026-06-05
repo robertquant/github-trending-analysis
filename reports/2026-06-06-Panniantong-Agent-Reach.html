@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent-Reach 深度分析报告 | GitHub Trending</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --orange: #d29922; --red: #f85149;
+    --purple: #bc8cff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--fg); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; line-height:1.7; padding:20px; max-width:960px; margin:0 auto; }
+  h1 { font-size:2em; margin-bottom:8px; background:linear-gradient(135deg,var(--accent),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .subtitle { color:var(--muted); font-size:1.1em; margin-bottom:30px; border-bottom:1px solid var(--border); padding-bottom:20px; }
+  .meta { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:30px; }
+  .meta-item { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 16px; font-size:0.9em; }
+  .meta-label { color:var(--muted); font-size:0.8em; display:block; margin-bottom:2px; }
+  .meta-value { font-weight:600; }
+  .score-card { background:linear-gradient(135deg,#1a1e2e,#1e2538); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:30px; text-align:center; }
+  .score-number { font-size:3.5em; font-weight:700; background:linear-gradient(135deg,var(--green),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .score-label { color:var(--muted); font-size:0.9em; }
+  .score-bars { display:flex; flex-wrap:wrap; gap:16px; margin-top:20px; justify-content:center; }
+  .score-bar-item { flex:1; min-width:120px; max-width:160px; text-align:center; }
+  .score-bar-label { font-size:0.85em; color:var(--muted); margin-bottom:4px; }
+  .score-bar-val { font-size:1.1em; font-weight:600; }
+  h2 { color:var(--accent); font-size:1.4em; margin:30px 0 14px; padding-left:12px; border-left:3px solid var(--accent); }
+  h3 { color:var(--purple); font-size:1.1em; margin:20px 0 10px; }
+  p { margin-bottom:12px; color:var(--fg); }
+  .highlight-box { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px 20px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; }
+  th,td { text-align:left; padding:10px 14px; border-bottom:1px solid var(--border); font-size:0.9em; }
+  th { color:var(--accent); font-weight:600; background:var(--card); }
+  td { color:var(--fg); }
+  tr:hover td { background:rgba(88,166,255,0.05); }
+  .tag { display:inline-block; background:rgba(88,166,255,0.15); color:var(--accent); border-radius:4px; padding:2px 8px; font-size:0.8em; margin:2px; }
+  .tag.green { background:rgba(63,185,80,0.15); color:var(--green); }
+  .tag.orange { background:rgba(210,153,34,0.15); color:var(--orange); }
+  .tag.purple { background:rgba(188,140,255,0.15); color:var(--purple); }
+  ul { padding-left:20px; margin:10px 0; }
+  li { margin-bottom:6px; }
+  .footer { margin-top:40px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:0.8em; text-align:center; }
+  code { background:rgba(88,166,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.9em; color:var(--accent); }
+  .pros-cons { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:14px 0; }
+  .pros, .cons { border-radius:8px; padding:16px; }
+  .pros { background:rgba(63,185,80,0.08); border:1px solid rgba(63,185,80,0.2); }
+  .cons { background:rgba(248,81,73,0.08); border:1px solid rgba(248,81,73,0.2); }
+  .pros h4 { color:var(--green); } .cons h4 { color:var(--red); }
+  @media(max-width:600px) { .pros-cons { grid-template-columns:1fr; } .meta { flex-direction:column; } }
+</style>
+</head>
+<body>
+
+<h1>Agent-Reach 深度分析报告</h1>
+<div class="subtitle">给你的 AI Agent 一键装上互联网能力 — 跨平台信息获取脚手架工具</div>
+
+<div class="meta">
+  <div class="meta-item"><span class="meta-label">项目</span><span class="meta-value">Panniantong/Agent-Reach</span></div>
+  <div class="meta-item"><span class="meta-label">Stars</span><span class="meta-value" style="color:var(--orange)">20,000+</span></div>
+  <div class="meta-item"><span class="meta-label">语言</span><span class="meta-value">Python 3.10+</span></div>
+  <div class="meta-item"><span class="meta-label">协议</span><span class="meta-value">MIT</span></div>
+  <div class="meta-item"><span class="meta-label">分类</span><span class="meta-value">AI Agent 工具链</span></div>
+  <div class="meta-item"><span class="meta-label">日期</span><span class="meta-value">2026-06-06</span></div>
+</div>
+
+<div class="score-card">
+  <div class="score-number">8.5</div>
+  <div class="score-label">综合评分 / 10</div>
+  <div class="score-bars">
+    <div class="score-bar-item"><div class="score-bar-label">创新性</div><div class="score-bar-val" style="color:var(--green)">9.0</div></div>
+    <div class="score-bar-item"><div class="score-bar-label">实用性</div><div class="score-bar-val" style="color:var(--green)">9.5</div></div>
+    <div class="score-bar-item"><div class="score-bar-label">技术深度</div><div class="score-bar-val" style="color:var(--accent)">7.5</div></div>
+    <div class="score-bar-item"><div class="score-bar-label">社区活跃度</div><div class="score-bar-val" style="color:var(--green)">8.5</div></div>
+    <div class="score-bar-item"><div class="score-bar-label">文档质量</div><div class="score-bar-val" style="color:var(--green)">8.5</div></div>
+    <div class="score-bar-item"><div class="score-bar-label">可持续性</div><div class="score-bar-val" style="color:var(--accent)">8.0</div></div>
+  </div>
+</div>
+
+<h2>项目概述</h2>
+<p><strong>Agent-Reach</strong> 是一个面向 AI Agent 的互联网信息获取脚手架工具。它解决了一个核心痛点：AI Agent（如 Claude Code、Cursor、OpenClaw 等）虽然已经具备强大的编程和分析能力，但在访问互联网内容时几乎是"盲"的——Twitter 需要付费 API、Reddit 服务器 IP 被 403 封锁、B 站海外 IP 无法访问、小红书需要登录才能浏览。</p>
+<p>Agent-Reach 通过整合多个成熟的开源 CLI 工具（twitter-cli、rdt-cli、yt-dlp、Jina Reader 等），将 <strong>17+ 平台</strong>的信息获取能力统一封装到一个安装命令中，实现零 API 费用、Cookie 本地存储、一键安装即可使用。</p>
+
+<div class="highlight-box">
+  <strong>核心价值主张：</strong>"Give your AI Agent one-click access to the entire internet" — 用一个 CLI 命令，让你的 AI Agent 具备跨平台的信息获取能力，无需付费 API，无需复杂配置。
+</div>
+
+<h2>技术架构</h2>
+<h3>架构设计：脚手架模式（Scaffolding）</h3>
+<p>Agent-Reach 明确定位为"脚手架"而非"框架"。它不封装上游工具的调用逻辑，而是负责<strong>选型、安装、配置和诊断</strong>。安装完成后，AI Agent 直接调用上游工具（如 <code>twitter search</code>、<code>yt-dlp</code>、<code>rdt search</code>），没有中间包装层。</p>
+
+<h3>可插拔渠道系统</h3>
+<p>每个平台对应一个独立的 channel 文件，仅负责检测上游工具是否可用。渠道可以自由替换：</p>
+<table>
+  <tr><th>渠道</th><th>上游工具</th><th>Stars</th><th>认证方式</th></tr>
+  <tr><td>网页阅读</td><td>Jina Reader</td><td>9.8K</td><td>无需配置</td></tr>
+  <tr><td>Twitter/X</td><td>twitter-cli</td><td>2.1K</td><td>Cookie</td></tr>
+  <tr><td>Reddit</td><td>rdt-cli</td><td>304</td><td>Cookie</td></tr>
+  <tr><td>YouTube</td><td>yt-dlp</td><td>154K</td><td>无需配置</td></tr>
+  <tr><td>B 站</td><td>yt-dlp + bili-cli</td><td>590</td><td>本地免配/服务器需代理</td></tr>
+  <tr><td>GitHub</td><td>gh CLI</td><td>官方工具</td><td>可选 OAuth</td></tr>
+  <tr><td>小红书</td><td>xhs-cli</td><td>1.5K</td><td>Cookie</td></tr>
+  <tr><td>抖音</td><td>douyin-mcp-server</td><td>—</td><td>无需登录</td></tr>
+  <tr><td>LinkedIn</td><td>linkedin-scraper-mcp</td><td>1.2K</td><td>浏览器自动化</td></tr>
+  <tr><td>微信公众号</td><td>Exa + Camoufox</td><td>—</td><td>零配置</td></tr>
+  <tr><td>微博</td><td>mcporter</td><td>—</td><td>零配置</td></tr>
+  <tr><td>V2EX</td><td>公开 JSON API</td><td>—</td><td>零配置</td></tr>
+  <tr><td>雪球</td><td>浏览器 Cookie</td><td>—</td><td>Cookie</td></tr>
+  <tr><td>小宇宙播客</td><td>Groq Whisper</td><td>—</td><td>免费 API Key</td></tr>
+  <tr><td>RSS</td><td>feedparser</td><td>2.3K</td><td>无需配置</td></tr>
+  <tr><td>全网搜索</td><td>Exa via mcporter</td><td>—</td><td>自动配置</td></tr>
+</table>
+
+<h3>核心技术组件</h3>
+<ul>
+  <li><strong>agent-reach CLI</strong> — 主命令行工具，提供 <code>install</code>、<code>doctor</code>、<code>uninstall</code>、<code>skill</code> 等子命令</li>
+  <li><strong>SKILL.md 注册机制</strong> — 安装后在 Agent 的 skills 目录写入使用指南，Agent 自动识别并调用对应工具</li>
+  <li><strong>mcporter MCP 集成</strong> — 通过 MCP 协议接入抖音、小红书、LinkedIn 等平台</li>
+  <li><strong>Cookie-Editor 统一流程</strong> — 浏览器登录 → Cookie-Editor 导出 → 发给 Agent，所有需 Cookie 的平台统一流程</li>
+  <li><strong>安全模式 & Dry Run</strong> — <code>--safe</code> 不自动安装系统包，<code>--dry-run</code> 仅预览操作</li>
+</ul>
+
+<h3>安装与集成方式</h3>
+<table>
+  <tr><th>方式</th><th>命令</th><th>适合场景</th></tr>
+  <tr><td>Agent 一键安装</td><td><code>帮我安装 Agent Reach：[install.md URL]</code></td><td>所有 Agent 用户</td></tr>
+  <tr><td>手动安装</td><td><code>pip install ... && agent-reach install --env=auto</code></td><td>高级用户</td></tr>
+  <tr><td>Skill 安装</td><td><code>npx skills add Panniantong/Agent-Reach@agent-reach</code></td><td>Claude Code / OpenClaw</td></tr>
+  <tr><td>安全模式</td><td><code>agent-reach install --env=auto --safe</code></td><td>生产服务器</td></tr>
+  <tr><td>仅预览</td><td><code>agent-reach install --env=auto --dry-run</code></td><td>审计检查</td></tr>
+</table>
+
+<h2>核心创新点</h2>
+
+<div class="highlight-box">
+  <strong>1. 脚手架思维而非框架思维</strong><br>
+  与 LangGraph、CrewAI 等 Agent 框架不同，Agent-Reach 不构建新的运行时或抽象层。它专注于解决"工具选型和配置"这个重复性工作，安装后 Agent 直接调用上游工具，零性能损耗。
+</div>
+
+<div class="highlight-box">
+  <strong>2. 零 API 费用 + Cookie 本地化</strong><br>
+  所有平台均通过开源 CLI 工具或 Cookie 认证访问，无需付费 API（Twitter API 约 $215/月）。Cookie 仅存储在本地 <code>~/.agent-reach/config.yaml</code>（权限 600），不上传不外传。
+</div>
+
+<div class="highlight-box">
+  <strong>3. Agent 原生设计（Agent-Native）</strong><br>
+  安装命令设计为"发给 Agent 的一段话"，Agent 读取 install.md 后自主完成全部安装。同时通过 SKILL.md 机制让 Agent 自动学会使用各平台工具，无需人工记忆命令。
+</div>
+
+<div class="highlight-box">
+  <strong>4. 内置诊断系统（agent-reach doctor）</strong><br>
+  一条命令即可查看所有渠道的运行状态，清晰标注哪些可用、哪些需配置、如何修复。大幅降低排查成本。
+</div>
+
+<div class="highlight-box">
+  <strong>5. 覆盖中国互联网生态</strong><br>
+  除国际平台外，深度整合小红书、B 站、抖音、微信公众号、微博、V2EX、雪球、小宇宙等中国平台，这在同类工具中极为罕见。
+</div>
+
+<h2>应用场景</h2>
+<table>
+  <tr><th>场景</th><th>具体用法</th></tr>
+  <tr><td>竞品情报监控</td><td>Agent 定时搜索 Twitter/Reddit/V2EX 上的产品反馈，生成竞品报告</td></tr>
+  <tr><td>技术调研</td><td>Agent 自动搜索 GitHub、YouTube 教程、技术博客，整理技术选型文档</td></tr>
+  <tr><td>内容创作辅助</td><td>Agent 从小红书/微博获取热点话题，辅助内容策划</td></tr>
+  <tr><td>市场分析</td><td>Agent 抓取雪球/微博舆情数据，辅助投资决策</td></tr>
+  <tr><td>学术研究</td><td>Agent 订阅 RSS + 搜索 Reddit/微博/V2EX 学术讨论，汇总研究线索</td></tr>
+  <tr><td>社区运营</td><td>Agent 监控多个平台的品牌提及和用户反馈</td></tr>
+  <tr><td>视频内容分析</td><td>Agent 提取 YouTube/B 站/抖音视频字幕，自动总结视频内容</td></tr>
+</table>
+
+<h2>竞品对比</h2>
+<table>
+  <tr><th>维度</th><th>Agent-Reach</th><th>Browser Use / Browserbase</th><th>Jina Reader</th><th>Firecrawl</th></tr>
+  <tr><td>定位</td><td>Agent 互联网脚手架</td><td>浏览器自动化</td><td>网页转 Markdown</td><td>网页抓取平台</td></tr>
+  <tr><td>覆盖平台</td><td>17+（含中国平台）</td><td>通用浏览器</td><td>任意网页</td><td>任意网页</td></tr>
+  <tr><td>成本</td><td>完全免费</td><td>需云浏览器 $</td><td>免费/付费</td><td>免费/付费</td></tr>
+  <tr><td>Cookie/认证</td><td>本地 Cookie 认证</td><td>浏览器会话</td><td>不支持</td><td>有限支持</td></tr>
+  <tr><td>中国平台</td><td>深度支持</td><td>需代理</td><td>有限</td><td>有限</td></tr>
+  <tr><td>Agent 集成</td><td>原生 SKILL.md</td><td>API 调用</td><td>HTTP API</td><td>API</td></tr>
+  <tr><td>技术门槛</td><td>极低（一句话安装）</td><td>中等</td><td>低</td><td>中等</td></tr>
+</table>
+<p><strong>差异化优势：</strong>Agent-Reach 是唯一同时覆盖国际+中国平台、零费用、Agent 原生设计的工具。Browser Use 虽然通用但成本高，Jina Reader 和 Firecrawl 聚焦网页解析，缺乏社交媒体平台的深度整合。</p>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>优势</h4>
+    <ul>
+      <li>17+ 平台全覆盖，含中国生态</li>
+      <li>零 API 费用，完全开源</li>
+      <li>Agent 原生设计，一句话安装</li>
+      <li>可插拔架构，自由替换组件</li>
+      <li>内置诊断 + 安全模式</li>
+      <li>Cookie 本地存储，隐私安全</li>
+      <li>活跃维护，持续更新上游工具</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>风险与不足</h4>
+    <ul>
+      <li>Cookie 认证存在封号风险</li>
+      <li>依赖上游工具稳定性</li>
+      <li>平台反爬策略可能导致失效</li>
+      <li>纯 vibe coding 开发，可能有粗糙之处</li>
+      <li>部分渠道需要手动配置代理</li>
+      <li>无商业支持</li>
+    </ul>
+  </div>
+</div>
+
+<h2>综合评分详解</h2>
+<table>
+  <tr><th>维度</th><th>评分</th><th>理由</th></tr>
+  <tr><td>创新性</td><td><strong>9.0</strong></td><td>脚手架思维精准切入 Agent 工具链痛点，Agent-Native 安装方式新颖</td></tr>
+  <tr><td>实用性</td><td><strong>9.5</strong></td><td>直接解决"Agent 无法访问互联网"的高频痛点，安装即可用</td></tr>
+  <tr><td>技术深度</td><td><strong>7.5</strong></td><td>核心价值在于选型和整合而非底层技术突破，架构设计合理</td></tr>
+  <tr><td>社区活跃度</td><td><strong>8.5</strong></td><td>20K+ Stars，多个第三方平台收录，社交媒体讨论活跃</td></tr>
+  <tr><td>文档质量</td><td><strong>8.5</strong></td><td>中英日韩四语文档，FAQ 完善，安装指南清晰</td></tr>
+  <tr><td>可持续性</td><td><strong>8.0</strong></td><td>作者每日自用并承诺维护，但依赖单人维护存在风险</td></tr>
+</table>
+
+<h2>总结</h2>
+<p>Agent-Reach 是 2026 年 AI Agent 工具链生态中一个极具实用价值的项目。它不是技术框架，而是一个<strong>工程化解决方案</strong>——将分散在 17+ 平台的配置工作统一收口，让 AI Agent 的互联网能力从"能上网"升级到"能高效获取信息"。</p>
+<p>特别值得关注的是它对中国互联网生态（小红书、B 站、抖音、微信公众号、微博、雪球）的深度支持，这在开源工具中非常罕见。对于使用 Claude Code、Cursor 等 Agent 的中文开发者来说，Agent-Reach 是一个值得安装的基础设施级工具。</p>
+<p><strong>推荐人群：</strong>所有使用 AI Agent 进行信息检索、内容分析、竞品调研、市场研究的技术人员和产品经理。</p>
+
+<div class="footer">
+  <p>报告生成时间：2026-06-06 | 数据来源：GitHub、WebSearch、项目文档</p>
+  <p>本项目报告由 AI 自动生成，仅供技术参考</p>
+</div>
+
+</body>
+</html>
