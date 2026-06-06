@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish 深度分析报告 - 群体智能预测引擎</title>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #eaeaea;
+            --text-muted: #a0a0b0;
+            --card-bg: #1e1e36;
+            --border: #2a2a4a;
+            --success: #4ecca3;
+            --warning: #ffd369;
+            --info: #6c63ff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0f1525 100%);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 20px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(233,69,96,0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .header h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #e94560, #6c63ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-muted);
+            position: relative;
+        }
+        .header .tagline {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 24px;
+            background: rgba(233,69,96,0.15);
+            border: 1px solid rgba(233,69,96,0.3);
+            border-radius: 30px;
+            color: var(--highlight);
+            font-size: 0.95em;
+            position: relative;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(108,99,255,0.15);
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--highlight), var(--info));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: var(--text-muted); font-size: 0.9em; margin-top: 4px; }
+
+        /* Sections */
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--highlight);
+        }
+        .section h3 {
+            font-size: 1.2em;
+            margin: 24px 0 12px;
+            color: var(--info);
+        }
+        .section p { margin-bottom: 14px; color: var(--text); }
+        .section ul, .section ol { margin: 12px 0 12px 24px; }
+        .section li { margin-bottom: 8px; }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: #0d0d1a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            overflow-x: auto;
+            color: #4ecca3;
+        }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .score-item {
+            background: rgba(15,52,96,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .score-item .label { font-size: 0.95em; color: var(--text-muted); margin-bottom: 8px; }
+        .score-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .score-value { font-weight: 700; font-size: 1.1em; }
+
+        /* Comparison Table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .compare-table th {
+            background: var(--accent);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--highlight);
+        }
+        .compare-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .compare-table tr:hover td { background: rgba(108,99,255,0.05); }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin: 3px;
+        }
+        .tag-red { background: rgba(233,69,96,0.15); color: var(--highlight); }
+        .tag-blue { background: rgba(108,99,255,0.15); color: var(--info); }
+        .tag-green { background: rgba(78,204,163,0.15); color: var(--success); }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(233,69,96,0.08), rgba(108,99,255,0.08));
+            border-left: 4px solid var(--highlight);
+            padding: 20px 24px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .section { padding: 20px; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>MiroFish</h1>
+        <div class="subtitle">666ghj/MiroFish | 群体智能预测引擎</div>
+        <div class="tagline">简洁通用的群体智能引擎，预测万物</div>
+        <div style="margin-top:18px; position:relative;">
+            <span class="tag tag-red">Multi-Agent</span>
+            <span class="tag tag-blue">GraphRAG</span>
+            <span class="tag tag-green">群体智能</span>
+            <span class="tag tag-red">预测引擎</span>
+            <span class="tag tag-blue">OASIS</span>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-value">64.1K+</div>
+            <div class="stat-label">GitHub Stars</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">#274</div>
+            <div class="stat-label">GitHub 全球排名</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">5</div>
+            <div class="stat-label">核心贡献者</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">2025.12</div>
+            <div class="stat-label">首次发布</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">v0.1.0</div>
+            <div class="stat-label">当前版本</div>
+        </div>
+    </div>
+
+    <!-- 1. 项目概述 -->
+    <div class="section">
+        <h2>一、项目概述</h2>
+        <p>
+            <strong>MiroFish</strong> 是由 BaiFu（GitHub: 666ghj）开发的新一代 AI 预测引擎，基于多智能体（Multi-Agent）群体智能技术构建。
+            该项目从真实世界中提取种子信息（如突发新闻、政策草案、金融信号），自动构建高保真的平行数字世界。在这个空间中，数千个拥有独立人格、
+            长期记忆和行为逻辑的智能体自由交互并进行社会演化。用户可以从"上帝视角"动态注入变量，精确推导未来趋势。
+        </p>
+        <div class="highlight-box">
+            <strong>核心理念：</strong> 在数字沙盘中预演未来，通过无数次模拟赢得决策先机。MiroFish 致力于创建一面映射现实的群体智能之镜，
+            通过捕捉个体交互引发的集体涌现，突破传统预测的局限性。
+        </div>
+        <p>
+            该项目由<strong>盛大集团</strong>提供战略支持和孵化，其模拟引擎基于 <strong>OASIS（Open Agent Social Interaction Simulations）</strong>框架，
+            该框架由 CAMEL-AI 研究社区开发，可扩展至百万级智能体。MiroFish 在 2026 年 3 月登上 GitHub 全球趋势榜第一名，引发了广泛关注。
+            值得一提的是，作者 BaiFu 是一名中国在校大学生，仅用 10 天时间便完成了项目的初始开发。
+        </p>
+    </div>
+
+    <!-- 2. 技术架构 -->
+    <div class="section">
+        <h2>二、技术架构</h2>
+
+        <h3>2.1 分层架构设计</h3>
+        <p>MiroFish 采用解耦的事件驱动架构，分为六个清晰的层次：</p>
+        <div class="arch-diagram">
+<pre>
++------------------------------------------------------------------+
+| INGESTION LAYER (数据摄取层)                                       |
+| 种子输入 (新闻/报告/文档/小说) -> GraphRAG 解析器                    |
++----------------------------------+-------------------------------+
+                                   |
++----------------------------------v-------------------------------+
+| KNOWLEDGE LAYER (知识层)                                          |
+| 知识图谱存储 (实体、关系、社区)                                     |
++----------------------------------+-------------------------------+
+                                   |
++----------------------------------v-------------------------------+
+| ORCHESTRATION LAYER (编排层)                                      |
+| 环境配置智能体 -> 人格模板 -> 智能体工厂                             |
++----------------------------------+-------------------------------+
+                                   |
++----------------------------------v-------------------------------+
+| SIMULATION LAYER (模拟层)                                         |
+| OASIS 引擎: 并行智能体循环 (Platform A + Platform B)              |
+| 智能体状态 <-> Zep Cloud (记忆更新)                                |
+| 事件日志 <- 社交动作 (23 种原语)                                    |
++----------------------------------+-------------------------------+
+                                   |
++----------------------------------v-------------------------------+
+| ANALYSIS LAYER (分析层)                                           |
+| ReportAgent -> 指标聚合 -> 结构化预测                               |
++----------------------------------+-------------------------------+
+                                   |
++----------------------------------v-------------------------------+
+| INTERACTION LAYER (交互层)                                        |
+| Vue.js 前端 -> REST API -> 智能体/记忆查询端点                      |
++------------------------------------------------------------------+
+</pre>
+        </div>
+
+        <h3>2.2 技术栈</h3>
+        <table class="compare-table">
+            <tr><th>层级</th><th>技术</th></tr>
+            <tr><td>后端</td><td>Python (>=3.11, <=3.12)</td></tr>
+            <tr><td>前端</td><td>Vue.js</td></tr>
+            <tr><td>LLM</td><td>任何 OpenAI SDK 兼容模型（推荐阿里 Qwen-plus）</td></tr>
+            <tr><td>知识图谱</td><td>GraphRAG（实体提取 + 关系推理 + 社区检测）</td></tr>
+            <tr><td>记忆管理</td><td>Zep Cloud（向量数据库，语义搜索，自动摘要）</td></tr>
+            <tr><td>模拟引擎</td><td>OASIS（CAMEL-AI，支持百万级智能体）</td></tr>
+            <tr><td>包管理</td><td>uv（Python）、npm（Node.js）</td></tr>
+            <tr><td>部署</td><td>Docker Compose（前端 :3000 / 后端 :5001）</td></tr>
+        </table>
+
+        <h3>2.3 核心工作流（五步预测管线）</h3>
+        <ol>
+            <li><strong>图谱构建</strong>：种子提取 & 个体/集体记忆注入 & GraphRAG 构建</li>
+            <li><strong>环境配置</strong>：实体关系提取 & 人格生成 & 智能体配置注入</li>
+            <li><strong>模拟运行</strong>：双平台并行模拟 & 自动解析预测需求 & 动态时序记忆更新</li>
+            <li><strong>报告生成</strong>：ReportAgent 利用丰富工具集生成深度分析</li>
+            <li><strong>深度交互</strong>：与模拟世界中任意智能体对话 & 与 ReportAgent 互动</li>
+        </ol>
+
+        <h3>2.4 GraphRAG 知识图谱构建</h3>
+        <p>MiroFish 选择 GraphRAG 而非传统向量搜索的原因在于：传统 RAG 将文档扁平化为向量，丢失了关系结构。GraphRAG 显式保留实体与关系（节点和边），
+        使智能体能推理<em>连接</em>信息。图谱构建管线包括四步：</p>
+        <ul>
+            <li><strong>实体提取</strong>：原始文本 -> LLM 分块 -> 实体识别（人物、组织、事件、政策），含共指消解和去重（余弦相似度 > 0.9 + 共享关系则合并）</li>
+            <li><strong>关系推理</strong>：实体对之间提取有向关系（如 influence_of、opposes、employs），支持多跳推理链，置信度 < 0.6 的边被剪枝</li>
+            <li><strong>上下文丰富化</strong>：实体/边赋予时间和空间限定符，Louvain 算法或 GNN 进行社区检测</li>
+            <li><strong>验证与剪枝</strong>：环检测、密度阈值过滤、时间一致性校验</li>
+        </ul>
+        <p>最终图谱：典型种子（新闻/政策文档）约 10-100K 节点/边，大型种子（小说）可达 500K+ 节点。</p>
+
+        <h3>2.5 Zep Cloud 记忆管理</h3>
+        <p>无状态智能体每轮重置上下文，无法产生涌现学习。MiroFish 通过 Zep Cloud 实现持久化记忆：</p>
+        <ul>
+            <li><strong>线程会话</strong>：每智能体独立命名空间，包含消息日志 + 自动摘要</li>
+            <li><strong>语义搜索</strong>：按语义查询记忆（"Alice 对监管了解了什么？"）</li>
+            <li><strong>混合记忆视野</strong>：短期记忆（最近 10 轮）+ 长期摘要记忆</li>
+            <li><strong>记忆更新协议</strong>：每次行动后追加观察 + 意图 -> 语义索引 -> 周期性 LLM 摘要压缩</li>
+        </ul>
+        <p>记忆系统创造了<strong>迟滞效应</strong>：过去事件以非平凡方式影响未来行为——极化浪潮、信念转变、关系演化、派系凝聚力——使模拟展现真实的路径依赖性。</p>
+
+        <h3>2.6 OASIS 双平台模拟引擎</h3>
+        <p>MiroFish 同时在两个平台上运行模拟，建模跨环境动态：</p>
+        <ul>
+            <li><strong>Platform A（类 Twitter）</strong>：短帖、病毒式传播机制、高速度低深度，适合快速情绪级联</li>
+            <li><strong>Platform B（类 Reddit）</strong>：线程讨论、投票机制、低速度高深度，适合理性辩论和派系形成</li>
+        </ul>
+        <p>智能体可在双平台之间跨发，形成社区桥接。每个智能体每轮执行 23 种社交动作（发帖、回复、转发、投票、关注、提及、标签、表情反应等），
+        并受速率限制以保证真实性。</p>
+
+        <h3>2.7 智能体行为循环</h3>
+        <p>每轮循环包含四步：</p>
+        <ol>
+            <li><strong>感知 (PERCEIVE)</strong>：获取关注用户的最新动态、从 Zep 检索个人记忆、查询知识图谱上下文</li>
+            <li><strong>思考 (DELIBERATE)</strong>：LLM 调用（含人格、立场向量、目标、记忆上下文），输出动作选择 + 推理</li>
+            <li><strong>行动 (ACT)</strong>：在平台上执行动作，记录事件流，索引内容</li>
+            <li><strong>持久化 (PERSIST)</strong>：更新 Zep 记忆（行动+结果），更新内部状态，发送下游分析事件</li>
+        </ol>
+    </div>
+
+    <!-- 3. 核心创新点 -->
+    <div class="section">
+        <h2>三、核心创新点</h2>
+
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label" style="font-weight:700; font-size:1.05em; color:var(--highlight); margin-bottom:10px;">1. 锚定现实的涌现预测</div>
+                <p>不同于传统的统计预测或孤立的 LLM 推理，MiroFish 将所有智能体行为锚定在从种子材料构建的知识图谱上。智能体不会虚构背景——它们在反映输入数据的结构化现实中运行。模拟成为"数字排演"，而非推测性虚构。</p>
+            </div>
+            <div class="score-item">
+                <div class="label" style="font-weight:700; font-size:1.05em; color:var(--highlight); margin-bottom:10px;">2. 持久记忆驱动的涌现</div>
+                <p>通过 Zep Cloud 实现的持久化记忆使智能体积累了经验，形成稳定的信念和关系。记忆创造了迟滞效应——早期分歧固化为根深蒂固的立场，暴露于反复反驳证据的智能体逐渐更新信念，联盟深化或瓦解。这是从马尔可夫（无记忆）到真实路径依赖的关键突破。</p>
+            </div>
+            <div class="score-item">
+                <div class="label" style="font-weight:700; font-size:1.05em; color:var(--highlight); margin-bottom:10px;">3. GraphRAG 结构化知识图谱</div>
+                <p>选择 GraphRAG 而非向量搜索是深思熟虑的架构决策。实体和关系作为显式节点和边保留，使智能体能直接查询连接信息并推理传递影响。多级摘要（全局、局部、模式）减少上下文窗口需求，支持 100K+ 节点图谱。</p>
+            </div>
+            <div class="score-item">
+                <div class="label" style="font-weight:700; font-size:1.05em; color:var(--highlight); margin-bottom:10px;">4. 双平台并行模拟</div>
+                <p>同时运行类 Twitter 和类 Reddit 两个平台，捕获不同社交动态：Twitter 上的快速情绪级联 vs Reddit 上的深度派系形成。跨平台传播机制（Reddit 热帖触发 Twitter 趋势）模拟了真实的信息流动。</p>
+            </div>
+            <div class="score-item">
+                <div class="label" style="font-weight:700; font-size:1.05em; color:var(--highlight); margin-bottom:10px;">5. 百万级可扩展性</div>
+                <p>基于 OASIS 框架，理论上可扩展至 100 万智能体。无状态智能体 + 分片记忆支持分布式执行，事件溯源和最终一致性模型实现水平扩展。</p>
+            </div>
+            <div class="score-item">
+                <div class="label" style="font-weight:700; font-size:1.05em; color:var(--highlight); margin-bottom:10px;">6. 后验交互与敏感性分析</div>
+                <p>模拟完成后，用户可以查询任意智能体的决策上下文、注入假设场景重跑子模拟、修改图谱或智能体参数重新模拟。这使 MiroFish 不仅是预测工具，更是一个可探索的假设分析平台。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 应用场景 -->
+    <div class="section">
+        <h2>四、应用场景</h2>
+
+        <h3>4.1 公共舆论模拟</h3>
+        <p>输入新闻事件（如大学争议事件），模拟社交媒体情绪如何演变。识别关键影响者、转折点、极化动态，预测哪些叙事将获得关注。</p>
+
+        <h3>4.2 金融市场预测</h3>
+        <p>注入市场信号（美联储声明、财报），模拟交易员、分析师、散户投资者的反应。预测市场情绪、波动性、流动性效应。支持压力测试："如果盈利低于预期 20% 会怎样？"</p>
+
+        <h3>4.3 危机公关模拟</h3>
+        <p>建模危机如何在社交媒体上展开，在部署前测试消息策略，识别放大器账户和反叙事。</p>
+
+        <h3>4.4 政策影响评估</h3>
+        <p>模拟新政策如何影响不同利益相关方群体。预测采纳率、阻力、意外后果，识别胜选联盟和否决方。</p>
+
+        <h3>4.5 文学创作推演</h3>
+        <p>基于小说前 80 回的数十万字文本，深度预测遗失结局。MiroFish 已成功演示了《红楼梦》失佚结局的推演。</p>
+
+        <h3>4.6 营销策略测试</h3>
+        <p>在模拟环境中测试营销活动创意，观察消费者反应，优化策略后再在真实市场部署。</p>
+    </div>
+
+    <!-- 5. 竞品对比 -->
+    <div class="section">
+        <h2>五、竞品对比</h2>
+
+        <table class="compare-table">
+            <tr>
+                <th>维度</th>
+                <th>MiroFish</th>
+                <th>传统预测模型</th>
+                <th>单智能体 LLM</th>
+                <th>AgentSims/ChatDev</th>
+            </tr>
+            <tr>
+                <td><strong>预测方法</strong></td>
+                <td>群体智能涌现</td>
+                <td>统计回归/时间序列</td>
+                <td>单模型推理</td>
+                <td>任务协作模拟</td>
+            </tr>
+            <tr>
+                <td><strong>智能体数量</strong></td>
+                <td>数千-百万级</td>
+                <td>N/A</td>
+                <td>1</td>
+                <td>数十级</td>
+            </tr>
+            <tr>
+                <td><strong>知识锚定</strong></td>
+                <td>GraphRAG 知识图谱</td>
+                <td>历史数据</td>
+                <td>提示词/RAG</td>
+                <td>有限</td>
+            </tr>
+            <tr>
+                <td><strong>记忆系统</strong></td>
+                <td>Zep Cloud 持久记忆</td>
+                <td>N/A</td>
+                <td>上下文窗口</td>
+                <td>有限</td>
+            </tr>
+            <tr>
+                <td><strong>涌现能力</strong></td>
+                <td>强（病毒级联、极化、派系）</td>
+                <td>弱</td>
+                <td>无</td>
+                <td>中等</td>
+            </tr>
+            <tr>
+                <td><strong>社交模拟</strong></td>
+                <td>双平台并行</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>单一环境</td>
+            </tr>
+            <tr>
+                <td><strong>可解释性</strong></td>
+                <td>高（可查询每个智能体决策）</td>
+                <td>高（统计显著性）</td>
+                <td>低</td>
+                <td>中</td>
+            </tr>
+            <tr>
+                <td><strong>可扩展性</strong></td>
+                <td>百万级（分布式）</td>
+                <td>数据驱动</td>
+                <td>单机</td>
+                <td>有限</td>
+            </tr>
+            <tr>
+                <td><strong>开源</strong></td>
+                <td>完全开源</td>
+                <td>混合</td>
+                <td>混合</td>
+                <td>开源</td>
+            </tr>
+            <tr>
+                <td><strong>成熟度</strong></td>
+                <td>早期 (v0.1.0)</td>
+                <td>成熟</td>
+                <td>中等</td>
+                <td>中等</td>
+            </tr>
+        </table>
+
+        <div class="highlight-box">
+            <strong>竞争优势：</strong>MiroFish 的独特之处在于将知识图谱锚定 + 持久记忆 + 百万级群体模拟 + 双平台社交动态四者结合。
+            这使它能捕捉传统统计模型无法处理的复杂社会动力学——群体行为、社会传染和涌现模式。作为完全开源项目，其可扩展性远超同类多智能体模拟框架。
+        </div>
+    </div>
+
+    <!-- 6. 局限性与风险 -->
+    <div class="section">
+        <h2>六、局限性与风险</h2>
+        <ul>
+            <li><strong>非水晶球</strong>：模拟展示的是<em>可能</em>场景，非概率估计。尚无发布基准对比预测与实际结果</li>
+            <li><strong>LLM 偏差传播</strong>：研究表明 LLM 智能体比真实人类更易出现群体行为，模拟群体极化速度快于真实群体</li>
+            <li><strong>知识图谱质量瓶颈</strong>：垃圾输入，垃圾输出。低质量种子材料导致低质量图谱和不现实的模拟</li>
+            <li><strong>计算成本高</strong>：1000 智能体 x 100 轮 = 10 万次 LLM 调用，约 $1000/次模拟</li>
+            <li><strong>早期阶段</strong>：v0.1.0 发布于 2025 年 12 月，API/架构可能变更</li>
+        </ul>
+    </div>
+
+    <!-- 7. 综合评分 -->
+    <div class="section">
+        <h2>七、综合评分</h2>
+
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="label">创新性</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:95%; background:linear-gradient(90deg, #e94560, #6c63ff);"></div></div>
+                <div class="score-value" style="color:var(--highlight);">9.5 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">技术深度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%; background:linear-gradient(90deg, #e94560, #6c63ff);"></div></div>
+                <div class="score-value" style="color:var(--highlight);">9.0 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">实用性</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:70%; background:linear-gradient(90deg, #ffd369, #4ecca3);"></div></div>
+                <div class="score-value" style="color:var(--warning);">7.0 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">代码质量</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:75%; background:linear-gradient(90deg, #ffd369, #4ecca3);"></div></div>
+                <div class="score-value" style="color:var(--warning);">7.5 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">社区活跃度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:92%; background:linear-gradient(90deg, #e94560, #6c63ff);"></div></div>
+                <div class="score-value" style="color:var(--highlight);">9.2 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">文档完善度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:78%; background:linear-gradient(90deg, #ffd369, #4ecca3);"></div></div>
+                <div class="score-value" style="color:var(--warning);">7.8 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">可扩展性</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:88%; background:linear-gradient(90deg, #e94560, #6c63ff);"></div></div>
+                <div class="score-value" style="color:var(--highlight);">8.8 / 10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">综合推荐度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:85%; background:linear-gradient(90deg, #4ecca3, #6c63ff);"></div></div>
+                <div class="score-value" style="color:var(--success);">8.5 / 10</div>
+            </div>
+        </div>
+
+        <div class="highlight-box" style="margin-top:24px;">
+            <strong>总结评价：</strong>MiroFish 代表了预测系统的新范式——用群体智能模拟替代统计推断。其架构设计精巧（分层解耦、事件驱动、模块可替换），
+            理论基础扎实（涌现预测 + 知识锚定），且具备百万级扩展潜力。虽然目前处于 v0.1.0 早期阶段，实用性和准确性尚待验证，
+            但作为开源项目，它为多智能体预测系统提供了完整的蓝图。对于关注 AI 预测、多智能体系统和社会模拟的开发者和研究者，这是一个极具前瞻性和学习价值的项目。
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>分析日期：2026-06-06 | 数据来源：GitHub, Medium, Reddit, LinkedIn</p>
+        <p>项目地址：<a href="https://github.com/666ghj/MiroFish" style="color:var(--info);">github.com/666ghj/MiroFish</a></p>
+    </div>
+
+</div>
+</body>
+</html>
