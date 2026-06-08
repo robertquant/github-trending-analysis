@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告: openai/plugins — GitHub Trending</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-1);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .hero .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .hero .meta-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.85;
+            position: relative;
+        }
+        .hero .meta-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Card Style */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--accent); }
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card h2 .icon { font-size: 1.4rem; }
+        .card p, .card li { color: var(--text); line-height: 1.8; }
+        .card ul { padding-left: 1.2rem; }
+        .card li { margin-bottom: 0.4rem; }
+        .card a { color: var(--accent); text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .score-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .score-item .score-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0.3rem 0;
+        }
+        .score-item .score-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        /* Plugin List */
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .plugin-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        .plugin-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-purple);
+        }
+        .plugin-card .plugin-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--accent-purple);
+            margin-bottom: 0.3rem;
+        }
+        .plugin-card .plugin-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .comparison-table th {
+            background: rgba(255,255,255,0.05);
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+            font-weight: 600;
+        }
+        .comparison-table td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .tag-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .tag-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+        .tag-red { background: rgba(248,81,73,0.15); color: var(--accent-red); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            .hero { padding: 1.5rem; }
+            .hero h1 { font-size: 1.5rem; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+    <h1>🧩 openai/plugins</h1>
+    <div class="subtitle">OpenAI Codex 官方插件示例集合 — 定义 AI 编码助手的扩展标准</div>
+    <div class="meta-info">
+        <span>⭐ 2,200+ Stars</span>
+        <span>🍴 276 Forks</span>
+        <span>📦 JavaScript 58.9% / Python 32.8%</span>
+        <span>📅 259 Commits</span>
+        <span>🏢 OpenAI 官方</span>
+    </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="card">
+    <h2><span class="icon">📋</span> 项目概述</h2>
+    <p>
+        <strong>openai/plugins</strong> 是 OpenAI 官方维护的 <strong>Codex 插件示例集合</strong>，为 AI 编码助手 Codex 提供可复用的扩展能力。
+        该仓库定义了一套标准化的插件结构，每个插件位于 <code>plugins/&lt;name&gt;/</code> 目录下，包含必需的
+        <code>.codex-plugin/plugin.json</code> 清单文件，以及可选的 skills、MCP 配置、agents、commands、hooks 和 assets 等组件。
+    </p>
+    <p style="margin-top: 0.8rem;">
+        <strong>GitHub:</strong> <a href="https://github.com/openai/plugins" target="_blank">https://github.com/openai/plugins</a>
+    </p>
+    <p>
+        <strong>文档:</strong> <a href="https://developers.openai.com/codex/plugins/build" target="_blank">Build Plugins – Codex</a>
+    </p>
+</div>
+
+<!-- 技术架构 -->
+<div class="card">
+    <h2><span class="icon">🏗️</span> 技术架构</h2>
+    <p>Codex 插件系统采用模块化设计，支持多种扩展方式。核心架构如下：</p>
+
+    <div class="arch-diagram">
+plugins/
+├── figma/                      # Figma 设计集成
+│   ├── .codex-plugin/
+│   │   └── plugin.json         # 插件清单（必需）
+│   ├── skills/                 # 技能定义
+│   ├── .app.json               # 应用集成配置
+│   ├── .mcp.json               # MCP 协议配置
+│   ├── agents/                 # 插件级 Agent
+│   ├── commands/               # 自定义命令
+│   ├── hooks.json              # 钩子配置
+│   └── assets/                 # 静态资源
+├── notion/                     # Notion 集成
+├── build-ios-apps/             # iOS 应用构建
+├── build-macos-apps/           # macOS 应用构建
+├── build-web-apps/             # Web 应用部署
+├── expo/                       # React Native / Expo
+├── netlify/                    # Netlify 部署
+├── remotion/                   # 视频生成
+└── google-slides/              # Google Slides 集成</div>
+
+    <p style="margin-top: 1rem;"><strong>核心组件说明：</strong></p>
+    <ul>
+        <li><strong>plugin.json</strong> — 插件元数据清单，定义名称、版本、描述和入口</li>
+        <li><strong>skills/</strong> — 预定义的提示工作流，让 Codex 能自动执行特定任务序列</li>
+        <li><strong>.mcp.json</strong> — Model Context Protocol 配置，连接外部工具和数据源</li>
+        <li><strong>.app.json</strong> — 应用集成配置，定义第三方服务连接</li>
+        <li><strong>agents/</strong> — 插件级 Agent 定义，实现自主任务执行</li>
+        <li><strong>commands/</strong> — 自定义命令，用户可通过 CLI 直接调用</li>
+        <li><strong>hooks.json</strong> — 事件钩子，在特定触发条件下自动执行操作</li>
+    </ul>
+</div>
+
+<!-- 重点插件 -->
+<div class="card">
+    <h2><span class="icon">🔌</span> 重点插件详解</h2>
+    <div class="plugin-grid">
+        <div class="plugin-card">
+            <div class="plugin-name">🎨 Figma</div>
+            <div class="plugin-desc">Code to Canvas、Code Connect、设计系统规则，将设计稿自动转化为前端代码</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">📝 Notion</div>
+            <div class="plugin-desc">规划、研究、会议记录、知识捕获，实现 Codex 与 Notion 工作空间的双向同步</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">📱 build-ios-apps</div>
+            <div class="plugin-desc">SwiftUI 实现、重构、性能优化和调试，覆盖 iOS 应用开发全流程</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">🖥️ build-macos-apps</div>
+            <div class="plugin-desc">macOS SwiftUI/AppKit 工作流，构建/运行/调试循环和打包指南</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">🌐 build-web-apps</div>
+            <div class="plugin-desc">部署、UI、支付和数据库工作流，Web 全栈开发一键式体验</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">⚛️ Expo</div>
+            <div class="plugin-desc">Expo/React Native 应用、SDK 升级、EAS 工作流和 Codex Run 操作</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">☁️ Netlify</div>
+            <div class="plugin-desc">一键部署到 Netlify，集成 CI/CD 和边缘函数</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">🎬 Remotion</div>
+            <div class="plugin-desc">使用 React 编程式生成视频，AI 辅助视频内容创作</div>
+        </div>
+        <div class="plugin-card">
+            <div class="plugin-name">📊 Google Slides</div>
+            <div class="plugin-desc">Google Slides 集成，AI 驱动的演示文稿生成与编辑</div>
+        </div>
+    </div>
+</div>
+
+<!-- 核心创新点 -->
+<div class="card">
+    <h2><span class="icon">💡</span> 核心创新点</h2>
+    <ul>
+        <li><strong>一体化插件架构：</strong>将 Skills、MCP、Agents、Commands、Hooks 五种扩展模式统一在一个插件框架内，开发者无需学习多种集成方式，一套结构即可覆盖所有扩展场景。</li>
+        <li><strong>声明式插件清单：</strong>通过 <code>plugin.json</code> 声明式定义插件能力，Codex 运行时自动发现和加载，降低了插件开发门槛。</li>
+        <li><strong>MCP 原生支持：</strong>内置对 Anthropic 推出的 Model Context Protocol 的支持，体现了 OpenAI 在工具层面对开放标准的兼容态度。</li>
+        <li><strong>全平台覆盖：</strong>从 iOS/macOS 原生应用到 Web 部署、从设计到代码、从文档到演示，覆盖开发全链路。</li>
+        <li><strong>可复用与可组合：</strong>插件之间可以组合使用，开发者可以将 Figma 插件与 build-web-apps 插件配合，实现从设计稿到上线部署的完整自动化。</li>
+        <li><strong>社区驱动生态：</strong>开源仓库配合社区资源（如 <a href="https://github.com/hashgraph-online/awesome-codex-plugins" target="_blank">awesome-codex-plugins</a>），形成快速增长的插件市场。</li>
+    </ul>
+</div>
+
+<!-- 应用场景 -->
+<div class="card">
+    <h2><span class="icon">🎯</span> 应用场景</h2>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>场景</th>
+                <th>描述</th>
+                <th>相关插件</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>设计到代码</strong></td>
+                <td>设计师在 Figma 完成设计后，Codex 自动将设计稿转化为前端代码</td>
+                <td><span class="tag tag-purple">figma</span> <span class="tag tag-blue">build-web-apps</span></td>
+            </tr>
+            <tr>
+                <td><strong>全栈 Web 开发</strong></td>
+                <td>从项目初始化到部署上线，涵盖 UI、数据库、支付、CI/CD</td>
+                <td><span class="tag tag-blue">build-web-apps</span> <span class="tag tag-green">netlify</span></td>
+            </tr>
+            <tr>
+                <td><strong>移动应用开发</strong></td>
+                <td>使用 SwiftUI 或 React Native 构建、调试和发布 iOS/macOS 应用</td>
+                <td><span class="tag tag-orange">build-ios-apps</span> <span class="tag tag-orange">expo</span></td>
+            </tr>
+            <tr>
+                <td><strong>知识管理</strong></td>
+                <td>将 Codex 分析结果、代码文档、技术方案同步到 Notion 工作空间</td>
+                <td><span class="tag tag-green">notion</span></td>
+            </tr>
+            <tr>
+                <td><strong>视频内容生成</strong></td>
+                <td>使用 React 组件编程式生成视频内容，AI 辅助创作</td>
+                <td><span class="tag tag-red">remotion</span></td>
+            </tr>
+            <tr>
+                <td><strong>自定义插件开发</strong></td>
+                <td>基于官方示例快速开发企业内部工具插件，扩展 Codex 能力</td>
+                <td><span class="tag tag-blue">全部示例</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 竞品对比 -->
+<div class="card">
+    <h2><span class="icon">⚔️</span> 竞品对比</h2>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>维度</th>
+                <th>OpenAI Codex Plugins</th>
+                <th>Anthropic MCP</th>
+                <th>GitHub Copilot Extensions</th>
+                <th>Cursor Plugins</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>协议类型</strong></td>
+                <td>插件清单 + OpenAPI</td>
+                <td>JSON-RPC 开放标准</td>
+                <td>GitHub App API</td>
+                <td>自研插件协议</td>
+            </tr>
+            <tr>
+                <td><strong>开源程度</strong></td>
+                <td><span class="tag tag-green">完全开源</span></td>
+                <td><span class="tag tag-green">完全开源</span></td>
+                <td><span class="tag tag-orange">部分开放</span></td>
+                <td><span class="tag tag-red">闭源</span></td>
+            </tr>
+            <tr>
+                <td><strong>扩展模式</strong></td>
+                <td>Skills + MCP + Agents + Commands + Hooks</td>
+                <td>Tools + Resources + Prompts</td>
+                <td>Skills + API 集成</td>
+                <td>Skills + MCP</td>
+            </tr>
+            <tr>
+                <td><strong>平台绑定</strong></td>
+                <td>OpenAI Codex</td>
+                <td>跨模型/跨平台</td>
+                <td>GitHub 生态</td>
+                <td>Cursor IDE</td>
+            </tr>
+            <tr>
+                <td><strong>社区生态</strong></td>
+                <td>快速成长中</td>
+                <td>成熟，已形成标准</td>
+                <td>大规模企业级</td>
+                <td>早期阶段</td>
+            </tr>
+            <tr>
+                <td><strong>上手难度</strong></td>
+                <td>低（一键安装）</td>
+                <td>中（需配置 MCP Server）</td>
+                <td>中（GitHub App 开发）</td>
+                <td>低</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 综合评分 -->
+<div class="card">
+    <h2><span class="icon">⭐</span> 综合评分</h2>
+    <div class="score-grid">
+        <div class="score-item">
+            <div class="score-label">创新性</div>
+            <div class="score-value" style="color: var(--accent-purple);">9.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--accent-purple);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">实用性</div>
+            <div class="score-value" style="color: var(--accent-green);">8.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--accent-green);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">文档质量</div>
+            <div class="score-value" style="color: var(--accent);">8.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: var(--accent);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">社区活跃度</div>
+            <div class="score-value" style="color: var(--accent-orange);">8.5</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--accent-orange);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">代码质量</div>
+            <div class="score-value" style="color: var(--accent-green);">8.0</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: var(--accent-green);"></div></div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">综合推荐</div>
+            <div class="score-value" style="color: var(--accent);">8.4</div>
+            <div class="score-bar"><div class="score-bar-fill" style="width: 84%; background: var(--accent);"></div></div>
+        </div>
+    </div>
+    <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+        💡 <strong>总结：</strong>openai/plugins 作为 OpenAI Codex 生态的核心扩展机制，创新性地将多种扩展模式统一在单一框架下。
+        其最大的战略意义在于定义了 AI 编码助手的插件标准——就像 VS Code 扩展定义了 IDE 扩展标准一样。
+        虽然目前仍处于快速迭代期，但凭借 OpenAI 的影响力和生态优势，该项目的长期价值值得关注。
+    </p>
+</div>
+
+<!-- 参考链接 -->
+<div class="card">
+    <h2><span class="icon">🔗</span> 参考链接</h2>
+    <ul>
+        <li><a href="https://github.com/openai/plugins" target="_blank">GitHub 仓库: openai/plugins</a></li>
+        <li><a href="https://developers.openai.com/codex/plugins/build" target="_blank">官方文档: Build Plugins – Codex</a></li>
+        <li><a href="https://github.com/hashgraph-online/awesome-codex-plugins" target="_blank">社区资源: awesome-codex-plugins</a></li>
+        <li><a href="https://xairouter.com/en/blog/codex-plugins-guide/" target="_blank">指南: Codex Plugins 完整指南</a></li>
+        <li><a href="https://quickchat.ai/post/gpt-actions-vs-mcp" target="_blank">对比: GPT Actions vs MCP</a></li>
+    </ul>
+</div>
+
+<div class="footer">
+    <p>📊 GitHub Trending 深度分析报告 · 生成日期: 2026-06-08 · Powered by Claude AI</p>
+</div>
+
+</body>
+</html>
