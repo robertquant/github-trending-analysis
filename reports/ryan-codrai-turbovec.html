@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurboVec 深度分析报告 | GitHub Trending Daily</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2.5rem;
+        }
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.3rem 0.9rem;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .header .subtitle { color: var(--text-muted); font-size: 1.1rem; }
+        .header .meta {
+            margin-top: 1.2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .header .meta span strong { color: var(--text); }
+
+        /* Score Card */
+        .score-card {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .score-card .score-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+        }
+        .score-card .score-label { color: rgba(255,255,255,0.8); margin-top: 0.3rem; font-size: 1rem; }
+        .score-bars {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .score-bar-item { text-align: left; }
+        .score-bar-item .label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 0.3rem;
+        }
+        .score-bar-item .bar-track {
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .score-bar-item .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .icon { font-size: 1.4rem; }
+        .section p { color: var(--text-muted); margin-bottom: 0.8rem; }
+        .section ul { padding-left: 1.2rem; color: var(--text-muted); }
+        .section ul li { margin-bottom: 0.4rem; }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+        .tag {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary-light);
+            padding: 0.25rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.8rem;
+        }
+        th, td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        th {
+            color: var(--text);
+            font-weight: 600;
+            background: rgba(99,102,241,0.08);
+        }
+        td { color: var(--text-muted); }
+        .highlight { color: var(--accent-green); font-weight: 600; }
+
+        /* Process Steps */
+        .steps { counter-reset: step; }
+        .step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+            align-items: flex-start;
+        }
+        .step-num {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .step-content h3 { font-size: 1rem; color: var(--text); margin-bottom: 0.2rem; }
+        .step-content p { font-size: 0.9rem; margin-bottom: 0; }
+
+        /* Code Block */
+        pre {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            color: #c9d1d9;
+        }
+        code { font-family: 'SF Mono', 'Fira Code', monospace; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.8rem; }
+            .score-bars { grid-template-columns: 1fr; }
+            .container { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="badge">🔬 GitHub Trending 深度分析</div>
+            <h1>TurboVec</h1>
+            <div class="subtitle">基于 Google TurboQuant 算法的下一代向量搜索引擎</div>
+            <div class="meta">
+                <span>📦 <strong>RyanCodrai/turbovec</strong></span>
+                <span>⭐ <strong>~6,700</strong></span>
+                <span>🍴 <strong>~660</strong></span>
+                <span>👨‍💻 <strong>7 贡献者</strong></span>
+                <span>📜 <strong>开源许可</strong></span>
+            </div>
+            <div class="tags" style="justify-content: center; margin-top: 1rem;">
+                <span class="tag">Rust</span>
+                <span class="tag">Python 绑定</span>
+                <span class="tag">向量搜索</span>
+                <span class="tag">SIMD</span>
+                <span class="tag">TurboQuant</span>
+                <span class="tag">ANN</span>
+                <span class="tag">RAG</span>
+                <span class="tag">语义搜索</span>
+            </div>
+        </div>
+
+        <!-- Score Card -->
+        <div class="score-card">
+            <div class="score-number">9.0</div>
+            <div class="score-label">综合评分 / 10</div>
+            <div class="score-bars">
+                <div class="score-bar-item">
+                    <div class="label">技术创新性 — 9.5</div>
+                    <div class="bar-track"><div class="bar-fill" style="width: 95%"></div></div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="label">实用价值 — 9.0</div>
+                    <div class="bar-track"><div class="bar-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="label">代码质量 — 8.5</div>
+                    <div class="bar-track"><div class="bar-fill" style="width: 85%"></div></div>
+                </div>
+                <div class="score-bar-item">
+                    <div class="label">社区活跃度 — 8.5</div>
+                    <div class="bar-track"><div class="bar-fill" style="width: 85%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 一句话总结 -->
+        <div class="section" style="border-left: 4px solid var(--primary);">
+            <h2><span class="icon">💡</span> 一句话总结</h2>
+            <p style="font-size: 1.05rem; color: var(--text); margin: 0;">
+                TurboVec 是一个基于 Google Research <strong>TurboQuant 算法</strong>（ICLR 2026）的 Rust 向量索引库，能将 1000 万条向量从 31 GB 压缩到仅 4 GB（~8× 压缩），并在 ARM 上比 FAISS 快 12–20%，无需训练、无需调参、即插即用。
+            </p>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="section">
+            <h2><span class="icon">📋</span> 项目概述</h2>
+            <p>TurboVec 是由独立开发者 RyanCodrai 创建的开源向量索引库，核心实现了 Google Research 发表于 ICLR 2026 的 <strong>TurboQuant</strong> 算法。该算法是一种<strong>数据无关（data-oblivious）</strong>的向量量化方法，其失真率达到了 Shannon 熵下界的近最优水平。</p>
+            <p>项目使用 Rust 编写核心引擎，通过 PyO3/maturin 提供 Python 绑定，同时提供纯 Rust API。其设计理念是<strong>零配置、零训练、在线索引</strong>——添加向量即自动索引，无需任何预处理步骤。</p>
+
+            <h3 style="margin-top: 1.2rem; font-size: 1rem; color: var(--text);">核心数据</h3>
+            <table>
+                <tr><th>指标</th><th>数值</th></tr>
+                <tr><td>压缩比</td><td class="highlight">~8×（31 GB → 4 GB，1000 万向量）</td></tr>
+                <tr><td>量化精度</td><td>2-bit 或 4-bit / 维度</td></tr>
+                <tr><td>ARM 性能</td><td class="highlight">比 FAISS IndexPQFastScan 快 12–20%</td></tr>
+                <tr><td>x86 性能</td><td>4-bit 配置快 1–6%，2-bit 基本持平</td></tr>
+                <tr><td>训练需求</td><td class="highlight">无需训练</td></tr>
+                <tr><td>编程语言</td><td>Rust（核心）+ Python（绑定）</td></tr>
+                <tr><td>框架集成</td><td>LangChain, LlamaIndex, Haystack, Agno</td></tr>
+            </table>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section">
+            <h2><span class="icon">🏗️</span> 技术架构</h2>
+            <p>TurboVec 的核心技术流程可以分为 6 个关键步骤：</p>
+
+            <div class="steps" style="margin-top: 1rem;">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h3>归一化（Normalize）</h3>
+                        <p>剥离向量长度（范数），将其存储为单个浮点数。每个向量变为高维超球面上的单位方向向量。</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h3>随机旋转（Random Rotation）</h3>
+                        <p>对所有向量乘以相同的随机正交矩阵。旋转后，每个坐标独立服从 Beta 分布（高维下趋近于高斯 N(0, 1/d)）。这使得坐标分布对任意输入数据都是可预测的——这是算法"数据无关"特性的核心来源。</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h3>逐坐标校准（TQ+）</h3>
+        <p>针对有限维度下 Beta 分布的渐近偏差，为每个坐标拟合两个标量（shift 和 scale），将经验 5/95% 分位数映射到标准 Beta 边际。校准在首次添加后冻结，后续添加无需重新训练。召回率增益：在低维嵌入上最高 +1.4pp @1。</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h3>Lloyd-Max 标量量化</h3>
+                        <p>由于分布已知，可预计算最优分桶方案：2-bit → 4 桶，4-bit → 16 桶。Lloyd-Max 算法找到最小化均方误差的边界和质心。这些参数从数学推导而来，不依赖数据。</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h3>位压缩（Bit-pack）</h3>
+                        <p>每个坐标编码为小整数后紧密打包。1536 维向量从 6,144 字节（FP32）压缩到 384 字节（2-bit），实现 <strong>16× 压缩</strong>。</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">6</div>
+                    <div class="step-content">
+                        <h3>长度重归一化评分</h3>
+                        <p>标量量化会系统性地低估内积。TurboVec 在编码时为每个向量计算一个校正标量，搜索内核在堆插入前乘以该标量，将偏差从向下偏差修正为无偏估计，且搜索时零额外开销。</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 1.5rem; font-size: 1rem; color: var(--text);">SIMD 搜索内核</h3>
+            <p>搜索阶段不解压数据库向量，而是将查询旋转到同一域，直接对码本值评分。评分内核使用 SIMD 内联函数：</p>
+            <ul>
+                <li><strong>ARM：</strong>手写 NEON 内核</li>
+                <li><strong>x86：</strong>AVX-512BW（现代 Intel/AMD）+ AVX2 回退</li>
+                <li>采用 nibble-split 查找表实现最大吞吐量</li>
+                <li>过滤搜索在 32 向量块粒度上短路无允许槽的块</li>
+            </ul>
+        </div>
+
+        <!-- 核心创新点 -->
+        <div class="section">
+            <h2><span class="icon">✨</span> 核心创新点</h2>
+
+            <h3 style="font-size: 1rem; color: var(--accent-green); margin-top: 0.5rem;">1. 数据无关量化 — 零训练范式</h3>
+            <p>传统向量量化（如 FAISS PQ）需要用 k-means++ 训练码本，这是计算密集型的离线步骤。TurboQuant 通过随机旋转使坐标分布可预测，完全消除了训练阶段——这对在线、流式场景是<strong>颠覆性的</strong>。</p>
+
+            <h3 style="font-size: 1rem; color: var(--accent-green); margin-top: 1rem;">2. 接近 Shannon 下界的失真率</h3>
+            <p>Lloyd-Max 码本在已知分布下的失真度在 Shannon 率失真极限的 2.7 倍因子以内。配合长度重归一化校正，进一步消除了内积估计器的残余偏差。</p>
+
+            <h3 style="font-size: 1rem; color: var(--accent-green); margin-top: 1rem;">3. 内核级过滤搜索</h3>
+            <p>搜索过滤直接在 SIMD 内核内以 32 向量块粒度执行：无允许槽的块在 LUT 查找前短路跳过，选择性过滤器可避免大部分 SIMD 计算开销。结果数量保证为 min(k, len(allowed))——不过度获取、不损失召回率。</p>
+
+            <h3 style="font-size: 1rem; color: var(--accent-green); margin-top: 1rem;">4. 纯本地、完全隐私</h3>
+            <p>无需托管服务、无数据外泄。可搭配任何开源嵌入模型，构建完全<strong>气隙隔离（air-gapped）</strong>的 RAG 流水线。在隐私敏感行业（医疗、金融、法律）具有极高价值。</p>
+
+            <h3 style="font-size: 1rem; color: var(--accent-green); margin-top: 1rem;">5. 多框架无缝集成</h3>
+            <p>提供 LangChain、LlamaIndex、Haystack、Agno 四大 AI 框架的<strong>即插即用替换</strong>方案——仅需更换导入行，保留原有流水线不变。</p>
+        </div>
+
+        <!-- 代码示例 -->
+        <div class="section">
+            <h2><span class="icon">💻</span> 代码示例</h2>
+            <p>Python 基本用法（极简 API）：</p>
+<pre><code>from turbovec import TurboQuantIndex
+
+index = TurboQuantIndex(dim=1536, bit_width=4)
+index.add(vectors)
+index.add(more_vectors)
+
+scores, indices = index.search(query, k=10)
+
+# 持久化
+index.write("my_index.tq")
+loaded = TurboQuantIndex.load("my_index.tq")</code></pre>
+
+            <p>混合检索（过滤搜索）：</p>
+<pre><code>from turbovec import IdMapIndex
+
+idx = IdMapIndex(dim=1536, bit_width=4)
+idx.add_with_ids(vectors, ids)
+
+# 外部系统（SQL/BM25）筛选候选 ID
+allowed = np.array([...], dtype=np.uint64)
+
+# 在候选集内做稠密重排
+scores, ids = idx.search(query, k=10, allowlist=allowed)</code></pre>
+
+            <p>Rust 原生 API：</p>
+<pre><code>use turbovec::TurboQuantIndex;
+
+let mut index = TurboQuantIndex::new(1536, 4);
+index.add(&vectors);
+let results = index.search(&queries, 10);
+index.write("index.tv").unwrap();</code></pre>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section">
+            <h2><span class="icon">🎯</span> 应用场景</h2>
+
+            <table>
+                <tr><th>场景</th><th>说明</th></tr>
+                <tr>
+                    <td><strong>RAG 检索增强生成</strong></td>
+                    <td>作为 LangChain/LlamaIndex 的向量存储后端，16× 压缩大幅降低内存成本，特别适合私有化部署</td>
+                </tr>
+                <tr>
+                    <td><strong>语义搜索</strong></td>
+                    <td>在高维嵌入空间中执行近似最近邻搜索，支持混合检索（关键词 + 向量）</td>
+                </tr>
+                <tr>
+                    <td><strong>推荐系统</strong></td>
+                    <td>存储用户/物品嵌入向量，快速检索 Top-K 相似项，过滤内核支持业务规则过滤</td>
+                </tr>
+                <tr>
+                    <td><strong>隐私敏感场景</strong></td>
+                    <td>医疗、金融、法律等需要气隙隔离的行业，纯本地运行零数据外泄</td>
+                </tr>
+                <tr>
+                    <td><strong>边缘设备部署</strong></td>
+                    <td>ARM 上的卓越性能使其适合在嵌入式设备、手机、IoT 终端上运行向量搜索</td>
+                </tr>
+                <tr>
+                    <td><strong>LLM KV Cache 压缩</strong></td>
+                    <td>TurboQuant 原始论文的主要动机——将 KV cache 压缩到 2.5-4 bit/元素</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 竞品对比 -->
+        <div class="section">
+            <h2><span class="icon">⚔️</span> 竞品对比</h2>
+            <table>
+                <tr>
+                    <th>维度</th>
+                    <th>TurboVec</th>
+                    <th>FAISS (IndexPQ)</th>
+                    <th>Qdrant</th>
+                    <th>Milvus</th>
+                </tr>
+                <tr>
+                    <td><strong>语言</strong></td>
+                    <td>Rust + Python</td>
+                    <td>C++ + Python</td>
+                    <td>Rust</td>
+                    <td>Go + C++</td>
+                </tr>
+                <tr>
+                    <td><strong>训练需求</strong></td>
+                    <td class="highlight">✅ 无需训练</td>
+                    <td>❌ 需 k-means 训练</td>
+                    <td>部分需训练</td>
+                    <td>部分需训练</td>
+                </tr>
+                <tr>
+                    <td><strong>压缩比</strong></td>
+                    <td class="highlight">16× (2-bit)</td>
+                    <td>4-8×</td>
+                    <td>可配置</td>
+                    <td>可配置</td>
+                </tr>
+                <tr>
+                    <td><strong>ARM 性能</strong></td>
+                    <td class="highlight">比 FAISS 快 12-20%</td>
+                    <td>基准</td>
+                    <td>良好</td>
+                    <td>良好</td>
+                </tr>
+                <tr>
+                    <td><strong>分布式</strong></td>
+                    <td>❌ 单机</td>
+                    <td>❌ 单机</td>
+                    <td>✅ 原生支持</td>
+                    <td class="highlight">✅ 云原生</td>
+                </tr>
+                <tr>
+                    <td><strong>过滤搜索</strong></td>
+                    <td class="highlight">SIMD 内核级</td>
+                    <td>后过滤</td>
+                    <td>有效载荷过滤</td>
+                    <td>标量过滤</td>
+                </tr>
+                <tr>
+                    <td><strong>部署模式</strong></td>
+                    <td class="highlight">嵌入库</td>
+                    <td>嵌入库</td>
+                    <td>独立服务</td>
+                    <td>独立服务</td>
+                </tr>
+                <tr>
+                    <td><strong>理论保证</strong></td>
+                    <td class="highlight">近 Shannon 最优</td>
+                    <td>经验优化</td>
+                    <td>多种索引</td>
+                    <td>多种索引</td>
+                </tr>
+            </table>
+
+            <h3 style="margin-top: 1.2rem; font-size: 1rem; color: var(--text);">TurboVec 的定位</h3>
+            <p>TurboVec <strong>不是</strong>一个分布式向量数据库，而是一个轻量级<strong>嵌入式向量索引库</strong>。它的定位类似于 FAISS——作为其他系统的底层组件。其核心优势在于：零配置 + 极高压缩比 + 卓越的 ARM 性能 + 理论最优保证。如果你需要在资源受限环境（边缘设备、嵌入式场景、单机 RAG）中进行高效向量搜索，TurboVec 是目前最优选择之一。</p>
+        </div>
+
+        <!-- 理论背景 -->
+        <div class="section">
+            <h2><span class="icon">🎓</span> 理论背景：TurboQuant</h2>
+            <p>TurboQuant 是 Google Research 提出的一种在线向量量化算法，发表于 <strong>ICLR 2026</strong>（论文 arXiv: 2504.19874）。其核心贡献包括：</p>
+            <ul>
+                <li><strong>数据无关性：</strong>不需要观察数据分布即可进行量化，适用于在线/流式场景（如 KV cache 压缩）</li>
+                <li><strong>随机旋转消除异常值：</strong>随机旋转向量消除异常值导致的量化误差</li>
+                <li><strong>接近 Shannon 率失真极限：</strong>失真率在理论下界的小常数因子以内</li>
+                <li><strong>结合 QJL + PolarQuant：</strong>融合两种互补的高维向量压缩技术</li>
+            </ul>
+            <p>Google Research 官方博客称 TurboQuant "重新定义了 AI 效率"，可实现 LLM KV cache <strong>6× 内存压缩</strong>和 <strong>8× 推理加速</strong>。据 Milvus 博客报道，这一成果据称导致向量数据库公司市值蒸发约 9000 万美元。</p>
+        </div>
+
+        <!-- 优势与局限 -->
+        <div class="section">
+            <h2><span class="icon">⚖️</span> 优势与局限</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <h3 style="font-size: 0.95rem; color: var(--accent-green); margin-bottom: 0.5rem;">✅ 优势</h3>
+                    <ul>
+                        <li>零训练、零配置、在线索引</li>
+                        <li>16× 压缩（2-bit）大幅降低内存需求</li>
+                        <li>ARM 上显著快于 FAISS</li>
+                        <li>内核级过滤搜索不损失召回率</li>
+                        <li>理论最优失真率保证</li>
+                        <li>多框架无缝集成</li>
+                        <li>纯本地运行，完全隐私</li>
+                        <li>同时提供 Rust 和 Python API</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="font-size: 0.95rem; color: var(--accent-orange); margin-bottom: 0.5rem;">⚠️ 局限</h3>
+                    <ul>
+                        <li>仅支持单机部署，无分布式</li>
+                        <li>项目较新，生产验证尚不充分</li>
+                        <li>贡献者仅 7 人，社区规模有限</li>
+                        <li>低维嵌入（如 GloVe 200-d）上召回率略有差距</li>
+                        <li>Mac ARM 构建曾报告编译问题</li>
+                        <li>缺乏 GPU 加速支持</li>
+                        <li>无 Web/API 服务层</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 综合评分说明 -->
+        <div class="section">
+            <h2><span class="icon">📊</span> 评分说明</h2>
+            <table>
+                <tr><th>维度</th><th>分数</th><th>说明</th></tr>
+                <tr><td>技术创新性</td><td class="highlight">9.5/10</td><td>基于 ICLR 2026 顶会论文，实现近 Shannon 最优量化，理论创新极强</td></tr>
+                <tr><td>实用价值</td><td class="highlight">9.0/10</td><td>直接解决 RAG 场景的内存和性能痛点，多框架集成降低采用门槛</td></tr>
+                <tr><td>代码质量</td><td>8.5/10</td><td>手写 SIMD 内核、完善的基准测试、清晰的文档，但项目较新需持续迭代</td></tr>
+                <tr><td>社区活跃度</td><td>8.5/10</td><td>6.7K Star 增长迅速，但贡献者少，长期可持续性待观察</td></tr>
+                <tr><td><strong>综合评分</strong></td><td><strong style="color: var(--primary-light); font-size: 1.1rem;">9.0/10</strong></td><td><strong>强烈推荐关注</strong> — 向量搜索领域的重要突破，特别适合资源受限和隐私敏感场景</td></tr>
+            </table>
+        </div>
+
+        <!-- Reference -->
+        <div class="section">
+            <h2><span class="icon">📚</span> 参考资料</h2>
+            <ul>
+                <li><a href="https://github.com/RyanCodrai/turbovec" style="color: var(--primary-light);">GitHub - RyanCodrai/turbovec</a></li>
+                <li><a href="https://arxiv.org/abs/2504.19874" style="color: var(--primary-light);">TurboQuant 论文 (arXiv: 2504.19874)</a></li>
+                <li><a href="https://research.google/blog/turboquant-redefining-ai-efficiency-with-extreme-compression/" style="color: var(--primary-light);">Google Research Blog: TurboQuant</a></li>
+                <li><a href="https://openreview.net/forum?id=tO3ASKZlok" style="color: var(--primary-light);">OpenReview: ICLR 2026 论文页</a></li>
+                <li><a href="https://www.marktechpost.com/2026/05/20/meet-turbovec-a-rust-vector-index-with-python-bindings-and-built-on-googles-turboquant-algorithm/" style="color: var(--primary-light);">MarkTechPost: TurboVec 介绍</a></li>
+                <li><a href="https://medium.com/data-science-in-your-pocket/turbovec-googles-turboquant-makes-vector-search-smaller-faster-and-simpler-fdea72674aad" style="color: var(--primary-light);">Medium: TurboVec 深度解析</a></li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>📅 分析日期：2026-06-09 | 数据来源：GitHub, arXiv, WebSearch</p>
+            <p style="margin-top: 0.3rem;">由 AI 深度分析引擎自动生成 | GitHub Trending Daily Report</p>
+        </div>
+    </div>
+</body>
+</html>
