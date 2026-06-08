@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>google/skills 深度分析报告 | GitHub Trending 2026</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-light: #e8f0fe;
+            --accent: #34a853;
+            --accent-warm: #fbbc04;
+            --accent-red: #ea4335;
+            --bg: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --border: #dadce0;
+            --card-shadow: 0 1px 3px rgba(60,64,67,0.15), 0 1px 2px rgba(60,64,67,0.1);
+            --card-shadow-hover: 0 4px 12px rgba(60,64,67,0.15), 0 2px 6px rgba(60,64,67,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', 'PingFang SC', sans-serif;
+            color: var(--text);
+            background: var(--bg-secondary);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a73e8 0%, #34a853 100%);
+            border-radius: 16px;
+            padding: 48px 40px;
+            color: white;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: 10%;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            padding: 4px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .header .subtitle {
+            font-size: 17px;
+            opacity: 0.9;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 6px 14px;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-value.green { color: var(--accent); }
+        .stat-value.yellow { color: var(--accent-warm); }
+        .stat-value.red { color: var(--accent-red); }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .section-card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary-light);
+            color: var(--primary);
+        }
+
+        .section-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 16px 0 8px;
+            color: var(--text);
+        }
+
+        .section-card p {
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .section-card ul {
+            padding-left: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .section-card li {
+            margin-bottom: 6px;
+        }
+
+        /* Skills Table */
+        .skills-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .skills-table th {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .skills-table th:first-child {
+            border-radius: 8px 0 0 0;
+        }
+
+        .skills-table th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        .skills-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .skills-table tr:last-child td:first-child {
+            border-radius: 0 0 0 8px;
+        }
+
+        .skills-table tr:last-child td:last-child {
+            border-radius: 0 0 8px 0;
+        }
+
+        .skills-table tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-product {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .tag-recipe {
+            background: #e6f4ea;
+            color: #34a853;
+        }
+
+        .tag-framework {
+            background: #fef7e0;
+            color: #b06000;
+        }
+
+        .tag-platform {
+            background: #fce8e6;
+            color: #c5221f;
+        }
+
+        /* Score Section */
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .score-bar-wrap {
+            flex: 1;
+        }
+
+        .score-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .score-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .score-total {
+            background: linear-gradient(135deg, #1a73e8, #34a853);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .score-total .big-score {
+            font-size: 48px;
+            font-weight: 800;
+        }
+
+        .score-total .score-desc {
+            font-size: 15px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* Comparison */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .compare-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .compare-card.current {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .compare-card h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .compare-card .compare-score {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header {
+                padding: 32px 24px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .section-card {
+                padding: 24px 20px;
+            }
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-badge">🔍 GitHub Trending 深度分析</div>
+            <h1>google/skills</h1>
+            <p class="subtitle">Google 官方 Agent Skills 仓库 —— 为 AI 代理赋予 Google 生态的专业能力</p>
+            <div class="meta-row">
+                <div class="meta-item">⭐ 11.2k Stars</div>
+                <div class="meta-item">🍴 893 Forks</div>
+                <div class="meta-item">📄 Apache 2.0</div>
+                <div class="meta-item">📅 2026-04-28 发布</div>
+                <div class="meta-item">🐍 Python / Shell</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value">11.2k</div>
+                <div class="stat-label">GitHub Stars</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value green">13</div>
+                <div class="stat-label">初始 Skills 数量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value yellow">7</div>
+                <div class="stat-label">Google Cloud 产品覆盖</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">1</div>
+                <div class="stat-label">命令安装</div>
+            </div>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="section-card">
+            <h2>📋 项目概述</h2>
+            <p><strong>google/skills</strong> 是 Google 在 Cloud Next 2026（2026年4月28日）上发布的官方开源仓库，旨在为 AI 编码代理（如 Claude Code、Gemini CLI、GitHub Copilot 等）提供可复用、模块化的专业能力包（Agent Skills）。</p>
+            <p>这些 Skills 基于 <strong>Agent Skills 开放标准</strong>（由 Anthropic 于2025年底发起并开放），以轻量级的 Markdown 文件（<code>SKILL.md</code>）格式存在，能被任何兼容该标准的 AI 代理直接加载使用。项目覆盖了 Google Cloud 核心产品（BigQuery、Cloud Run、AlloyDB、GKE 等）以及 Gemini API 的专业知识和最佳实践。</p>
+            <h3>核心定位</h3>
+            <ul>
+                <li><strong>AI 代理的"Google 专家知识库"</strong> —— 让任何兼容 Agent Skills 标准的编码代理都能获得 Google 生态的专业能力</li>
+                <li><strong>一键安装</strong> —— 通过 <code>npx skills add google/skills</code> 即可选择并安装所需技能</li>
+                <li><strong>跨平台兼容</strong> —— 一份 Skill 定义可在 Claude Code、Gemini CLI、Codex、GitHub Copilot 等多个平台使用</li>
+            </ul>
+            <h3>安装方式</h3>
+            <div class="code-block">
+                <span class="comment"># 一键安装 Google 官方 Agent Skills</span><br>
+                <span class="keyword">npx</span> skills add google/skills<br>
+                <br>
+                <span class="comment"># 安装后可在代理中自动加载，选择所需技能</span>
+            </div>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section-card">
+            <h2>🏗️ 技术架构</h2>
+            <h3>架构设计理念</h3>
+            <p>google/skills 遵循 Agent Skills 开放标准规范，采用<strong>文件系统驱动</strong>的架构。每个 Skill 是一个独立的 Markdown 文件，包含：</p>
+            <ul>
+                <li><strong>SKILL.md</strong> —— 核心技能定义文件，包含元数据（frontmatter）、触发条件、知识内容、工作流程和最佳实践</li>
+                <li><strong>模块化设计</strong> —— 每个 Skill 独立成包，互不依赖，可按需安装</li>
+                <li><strong>版本控制友好</strong> —— 纯文本 Markdown 格式，天然适合 Git 管理</li>
+            </ul>
+            <h3>目录结构</h3>
+            <div class="code-block">
+                google/skills/<br>
+                ├── skills/<br>
+                │   └── cloud/<br>
+                │       ├── alloydb-basics/        <span class="comment"># AlloyDB 基础技能</span><br>
+                │       ├── bigquery-basics/       <span class="comment"># BigQuery 基础技能</span><br>
+                │       ├── cloud-run-basics/      <span class="comment"># Cloud Run 基础技能</span><br>
+                │       ├── cloud-sql-basics/      <span class="comment"># Cloud SQL 基础技能</span><br>
+                │       ├── firebase-basics/       <span class="comment"># Firebase 基础技能</span><br>
+                │       ├── gke-basics/            <span class="comment"># GKE 基础技能</span><br>
+                │       ├── gemini-api/            <span class="comment"># Gemini API 技能</span><br>
+                │       ├── well-architected/      <span class="comment"># Well-Architected 框架</span><br>
+                │       └── recipes/               <span class="comment"># 实用配方</span><br>
+                ├── CONTRIBUTING.md<br>
+                ├── LICENSE                        <span class="comment"># Apache 2.0</span><br>
+                └── README.md
+            </div>
+            <h3>技术栈</h3>
+            <ul>
+                <li><strong>语言</strong>: Python 97.1% + Shell 2.9%（辅助脚本）</li>
+                <li><strong>格式标准</strong>: Agent Skills 开放规范（SKILL.md）</li>
+                <li><strong>分发工具</strong>: npx skills CLI（兼容 npm 生态）</li>
+                <li><strong>许可证</strong>: Apache 2.0（完全开源可商用）</li>
+            </ul>
+        </div>
+
+        <!-- 核心 Skills 列表 -->
+        <div class="section-card">
+            <h2>⚡ 初始 13 个 Skills 详解</h2>
+            <table class="skills-table">
+                <thead>
+                    <tr>
+                        <th>Skill 名称</th>
+                        <th>分类</th>
+                        <th>功能描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gemini API on Agent Platform</td>
+                        <td><span class="tag tag-platform">平台</span></td>
+                        <td>Gemini API 在 Agent Platform 上的使用方法与最佳实践</td>
+                    </tr>
+                    <tr>
+                        <td>Gemini Interactions API</td>
+                        <td><span class="tag tag-platform">平台</span></td>
+                        <td>Gemini 交互式 API 的集成与调用指南</td>
+                    </tr>
+                    <tr>
+                        <td>Managed Agents API</td>
+                        <td><span class="tag tag-platform">平台</span></td>
+                        <td>托管代理 API 的创建、部署和管理</td>
+                    </tr>
+                    <tr>
+                        <td>Skill Registry API</td>
+                        <td><span class="tag tag-platform">平台</span></td>
+                        <td>Skill 注册中心 API —— 发现、注册和管理 Agent Skills</td>
+                    </tr>
+                    <tr>
+                        <td>AlloyDB Basics</td>
+                        <td><span class="tag tag-product">产品</span></td>
+                        <td>AlloyDB for PostgreSQL 集群创建、实例管理和备份集成</td>
+                    </tr>
+                    <tr>
+                        <td>BigQuery Basics</td>
+                        <td><span class="tag tag-product">产品</span></td>
+                        <td>数据集/表管理、作业调度、BigQuery ML 和 Gemini 集成</td>
+                    </tr>
+                    <tr>
+                        <td>Cloud Run Basics</td>
+                        <td><span class="tag tag-product">产品</span></td>
+                        <td>Serverless 容器化应用的部署、扩缩和服务管理</td>
+                    </tr>
+                    <tr>
+                        <td>Cloud SQL Basics</td>
+                        <td><span class="tag tag-product">产品</span></td>
+                        <td>Google Cloud 关系型数据库的基础操作和管理</td>
+                    </tr>
+                    <tr>
+                        <td>Firebase Basics</td>
+                        <td><span class="tag tag-product">产品</span></td>
+                        <td>Firebase 移动/Web 应用开发平台的核心功能</td>
+                    </tr>
+                    <tr>
+                        <td>GKE Basics</td>
+                        <td><span class="tag tag-product">产品</span></td>
+                        <td>Google Kubernetes Engine 集群管理和容器编排</td>
+                    </tr>
+                    <tr>
+                        <td>Recipe: Cloud Onboarding</td>
+                        <td><span class="tag tag-recipe">配方</span></td>
+                        <td>Google Cloud 入门引导 —— 账号设置、项目配置</td>
+                    </tr>
+                    <tr>
+                        <td>Recipe: Cloud Auth</td>
+                        <td><span class="tag tag-recipe">配方</span></td>
+                        <td>Google Cloud 认证配置与服务账号管理</td>
+                    </tr>
+                    <tr>
+                        <td>Recipe: Network Observability</td>
+                        <td><span class="tag tag-recipe">配方</span></td>
+                        <td>Google Cloud 网络可观测性配置与故障排查</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>额外包含: Google Cloud Well-Architected Framework</h3>
+            <p>涵盖六大支柱的系统化最佳实践框架：</p>
+            <ul>
+                <li>🔒 <strong>安全性 (Security)</strong></li>
+                <li>🔄 <strong>可靠性 (Reliability)</strong></li>
+                <li>💰 <strong>成本优化 (Cost Optimization)</strong></li>
+                <li>⚙️ <strong>运维卓越 (Operational Excellence)</strong></li>
+                <li>🚀 <strong>性能优化 (Performance Optimization)</strong></li>
+                <li>🌿 <strong>可持续性 (Sustainability)</strong></li>
+            </ul>
+        </div>
+
+        <!-- 核心创新点 -->
+        <div class="section-card">
+            <h2>💡 核心创新点</h2>
+            <h3>1. "Agent Skills 的 npm 时刻"</h3>
+            <p>业界将 google/skills 的发布比作 <strong>"Agent Skills 的 npm 时刻"</strong>。通过 <code>npx skills add</code> 一行命令即可为 AI 代理安装专业技能包，这一体验与 <code>npm install</code> 如出一辙，但面向的是 AI 代理而非 JavaScript 项目。这种分发模式极大地降低了专业知识的获取门槛。</p>
+            <h3>2. 跨代理平台的标准化</h3>
+            <p>google/skills 遵循的 Agent Skills 开放标准（最初由 Anthropic 发起）使得一份 Skill 定义文件可以在<strong>所有主流 AI 编码代理</strong>中使用：Claude Code、Gemini CLI、OpenAI Codex、GitHub Copilot 等。这种"写一次，到处用"的理念有望成为 AI 代理生态的基础设施标准。</p>
+            <h3>3. Google 官方背书的"浓缩专业知识"</h3>
+            <p>每个 Skill 不是简单的文档链接，而是经过 Google 工程团队精心提炼的<strong>实时、浓缩版专业知识</strong>，包含 API 调用模式、最佳实践、常见陷阱和推荐工作流。这意味着 AI 代理可以直接获得 Google 官方的工程经验，而非二手信息。</p>
+            <h3>4. 从文档到"可执行知识"的范式转变</h3>
+            <p>传统文档是给人读的，而 Agent Skills 是<strong>专门为 AI 代理优化</strong>的知识格式。它将文档转化为可被 AI 直接理解和执行的指令集，实现了从"人阅读文档后操作"到"AI 直接按最佳实践操作"的范式转变。</p>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section-card">
+            <h2>🎯 应用场景</h2>
+            <h3>场景一：AI 辅助的 Cloud 开发</h3>
+            <p>开发者在 Claude Code 或 Gemini CLI 中安装 BigQuery Basics skill 后，AI 代理能够<strong>直接理解</strong> BigQuery 的数据集管理、SQL 语法、ML 集成等操作，无需开发者手动翻阅文档。代理可以自动生成符合最佳实践的 BigQuery 查询和管理代码。</p>
+            <h3>场景二：企业云迁移的智能引导</h3>
+            <p>通过 "Recipe: Onboarding to Google Cloud" + "Recipe: Authenticating to Google Cloud" 的组合，AI 代理可以<strong>引导企业用户完成</strong>从零开始的 Google Cloud 环境搭建，包括项目创建、权限配置、认证设置等全流程。</p>
+            <h3>场景三：架构评审与合规检查</h3>
+            <p>结合 Well-Architected Framework 的六大支柱 skills，AI 代理可以在代码审查阶段自动检查基础设施配置是否符合 Google 推荐的安全、可靠性和成本优化标准。</p>
+            <h3>场景四：Serverless 应用快速部署</h3>
+            <p>使用 Cloud Run Basics skill，AI 代理能帮助开发者<strong>一键生成</strong>完整的 Cloud Run 部署配置，包括 Dockerfile、service.yaml、CI/CD 流水线和扩缩策略。</p>
+            <h3>场景五：AI 代理平台集成开发</h3>
+            <p>Gemini API + Managed Agents API + Skill Registry API 三件套，使开发者能够在 Agent Platform 上<strong>构建、注册和管理自定义 AI 代理</strong>，形成完整的代理开发生态。</p>
+        </div>
+
+        <!-- 竞品对比 -->
+        <div class="section-card">
+            <h2>⚔️ 竞品对比</h2>
+            <p>在 Agent Skills 生态中，google/skills 并非唯一玩家。以下是主要竞品/相关项目的对比：</p>
+            <div class="compare-grid">
+                <div class="compare-card current">
+                    <h4>google/skills</h4>
+                    <div class="compare-score">⭐⭐⭐⭐⭐</div>
+                    <p style="font-size:13px; color:var(--text-secondary); margin-top:8px;">
+                        Google 官方 | Cloud 产品覆盖<br>
+                        Apache 2.0 | 13 Skills<br>
+                        <strong>优势</strong>: 官方背书、生态深度
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>android/skills</h4>
+                    <div class="compare-score">⭐⭐⭐⭐</div>
+                    <p style="font-size:13px; color:var(--text-secondary); margin-top:8px;">
+                        Android 官方 | 移动开发专精<br>
+                        Kotlin/Compose/UI 最佳实践<br>
+                        <strong>优势</strong>: 移动端深度覆盖
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>google-gemini/gemini-skills</h4>
+                    <div class="compare-score">⭐⭐⭐⭐</div>
+                    <p style="font-size:13px; color:var(--text-secondary); margin-top:8px;">
+                        Gemini API 专用 | SDK 集成<br>
+                        模型/代理交互技能<br>
+                        <strong>优势</strong>: Gemini 深度优化
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>google-labs-code/stitch-skills</h4>
+                    <div class="compare-score">⭐⭐⭐</div>
+                    <p style="font-size:13px; color:var(--text-secondary); margin-top:8px;">
+                        Stitch 工具专用 | 插件生态<br>
+                        Codex 兼容<br>
+                        <strong>优势</strong>: 创新工具集成
+                    </p>
+                </div>
+            </div>
+            <h3 style="margin-top:20px;">对比分析</h3>
+            <table class="skills-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>google/skills</th>
+                        <th>android/skills</th>
+                        <th>gemini-skills</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>覆盖范围</td>
+                        <td>Google Cloud 全栈</td>
+                        <td>Android 开发全栈</td>
+                        <td>Gemini API/SDK</td>
+                    </tr>
+                    <tr>
+                        <td>目标用户</td>
+                        <td>Cloud 开发者/DevOps</td>
+                        <td>移动端开发者</td>
+                        <td>AI 应用开发者</td>
+                    </tr>
+                    <tr>
+                        <td>官方等级</td>
+                        <td>Google 官方</td>
+                        <td>Android 官方</td>
+                        <td>Gemini 团队官方</td>
+                    </tr>
+                    <tr>
+                        <td>生态协同</td>
+                        <td>配合 agents-cli</td>
+                        <td>配合 Android Studio</td>
+                        <td>配合 Gemini CLI</td>
+                    </tr>
+                    <tr>
+                        <td>社区活跃度</td>
+                        <td>🔥🔥🔥🔥🔥 (11.2k stars)</td>
+                        <td>🔥🔥🔥🔥</td>
+                        <td>🔥🔥🔥</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="section-card">
+            <h2>📊 综合评分</h2>
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-label">
+                            <span>技术创新性</span>
+                            <span><strong>9.0</strong>/10</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:90%; background: linear-gradient(90deg, #1a73e8, #34a853);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-label">
+                            <span>生态完整性</span>
+                            <span><strong>8.5</strong>/10</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:85%; background: linear-gradient(90deg, #1a73e8, #34a853);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-label">
+                            <span>实用价值</span>
+                            <span><strong>9.5</strong>/10</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:95%; background: linear-gradient(90deg, #1a73e8, #34a853);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-label">
+                            <span>社区活跃度</span>
+                            <span><strong>9.0</strong>/10</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:90%; background: linear-gradient(90deg, #1a73e8, #34a853);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-label">
+                            <span>文档质量</span>
+                            <span><strong>8.0</strong>/10</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:80%; background: linear-gradient(90deg, #1a73e8, #34a853);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-label">
+                            <span>长期潜力</span>
+                            <span><strong>9.5</strong>/10</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" style="width:95%; background: linear-gradient(90deg, #1a73e8, #34a853);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="score-total">
+                <div class="big-score">8.9 / 10</div>
+                <div class="score-desc">综合评级：<strong>⭐ 极力推荐</strong> —— AI 代理生态的基础设施级项目</div>
+            </div>
+        </div>
+
+        <!-- 总结 -->
+        <div class="section-card">
+            <h2>📝 总结与展望</h2>
+            <p>google/skills 代表了 AI 代理生态的一个关键里程碑。它不仅仅是一个技能包仓库，更标志着<strong>大型科技公司正式拥抱 Agent Skills 开放标准</strong>，将"AI 代理的专业能力"作为一种可分发、可复用、可版本控制的基础设施来对待。</p>
+            <h3>短期展望（3-6个月）</h3>
+            <ul>
+                <li>预计 Google 将持续新增更多 Google Cloud 产品的 Skills（如 Vertex AI、Cloud Functions、Pub/Sub 等）</li>
+                <li>社区贡献机制逐步完善，第三方开发者可以提交自己的 Google 生态 Skills</li>
+                <li>与 google/agents-cli 的深度集成，形成完整的代理开发工具链</li>
+            </ul>
+            <h3>长期展望（6-12个月）</h3>
+            <ul>
+                <li>Agent Skills 可能成为 AI 编码代理的<strong>"包管理标准"</strong>，类似于 npm 之于 Node.js</li>
+                <li>企业级私有 Skill Registry 出现，支持内部知识库的 Skills 化管理</li>
+                <li>跨云 Skills 生态形成 —— AWS、Azure 可能也会推出类似的官方 Skills 仓库</li>
+            </ul>
+            <h3>潜在风险</h3>
+            <ul>
+                <li>Skills 内容更新频率需要跟上 Google Cloud API 的快速迭代</li>
+                <li>社区贡献的质量管控和审核机制尚待建立</li>
+                <li>Agent Skills 标准本身仍在演进中，可能存在格式变更的兼容性风险</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>📡 分析日期：2026-06-09 | 数据来源：<a href="https://github.com/google/skills">GitHub</a>、<a href="https://cloud.google.com/blog/topics/developers-practitioners/level-up-your-agents-announcing-googles-official-skills-repository">Google Cloud Blog</a>、<a href="https://agentskills.io/home">Agent Skills</a></p>
+            <p style="margin-top:4px;">由 Claude Code 自动生成 | GitHub Trending 每日分析</p>
+        </div>
+    </div>
+</body>
+</html>
