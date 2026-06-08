@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemPalace/mempalace 深度分析报告</title>
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #A29BFE;
+            --accent: #00CEC9;
+            --bg-dark: #0F0F23;
+            --bg-card: #1A1A2E;
+            --bg-card-hover: #222240;
+            --text-primary: #E8E8F0;
+            --text-secondary: #A0A0B8;
+            --border: #2D2D4A;
+            --success: #00B894;
+            --warning: #FDCB6E;
+            --danger: #E17055;
+            --info: #74B9FF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 0 48px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 48px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.6em;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .subtitle {
+            font-size: 1.15em;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto 28px;
+        }
+
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .hero-meta span strong {
+            color: var(--text-primary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .content-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 16px;
+        }
+
+        .content-block h3 {
+            font-size: 1.15em;
+            margin-bottom: 12px;
+            color: var(--primary-light);
+        }
+
+        .content-block p {
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .content-block p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Feature List */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 28px;
+            position: relative;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(45, 45, 74, 0.5);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-size: 14px;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .comparison-table thead th {
+            background: rgba(108, 92, 231, 0.15);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-light);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .comparison-table tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .comparison-table .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Score Section */
+        .score-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 20px 12px;
+            background: rgba(108, 92, 231, 0.08);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .score-item .score-num {
+            font-size: 2em;
+            font-weight: 800;
+        }
+
+        .score-item .score-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .score-excellent { color: var(--success); }
+        .score-good { color: var(--info); }
+        .score-fair { color: var(--warning); }
+
+        .overall-score {
+            text-align: center;
+            padding: 32px;
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.12), rgba(0, 206, 201, 0.08));
+            border-radius: 16px;
+            border: 1px solid var(--primary);
+            margin-top: 24px;
+        }
+
+        .overall-score .big-score {
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .overall-score .score-desc {
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            padding: 24px 0;
+        }
+
+        .arch-layer {
+            width: 100%;
+            max-width: 500px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .arch-layer-1 { background: rgba(0, 206, 201, 0.12); border-color: var(--accent); }
+        .arch-layer-2 { background: rgba(108, 92, 231, 0.12); border-color: var(--primary); }
+        .arch-layer-3 { background: rgba(253, 203, 110, 0.12); border-color: var(--warning); }
+
+        .arch-layer h4 { margin-bottom: 4px; }
+        .arch-layer p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+        .arch-arrow {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+
+        /* Tags */
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag-purple { background: rgba(108, 92, 231, 0.2); color: var(--primary-light); }
+        .tag-teal { background: rgba(0, 206, 201, 0.2); color: var(--accent); }
+        .tag-blue { background: rgba(116, 185, 255, 0.2); color: var(--info); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8em; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .score-container { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-badge">🔥 GitHub Trending 深度分析</div>
+            <h1>MemPalace / mempalace</h1>
+            <p class="subtitle">史上最强开源 AI 记忆系统 —— 借鉴古希腊记忆宫殿技术，为 LLM 打造持久、跨会话、零 API 调用的记忆层</p>
+            <div class="hero-meta">
+                <span>⭐ <strong>23,000+</strong> Stars</span>
+                <span>🍴 <strong>3,000+</strong> Forks</span>
+                <span>📜 <strong>MIT</strong> License</span>
+                <span>📅 <strong>2026-04-06</strong> 发布</span>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">96.6%</div>
+                <div class="stat-label">LongMemEval R@5</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">API 调用次数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">v3.0</div>
+                <div class="stat-label">最新版本</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">#1</div>
+                <div class="stat-label">免费记忆系统排名</div>
+            </div>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <h2 class="section-title">项目概述</h2>
+            </div>
+            <div class="content-block">
+                <p><strong>MemPalace</strong> 是由好莱坞女演员 <strong>Milla Jovovich</strong>（米拉·乔沃维奇）与开发者 <strong>Ben Sigman</strong> 联合创建的开源 AI 记忆系统。Jovovich 负责架构设计，Sigman 负责工程实现。</p>
+                <p>该项目于 <strong>2026年4月6日</strong> 在 GitHub 上发布后迅速走红，48小时内获得 <strong>22,000+</strong> 颗星标。截至分析时，项目已获得超过 23,000 Stars 和近 3,000 Forks。</p>
+                <p>核心理念来自古希腊的<strong>「位置记忆法」(Method of Loci)</strong>，即著名的"记忆宫殿"技巧——通过将信息组织到空间结构中来增强记忆。MemPalace 将这一古老智慧映射到 AI 系统架构中，为大型语言模型提供持久化的跨会话记忆能力。</p>
+                <div class="tag-group">
+                    <span class="tag tag-purple">AI 记忆系统</span>
+                    <span class="tag tag-teal">Local-First</span>
+                    <span class="tag tag-blue">LLM Agent</span>
+                    <span class="tag tag-purple">MCP 集成</span>
+                    <span class="tag tag-teal">RAG</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏗️</div>
+                <h2 class="section-title">技术架构</h2>
+            </div>
+            <div class="content-block">
+                <h3>分层记忆架构（Layered Memory Architecture）</h3>
+                <p>MemPalace 采用受人类认知科学启发的三层记忆架构，每一层模拟人脑记忆的不同阶段：</p>
+
+                <div class="arch-diagram">
+                    <div class="arch-layer arch-layer-1">
+                        <h4>🧠 工作记忆层 (Working Memory)</h4>
+                        <p>当前对话上下文的短期记忆，处理即时交互信息</p>
+                    </div>
+                    <div class="arch-arrow">↕</div>
+                    <div class="arch-layer arch-layer-2">
+                        <h4>📖 情景记忆层 (Episodic Memory)</h4>
+                        <p>按时间线存储完整对话历史，保留事件的时间顺序与因果关系</p>
+                    </div>
+                    <div class="arch-arrow">↕</div>
+                    <div class="arch-layer arch-layer-3">
+                        <h4>🏛️ 长期语义记忆 (Long-term Semantic Storage)</h4>
+                        <p>提取并存储结构化知识、用户偏好、决策记录等持久信息</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>核心设计哲学：「先存一切，再构建结构」</h3>
+                <p>与传统 AI 记忆系统不同，MemPalace 不对对话内容进行摘要、压缩或改写。它采用<strong>逐字存储 (Verbatim Storage)</strong> 策略——完整保留原始对话数据，然后在原始数据之上构建结构化的索引和检索层。</p>
+                <p>Hacker News 社区讨论指出 MemPalace 的关键洞察：<strong>"你不需要完整的对话记录，但你需要决策层"</strong>——记录什么被决定了、为什么决定、以及什么被拒绝了，由智能层进行综合。</p>
+            </div>
+
+            <div class="content-block">
+                <h3>可插拔后端 (Pluggable Backend)</h3>
+                <p>MemPalace 的存储后端完全可插拔，用户可以根据需要选择不同的存储引擎。支持本地文件存储、向量数据库等多种后端选项，实现灵活部署。</p>
+                <p>同时支持 <strong>MCP (Model Context Protocol)</strong> 集成，可以与 Claude Code 等工具无缝对接。</p>
+            </div>
+        </div>
+
+        <!-- 核心创新点 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💡</div>
+                <h2 class="section-title">核心创新点</h2>
+            </div>
+            <div class="content-block">
+                <ul class="feature-list">
+                    <li><strong>记忆宫殿映射</strong>：将古希腊「位置记忆法」首次系统性地应用于 LLM 记忆管理，通过空间隐喻组织信息结构，而非传统的向量相似度搜索</li>
+                    <li><strong>逐字存储策略</strong>：放弃主流的"摘要压缩"方案，完整保留原始对话文本，通过语义索引在原始数据之上实现高保真检索</li>
+                    <li><strong>零 API 调用</strong>：完全本地运行，无需任何外部 API 调用，既保护隐私又降低成本，适合离线和敏感场景</li>
+                    <li><strong>最高基准测试成绩</strong>：在 LongMemEval 基准上达到 96.6% Recall@5，是目前免费 AI 记忆系统中的最高分</li>
+                    <li><strong>Aya Fork 高保真分支</strong>：社区衍生的 mempalace-Aya-fork 版本专注于高保真记忆检索，使用逐字文本存储 + 语义搜索，不做任何改写</li>
+                    <li><strong>名人跨界创新</strong>：好莱坞演员主导架构设计这一独特背景，为项目带来跨学科的视角和巨大的公众关注度</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🎯</div>
+                <h2 class="section-title">应用场景</h2>
+            </div>
+            <div class="content-block">
+                <h3>🤖 AI Agent 持久记忆</h3>
+                <p>为自主 AI Agent 提供跨会话的持久记忆能力。Agent 可以记住之前的交互、决策和上下文，实现真正连续的个性化服务。</p>
+            </div>
+            <div class="content-block">
+                <h3>💬 对话式 AI 助手增强</h3>
+                <p>让 ChatGPT、Claude 等对话 AI 拥有长期记忆，记住用户偏好、历史对话和个性化信息，大幅提升用户体验。</p>
+            </div>
+            <div class="content-block">
+                <h3>🔒 隐私敏感场景</h3>
+                <p>零 API 调用 + 本地优先的特性，使得 MemPalace 特别适合医疗、金融、法律等对数据隐私要求极高的场景。</p>
+            </div>
+            <div class="content-block">
+                <h3>🔧 开发者工具集成</h3>
+                <p>通过 MCP 协议与 Claude Code、Cursor 等开发工具集成，为编程助手提供项目上下文的长期记忆。</p>
+            </div>
+            <div class="content-block">
+                <h3>📊 知识管理系统</h3>
+                <p>作为知识图谱的底层存储引擎，构建个人或组织的持久化知识库，支持语义检索和推理。</p>
+            </div>
+        </div>
+
+        <!-- 竞品对比 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">⚔️</div>
+                <h2 class="section-title">竞品对比</h2>
+            </div>
+            <div class="content-block">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th class="highlight">MemPalace</th>
+                            <th>Mem0</th>
+                            <th>Letta (MemGPT)</th>
+                            <th>Zep</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>核心定位</strong></td>
+                            <td class="highlight">本地优先记忆系统</td>
+                            <td>可插拔记忆 API 层</td>
+                            <td>完整 Agent 运行时</td>
+                            <td>时序知识图谱</td>
+                        </tr>
+                        <tr>
+                            <td><strong>存储策略</strong></td>
+                            <td class="highlight">逐字存储 + 结构索引</td>
+                            <td>摘要提取</td>
+                            <td>上下文管理</td>
+                            <td>图结构存储</td>
+                        </tr>
+                        <tr>
+                            <td><strong>API 依赖</strong></td>
+                            <td class="highlight">零 API 调用</td>
+                            <td>需要外部服务</td>
+                            <td>可能需要 API</td>
+                            <td>需要外部服务</td>
+                        </tr>
+                        <tr>
+                            <td><strong>基准测试</strong></td>
+                            <td class="highlight">LongMemEval 96.6%</td>
+                            <td>LoCoMo</td>
+                            <td>LoCoMo</td>
+                            <td>自测基准</td>
+                        </tr>
+                        <tr>
+                            <td><strong>开源协议</strong></td>
+                            <td class="highlight">MIT</td>
+                            <td>MIT</td>
+                            <td>Apache 2.0</td>
+                            <td>MIT</td>
+                        </tr>
+                        <tr>
+                            <td><strong>部署复杂度</strong></td>
+                            <td class="highlight">pip install</td>
+                            <td>中等</td>
+                            <td>较高（完整运行时）</td>
+                            <td>中等</td>
+                        </tr>
+                        <tr>
+                            <td><strong>架构哲学</strong></td>
+                            <td class="highlight">认知科学启发</td>
+                            <td>工程实用主义</td>
+                            <td>操作系统隐喻</td>
+                            <td>图论驱动</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 16px; font-size: 13px; color: var(--text-secondary);">
+                    ⚠️ 注意：直接对比不同基准测试的成绩可能产生误导。MemPalace 使用 LongMemEval-S，而 Mem0 和 Letta 主要在 LoCoMo 上测试。
+                </p>
+            </div>
+        </div>
+
+        <!-- 综合评分 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">⭐</div>
+                <h2 class="section-title">综合评分</h2>
+            </div>
+            <div class="score-container">
+                <div class="score-item">
+                    <div class="score-num score-excellent">9.2</div>
+                    <div class="score-label">技术创新</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-num score-excellent">9.5</div>
+                    <div class="score-label">社区活跃度</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-num score-excellent">9.0</div>
+                    <div class="score-label">实用性</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-num score-good">8.5</div>
+                    <div class="score-label">文档质量</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-num score-excellent">9.4</div>
+                    <div class="score-label">性能表现</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-num score-good">8.0</div>
+                    <div class="score-label">生态成熟度</div>
+                </div>
+            </div>
+
+            <div class="overall-score">
+                <div class="big-score">9.1 / 10</div>
+                <p class="score-desc">🏆 极力推荐 · AI Agent 记忆领域的新标杆项目</p>
+            </div>
+        </div>
+
+        <!-- 参考链接 -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🔗</div>
+                <h2 class="section-title">参考链接</h2>
+            </div>
+            <div class="content-block">
+                <ul class="feature-list">
+                    <li><strong>GitHub 仓库</strong>：<a href="https://github.com/mempalace/mempalace" style="color: var(--accent)">github.com/mempalace/mempalace</a></li>
+                    <li><strong>官方网站</strong>：<a href="https://www.mempalace.tech/" style="color: var(--accent)">mempalace.tech</a></li>
+                    <li><strong>PyPI 包</strong>：<a href="https://pypi.org/project/mempalace" style="color: var(--accent)">pip install mempalace</a></li>
+                    <li><strong>arXiv 技术分析论文</strong>：<a href="https://arxiv.org/html/2604.21284v1" style="color: var(--accent)">Spatial Metaphors for LLM Memory</a></li>
+                    <li><strong>Cybernews 报道</strong>：<a href="https://cybernews.com/ai-news/milla-jovovich-mempalace-memory-tool/" style="color: var(--accent)">Milla Jovovich creates MemPalace</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>分析日期：2026-06-08 · 数据来源：GitHub、WebSearch</p>
+            <p style="margin-top: 8px;">由 Claude Code 自动生成</p>
+        </div>
+    </div>
+</body>
+</html>
