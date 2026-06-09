@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：system-prompts-and-models-of-ai-tools</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --bg-card-hover: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #bc8cff;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --accent-cyan: #39d353;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        .report-header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 48px 32px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+
+        .report-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent-blue);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .report-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: var(--gradient-3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .report-header .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .report-meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .meta-item .icon {
+            font-size: 16px;
+        }
+
+        /* Score Section */
+        .score-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .score-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .score-card .score-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-card .score-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .score-card .score-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .score-overall .score-value { color: var(--accent-blue); }
+        .score-innovation .score-value { color: var(--accent-purple); }
+        .score-impact .score-value { color: var(--accent-green); }
+        .score-quality .score-value { color: var(--accent-orange); }
+        .score-security .score-value { color: var(--accent-red); }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 36px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title .emoji {
+            font-size: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .info-item .label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .info-item .value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Tags */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--accent-blue);
+            border-radius: 16px;
+            font-size: 13px;
+            border: 1px solid rgba(88, 166, 255, 0.2);
+        }
+
+        .tag.purple {
+            background: rgba(188, 140, 255, 0.1);
+            color: var(--accent-purple);
+            border-color: rgba(188, 140, 255, 0.2);
+        }
+
+        .tag.green {
+            background: rgba(63, 185, 80, 0.1);
+            color: var(--accent-green);
+            border-color: rgba(63, 185, 80, 0.2);
+        }
+
+        .tag.orange {
+            background: rgba(240, 136, 62, 0.1);
+            color: var(--accent-orange);
+            border-color: rgba(240, 136, 62, 0.2);
+        }
+
+        .tag.red {
+            background: rgba(248, 81, 73, 0.1);
+            color: var(--accent-red);
+            border-color: rgba(248, 81, 73, 0.2);
+        }
+
+        /* Tools Table */
+        .tools-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .tools-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tools-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .tools-table tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .tools-table .tool-name {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .tools-table .tool-category {
+            color: var(--text-secondary);
+        }
+
+        /* Comparison */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .comparison-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .comparison-card:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .comparison-card h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent-purple);
+        }
+
+        .comparison-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .comparison-card .pros-cons {
+            margin-top: 10px;
+        }
+
+        .comparison-card .pros-cons li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .comparison-card .pros-cons li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: rgba(88, 166, 255, 0.05);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+
+        .highlight-box.warning {
+            background: rgba(248, 81, 73, 0.05);
+            border-left-color: var(--accent-red);
+        }
+
+        .highlight-box.success {
+            background: rgba(63, 185, 80, 0.05);
+            border-left-color: var(--accent-green);
+        }
+
+        .highlight-box p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .highlight-box strong {
+            color: var(--text-primary);
+        }
+
+        /* Innovation List */
+        .innovation-list {
+            list-style: none;
+        }
+
+        .innovation-list li {
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .innovation-list li .icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .innovation-list li .content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .innovation-list li .content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .report-footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 48px;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .fill-blue { background: var(--gradient-3); }
+        .fill-purple { background: var(--gradient-1); }
+        .fill-green { background: var(--gradient-4); }
+        .fill-orange { background: linear-gradient(135deg, #f0883e, #d29922); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 20px 16px; }
+            .report-header h1 { font-size: 24px; }
+            .score-section { grid-template-columns: repeat(2, 1fr); }
+            .report-meta { gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="report-badge">🔍 GitHub Trending 深度分析</div>
+            <h1>system-prompts-and-models-of-ai-tools</h1>
+            <div class="subtitle">x1xhlol — AI 工具系统提示词的终极集合</div>
+            <div class="report-meta">
+                <div class="meta-item"><span class="icon">⭐</span> 134,000+ Stars</div>
+                <div class="meta-item"><span class="icon">📅</span> 分析日期: 2026-06-10</div>
+                <div class="meta-item"><span class="icon">📂</span> AI 安全 / 提示工程</div>
+                <div class="meta-item"><span class="icon">🏷️</span> CC0-1.0 License</div>
+            </div>
+        </div>
+
+        <!-- Score Section -->
+        <div class="score-section">
+            <div class="score-card score-overall">
+                <div class="score-label">综合评分</div>
+                <div class="score-value">9.2</div>
+                <div class="score-desc">满分 10</div>
+                <div class="progress-bar"><div class="fill fill-blue" style="width: 92%"></div></div>
+            </div>
+            <div class="score-card score-innovation">
+                <div class="score-label">创新性</div>
+                <div class="score-value">8.5</div>
+                <div class="score-desc">开创性贡献</div>
+                <div class="progress-bar"><div class="fill fill-purple" style="width: 85%"></div></div>
+            </div>
+            <div class="score-card score-impact">
+                <div class="score-label">行业影响力</div>
+                <div class="score-value">9.8</div>
+                <div class="score-desc">改变游戏规则</div>
+                <div class="progress-bar"><div class="fill fill-green" style="width: 98%"></div></div>
+            </div>
+            <div class="score-card score-quality">
+                <div class="score-label">内容质量</div>
+                <div class="score-value">9.0</div>
+                <div class="score-desc">全面且结构化</div>
+                <div class="progress-bar"><div class="fill fill-orange" style="width: 90%"></div></div>
+            </div>
+            <div class="score-card score-security">
+                <div class="score-label">安全关注度</div>
+                <div class="score-value">9.5</div>
+                <div class="score-desc">行业警示作用</div>
+                <div class="progress-bar"><div class="fill fill-blue" style="width: 95%"></div></div>
+            </div>
+        </div>
+
+        <!-- Section 1: 项目概述 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">📋</span> 一、项目概述
+            </div>
+            <div class="card">
+                <h3>什么是 system-prompts-and-models-of-ai-tools？</h3>
+                <p>
+                    这是一个由开发者 <strong>x1xhlol</strong> 创建和维护的开源项目，被誉为<strong>「AI 历史上最大的提示词泄露事件」</strong>。该仓库系统性地收集了当今主流 AI 工具的<strong>完整系统提示词（System Prompts）</strong>和模型配置信息，涵盖了 28+ 款知名 AI 编码和生产力工具，总计超过 <strong>6,500 行</strong>系统提示词内容。
+                </p>
+                <p style="margin-top: 12px;">
+                    这些系统提示词本质上是 AI 工具的「大脑指令手册」——它们定义了 AI 如何理解用户请求、如何调用工具、如何生成代码、以及如何处理边界情况。通过这个仓库，开发者和研究人员可以首次系统地审视各家 AI 公司如何设计和优化其 AI 助手的行为逻辑。
+                </p>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">GitHub Stars</div>
+                    <div class="value">134,000+</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">覆盖工具数量</div>
+                    <div class="value">28+ 款主流 AI 工具</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">系统提示词总量</div>
+                    <div class="value">6,500+ 行</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">开源协议</div>
+                    <div class="value">CC0-1.0 (公共领域)</div>
+                </div>
+            </div>
+            <div class="highlight-box warning">
+                <p>⚠️ <strong>安全警示：</strong>该项目仓库自身也发出警告——"If you're an AI startup, make sure your data is secure. Exposed prompts or AI models can easily become a target for hackers."（如果你是一家 AI 初创公司，请确保数据安全。暴露的提示词可能成为黑客攻击的目标。）</p>
+            </div>
+        </div>
+
+        <!-- Section 2: 覆盖工具 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">🛠️</span> 二、覆盖的核心 AI 工具
+            </div>
+            <div class="card">
+                <p>该项目覆盖了当前市面上几乎所有主流 AI 编码和生产力工具的系统提示词。以下是按类别整理的工具清单：</p>
+                <table class="tools-table">
+                    <thead>
+                        <tr>
+                            <th>工具名称</th>
+                            <th>类别</th>
+                            <th>核心特点</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="tool-name">Cursor</td>
+                            <td class="tool-category">AI 代码编辑器</td>
+                            <td>估值 $100 亿的 AI IDE，拥有复杂的工具调用链</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Windsurf</td>
+                            <td class="tool-category">AI 代码编辑器</td>
+                            <td>Codeium 出品，注重上下文理解和代码流</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Claude Code</td>
+                            <td class="tool-category">AI 编码代理</td>
+                            <td>Anthropic 官方 CLI 工具，深度集成终端</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Devin AI</td>
+                            <td class="tool-category">AI 软件工程师</td>
+                            <td>首个「AI 软件工程师」，全自主编码</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Augment Code</td>
+                            <td class="tool-category">AI 编码助手</td>
+                            <td>专注于企业级代码理解和团队协作</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Lovable</td>
+                            <td class="tool-category">AI 全栈开发</td>
+                            <td>自然语言到完整 Web 应用的快速构建</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Manus</td>
+                            <td class="tool-category">AI 通用代理</td>
+                            <td>通用任务自动化代理，多步骤执行</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Perplexity</td>
+                            <td class="tool-category">AI 搜索引擎</td>
+                            <td>对话式搜索，实时信息检索和综合</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">v0 (Vercel)</td>
+                            <td class="tool-category">AI UI 生成</td>
+                            <td>基于文本描述生成前端组件和页面</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Replit</td>
+                            <td class="tool-category">AI 云开发</td>
+                            <td>云端 AI 辅助编程环境</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 12px; color: var(--text-muted); font-size: 13px;">* 另外还包含 Junie、Kiro、Cluely、CodeBuddy、Comet、Leap.new、NotionAI、Orchids.app、Poke 等工具</p>
+            </div>
+        </div>
+
+        <!-- Section 3: 技术架构分析 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">🏗️</span> 三、技术架构深度分析
+            </div>
+            <div class="card">
+                <h3>3.1 系统提示词的通用架构模式</h3>
+                <p>
+                    通过分析 28+ 款 AI 工具的系统提示词，可以发现它们共享一套相似的架构模式。这些提示词通常由以下核心模块组成：
+                </p>
+                <ul class="innovation-list" style="margin-top: 16px;">
+                    <li>
+                        <span class="icon">🎯</span>
+                        <div class="content">
+                            <h4>角色定义层（Role Definition）</h4>
+                            <p>定义 AI 的身份、能力和行为边界。例如 Cursor 将自己定义为「一个由 AI 驱动的代码编辑器」，Claude Code 则强调自己是「命令行工具」。每个工具都在角色定义中注入了品牌独特的措辞风格。</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔧</span>
+                        <div class="content">
+                            <h4>工具调用层（Tool Orchestration）</h4>
+                            <p>定义 AI 可以调用的外部工具集合及其使用规范。Cursor 定义了代码编辑、文件搜索、终端执行等工具；Devin 则定义了浏览器操作、代码部署等更复杂的工具链。工具调用的精确描述直接决定了 AI 的能力边界。</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🛡️</span>
+                        <div class="content">
+                            <h4>安全护栏层（Safety Guardrails）</h4>
+                            <p>包含各种安全限制和边界条件处理。几乎所有工具都在系统提示词中加入了「不要执行危险操作」「不要删除重要文件」「请求用户确认」等安全约束。然而，这些约束如果暴露，攻击者可以精确定位并绕过。</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">📝</span>
+                        <div class="content">
+                            <h4>输出格式层（Output Formatting）</h4>
+                            <p>规定 AI 输出的格式规范，包括代码风格、注释密度、Markdown 格式等。不同工具在这一层的设计差异巨大——Cursor 追求简洁实用的代码输出，而 Lovable 则注重生成完整的可运行项目。</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🧠</span>
+                        <div class="content">
+                            <h4>推理策略层（Reasoning Strategy）</h4>
+                            <p>指导 AI 如何分析问题、制定计划、选择最优方案。Claude Code 采用了「Think step by step」式的链式推理，Devin 使用了更复杂的「Plan → Execute → Verify」三阶段架构。</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card" style="margin-top: 16px;">
+                <h3>3.2 代表性工具的提示词设计特点</h3>
+                <div class="info-grid">
+                    <div class="info-item" style="border-left: 3px solid var(--accent-blue);">
+                        <div class="label">Cursor — 模块化设计</div>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                            Cursor 的系统提示词采用了高度模块化的设计，将不同的功能（代码编辑、搜索、终端操作）封装为独立的工具描述。每个工具都有清晰的输入/输出规范和错误处理逻辑。这使其提示词虽然复杂，但可维护性极高。
+                        </p>
+                    </div>
+                    <div class="info-item" style="border-left: 3px solid var(--accent-purple);">
+                        <div class="label">Devin — 自主编航</div>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                            Devin 的提示词揭示了一个完全自主的 AI 代理架构：它被赋予了浏览网页、操作浏览器、运行命令、编辑代码、部署应用的全套能力。其系统提示词更像一个「操作手册」，而非简单的行为约束。
+                        </p>
+                    </div>
+                    <div class="info-item" style="border-left: 3px solid var(--accent-green);">
+                        <div class="label">Claude Code — 终端原生</div>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                            Claude Code 的提示词体现了「终端优先」的设计理念。它直接与 shell 交互，使用结构化的工具调用来读写文件、执行命令。提示词中对 git 操作、文件系统导航和错误恢复有极为详细的指导。
+                        </p>
+                    </div>
+                    <div class="info-item" style="border-left: 3px solid var(--accent-orange);">
+                        <div class="label">Lovable — 全栈生成</div>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                            Lovable 的提示词侧重于从自然语言描述生成完整的前端应用。它包含了丰富的 UI/UX 设计指南、组件库使用规范和响应式设计约束，旨在生成可以直接部署的 Web 应用。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: 核心创新点 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">💡</span> 四、核心创新点
+            </div>
+            <ul class="innovation-list">
+                <li>
+                    <span class="icon">🔬</span>
+                    <div class="content">
+                        <h4>开创性的「透明化」研究方法</h4>
+                        <p>该项目首次大规模地系统收集和公开 AI 工具的系统提示词，开创了「AI 透明化研究」这一全新领域。以前这些信息仅存在于各公司的内部，现在任何人都可以进行横向比较和深入分析。</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">🧩</span>
+                    <div class="content">
+                        <h4>AI 工具设计的「逆向工程」价值</h4>
+                        <p>对于 AI 产品开发者和提示词工程师来说，这些系统提示词是无价的学习资源。通过研究 Cursor、Devin 等顶级 AI 工具如何设计其提示词，开发者可以学到先进的提示词架构模式、安全护栏设计和技术集成策略。</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">🔒</span>
+                    <div class="content">
+                        <h4>安全意识的行业级唤醒</h4>
+                        <p>该项目的爆红直接推动了 AI 安全社区对「提示词安全」的重视。它催生了 ZeroLeaks 等安全服务，帮助 AI 初创公司评估其系统提示词的抗提取能力，推动了行业对 AI 安全最佳实践的讨论。</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">📊</span>
+                    <div class="content">
+                        <h4>跨工具比较分析的基础设施</h4>
+                        <p>该项目为学术界和工业界提供了第一个大规模的、可横向比较的 AI 工具提示词数据集。研究者可以分析不同公司在安全策略、工具集成、推理策略等方面的差异和趋势。</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">⚡</span>
+                    <div class="content">
+                        <h4>社区驱动的持续更新机制</h4>
+                        <p>随着各 AI 工具频繁更新其系统提示词，该项目建立了社区驱动的持续更新机制。用户可以通过 Issue 和 PR 提交最新提取到的提示词，确保数据集的时效性和完整性。</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Section 5: 应用场景 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">🎯</span> 五、应用场景
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">🎓 提示词工程师学习</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                        通过研读顶级 AI 产品的系统提示词设计，学习角色定义、工具编排、安全护栏、输出格式等提示词工程的最佳实践。
+                    </p>
+                    <div class="tag-list">
+                        <span class="tag">提示词工程</span>
+                        <span class="tag">最佳实践</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">🛡️ AI 安全审计</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                        安全研究人员可以利用这些提示词分析各工具的安全薄弱点，设计更有针对性的提示注入攻击检测和防御方案。
+                    </p>
+                    <div class="tag-list">
+                        <span class="tag red">安全审计</span>
+                        <span class="tag red">提示注入</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">🏢 AI 产品竞品分析</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                        AI 初创公司可以通过比较竞品的提示词设计，了解行业标准和差异化策略，优化自身产品的提示词架构。
+                    </p>
+                    <div class="tag-list">
+                        <span class="tag purple">竞品分析</span>
+                        <span class="tag purple">产品策略</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">📚 学术研究</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                        研究者可以利用这个数据集开展关于 AI 行为设计、安全策略演化、工具集成模式等方面的学术研究。
+                    </p>
+                    <div class="tag-list">
+                        <span class="tag green">学术研究</span>
+                        <span class="tag green">数据集</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">🔧 自定义 AI Agent 开发</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                        开发者可以借鉴成熟的系统提示词模板，快速构建自己的 AI Agent，避免从零开始设计提示词架构。
+                    </p>
+                    <div class="tag-list">
+                        <span class="tag orange">Agent 开发</span>
+                        <span class="tag orange">模板复用</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">⚖️ 合规与隐私评估</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                        帮助合规团队评估 AI 工具在数据隐私、知识产权保护和安全性方面的透明度。
+                    </p>
+                    <div class="tag-list">
+                        <span class="tag">合规审计</span>
+                        <span class="tag">隐私保护</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: 竞品对比 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">⚔️</span> 六、竞品对比
+            </div>
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <h4>🏆 system-prompts-and-models-of-ai-tools（本项目）</h4>
+                    <p>最全面的 AI 系统提示词集合，覆盖 28+ 工具，134K+ Stars。</p>
+                    <ul class="pros-cons">
+                        <li>覆盖面最广，持续更新</li>
+                        <li>社区活跃，新提示词提交频繁</li>
+                        <li>包含详细的安全分析视角</li>
+                        <li>数据量最大（6500+ 行提示词）</li>
+                    </ul>
+                </div>
+                <div class="comparison-card">
+                    <h4>📄 ai-boost/awesome-prompts</h4>
+                    <p>一个更广泛的提示词工程资源集合，侧重于通用提示词模板而非系统提示词。</p>
+                    <ul class="pros-cons">
+                        <li>覆盖面广但不聚焦系统提示词</li>
+                        <li>偏向用户端提示词模板</li>
+                        <li>缺乏对 AI 工具内部架构的揭示</li>
+                    </ul>
+                </div>
+                <div class="comparison-card">
+                    <h4>🔒 tldrsec/prompt-injection-defenses</h4>
+                    <p>专注于提示注入防御的安全资源库，与本项目形成互补。</p>
+                    <ul class="pros-cons">
+                        <li>专注于防御策略而非提示词收集</li>
+                        <li>对安全从业者更有实用价值</li>
+                        <li>可以结合本项目进行攻击面分析</li>
+                    </ul>
+                </div>
+                <div class="comparison-card">
+                    <h4>📰 社区博客和分析文章</h4>
+                    <p>散布在 Medium、Reddit、YouTube 等平台的零散分析内容。</p>
+                    <ul class="pros-cons">
+                        <li>提供更深入的单工具分析视角</li>
+                        <li>缺乏系统性和可对比性</li>
+                        <li>通常依赖本项目作为数据源</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box success" style="margin-top: 16px;">
+                <p>✅ <strong>结论：</strong>在 AI 系统提示词收集这一垂直领域，<code>system-prompts-and-models-of-ai-tools</code> 目前没有真正意义上的直接竞争对手。它的地位相当于 AI 安全领域的「维基解密」——尽管存在伦理争议，但提供了无可替代的价值。</p>
+            </div>
+        </div>
+
+        <!-- Section 7: 综合评估 -->
+        <div class="section">
+            <div class="section-title">
+                <span class="emoji">📊</span> 七、综合评估
+            </div>
+            <div class="card">
+                <h3>评分维度详解</h3>
+                <table class="tools-table">
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th>评分</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>创新性</strong></td>
+                            <td style="color: var(--accent-purple); font-weight: 700;">8.5 / 10</td>
+                            <td>开创了「AI 提示词透明化」这一全新领域，虽然收集方式（提取/泄露）本身技术门槛不高，但其组织和呈现方式具有创新性</td>
+                        </tr>
+                        <tr>
+                            <td><strong>行业影响力</strong></td>
+                            <td style="color: var(--accent-green); font-weight: 700;">9.8 / 10</td>
+                            <td>134K+ Stars，被主流媒体广泛报道，直接推动了 AI 安全行业对提示词安全的重视，堪称 AI 领域的「维基解密时刻」</td>
+                        </tr>
+                        <tr>
+                            <td><strong>内容质量</strong></td>
+                            <td style="color: var(--accent-orange); font-weight: 700;">9.0 / 10</td>
+                            <td>内容全面、结构清晰、持续更新。唯一扣分点是部分提示词可能存在版本滞后或提取不完整的情况</td>
+                        </tr>
+                        <tr>
+                            <td><strong>安全贡献</strong></td>
+                            <td style="color: var(--accent-red); font-weight: 700;">9.5 / 10</td>
+                            <td>虽然本身存在「泄露」的伦理争议，但客观上极大推动了 AI 安全意识的提升和相关防御技术的发展</td>
+                        </tr>
+                        <tr>
+                            <td><strong>实用性</strong></td>
+                            <td style="color: var(--accent-blue); font-weight: 700;">9.0 / 10</td>
+                            <td>对提示词工程师、安全研究者、AI 产品经理等群体具有极高的实用价值</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="margin-top: 16px;">
+                <h3>🎯 总结评语</h3>
+                <p>
+                    <code>system-prompts-and-models-of-ai-tools</code> 是 2025-2026 年 AI 领域最具争议性和影响力的开源项目之一。它以「透明化」为旗帜，揭开了 AI 工具背后精心设计的系统提示词面纱，为研究者、开发者和安全从业者提供了前所未有的洞察力。
+                </p>
+                <p style="margin-top: 12px;">
+                    该项目最大的价值不仅在于数据本身，更在于它引发的全行业对 AI 安全的深度思考。它迫使我们重新审视：<strong>当我们把核心逻辑写在系统提示词中时，这种「安全通过隐匿」的策略是否真的安全？</strong> 答案显然是否定的。
+                </p>
+                <p style="margin-top: 12px;">
+                    对于 AI 从业者而言，这个仓库是一座宝库——无论你是想学习顶级 AI 产品的提示词设计，还是评估自己产品的安全态势，都值得一读。
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <p>📡 本报告由 AI 深度分析系统自动生成 | 分析日期: 2026-06-10</p>
+            <p style="margin-top: 4px;">数据来源: GitHub、WebSearch、技术博客、学术论文</p>
+        </div>
+    </div>
+</body>
+</html>
