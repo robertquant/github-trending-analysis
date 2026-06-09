@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：refactoringhq/tolaria</title>
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #A29BFE;
+            --accent: #00CEC9;
+            --accent-dark: #00B5B0;
+            --bg: #0F0F1A;
+            --bg-card: #1A1A2E;
+            --bg-card-hover: #222240;
+            --text: #E8E8F0;
+            --text-muted: #8888AA;
+            --border: #2D2D4A;
+            --success: #00E676;
+            --warning: #FFD600;
+            --danger: #FF5252;
+            --info: #448AFF;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 24px 40px;
+            background: linear-gradient(135deg, #1A1A2E 0%, #2D1B69 50%, #1A1A2E 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        .header .badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 2.4em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff, var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle {
+            font-size: 1.1em;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header .meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .header .meta span strong {
+            color: var(--text);
+        }
+
+        /* Score Card */
+        .score-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin: 40px 0;
+        }
+        .score-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 16px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .score-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(108, 92, 231, 0.15);
+        }
+        .score-item .score-value {
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .score-item .score-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .score-excellent { color: var(--success); }
+        .score-good { color: var(--info); }
+        .score-average { color: var(--warning); }
+        .score-poor { color: var(--danger); }
+
+        /* Overall Score */
+        .overall-score {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, var(--bg-card), #2D1B69);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin: 40px 0;
+        }
+        .overall-score .big-number {
+            font-size: 4em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .overall-score .label {
+            font-size: 1.1em;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Section */
+        .section {
+            margin: 40px 0;
+        }
+        .section h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+        .section h3 {
+            font-size: 1.15em;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: var(--primary-light);
+        }
+        .section p {
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .section ul, .section ol {
+            margin: 12px 0 12px 24px;
+        }
+        .section li {
+            margin-bottom: 8px;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+        .card:hover {
+            border-color: var(--primary);
+        }
+        .card .card-icon {
+            font-size: 1.6em;
+            margin-bottom: 8px;
+        }
+        .card .card-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+        .card .card-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table th {
+            background: var(--bg-card);
+            font-weight: 700;
+            color: var(--primary-light);
+            position: sticky;
+            top: 0;
+        }
+        .comparison-table tr:hover {
+            background: var(--bg-card-hover);
+        }
+        .comparison-table .highlight {
+            color: var(--success);
+            font-weight: 600;
+        }
+        .comparison-table .dim {
+            color: var(--text-muted);
+        }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+        }
+        .tag-ts { background: #3178C620; color: #3178C6; }
+        .tag-rust { background: #CE422B20; color: #CE422B; }
+        .tag-react { background: #61DAFB20; color: #61DAFB; }
+        .tag-tauri { background: #FFC13120; color: #FFC131; }
+        .tag-md { background: #88888820; color: #AAAAAA; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 24px;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+
+        /* Highlight block */
+        .highlight-block {
+            background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(0,206,201,0.05));
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-style: italic;
+        }
+
+        /* Bar chart */
+        .bar-chart { margin: 16px 0; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .bar-label {
+            width: 120px;
+            font-size: 14px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            transition: width 0.6s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="badge">GitHub Trending 深度分析</div>
+    <h1>Tolaria</h1>
+    <p class="subtitle">开源、本地优先的 Markdown 知识库桌面应用 —— 面向 AI 时代的「第二大脑」管理工具</p>
+    <div class="meta">
+        <span>📦 <strong>refactoringhq/tolaria</strong></span>
+        <span>⭐ <strong>13,500+</strong> Stars</span>
+        <span>📅 <strong>2026-06-09</strong> 分析</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Overall Score -->
+    <div class="overall-score">
+        <div class="big-number">8.6</div>
+        <div class="label">综合评分 / 10</div>
+    </div>
+
+    <!-- Dimension Scores -->
+    <div class="score-card">
+        <div class="score-item">
+            <div class="score-value score-excellent">9.5</div>
+            <div class="score-label">技术创新</div>
+        </div>
+        <div class="score-item">
+            <div class="score-value score-excellent">9.0</div>
+            <div class="score-label">隐私与开放性</div>
+        </div>
+        <div class="score-item">
+            <div class="score-value score-good">8.5</div>
+            <div class="score-label">AI 集成</div>
+        </div>
+        <div class="score-item">
+            <div class="score-value score-good">8.0</div>
+            <div class="score-label">易用性</div>
+        </div>
+        <div class="score-item">
+            <div class="score-value score-average">7.5</div>
+            <div class="score-label">生态成熟度</div>
+        </div>
+    </div>
+
+    <!-- 1. 项目概述 -->
+    <div class="section">
+        <h2>一、项目概述</h2>
+        <p>
+            <strong>Tolaria</strong> 是一款由 Luca Rossi（知名技术周刊 <em>Refactoring.fm</em> 作者）创建的开源桌面应用，
+            用于管理基于 Markdown 的知识库（Knowledge Base）。它支持 macOS、Windows 和 Linux 三大平台，
+            采用 <strong>Tauri + React + TypeScript</strong> 技术栈构建，以"文件即数据、Git 即同步"为核心理念，
+            致力于成为 <strong>100% 本地优先、零锁定</strong>的 Obsidian 替代品。
+        </p>
+
+        <div class="highlight-block">
+            "I have a massive workspace of 10,000+ notes, which are the result of my Refactoring work + a ton of personal journaling and second braining." —— Luca Rossi
+        </div>
+
+        <h3>核心设计原则</h3>
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">📑</div>
+                <div class="card-title">文件优先（Files-first）</div>
+                <div class="card-desc">所有笔记均为纯 Markdown 文件，可被任何编辑器打开，无需导出。你的数据属于你自己。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔌</div>
+                <div class="card-title">Git 优先（Git-first）</div>
+                <div class="card-desc">每个 Vault 都是一个 Git 仓库，天然拥有完整版本历史，可使用任意 Git 远程仓库同步。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🛜</div>
+                <div class="card-title">离线优先、零锁定</div>
+                <div class="card-desc">无需账号、无需订阅、无云依赖。即使不再使用 Tolaria，你也不会丢失任何数据。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔬</div>
+                <div class="card-title">完全开源</div>
+                <div class="card-desc">AGPL-3.0 许可证，代码完全公开透明，社区可自由贡献和审查。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🪄</div>
+                <div class="card-title">AI 优先但非 AI 唯一</div>
+                <div class="card-desc">原生支持 Claude Code、Codex CLI、Gemini CLI 等 AI Agent 集成，但不强制使用。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">⌨️</div>
+                <div class="card-title">键盘优先</div>
+                <div class="card-desc">为高级用户设计，大量快捷键和命令面板操作，最大化效率。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 技术架构 -->
+    <div class="section">
+        <h2>二、技术架构</h2>
+        <p>Tolaria 采用经典的分层架构设计，以文件系统作为唯一数据源（Single Source of Truth），通过 Rust 后端处理所有文件 I/O 和核心操作。</p>
+
+        <h3>技术栈</h3>
+        <p>
+            <span class="tag tag-tauri">Tauri 2</span>
+            <span class="tag tag-rust">Rust</span>
+            <span class="tag tag-react">React</span>
+            <span class="tag tag-ts">TypeScript</span>
+            <span class="tag tag-md">Markdown + YAML</span>
+        </p>
+
+        <h3>架构分层</h3>
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">💾</div>
+                <div class="card-title">文件系统层</div>
+                <div class="card-desc">所有笔记以 Markdown + YAML Frontmatter 格式存储在本地磁盘。Vault 中的每个文件都可被标准工具直接读写，无需专有格式。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">Rust 后端层</div>
+                <div class="card-desc">基于 Tauri 2 构建，负责所有文件 I/O、Git 操作、索引管理、AI Agent 通信等核心逻辑。Rust 保证了高性能和内存安全。</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🖥️</div>
+                <div class="card-title">React 前端层</div>
+                <div class="card-desc">使用 React + TypeScript 构建桌面 UI，提供笔记编辑、结构化视图、命令面板等交互界面。支持浏览器 mock 模式开发。</div>
+            </div>
+        </div>
+
+        <h3>数据模型</h3>
+        <p>每条笔记的核心结构：</p>
+        <ul>
+            <li><strong>Markdown 正文</strong> —— 标准的 .md 文件，兼容所有 Markdown 解析器</li>
+            <li><strong>YAML Frontmatter</strong> —— 存储元数据（类型标签、创建时间、标签等）</li>
+            <li><strong>Types（类型系统）</strong> —— 类型是"导航透镜"而非强制 Schema，无必填字段、无验证，仅作分类辅助</li>
+        </ul>
+
+        <h3>AI 集成架构</h3>
+        <p>Tolaria 内置 MCP（Model Context Protocol）服务器，使 AI Agent 能够直接读写 Vault 内容：</p>
+        <ul>
+            <li>支持 <strong>Claude Code</strong>、<strong>Codex CLI</strong>、<strong>Gemini CLI</strong> 等多种 AI 工具</li>
+            <li>提供 <strong>AGENTS 文件</strong>，让 AI Agent 自动理解 Vault 结构</li>
+            <li>本地 AI 模型集成 —— 无需将数据发送到云端</li>
+        </ul>
+    </div>
+
+    <!-- 3. 核心创新点 -->
+    <div class="section">
+        <h2>三、核心创新点</h2>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">🔄</div>
+                <div class="card-title">Git-Native 同步</div>
+                <div class="card-desc">
+                    与 Obsidian 需要付费同步服务或第三方插件不同，Tolaria 将 Git 作为一等公民集成。
+                    每个 Vault 自动初始化为 Git 仓库，版本历史、分支、远程同步开箱即用。
+                    开发者可使用 GitHub/GitLab 等熟悉的平台进行笔记协作。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🤖</div>
+                <div class="card-title">AI Agent 原生支持</div>
+                <div class="card-desc">
+                    面向 AI 时代设计，内置 MCP Server 让 AI Agent 可直接操作知识库。
+                    用户可以用 Claude Code 等 Agent 自动整理笔记、生成摘要、维护知识图谱。
+                    提供标准化的 AGENTS 文件描述 Vault 结构，实现"AI 有完美记忆"的愿景。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🏗️</div>
+                <div class="card-title">Types-as-Lenses 理念</div>
+                <div class="card-desc">
+                    独创的"类型即透镜"设计：笔记类型不是强制 Schema，而是导航辅助工具。
+                    没有必填字段、没有验证错误，只有灵活的分类视图。
+                    相比 Notion 的严格数据库 Schema 和 Obsidian 的无类型系统，Tolaria 找到了最佳平衡点。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🦀</div>
+                <div class="card-title">Tauri 2 + Rust 后端</div>
+                <div class="card-desc">
+                    相比 Electron 方案（Obsidian、Notion 桌面端），Tauri + Rust 带来更小的安装包（< 20MB vs > 200MB）、
+                    更低的内存占用和更快的启动速度。系统原生 WebView 确保 UI 流畅。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 应用场景 -->
+    <div class="section">
+        <h2>四、应用场景</h2>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">🧠</div>
+                <div class="card-title">个人知识管理（第二大脑）</div>
+                <div class="card-desc">
+                    管理 10,000+ 笔记的大型知识库，结合日记、书签、知识卡片等类型，
+                    构建个人"第二大脑"。Git 同步保证跨设备访问和版本安全。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🏢</div>
+                <div class="card-title">企业 AI 上下文管理</div>
+                <div class="card-desc">
+                    将公司文档整理为结构化 Markdown 知识库，作为 AI Agent 的上下文输入。
+                    使 AI 工具更精准地理解业务知识，提升 AI 辅助决策质量。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🤖</div>
+                <div class="card-title">AI Agent 记忆系统</div>
+                <div class="card-desc">
+                    为 OpenClaw/助手等 AI Agent 存储记忆和操作流程。
+                    通过 MCP 协议让 Agent 直接读写知识库，实现持久化记忆和知识积累。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">📝</div>
+                <div class="card-title">技术写作与知识分享</div>
+                <div class="card-desc">
+                    利用 Git 集成天然支持技术文档的版本管理和协作。
+                    Markdown 格式可直接发布为博客、文档站点，工作流无缝衔接。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 竞品对比 -->
+    <div class="section">
+        <h2>五、竞品对比</h2>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>Tolaria ✨</th>
+                    <th>Obsidian</th>
+                    <th>Notion</th>
+                    <th>Logseq</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>开源</strong></td>
+                    <td class="highlight">✅ AGPL-3.0</td>
+                    <td class="dim">❌ 核心闭源</td>
+                    <td class="dim">❌ 闭源</td>
+                    <td class="highlight">✅ AGPL-3.0</td>
+                </tr>
+                <tr>
+                    <td><strong>数据格式</strong></td>
+                    <td class="highlight">Markdown + YAML</td>
+                    <td class="highlight">Markdown + YAML</td>
+                    <td class="dim">专有数据库</td>
+                    <td>Markdown（大纲式）</td>
+                </tr>
+                <tr>
+                    <td><strong>Git 集成</strong></td>
+                    <td class="highlight">内置一等支持</td>
+                    <td class="dim">需社区插件</td>
+                    <td class="dim">不支持</td>
+                    <td class="dim">需手动配置</td>
+                </tr>
+                <tr>
+                    <td><strong>离线使用</strong></td>
+                    <td class="highlight">✅ 完全离线</td>
+                    <td class="highlight">✅ 完全离线</td>
+                    <td class="dim">⚠️ 需网络</td>
+                    <td class="highlight">✅ 完全离线</td>
+                </tr>
+                <tr>
+                    <td><strong>AI 集成</strong></td>
+                    <td class="highlight">MCP 原生支持</td>
+                    <td>社区插件</td>
+                    <td>内置 AI 助手</td>
+                    <td class="dim">有限</td>
+                </tr>
+                <tr>
+                    <td><strong>技术栈</strong></td>
+                    <td class="highlight">Tauri + Rust（轻量）</td>
+                    <td class="dim">Electron（较重）</td>
+                    <td class="dim">Web 应用</td>
+                    <td class="dim">Electron</td>
+                </tr>
+                <tr>
+                    <td><strong>插件生态</strong></td>
+                    <td class="dim">🌱 早期阶段</td>
+                    <td class="highlight">1000+ 插件</td>
+                    <td class="highlight">丰富集成</td>
+                    <td>中等规模</td>
+                </tr>
+                <tr>
+                    <td><strong>移动端</strong></td>
+                    <td class="dim">❌ 暂无</td>
+                    <td class="highlight">✅ iOS/Android</td>
+                    <td class="highlight">✅ 全平台</td>
+                    <td>✅ iOS/Android</td>
+                </tr>
+                <tr>
+                    <td><strong>价格</strong></td>
+                    <td class="highlight">🆓 完全免费</td>
+                    <td>免费 + 付费同步</td>
+                    <td>免费 + 付费版</td>
+                    <td class="highlight">🆓 完全免费</td>
+                </tr>
+                <tr>
+                    <td><strong>类型系统</strong></td>
+                    <td class="highlight">灵活透镜式</td>
+                    <td class="dim">无原生支持</td>
+                    <td>严格数据库</td>
+                    <td class="dim">无原生支持</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>竞争优势分析</h3>
+        <div class="bar-chart">
+            <div class="bar-row">
+                <div class="bar-label">隐私保护</div>
+                <div class="bar-track"><div class="bar-fill" style="width:95%; background:linear-gradient(90deg, var(--primary), var(--accent));">9.5</div></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">AI 集成</div>
+                <div class="bar-track"><div class="bar-fill" style="width:85%; background:linear-gradient(90deg, var(--primary), var(--accent));">8.5</div></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">性能效率</div>
+                <div class="bar-track"><div class="bar-fill" style="width:90%; background:linear-gradient(90deg, var(--primary), var(--accent));">9.0</div></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">生态丰富度</div>
+                <div class="bar-track"><div class="bar-fill" style="width:55%; background:linear-gradient(90deg, var(--danger), var(--warning));">5.5</div></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">跨平台</div>
+                <div class="bar-track"><div class="bar-fill" style="width:70%; background:linear-gradient(90deg, var(--warning), var(--info));">7.0</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 综合评分 -->
+    <div class="section">
+        <h2>六、综合评分与总结</h2>
+
+        <div class="score-card">
+            <div class="score-item">
+                <div class="score-value score-excellent">9.5</div>
+                <div class="score-label">技术创新</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-excellent">9.0</div>
+                <div class="score-label">隐私与开放性</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-good">8.5</div>
+                <div class="score-label">AI 集成深度</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-good">9.0</div>
+                <div class="score-label">性能与体验</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-good">8.0</div>
+                <div class="score-label">易用性</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-average">7.5</div>
+                <div class="score-label">生态成熟度</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-average">7.0</div>
+                <div class="score-label">跨平台支持</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value score-good">8.5</div>
+                <div class="score-label">社区活跃度</div>
+            </div>
+        </div>
+
+        <h3>✅ 优势</h3>
+        <ul>
+            <li><strong>真正的数据自主</strong> —— 纯 Markdown + Git 方案，零供应商锁定，数据永远属于用户</li>
+            <li><strong>AI 时代的先行者</strong> —— 原生 MCP 支持，让 AI Agent 拥有"完美记忆"，在知识管理 × AI 交叉领域独特定位</li>
+            <li><strong>轻量高性能</strong> —— Tauri + Rust 方案带来远超 Electron 应用的性能和资源效率</li>
+            <li><strong>类型透镜系统</strong> —— 在 Notion 的严格和 Obsidian 的松散之间找到了优雅的平衡点</li>
+            <li><strong>真实使用驱动</strong> —— 作者本人管理 10,000+ 笔记，每个功能都源于真实需求</li>
+        </ul>
+
+        <h3>⚠️ 不足</h3>
+        <ul>
+            <li><strong>移动端缺失</strong> —— 目前仅桌面端，缺少 iOS/Android 客户端，移动办公受限</li>
+            <li><strong>插件生态初期</strong> —— 相比 Obsidian 的 1000+ 社区插件，生态尚处于萌芽阶段</li>
+            <li><strong>仅 macOS 桌面端成熟</strong> —— 虽宣称支持 Windows/Linux，但主要开发和优化在 macOS</li>
+            <li><strong>社区规模小</strong> —— 作为新项目，社区贡献者和文档仍在积累中</li>
+        </ul>
+
+        <h3>🔮 展望</h3>
+        <p>
+            Tolaria 在 "AI + 本地优先知识管理" 这个新兴赛道上占据了独特位置。随着 AI Agent 能力的快速进化，
+            能够为 Agent 提供结构化、可版本化记忆的知识库工具将变得越来越重要。
+            如果 Tolaria 能在保持核心理念的同时扩展移动端和插件生态，它有潜力成为 AI 时代知识管理的新标杆。
+        </p>
+
+        <div class="highlight-block">
+            推荐指数：<strong>★★★★☆</strong>（4/5）—— 适合重视数据自主、热衷 AI 工具链的技术工作者和知识管理者。移动端需求强的用户建议观望。
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>📊 GitHub Trending 深度分析报告 · 2026-06-09</p>
+    <p>数据来源：<a href="https://github.com/refactoringhq/tolaria" style="color:var(--primary-light)">GitHub</a> · <a href="https://news.ycombinator.com/item?id=47882697" style="color:var(--primary-light)">Hacker News</a> · <a href="https://refactoring.fm/p/introducing-tolaria" style="color:var(--primary-light)">Refactoring.fm</a></p>
+</div>
+
+</body>
+</html>
