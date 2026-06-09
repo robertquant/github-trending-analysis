@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：phuryn/pm-skills — PM Skills Marketplace</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 1rem; }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .header .meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+        /* Score Card */
+        .score-card {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border: 1px solid var(--primary-dark);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+        .score-circle {
+            text-align: center;
+        }
+        .score-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .score-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem; }
+        .score-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .score-item .label { color: var(--text-muted); }
+        .score-item .value { font-weight: 700; }
+        .score-item .value.high { color: var(--success); }
+        .score-item .value.mid { color: var(--warning); }
+        .score-item .value.low { color: var(--danger); }
+
+        /* Sections */
+        .section {
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.75rem;
+        }
+        .section h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .icon { font-size: 1.2rem; }
+        .section p { color: var(--text-muted); margin-bottom: 0.75rem; }
+        .section p:last-child { margin-bottom: 0; }
+        .section ul { padding-left: 1.5rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+        .section li { margin-bottom: 0.4rem; }
+        .section li strong { color: var(--text); }
+
+        /* Plugin Grid */
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .plugin-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: background 0.2s;
+        }
+        .plugin-item:hover { background: rgba(255,255,255,0.06); }
+        .plugin-item h4 {
+            font-size: 0.95rem;
+            color: var(--primary-light);
+            margin-bottom: 0.3rem;
+        }
+        .plugin-item p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .plugin-item .stats { font-size: 0.78rem; color: var(--primary); font-weight: 600; }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .comparison-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary-light);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            color: var(--text-muted);
+        }
+        .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .comparison-table .highlight { color: var(--success); font-weight: 600; }
+        .comparison-table .self-row td { background: rgba(99, 102, 241, 0.08); }
+        .comparison-table .self-row td:first-child { color: var(--primary-light); font-weight: 700; }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.3rem;
+            margin-bottom: 0.3rem;
+        }
+        .tag-blue { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .tag-green { background: rgba(34,197,94,0.2); color: #4ade80; }
+        .tag-purple { background: rgba(168,85,247,0.2); color: #c084fc; }
+        .tag-orange { background: rgba(245,158,11,0.2); color: #fbbf24; }
+
+        /* Highlight box */
+        .highlight-box {
+            background: rgba(99,102,241,0.1);
+            border-left: 3px solid var(--primary);
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1rem 0;
+        }
+        .highlight-box p { color: var(--text); margin-bottom: 0; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 640px) {
+            .score-card { grid-template-columns: 1fr; text-align: center; }
+            .plugin-grid { grid-template-columns: 1fr; }
+            .score-breakdown { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="badge">🔍 GitHub Trending 深度分析</div>
+            <h1>phuryn/pm-skills</h1>
+            <div class="subtitle">PM Skills Marketplace：产品经理的 AI 操作系统</div>
+            <div class="meta">
+                <span>⭐ 7,000+ Stars</span>
+                <span>📄 MIT License</span>
+                <span>👤 Paweł Huryn</span>
+                <span>📅 分析日期: 2026-06-09</span>
+            </div>
+        </div>
+
+        <!-- Score Card -->
+        <div class="score-card">
+            <div class="score-circle">
+                <div class="score-number">9.2</div>
+                <div class="score-label">综合评分 / 10</div>
+            </div>
+            <div class="score-breakdown">
+                <div class="score-item"><span class="label">创新性</span><span class="value high">9.5</span></div>
+                <div class="score-item"><span class="label">实用性</span><span class="value high">9.5</span></div>
+                <div class="score-item"><span class="label">社区热度</span><span class="value high">9.0</span></div>
+                <div class="score-item"><span class="label">技术质量</span><span class="value high">9.0</span></div>
+                <div class="score-item"><span class="label">生态兼容</span><span class="value high">9.5</span></div>
+                <div class="score-item"><span class="label">文档完整度</span><span class="value high">9.0</span></div>
+                <div class="score-item"><span class="label">可维护性</span><span class="value mid">8.5</span></div>
+                <div class="score-item"><span class="label">差异化</span><span class="value high">9.0</span></div>
+            </div>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="section">
+            <h2><span class="icon">📋</span> 项目概述</h2>
+            <p><strong>PM Skills Marketplace</strong> 是由产品管理专家 Paweł Huryn（The Product Compass Newsletter 创始人）创建的开源项目，旨在将经过验证的产品管理框架编码为 AI 可执行的技能（Skills）、命令（Commands）和工作流（Workflows）。</p>
+            <div class="highlight-box">
+                <p><strong>核心定位：</strong>"Generic AI gives you text. PM Skills Marketplace gives you structure."（通用 AI 给你文本，PM Skills 给你结构。）将 Teresa Torres、Marty Cagan、Alberto Savoia 等大师的 PM 方法论，转化为 AI 助手可直接执行的可复用工作流。</p>
+            </div>
+            <p>项目包含 <strong>68 个 PM 技能</strong>和 <strong>42 个链式工作流</strong>，分布在 <strong>9 个插件</strong>中，覆盖从产品发现、战略规划到执行交付、上市增长的全生命周期。兼容 Claude Code、Claude Cowork、OpenAI Codex CLI、Gemini CLI、Cursor、OpenCode、Kiro 等多种 AI 工具。</p>
+            <p>该项目发布后迅速走红，<strong>3 天内获得 1,100+ GitHub Stars</strong>，目前累计超过 7,000 Stars，在 PM 和 AI 开发者社区引发广泛关注。</p>
+        </div>
+
+        <!-- 技术架构 -->
+        <div class="section">
+            <h2><span class="icon">🏗️</span> 技术架构</h2>
+            <p>项目采用 <strong>Skills → Commands → Plugins</strong> 三层架构设计：</p>
+            <ul>
+                <li><strong>Skills（技能）</strong>：最基础的构建块。每个 Skill 为 AI 助手提供特定 PM 任务的知识、分析框架或引导式工作流。按需自动加载，无需显式调用。可通过 <code>/plugin-name:skill-name</code> 强制加载。</li>
+                <li><strong>Commands（命令）</strong>：用户通过 <code>/command-name</code> 触发的链式工作流。将多个 Skill 串联为端到端流程。例如 <code>/discover</code> 串联四个技能：brainstorm-ideas → identify-assumptions → prioritize-assumptions → brainstorm-experiments。</li>
+                <li><strong>Plugins（插件）</strong>：将相关 Skill 和 Command 按领域分组为可安装包。每个插件覆盖一个 PM 领域。</li>
+            </ul>
+            <p>技能文件遵循 <strong>通用 Skill 格式</strong>（<code>SKILL.md</code>），存放于 <code>skills/*/SKILL.md</code> 路径，任何支持该格式的 AI 工具均可直接读取使用。</p>
+
+            <h3 style="margin-top: 1.25rem; font-size: 1.1rem; margin-bottom: 0.75rem;">9 大插件一览</h3>
+            <div class="plugin-grid">
+                <div class="plugin-item">
+                    <h4>🔍 pm-product-discovery</h4>
+                    <p>产品发现：构思、假设测试、实验设计、OST、用户访谈</p>
+                    <span class="stats">13 Skills · 5 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>🎯 pm-product-strategy</h4>
+                    <p>战略规划：愿景、商业模式、定价、竞争格局分析</p>
+                    <span class="stats">12 Skills · 5 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>⚡ pm-execution</h4>
+                    <p>日常执行：PRD、OKR、路线图、冲刺、回顾、发布</p>
+                    <span class="stats">16 Skills · 11 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>📊 pm-market-research</h4>
+                    <p>市场研究：用户画像、细分、旅程图、市场规模、竞品分析</p>
+                    <span class="stats">7 Skills · 3 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>📈 pm-data-analytics</h4>
+                    <p>数据分析：SQL 生成、队列分析、A/B 测试分析</p>
+                    <span class="stats">3 Skills · 3 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>🚀 pm-go-to-market</h4>
+                    <p>上市策略：滩头市场、ICP、增长飞轮、GTM 路径、Battlecard</p>
+                    <span class="stats">6 Skills · 3 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>📢 pm-marketing-growth</h4>
+                    <p>营销增长：营销创意、定位、价值主张、北极星指标</p>
+                    <span class="stats">5 Skills · 2 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>🛠️ pm-toolkit</h4>
+                    <p>实用工具：简历评审、法律文件、校对检查</p>
+                    <span class="stats">4 Skills · 5 Commands</span>
+                </div>
+                <div class="plugin-item">
+                    <h4>🤖 pm-ai-shipping</h4>
+                    <p>AI 交付审计：文档化 AI 生成代码、安全与性能审计、测试覆盖</p>
+                    <span class="stats">2 Skills · 5 Commands</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心创新点 -->
+        <div class="section">
+            <h2><span class="icon">💡</span> 核心创新点</h2>
+
+            <h3 style="font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">1. 将 PM 方法论"编译"为 AI 可执行指令</h3>
+            <p>不是简单地让 AI "帮我写 PRD"，而是将 Opportunity Solution Tree、Lean Canvas、Pre-mortem 等经典框架的结构化思考过程编码为 AI 可遵循的分步指令。AI 不再是自由发挥，而是按框架的严谨逻辑推进。</p>
+
+            <h3 style="font-size: 1.05rem; margin-top: 1rem; margin-bottom: 0.5rem;">2. 链式工作流设计</h3>
+            <p>Commands 将多个 Skill 串联为端到端流程，且完成后自动推荐下一步命令。例如 <code>/discover</code> 完成后推荐 <code>/strategy</code>，自然形成 PM 工作流的闭环。这种设计确保了方法论之间的连贯性。</p>
+
+            <h3 style="font-size: 1.05rem; margin-top: 1rem; margin-bottom: 0.5rem;">3. 跨平台通用 Skill 格式</h3>
+            <p>基于 <code>SKILL.md</code> 的通用格式，一套技能可在 Claude Code、Codex CLI、Gemini CLI、Cursor、OpenCode、Kiro 等多种工具中使用，实现了真正的平台无关性。</p>
+
+            <h3 style="font-size: 1.05rem; margin-top: 1rem; margin-bottom: 0.5rem;">4. AI Shipping 审计能力（pm-ai-shipping）</h3>
+            <p>这是项目中特别亮眼的创新插件。针对 AI 生成代码（"vibe-coded"应用）缺乏意图记录的问题，提供了文档化、安全审计、性能审计、测试覆盖率映射等工具，解决了 AI 编程带来的可审查性缺失问题。</p>
+
+            <h3 style="font-size: 1.05rem; margin-top: 1rem; margin-bottom: 0.5rem;">5. 与 PM Brain 的组合生态</h3>
+            <p>配合 PM Brain（产品经理的第二大脑），实现了"知识持久化 + 技能执行"的组合：PM Brain 维护 Markdown 格式的持久化 PM 知识库，PM Skills 提供执行框架，Claude 读取前者并使用后者进行工作。</p>
+        </div>
+
+        <!-- 应用场景 -->
+        <div class="section">
+            <h2><span class="icon">🌍</span> 应用场景</h2>
+            <ul>
+                <li><strong>独立产品经理 / 创业者</strong>：在没有大团队的情况下，通过 AI 技能完成从产品发现到上市的全部工作流。一条命令启动完整的发现流程。</li>
+                <li><strong>企业 PM 团队</strong>：标准化团队的方法论实践。将团队统一的 PM 框架（如公司定制的 PRD 模板）编码为 Skill，确保一致性。</li>
+                <li><strong>PM 培训与教育</strong>：学习 Teresa Torres 持续发现、Marty Cagan INSPIRED、Alberto Savoia The Right It 等经典方法论的最佳实践——AI 在执行过程中自然会解释框架的逻辑。</li>
+                <li><strong>AI 生成代码的审计与交付</strong>：通过 pm-ai-shipping 插件，对 AI 辅助编写的代码进行系统性文档化、安全审计和测试覆盖检查。</li>
+                <li><strong>跨职能协作</strong>：设计师、工程师、数据分析师可通过统一的 Skill 格式获取 PM 上下文，减少沟通摩擦。</li>
+                <li><strong>快速竞品分析</strong>：使用 <code>/competitive-analysis</code> 和 Battlecard 命令快速生成竞品分析报告。</li>
+            </ul>
+            <div style="margin-top: 1rem;">
+                <span class="tag tag-blue">产品发现</span>
+                <span class="tag tag-green">战略规划</span>
+                <span class="tag tag-purple">PRD 编写</span>
+                <span class="tag tag-orange">竞品分析</span>
+                <span class="tag tag-blue">A/B 测试</span>
+                <span class="tag tag-green">AI 代码审计</span>
+                <span class="tag tag-purple">GTM 策略</span>
+                <span class="tag tag-orange">用户研究</span>
+            </div>
+        </div>
+
+        <!-- 竞品对比 -->
+        <div class="section">
+            <h2><span class="icon">⚔️</span> 竞品对比</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>项目 / 工具</th>
+                        <th>技能数</th>
+                        <th>框架深度</th>
+                        <th>跨平台</th>
+                        <th>开源</th>
+                        <th>特色</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="self-row">
+                        <td>phuryn/pm-skills</td>
+                        <td>68 + 42 工作流</td>
+                        <td class="highlight">⭐⭐⭐⭐⭐</td>
+                        <td class="highlight">7+ 平台</td>
+                        <td class="highlight">MIT</td>
+                        <td>全生命周期覆盖，AI Shipping 审计</td>
+                    </tr>
+                    <tr>
+                        <td>AI PM OS</td>
+                        <td>200+ / 150 框架</td>
+                        <td>⭐⭐⭐⭐</td>
+                        <td>Claude Code</td>
+                        <td>付费 ($99)</td>
+                        <td>数量最多，付费指南</td>
+                    </tr>
+                    <tr>
+                        <td>product-on-purpose/pm-skills</td>
+                        <td>65 Skills</td>
+                        <td>⭐⭐⭐⭐</td>
+                        <td>多平台</td>
+                        <td>开源</td>
+                        <td>含学习层（教程、案例）</td>
+                    </tr>
+                    <tr>
+                        <td>deanpeters/Product-Manager-Skills</td>
+                        <td>中等</td>
+                        <td>⭐⭐⭐</td>
+                        <td>多平台</td>
+                        <td>开源</td>
+                        <td>教学方法论驱动</td>
+                    </tr>
+                    <tr>
+                        <td>Ron Yang PM Skills</td>
+                        <td>71 Skills</td>
+                        <td>⭐⭐⭐</td>
+                        <td>Claude Code</td>
+                        <td>开源</td>
+                        <td>社区驱动，覆盖广</td>
+                    </tr>
+                    <tr>
+                        <td>ChatPRD</td>
+                        <td>专注 PRD</td>
+                        <td>⭐⭐⭐</td>
+                        <td>Web</td>
+                        <td>Freemium</td>
+                        <td>PRD 专用，界面友好</td>
+                    </tr>
+                    <tr>
+                        <td>Productboard AI</td>
+                        <td>平台集成</td>
+                        <td>⭐⭐⭐⭐</td>
+                        <td>自有平台</td>
+                        <td>付费 SaaS</td>
+                        <td>企业级反馈分析</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top: 1rem;">
+                <p><strong>竞争优势总结：</strong>pm-skills 在"开源 + 跨平台 + 框架深度"三个维度上具有显著优势。它不依赖任何特定 SaaS 平台，且 AI Shipping 审计功能在竞品中独树一帜。唯一的短板是缺乏系统化的学习路径（product-on-purpose 在这方面做得更好），但 PM Brain 的组合一定程度上弥补了这一不足。</p>
+            </div>
+        </div>
+
+        <!-- 综合评价 -->
+        <div class="section">
+            <h2><span class="icon">🏆</span> 综合评价</h2>
+            <p><strong>PM Skills Marketplace</strong> 是目前开源 PM AI 工具领域完成度最高的项目之一。它不仅仅是"提示词集合"，而是一套经过深思熟虑的、将顶级 PM 方法论系统化编码为 AI 可执行工作流的工程化方案。</p>
+
+            <h3 style="font-size: 1.05rem; margin-top: 1rem; margin-bottom: 0.5rem;">✅ 亮点</h3>
+            <ul>
+                <li>基于 Teresa Torres、Marty Cagan 等 <strong>12 位顶级 PM 思想领袖</strong>的方法论</li>
+                <li><strong>9 个插件、68 个 Skill、42 个 Command</strong>，覆盖 PM 全生命周期</li>
+                <li>真正实现<strong>跨平台兼容</strong>（Claude Code/Cowork、Codex、Gemini、Cursor 等）</li>
+                <li><strong>pm-ai-shipping</strong> 插件解决了 AI 生成代码的可审查性痛点</li>
+                <li><strong>链式工作流</strong>设计让 PM 方法论自然衔接，形成闭环</li>
+                <li>MIT 开源，社区活跃，3 天 1100+ Stars</li>
+            </ul>
+
+            <h3 style="font-size: 1.05rem; margin-top: 1rem; margin-bottom: 0.5rem;">⚠️ 待改进</h3>
+            <ul>
+                <li>缺乏系统化的学习教程（依赖用户对 PM 框架的先验知识）</li>
+                <li>部分 Skill 质量参差，深度不一</li>
+                <li>暂无 Web UI，对非技术 PM 有一定门槛（Claude Cowork 改善了这一点）</li>
+                <li>Windows 平台存在已知兼容性问题</li>
+            </ul>
+
+            <div class="highlight-box" style="margin-top: 1rem;">
+                <p><strong>总结：</strong>PM Skills Marketplace 代表了"AI + PM 方法论"领域的最佳实践。它证明了 AI 工具不应只是生成文本，而应成为结构化思考的增强器。对于任何希望在 AI 时代提升 PM 工作效率的产品经理来说，这是一个值得深入使用的工具。评分 <strong>9.2/10</strong>，强烈推荐。</p>
+            </div>
+        </div>
+
+        <!-- Reference -->
+        <div class="section">
+            <h2><span class="icon">🔗</span> 参考链接</h2>
+            <ul>
+                <li><strong>GitHub 仓库：</strong><a href="https://github.com/phuryn/pm-skills" style="color: var(--primary-light);">github.com/phuryn/pm-skills</a></li>
+                <li><strong>The Product Compass（作者 Newsletter）：</strong><a href="https://www.productcompass.pm/" style="color: var(--primary-light);">productcompass.pm</a></li>
+                <li><strong>Claude Code Skills 官方文档：</strong><a href="https://code.claude.com/docs/en/skills" style="color: var(--primary-light);">code.claude.com/docs/en/skills</a></li>
+                <li><strong>Firecrawl - Best Claude Code Skills 2026：</strong><a href="https://firecrawl.dev/blog/best-claude-code-skills" style="color: var(--primary-light);">firecrawl.dev</a></li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>📊 GitHub Trending 深度分析 · 由 AI 自动生成 · 2026-06-09</p>
+        </div>
+    </div>
+</body>
+</html>
