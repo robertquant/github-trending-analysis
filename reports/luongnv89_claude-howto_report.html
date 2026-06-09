@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：luongnv89/claude-howto</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #f59e0b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #f59e0b, #ef4444);
+            --gradient-3: linear-gradient(135deg, #22c55e, #06b6d4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--gradient-1);
+            border-radius: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        }
+        .header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; position: relative; }
+        .header .subtitle { font-size: 1.1rem; opacity: 0.9; position: relative; }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .header .meta span {
+            background: rgba(255,255,255,0.15);
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--primary-light); }
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .card h2 .icon { font-size: 1.3rem; }
+        .card h3 { font-size: 1.15rem; margin: 1.2rem 0 0.6rem; color: var(--primary-light); }
+        .card p, .card li { color: var(--text-muted); line-height: 1.8; }
+        .card ul { padding-left: 1.2rem; }
+        .card li { margin-bottom: 0.3rem; }
+
+        /* Score Grid */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .score-item {
+            background: var(--bg);
+            border-radius: 0.8rem;
+            padding: 1.2rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .score-item .score-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .score-item .score-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin-top: 0.6rem;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.8rem 0; }
+        .tag {
+            background: rgba(99,102,241,0.15);
+            color: var(--primary-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            border: 1px solid rgba(99,102,241,0.3);
+        }
+        .tag.green { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+        .tag.amber { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+
+        /* Table */
+        .table-wrap { overflow-x: auto; margin: 1rem 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--bg);
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+        tr:hover { background: rgba(99,102,241,0.05); }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .feature-card {
+            background: var(--bg);
+            border-radius: 0.8rem;
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+        }
+        .feature-card h4 {
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
+        }
+        .feature-card p { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Comparison */
+        .comparison-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin: 0.5rem 0;
+        }
+        .comparison-bar .name { width: 160px; font-size: 0.85rem; color: var(--text); text-align: right; flex-shrink: 0; }
+        .comparison-bar .bar-container { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .comparison-bar .bar-fill { height: 100%; border-radius: 4px; }
+        .comparison-bar .val { width: 40px; font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Highlight */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1rem 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.5rem; }
+            .card { padding: 1.2rem; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🔍 深度分析：luongnv89/claude-howto</h1>
+        <div class="subtitle">Master Claude Code in a Weekend — 一周掌握 Claude Code 的可视化实战指南</div>
+        <div class="meta">
+            <span>⭐ GitHub Trending #1</span>
+            <span>📦 Version 2.1.160</span>
+            <span>📄 MIT License</span>
+            <span>📅 更新于 2026-06-02</span>
+            <span>🌐 5 种语言</span>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="card">
+        <h2><span class="icon">📋</span> 项目概述</h2>
+        <p><strong>claude-howto</strong> 是由 Luong NGUYEN（luongnv89）创建的开源教学项目，旨在帮助开发者从零基础到高级用户，系统化掌握 Anthropic 的 CLI 工具 <strong>Claude Code</strong>。</p>
+        <div class="highlight-box">
+            <strong>核心理念：</strong>"You installed Claude Code. You ran a few prompts. Now what?" — 项目解决了从"知道功能"到"真正掌握并组合使用"之间巨大的认知鸿沟。
+        </div>
+        <div class="tags">
+            <span class="tag">Claude Code</span>
+            <span class="tag">AI 开发工具</span>
+            <span class="tag">教程指南</span>
+            <span class="tag green">可视化</span>
+            <span class="tag green">模板驱动</span>
+            <span class="tag amber">渐进式学习</span>
+        </div>
+        <h3>与官方文档的差异</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>维度</th><th>官方文档</th><th>claude-howto</th></tr></thead>
+                <tbody>
+                    <tr><td>格式</td><td>参考文档</td><td>可视化教程 + Mermaid 图表</td></tr>
+                    <tr><td>深度</td><td>功能描述</td><td>底层原理解析</td></tr>
+                    <tr><td>示例</td><td>基础片段</td><td>生产级可复制模板</td></tr>
+                    <tr><td>结构</td><td>按功能组织</td><td>渐进式学习路径</td></tr>
+                    <tr><td>自评估</td><td>无</td><td>互动测验 + 个性化路径</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="card">
+        <h2><span class="icon">🏗️</span> 技术架构与内容体系</h2>
+        <p>项目采用模块化教程架构，覆盖 Claude Code 的全部 10 大核心功能域：</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>01. Slash Commands</h4>
+                <p>用户自定义快捷命令（/optimize, /pr 等），15 分钟上手</p>
+            </div>
+            <div class="feature-card">
+                <h4>02. Memory</h4>
+                <p>跨会话持久化上下文：项目级 / 目录级 / 个人级记忆</p>
+            </div>
+            <div class="feature-card">
+                <h4>03. Skills</h4>
+                <p>可复用的自动调用能力，含脚本和模板（代码审查、文档生成等）</p>
+            </div>
+            <div class="feature-card">
+                <h4>04. Subagents</h4>
+                <p>专用 AI 子代理：代码审查、测试工程师、文档撰写、安全审计</p>
+            </div>
+            <div class="feature-card">
+                <h4>05. MCP Protocol</h4>
+                <p>Model Context Protocol — 接入 GitHub、数据库、文件系统等外部工具</p>
+            </div>
+            <div class="feature-card">
+                <h4>06. Hooks</h4>
+                <p>事件驱动自动化：5 类 29 种事件（PreToolUse, PostToolUse 等）</p>
+            </div>
+            <div class="feature-card">
+                <h4>07. Plugins</h4>
+                <p>打包完整工作流（PR 审查、DevOps 自动化、文档生成）</p>
+            </div>
+            <div class="feature-card">
+                <h4>08. Checkpoints</h4>
+                <p>会话快照与回滚，支持安全实验和 A/B 方案对比</p>
+            </div>
+            <div class="feature-card">
+                <h4>09. Advanced Features</h4>
+                <p>Plan Mode、Extended Thinking、后台任务、权限管理、Headless 模式</p>
+            </div>
+            <div class="feature-card">
+                <h4>10. CLI Reference</h4>
+                <p>完整命令行参考：交互模式、管道模式、JSON 输出、CI/CD 集成</p>
+            </div>
+        </div>
+        <h3>工程化特色</h3>
+        <ul>
+            <li><strong>自动化测试：</strong>Python pytest 单元测试、Ruff 代码检查、Bandit 安全扫描、mypy 类型检查</li>
+            <li><strong>CI/CD 集成：</strong>每次推送自动运行测试，Codecov 覆盖率追踪</li>
+            <li><strong>离线阅读：</strong>支持 <code>uv run scripts/build_epub.py</code> 生成 EPUB 电子书</li>
+            <li><strong>多语言：</strong>英语、越南语、中文、乌克兰语、日语 5 种语言版本</li>
+            <li><strong>版本同步：</strong>紧跟 Claude Code 每个 release 更新（当前 v2.1.160）</li>
+        </ul>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="card">
+        <h2><span class="icon">💡</span> 核心创新点</h2>
+        <h3>1. 🎯 解决"功能孤岛"问题</h3>
+        <p>官方文档只介绍单个功能，但 Claude Code 的真正威力在于功能的<strong>组合使用</strong>。该项目教会你将 Slash Commands + Memory + Subagents + Hooks + MCP 打造成自动化流水线。</p>
+
+        <h3>2. 📊 Mermaid 可视化架构图</h3>
+        <p>每个功能模块配有 Mermaid 图表，展示内部工作原理，让你理解 <em>why</em> 而不仅仅是 <em>how</em>。</p>
+
+        <h3>3. 🧩 可复制粘贴的生产级模板</h3>
+        <p>不是 "Hello World" 级别的示例，而是可以直接用于生产环境的完整配置：Hook 脚本、MCP 配置、子代理定义、完整插件包。</p>
+
+        <h3>4. 📈 渐进式学习路径 + 自评估</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>级别</th><th>前置条件</th><th>起点模块</th><th>预计时长</th></tr></thead>
+                <tbody>
+                    <tr><td>🟢 初学者</td><td>启动 Claude Code 即可</td><td>Slash Commands</td><td>~2.5 小时</td></tr>
+                    <tr><td>🟡 中级</td><td>会使用 CLAUDE.md</td><td>Skills</td><td>~3.5 小时</td></tr>
+                    <tr><td>🔴 高级</td><td>会配置 MCP / Hooks</td><td>Advanced Features</td><td>~5 小时</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>5. 🔄 实用工作流组合示例</h3>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>自动化代码审查</h4>
+                <p>Slash Commands → 加载项目 Memory → GitHub MCP 获取 PR → 分发给子代理 → 综合报告</p>
+            </div>
+            <div class="feature-card">
+                <h4>DevOps 部署流水线</h4>
+                <p>Plugins → 部署子代理 → Kubernetes MCP → Hooks 健康检查 → 状态报告</p>
+            </div>
+            <div class="feature-card">
+                <h4>安全审计</h4>
+                <p>Subagents → 安全审查技能 → Hooks (只读模式) → 自动报告</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="card">
+        <h2><span class="icon">🌍</span> 应用场景</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>场景</th><th>目标用户</th><th>涉及功能组合</th><th>价值</th></tr></thead>
+                <tbody>
+                    <tr><td>团队代码审查自动化</td><td>技术负责人 / DevOps</td><td>Slash Commands + Subagents + Memory + MCP</td><td>减少 80% 人工审查时间</td></tr>
+                    <tr><td>新成员快速上手</td><td>团队管理者</td><td>Memory + Slash Commands + Plugins</td><td>项目规范自动加载</td></tr>
+                    <tr><td>CI/CD 自动化集成</td><td>DevOps 工程师</td><td>CLI + Hooks + Background Tasks</td><td>无人值守自动化</td></tr>
+                    <tr><td>文档自动生成</td><td>技术写作者</td><td>Skills + Subagents + Plugins</td><td>API 文档一键生成</td></tr>
+                    <tr><td>安全扫描流水线</td><td>安全工程师</td><td>Subagents + Skills + Hooks</td><td>每次提交自动安全审计</td></tr>
+                    <tr><td>复杂重构实验</td><td>高级开发者</td><td>Checkpoints + Plan Mode + Hooks</td><td>安全回滚的多方案探索</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="card">
+        <h2><span class="icon">⚔️</span> 竞品对比分析</h2>
+        <p>以下对比 claude-howto 与其他主流 Claude Code 学习资源的差异：</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>维度</th><th>claude-howto</th><th>freeCodeCamp Handbook</th><th>YouTube 4h Full Course</th><th>Everything Claude Code (ECC)</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>形式</strong></td><td>模块化 Markdown + 模板</td><td>长文教程</td><td>视频课程</td><td>48 代理 + 183 技能集合</td></tr>
+                    <tr><td><strong>深度</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+                    <tr><td><strong>可操作性</strong></td><td>极高（复制粘贴即用）</td><td>中等</td><td>中等（需跟做）</td><td>高（直接安装）</td></tr>
+                    <tr><td><strong>学习路径</strong></td><td>✅ 渐进式 + 自评估</td><td>❌ 线性阅读</td><td>⚠️ 线性观看</td><td>❌ 需自行探索</td></tr>
+                    <tr><td><strong>可视化</strong></td><td>✅ Mermaid 图表</td><td>❌ 纯文本</td><td>✅ 视频演示</td><td>⚠️ 配置文件为主</td></tr>
+                    <tr><td><strong>覆盖范围</strong></td><td>10 大功能全覆盖</td><td>核心功能</td><td>基础 + 进阶</td><td>极致全面</td></tr>
+                    <tr><td><strong>离线支持</strong></td><td>✅ EPUB 生成</td><td>✅ 网页</td><td>❌ 需联网</td><td>✅ 本地安装</td></tr>
+                    <tr><td><strong>维护频率</strong></td><td>紧跟每次 release</td><td>低频更新</td><td>一次性录制</td><td>活跃更新</td></tr>
+                    <tr><td><strong>多语言</strong></td><td>5 种语言</td><td>英语</td><td>英语</td><td>英语</td></tr>
+                    <tr><td><strong>Stars</strong></td><td>2K+</td><td>N/A</td><td>N/A (1.8M views)</td><td>163K</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="highlight-box">
+            <strong>定位差异：</strong>claude-howto 是<strong>教学导向</strong>的最佳选择（从入门到精通的引导式学习）；ECC 是<strong>工具集导向</strong>（直接安装海量配置）；YouTube 视频适合<strong>视觉学习者</strong>的初次接触。
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="card">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-value">9.0</div>
+                <div class="score-label">📚 内容质量</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--gradient-1);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.5</div>
+                <div class="score-label">🎓 教学设计</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--gradient-3);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">8.5</div>
+                <div class="score-label">🔧 实用性</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:var(--gradient-2);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.0</div>
+                <div class="score-label">🔄 维护活跃度</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:90%;background:var(--gradient-1);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">8.0</div>
+                <div class="score-label">🌍 社区影响力</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:80%;background:var(--gradient-2);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-value">9.5</div>
+                <div class="score-label">📖 文档规范</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:95%;background:var(--gradient-3);"></div></div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:1.5rem;">
+            <span style="font-size:2.5rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⭐ 8.9 / 10</span>
+            <p style="color:var(--text-muted);margin-top:0.3rem;">综合评分 · 极力推荐</p>
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="card">
+        <h2><span class="icon">🎯</span> 总结与建议</h2>
+        <div class="highlight-box">
+            <strong>适合人群：</strong>任何正在或计划使用 Claude Code 的开发者，尤其是感到"只用了 10% 功能"的用户。
+        </div>
+        <h3>✅ 推荐理由</h3>
+        <ul>
+            <li>市面上最系统化的 Claude Code 学习资源，没有之一</li>
+            <li>渐进式学习路径 + 自评估，精准定位你的知识盲区</li>
+            <li>所有模板可直接复制到项目中使用，15 分钟见效</li>
+            <li>紧跟官方每次 release，保持内容时效性</li>
+            <li>多语言支持，对中文用户非常友好</li>
+            <li>MIT 开源许可，自由使用</li>
+        </ul>
+        <h3>⚠️ 注意事项</h3>
+        <ul>
+            <li>需要已安装并了解 Claude Code 的基本操作</li>
+            <li>完整学习路径需 11-13 小时投入</li>
+            <li>部分高级功能需要配置 MCP 服务器、环境变量等基础设施</li>
+        </ul>
+        <h3>🔗 相关链接</h3>
+        <div class="tags">
+            <a href="https://github.com/luongnv89/claude-howto" class="tag" target="_blank">GitHub 仓库</a>
+            <a href="https://trendshift.io/repositories/24227" class="tag" target="_blank">TrendShift 统计</a>
+            <a href="https://www.freecodecamp.org/news/claude-code-handbook/" class="tag" target="_blank">freeCodeCamp 手册</a>
+            <a href="https://github.com/affaan-m/everything-claude-code" class="tag" target="_blank">Everything Claude Code</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>📅 分析日期：2026-06-10 · 数据来源：GitHub、TrendShift、Reddit、LinkedIn</p>
+        <p>由 AI 深度分析师自动生成</p>
+    </div>
+
+</div>
+</body>
+</html>
