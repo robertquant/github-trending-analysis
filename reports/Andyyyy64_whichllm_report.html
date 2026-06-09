@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：Andyyyy64/whichllm</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --fg: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --green: #3fb950;
+            --yellow: #d29922;
+            --red: #f85149;
+            --purple: #bc8cff;
+            --orange: #f0883e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+        .header .tag {
+            display: inline-block;
+            background: rgba(88,166,255,0.15);
+            color: var(--accent);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle { color: var(--muted); font-size: 1.05em; max-width: 680px; margin: 0 auto; }
+        .header .meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .header .meta span strong { color: var(--fg); }
+
+        /* Score Card */
+        .score-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .score-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .score-card .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+        .score-card .value { font-size: 2em; font-weight: 700; }
+        .score-card .value.green { color: var(--green); }
+        .score-card .value.blue { color: var(--accent); }
+        .score-card .value.purple { color: var(--purple); }
+        .score-card .value.orange { color: var(--orange); }
+        .score-card .value.yellow { color: var(--yellow); }
+
+        /* Section */
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 1.3em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2 .icon { font-size: 1.2em; }
+        .section p { color: var(--muted); margin-bottom: 12px; }
+        .section ul, .section ol { margin: 10px 0 14px 20px; color: var(--muted); }
+        .section li { margin-bottom: 6px; }
+
+        /* Code */
+        pre {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 12px 0;
+        }
+        code { color: var(--green); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--accent); font-size: 13px; font-weight: 600; }
+        td { color: var(--muted); font-size: 14px; }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.green { background: rgba(63,185,80,0.15); color: var(--green); }
+        .badge.blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .badge.yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+        .badge.red { background: rgba(248,81,73,0.15); color: var(--red); }
+        .badge.purple { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+        /* Highlight */
+        .highlight {
+            background: rgba(88,166,255,0.08);
+            border-left: 3px solid var(--accent);
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+        }
+        .highlight p { margin: 0; color: var(--fg); }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .arch-box {
+            background: rgba(88,166,255,0.06);
+            border: 1px solid rgba(88,166,255,0.2);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .arch-box h4 { color: var(--accent); font-size: 14px; margin-bottom: 6px; }
+        .arch-box ul { margin: 0; padding-left: 16px; }
+        .arch-box li { font-size: 13px; }
+
+        /* Comparison */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .compare-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .compare-card h4 { color: var(--fg); margin-bottom: 10px; font-size: 15px; }
+        .compare-card .pros { color: var(--green); }
+        .compare-card .cons { color: var(--red); }
+        .compare-card .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.5em; }
+            .section { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="tag">🔥 GitHub Trending 深度分析</div>
+        <h1>Andyyyy64/whichllm</h1>
+        <div class="subtitle">找到真正适合你硬件的最佳本地 LLM —— 基于真实基准测试的智能推荐，而非单纯参数量比较</div>
+        <div class="meta">
+            <span>📦 <strong>Python CLI</strong></span>
+            <span>⚖️ <strong>MIT License</strong></span>
+            <span>🐍 <strong>Python 3.11+</strong></span>
+            <span>📅 <strong>分析日期：2026-06-09</strong></span>
+        </div>
+    </div>
+
+    <!-- Score Cards -->
+    <div class="score-section">
+        <div class="score-card">
+            <div class="label">综合评分</div>
+            <div class="value green">8.5</div>
+        </div>
+        <div class="score-card">
+            <div class="label">创新性</div>
+            <div class="value blue">8.0</div>
+        </div>
+        <div class="score-card">
+            <div class="label">实用性</div>
+            <div class="value purple">9.5</div>
+        </div>
+        <div class="score-card">
+            <div class="label">代码质量</div>
+            <div class="value orange">8.5</div>
+        </div>
+        <div class="score-card">
+            <div class="label">社区活跃度</div>
+            <div class="value yellow">8.0</div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2><span class="icon">📋</span> 项目概述</h2>
+        <p><strong>whichllm</strong> 是一个开源命令行工具（CLI），旨在解决本地 LLM 部署中最核心的难题：<strong>在众多模型中，哪一个真正适合我的硬件并且表现最佳？</strong></p>
+        <p>该工具自动检测用户的 GPU/CPU/RAM 配置，从 HuggingFace 实时获取模型数据，并基于多维度真实基准测试（LiveBench、Artificial Analysis、Aider、Chatbot Arena ELO 等）进行智能排名，而非简单地推荐"能塞进显存的最大的模型"。</p>
+        <div class="highlight">
+            <p>💡 <strong>核心理念</strong>：能塞进显存只是第一步。知道哪个模型<strong>在能跑的里面是最好的</strong>，才是 whichllm 真正解决的问题。</p>
+        </div>
+        <table>
+            <tr><th>属性</th><th>详情</th></tr>
+            <tr><td>项目地址</td><td><code>github.com/Andyyyy64/whichllm</code></td></tr>
+            <tr><td>开源协议</td><td><span class="badge yellow">MIT</span></td></tr>
+            <tr><td>编程语言</td><td>Python 3.11+</td></tr>
+            <tr><td>安装方式</td><td>uvx / pip / brew</td></tr>
+            <tr><td>支持硬件</td><td>NVIDIA GPU、AMD GPU、Apple Silicon、CPU-only</td></tr>
+            <tr><td>支持格式</td><td>GGUF、AWQ、GPTQ、FP16/BF16</td></tr>
+        </table>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2><span class="icon">🏗️</span> 技术架构</h2>
+        <p>whichllm 采用模块化架构设计，清晰分层，分为四大核心模块：</p>
+        <div class="arch-diagram">
+            <div class="arch-box">
+                <h4>🖥️ Hardware 硬件检测层</h4>
+                <ul>
+                    <li>NVIDIA GPU（nvidia-ml-py）</li>
+                    <li>AMD GPU（dbgpu/ROCm）</li>
+                    <li>Apple Silicon（Metal）</li>
+                    <li>CPU 名称、核心数、AVX 支持</li>
+                    <li>RAM 与磁盘空间</li>
+                    <li>GPU 模拟器（<code>--gpu</code>）</li>
+                </ul>
+            </div>
+            <div class="arch-box">
+                <h4>📦 Models 数据获取层</h4>
+                <ul>
+                    <li>HuggingFace API 实时获取</li>
+                    <li>模型解析与 evalResults</li>
+                    <li>多源基准数据（Arena ELO、Leaderboard）</li>
+                    <li>模型家族分组</li>
+                    <li>JSON 缓存（TTL 机制）</li>
+                </ul>
+            </div>
+            <div class="arch-box">
+                <h4>⚙️ Engine 推荐引擎层</h4>
+                <ul>
+                    <li>VRAM 精确估算（权重+KV缓存+激活值+开销）</li>
+                    <li>兼容性检查（显存/算力/OS）</li>
+                    <li>tok/s 性能预估（带宽模型）</li>
+                    <li>量化分析（质量惩罚系数）</li>
+                    <li>多因子评分排名</li>
+                </ul>
+            </div>
+            <div class="arch-box">
+                <h4>📤 Output 输出展示层</h4>
+                <ul>
+                    <li>Rich 表格（终端美化）</li>
+                    <li>JSON 结构化输出</li>
+                    <li>硬件信息展示</li>
+                    <li>升级方案对比</li>
+                    <li>Python 代码片段生成</li>
+                </ul>
+            </div>
+        </div>
+        <h3 style="color: var(--accent); margin-top: 20px;">数据流水线</h3>
+        <ol>
+            <li><strong>模型获取</strong> — 从 HuggingFace API 获取热门文本生成模型 + GGUF 模型 + 视觉模型</li>
+            <li><strong>基准数据融合</strong> — 实时获取 LiveBench、Artificial Analysis、Aider 等 + 冻结层 Open LLM Leaderboard、Arena ELO</li>
+            <li><strong>证据分级</strong> — 五级分辨率（直接匹配 → 变体 → 基座模型 → 家族插值 → 自报分数），逐级折扣</li>
+            <li><strong>缓存策略</strong> — 模型数据 6h TTL，基准数据 24h TTL</li>
+        </ol>
+        <h3 style="color: var(--accent); margin-top: 20px;">评分体系（0-100 分）</h3>
+        <table>
+            <tr><th>因子</th><th>影响</th><th>说明</th></tr>
+            <tr><td>基准质量</td><td><span class="badge green">核心</span></td><td>融合 LiveBench / Aider / Arena ELO 等，按来源置信度加权</td></tr>
+            <tr><td>模型规模</td><td>最高 +35</td><td>log2 缩放的世界知识代理（MoE 按总参数计）</td></tr>
+            <tr><td>量化精度</td><td>× 惩罚</td><td>低比特量化乘性折扣</td></tr>
+            <tr><td>证据置信度</td><td>×0.55–1.0</td><td>无证据 / 自报 ×0.55，继承 ×0.78，直接匹配满分</td></tr>
+            <tr><td>运行适配</td><td>×0.50–1.0</td><td>部分卸载 ×0.72，纯 CPU ×0.50</td></tr>
+            <tr><td>推理速度</td><td>-8 ~ +8</td><td>可用性门槛与适配相关的 tok/s 下限</td></tr>
+            <tr><td>来源信任</td><td>-5 ~ +5</td><td>官方组织加分，已知转载者扣分</td></tr>
+            <tr><td>热度</td><td>决胜因素</td><td>下载/点赞；随证据增强权重递减</td></tr>
+        </table>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2><span class="icon">💡</span> 核心创新点</h2>
+        <ul>
+            <li><strong>基于证据的排名，而非参数量启发式</strong>：顶级推荐由真实基准数据决定，而非简单选择"能装下的最大模型"。一个 27B 的高质量模型可能比 32B 的旧模型排名更高。</li>
+            <li><strong>时效性感知（Recency-aware）</strong>：陈旧的排行榜得分会被降权。2024 年的模型不能凭过时分数超越新一代模型。每次排名都显示基准快照日期，让过时推荐自我暴露。</li>
+            <li><strong>五级证据分级体系</strong>：从"直接匹配"到"自报分数"五级递减，有效防止小模型借用大模型家族的分数。家族成员参数量差异超过 2 倍时自动拒绝继承。</li>
+            <li><strong>架构感知的 VRAM 估算</strong>：VRAM = 权重 + GQA KV 缓存 + 激活值 + 框架开销，并考虑量化效率、后端因素、MoE 活跃/总参数区分、统一内存 vs 独立 PCIe 部分卸载建模。</li>
+            <li><strong>一键运行与代码生成</strong>：<code>whichllm run</code> 自动创建隔离环境、下载模型、启动对话；<code>whichllm snippet</code> 生成即用 Python 代码。</li>
+            <li><strong>GPU 模拟与升级规划</strong>：购买硬件前即可模拟任意 GPU 性能表现，对比升级候选方案。</li>
+            <li><strong>Live HuggingFace 数据</strong>：模型数据直接从 HuggingFace API 实时获取，附带精选冻结后备数据应对离线场景。</li>
+        </ul>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <div class="compare-grid">
+            <div class="compare-card">
+                <h4>🧑‍💻 个人开发者</h4>
+                <p class="pros">快速找到适合自己笔记本/工作站的本地模型，无需研究复杂的技术参数</p>
+                <p class="note">例：<code>whichllm</code> 一行命令，即刻获得推荐</p>
+            </div>
+            <div class="compare-card">
+                <h4>🏢 企业 AI 部署</h4>
+                <p class="pros">为不同规格的服务器批量筛选最优本地模型，JSON 输出方便脚本集成</p>
+                <p class="note">例：<code>whichllm --json | jq</code> 管道化处理</p>
+            </div>
+            <div class="compare-card">
+                <h4>🛒 硬件采购规划</h4>
+                <p class="pros">购买 GPU 前模拟性能表现，对比不同显卡的模型运行能力</p>
+                <p class="note">例：<code>whichllm upgrade "RTX 4090" "RTX 5090"</code></p>
+            </div>
+            <div class="compare-card">
+                <h4>🎓 AI 学习与研究</h4>
+                <p class="pros">学生和研究者快速了解各模型的硬件需求和性能表现</p>
+                <p class="note">例：<code>whichllm plan "llama 3 70b"</code> 逆向查找所需硬件</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 典型工作流 -->
+    <div class="section">
+        <h2><span class="icon">⚡</span> 典型工作流</h2>
+        <pre><code># 1. 自动检测硬件，推荐最佳模型
+$ whichllm
+
+# 2. 模拟特定 GPU（购买前测试）
+$ whichllm --gpu "RTX 4090"
+
+# 3. 对比升级方案
+$ whichllm upgrade "RTX 4090" "RTX 5090" "H100"
+
+# 4. 反向查找：某模型需要什么硬件？
+$ whichllm plan "llama 3 70b"
+
+# 5. 一键运行模型对话
+$ whichllm run "qwen 2.5 1.5b gguf"
+
+# 6. 生成 Python 代码片段
+$ whichllm snippet "qwen 7b"
+
+# 7. JSON 输出用于脚本
+$ whichllm --top 1 --json</code></pre>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2><span class="icon">⚔️</span> 竞品对比</h2>
+        <table>
+            <tr>
+                <th>特性</th>
+                <th>whichllm</th>
+                <th>llm-checker</th>
+                <th>llmfit</th>
+                <th>Ollama 内置</th>
+            </tr>
+            <tr>
+                <td>硬件自动检测</td>
+                <td><span class="badge green">✅ 全平台</span></td>
+                <td><span class="badge green">✅</span></td>
+                <td><span class="badge green">✅ 多厂商</span></td>
+                <td><span class="badge green">✅</span></td>
+            </tr>
+            <tr>
+                <td>基准测试排名</td>
+                <td><span class="badge green">✅ 多源融合</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge yellow">⚠️ 有限</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>时效性感知</td>
+                <td><span class="badge green">✅ 降权旧模型</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>证据分级</td>
+                <td><span class="badge green">✅ 五级体系</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>GPU 模拟</td>
+                <td><span class="badge green">✅</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge green">✅</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>升级规划对比</td>
+                <td><span class="badge green">✅</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>一键运行模型</td>
+                <td><span class="badge green">✅ 多格式</span></td>
+                <td><span class="badge yellow">⚠️ Ollama</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge green">✅</span></td>
+            </tr>
+            <tr>
+                <td>代码片段生成</td>
+                <td><span class="badge green">✅ Python</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>JSON 输出</td>
+                <td><span class="badge green">✅</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge yellow">⚠️</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+            <tr>
+                <td>任务场景过滤</td>
+                <td><span class="badge green">✅ 多 profile</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+                <td><span class="badge red">❌</span></td>
+            </tr>
+        </table>
+        <div class="highlight">
+            <p>🏆 <strong>whichllm 的核心差异化优势</strong>：唯一一个不仅告诉你"什么模型能跑"，还能告诉你"什么模型跑得最好"的工具。多源基准融合 + 时效性降权 + 五级证据分级，构成了其核心竞争壁垒。</p>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2><span class="icon">📊</span> 综合评分详解</h2>
+        <table>
+            <tr><th>维度</th><th>评分</th><th>评价</th></tr>
+            <tr>
+                <td>🎯 实用性</td>
+                <td><strong>9.5 / 10</strong></td>
+                <td>精准击中本地 LLM 用户的核心痛点：硬件选型。一条命令解决问题，安装极其简便，支持多平台。CLI + JSON 输出的设计兼顾人工和自动化场景。</td>
+            </tr>
+            <tr>
+                <td>💡 创新性</td>
+                <td><strong>8.0 / 10</strong></td>
+                <td>五级证据分级、时效性降权、架构感知 VRAM 估算等设计在同类工具中属首创。将"模型选型"从经验驱动升级为数据驱动。</td>
+            </tr>
+            <tr>
+                <td>🔧 代码质量</td>
+                <td><strong>8.5 / 10</strong></td>
+                <td>模块化架构清晰（hardware/models/engine/output 四层），CLI 使用 Typer 框架，缓存设计合理。有完整的测试和 CI 配置。</td>
+            </tr>
+            <tr>
+                <td>👥 社区活跃度</td>
+                <td><strong>8.0 / 10</strong></td>
+                <td>登上 GitHub Trending，被 Let's Data Science、YouTube 等多平台报道。持续迭代更新，有完整的贡献指南和讨论区。</td>
+            </tr>
+            <tr>
+                <td>📈 增长潜力</td>
+                <td><strong>8.5 / 10</strong></td>
+                <td>本地 LLM 部署需求持续爆发，硬件选型是刚需。随着更多模型和硬件类型涌现，工具价值将进一步增长。</td>
+            </tr>
+        </table>
+        <div class="highlight">
+            <p>⭐ <strong>综合评分：8.5 / 10</strong> — 一个高度实用的开发者工具，精准解决本地 LLM 选型难题，设计理念先进，代码质量良好，推荐关注和使用。</p>
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="section">
+        <h2><span class="icon">📝</span> 总结</h2>
+        <p><strong>whichllm</strong> 是目前本地 LLM 选型领域最完善的命令行工具。它不是简单的"显存计算器"，而是一个综合考虑基准表现、硬件适配、推理速度、模型时效性等多维因素的智能推荐系统。</p>
+        <p>在本地 LLM 生态快速发展的当下，模型数量爆炸式增长，硬件选择成为普通用户最大的困惑。whichllm 以极其简洁的一条命令，将复杂的选型过程自动化，并用严谨的评分体系保证了推荐质量。</p>
+        <p>无论你是想在笔记本上跑第一个本地模型的初学者，还是正在规划 GPU 服务器集群的企业用户，whichllm 都能为你提供有价值的参考。</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>📅 报告生成日期：2026-06-09 | 数据来源：GitHub、HuggingFace、Let's Data Science 等</p>
+        <p>由 AI 深度分析引擎自动生成</p>
+    </div>
+
+</div>
+</body>
+</html>
