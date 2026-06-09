@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告: santifer/career-ops</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --fg: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --green: #3fb950;
+            --orange: #d29922;
+            --red: #f85149;
+            --purple: #bc8cff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 50%, #162033 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(88,166,255,0.05) 0%, transparent 60%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .header .subtitle {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .header .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .badge-row {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            position: relative;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+        .badge-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+        .badge-purple { background: rgba(188,140,255,0.15); color: var(--purple); border: 1px solid rgba(188,140,255,0.3); }
+        .badge-orange { background: rgba(210,153,34,0.15); color: var(--orange); border: 1px solid rgba(210,153,34,0.3); }
+
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h3 {
+            font-size: 1.1rem;
+            margin: 1.2rem 0 0.6rem;
+            color: var(--accent);
+        }
+        .section p, .section li {
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+        }
+        .section strong { color: var(--fg); }
+        .section ul { padding-left: 1.5rem; }
+        .section ul li { margin-bottom: 0.4rem; }
+
+        .highlight-box {
+            background: rgba(88,166,255,0.08);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+        .highlight-box p { color: var(--fg); }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .score-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .score-card .score-num {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .score-card .score-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 0.3rem;
+        }
+        .score-high { color: var(--green); }
+        .score-mid { color: var(--orange); }
+
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .tech-table th, .tech-table td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .tech-table th {
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(88,166,255,0.05);
+        }
+        .tech-table td { color: var(--muted); }
+        .tech-table td:first-child { color: var(--fg); font-weight: 500; }
+
+        .flow-diagram {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .flow-diagram .node { color: var(--accent); font-weight: 600; }
+        .flow-diagram .arrow { color: var(--green); }
+
+        .compete-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .compete-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+        }
+        .compete-card h4 {
+            color: var(--fg);
+            margin-bottom: 0.5rem;
+        }
+        .compete-card p { font-size: 0.9rem; }
+        .compete-card .tag {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .tag-free { background: rgba(63,185,80,0.15); color: var(--green); }
+        .tag-paid { background: rgba(210,153,34,0.15); color: var(--orange); }
+        .tag-oss { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+        .stat-row {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 1.5rem 0;
+        }
+        .stat-item { text-align: center; }
+        .stat-item .stat-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .stat-item .stat-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.8rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .header h1 { font-size: 1.6rem; }
+            .section { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🎯 Career-Ops 深度分析报告</h1>
+    <div class="subtitle">santifer/career-ops — AI 驱动的求职搜索指挥中心</div>
+    <div class="meta">
+        分析日期: 2026-06-09 · GitHub Stars: ~48,900 · 许可证: MIT<br>
+        官网: <a href="https://career-ops.org" style="color:var(--accent)">career-ops.org</a> ·
+        仓库: <a href="https://github.com/santifer/career-ops" style="color:var(--accent)">github.com/santifer/career-ops</a>
+    </div>
+    <div class="badge-row">
+        <span class="badge badge-purple">🏆 Product Hunt Featured</span>
+        <span class="badge badge-blue">📰 WIRED 报道</span>
+        <span class="badge badge-green">⭐ 48.9K Stars</span>
+        <span class="badge badge-orange">🔧 14 技能模式</span>
+    </div>
+</div>
+
+<!-- 项目概述 -->
+<div class="section">
+    <h2>📋 一、项目概述</h2>
+
+    <div class="highlight-box">
+        <p><strong>Career-Ops</strong> 是一个开源的 AI 求职搜索系统，它将任何 AI 编码 CLI（如 Claude Code、Gemini CLI、OpenAI Codex 等）转化为一个完整的求职搜索指挥中心。由 Santiago Fernández de Valderrama（santifer）创建，他本人使用该系统评估了 <strong>740+ 职位</strong>，生成了 <strong>100+ 份定制简历</strong>，最终成功获得 <strong>Applied AI 负责人</strong> 的职位。</p>
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-item">
+            <div class="stat-val">740+</div>
+            <div class="stat-desc">职位评估</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-val">100+</div>
+            <div class="stat-desc">定制简历生成</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-val">48.9K</div>
+            <div class="stat-desc">GitHub Stars</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-val">45+</div>
+            <div class="stat-desc">预配置公司门户</div>
+        </div>
+    </div>
+
+    <h3>核心理念</h3>
+    <p>Career-Ops 的哲学是 <strong>"不是海投工具，而是过滤器"</strong>。系统会帮助你从数百个职位中找到真正值得投入的少数几个。它强烈建议不要申请评分低于 4.0/5 的职位。AI 进行评估和建议，但最终决策权始终在用户手中——系统永远不会自动提交申请。</p>
+
+    <h3>项目愿景</h3>
+    <p>成为一个 <strong>免费、本地优先的 AI 求职代理</strong>，任何人都可以在自己的电脑上运行——无需 API 密钥、无需订阅、无需托管。</p>
+</div>
+
+<!-- 技术架构 -->
+<div class="section">
+    <h2>🏗️ 二、技术架构</h2>
+
+    <h3>技术栈总览</h3>
+    <table class="tech-table">
+        <thead>
+            <tr>
+                <th>组件</th>
+                <th>技术选型</th>
+                <th>用途说明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>AI 引擎</td>
+                <td>Claude Code / Gemini CLI / Codex / Qwen / Copilot</td>
+                <td>多平台 AI 代理驱动核心</td>
+            </tr>
+            <tr>
+                <td>仪表盘</td>
+                <td>Go + Bubble Tea + Lipgloss</td>
+                <td>终端 UI 流水线查看器（Catppuccin Mocha 主题）</td>
+            </tr>
+            <tr>
+                <td>PDF 生成</td>
+                <td>Playwright / Puppeteer + HTML 模板</td>
+                <td>ATS 优化的 PDF 简历生成（Space Grotesk + DM Sans 字体）</td>
+            </tr>
+            <tr>
+                <td>门户扫描</td>
+                <td>Playwright + Greenhouse/Ashby/Lever API</td>
+                <td>自动抓取 45+ 公司的招聘页面</td>
+            </tr>
+            <tr>
+                <td>批处理</td>
+                <td>Node.js + <code>claude -p</code> 并行 Worker</td>
+                <td>并行评估 10+ 职位描述</td>
+            </tr>
+            <tr>
+                <td>数据存储</td>
+                <td>Markdown 表格 + YAML 配置 + TSV 批处理</td>
+                <td>本地文件系统，零外部依赖</td>
+            </tr>
+            <tr>
+                <td>运行时</td>
+                <td>Node.js + npm</td>
+                <td>安装和依赖管理</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>系统工作流程</h3>
+    <div class="flow-diagram">
+        <span class="node">用户粘贴职位 URL 或描述</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">▼</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="node">[原型检测]</span> &nbsp;分类: LLMOps / Agentic / PM / SA / FDE / Transformation<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">▼</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="node">[A-F 评估]</span> &nbsp;读取 cv.md → 匹配度分析 → 差距识别 → 薪酬研究 → STAR 故事<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">▼</span><br>
+        &nbsp;&nbsp;<span class="arrow">┌──────────┼──────────┐</span><br>
+        &nbsp;&nbsp;<span class="arrow">▼</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">▼</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">▼</span><br>
+        <span class="node">报告 (.md)</span> &nbsp;&nbsp;<span class="node">PDF (.pdf)</span> &nbsp;&nbsp;<span class="node">追踪器 (.tsv)</span><br>
+        <em>结构化评估报告</em>&nbsp;&nbsp;<em>ATS优化简历</em>&nbsp;&nbsp;&nbsp;<em>申请状态追踪</em>
+    </div>
+
+    <h3>14 种技能模式</h3>
+    <table class="tech-table">
+        <thead>
+            <tr><th>命令</th><th>功能</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>/career-ops</code></td><td>自动流水线：评估 + PDF + 追踪一体化</td></tr>
+            <tr><td><code>/career-ops evaluate</code></td><td>单职位深度评估（A-F 评分，10 维度加权）</td></tr>
+            <tr><td><code>/career-ops scan</code></td><td>扫描 45+ 预配置公司招聘门户</td></tr>
+            <tr><td><code>/career-ops pdf</code></td><td>生成 ATS 优化的 PDF 简历</td></tr>
+            <tr><td><code>/career-ops batch</code></td><td>批量并行评估多个职位</td></tr>
+            <tr><td><code>/career-ops apply</code></td><td>AI 辅助填写申请表单</td></tr>
+            <tr><td><code>/career-ops tracker</code></td><td>查看申请状态追踪面板</td></tr>
+            <tr><td><code>/career-ops pipeline</code></td><td>处理待处理的 URL 队列</td></tr>
+            <tr><td><code>/career-ops deep</code></td><td>深度公司调研</td></tr>
+            <tr><td><code>/career-ops contacto</code></td><td>生成 LinkedIn 外联消息</td></tr>
+            <tr><td><code>/career-ops training</code></td><td>评估课程/认证价值</td></tr>
+            <tr><td><code>/career-ops project</code></td><td>评估作品集项目价值</td></tr>
+            <tr><td><code>/career-ops negotiate</code></td><td>薪酬谈判脚本生成</td></tr>
+            <tr><td><code>/career-ops interview</code></td><td>面试故事库（STAR+Reflection 模式）</td></tr>
+        </tbody>
+    </table>
+
+    <h3>项目目录结构</h3>
+    <div class="flow-diagram">
+career-ops/
+├── <span class="node">AGENTS.md</span>          # 所有 CLI 的代理指令（Canonical）
+├── <span class="node">CLAUDE.md</span>          # Claude Code 封装（导入 AGENTS.md）
+├── <span class="node">GEMINI.md</span>          # Gemini CLI 原生支持
+├── cv.md                    # 用户简历（需自行创建）
+├── config/
+│   └── profile.example.yml  # 用户档案模板
+├── <span class="node">modes/</span>             # 14 种技能模式定义
+│   ├── _shared.md           # 共享上下文
+│   ├── oferta.md            # 单次评估
+│   ├── pdf.md               # PDF 生成
+│   ├── scan.md              # 门户扫描
+│   └── batch.md             # 批处理
+├── templates/               # 简历模板 + 门户配置
+├── <span class="node">dashboard/</span>         # Go TUI 流水线查看器
+├── batch/                   # 批处理脚本和 Worker
+├── data/                    # 追踪数据（gitignored）
+├── reports/                 # 评估报告（gitignored）
+└── output/                  # 生成的 PDF（gitignored）
+    </div>
+</div>
+
+<!-- 核心创新点 -->
+<div class="section">
+    <h2>💡 三、核心创新点</h2>
+
+    <h3>1. CLI-Native 求职范式</h3>
+    <p>首个将<strong> AI 编码 CLI 作为求职工具</strong>的开源项目。不依赖任何 Web 界面或 SaaS 平台，直接在终端中完成全部求职流程。这种"开发者的求职方式"充分利用了 AI 代理的推理能力，而非简单的关键词匹配。</p>
+
+    <h3>2. 多 AI 引擎统一架构</h3>
+    <p>通过 <code>AGENTS.md</code> 作为统一代理指令层，实现了对 <strong>Claude Code、Gemini CLI、OpenAI Codex、OpenCode、GitHub Copilot、Qwen</strong> 等多个 AI 平台的统一支持。用户可以自由切换 AI 后端，无需更改工作流。</p>
+
+    <h3>3. 六维度评估框架（A-F 评分）</h3>
+    <p>不是简单的匹配度打分，而是一个<strong>结构化的六模块评估体系</strong>：角色摘要、CV 匹配度、级别策略、薪酬调研、个性化推荐、面试准备（STAR+R 方法论）。每个模块独立评分，最终给出 A-F 综合评级。</p>
+
+    <h3>4. STAR+Reflection 面试故事库</h3>
+    <p>系统会在每次评估过程中<strong>积累 STAR+Reflection 面试故事</strong>。随着使用时间增长，系统逐渐掌握用户的核心经历，构建出 5-10 个"万能故事"来回答任何行为面试问题。</p>
+
+    <h3>5. 自我定制系统（AI 修改 AI）</h3>
+    <p>系统设计为<strong>由 AI 本身来定制</strong>。用户只需对 Claude 说"将原型改为后端工程角色"或"将这些公司添加到扫描列表"，AI 会读取并修改自己的配置文件。这创造了一个持续进化的个性化系统。</p>
+
+    <h3>6. Go TUI 仪表盘</h3>
+    <p>用 Go + Bubble Tea 构建的终端 UI 仪表盘，提供 6 个筛选标签页、4 种排序模式、分组/扁平视图切换、懒加载预览和内联状态修改——所有这些都在终端内完成，无需离开命令行。</p>
+</div>
+
+<!-- 应用场景 -->
+<div class="section">
+    <h2>🎯 四、应用场景</h2>
+
+    <div class="compete-grid">
+        <div class="compete-card">
+            <h4>🎓 应届毕业生</h4>
+            <p>帮助缺乏求职经验的新人系统化地评估职位匹配度，避免盲目海投。通过 STAR 故事库帮助准备面试。</p>
+        </div>
+        <div class="compete-card">
+            <h4>🔄 中高级工程师跳槽</h4>
+            <p>批量评估大量职位，快速找到真正匹配的优质机会。薪酬谈判脚本帮助争取更好的待遇。</p>
+        </div>
+        <div class="compete-card">
+            <h4>🌍 跨国求职者</h4>
+            <p>支持扫描 45+ 国际公司门户，自动生成 ATS 优化的英文简历，LinkedIn 外联消息模板帮助建立人脉。</p>
+        </div>
+        <div class="compete-card">
+            <h4>🤖 AI/ML 从业者</h4>
+            <p>预配置了 Anthropic、OpenAI、Mistral 等 AI 实验室的招聘门户。原型检测支持 LLMOps、Agentic 等 AI 专属角色分类。</p>
+        </div>
+        <div class="compete-card">
+            <h4>🏢 职业转型者</h4>
+            <p>通过深度公司调研和项目/课程评估功能，帮助转型者系统性地规划学习路径和目标公司。</p>
+        </div>
+        <div class="compete-card">
+            <h4>🇨🇳 国内求职者</h4>
+            <p>已有社区创建了 <a href="https://github.com/shuheng-mo/career-ops-china" style="color:var(--accent)">career-ops-china</a> 中文定制版，适配国内招聘市场。</p>
+        </div>
+    </div>
+
+    <h3>真实案例</h3>
+    <div class="highlight-box">
+        <p>项目创建者 Santiago 使用该系统在求职过程中评估了 740+ 职位，生成了 100+ 份定制简历，最终成功获得了 <strong>Head of Applied AI</strong> 职位。这一真实案例被 WIRED、Business Insider 等主流媒体报道，并在 TikTok 上获得 14.2K+ 点赞。</p>
+    </div>
+</div>
+
+<!-- 竞品对比 -->
+<div class="section">
+    <h2>⚔️ 五、竞品对比</h2>
+
+    <table class="tech-table">
+        <thead>
+            <tr>
+                <th>维度</th>
+                <th>Career-Ops</th>
+                <th>Teal HQ</th>
+                <th>Jobscan</th>
+                <th>Rezi</th>
+                <th>LoopCV</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>类型</strong></td>
+                <td>开源 CLI 工具</td>
+                <td>SaaS 平台</td>
+                <td>SaaS 平台</td>
+                <td>SaaS 平台</td>
+                <td>SaaS 平台</td>
+            </tr>
+            <tr>
+                <td><strong>价格</strong></td>
+                <td>完全免费</td>
+                <td>$9-39/月</td>
+                <td>$0-49.95/月</td>
+                <td>$0-29.99/月</td>
+                <td>€19.99/月</td>
+            </tr>
+            <tr>
+                <td><strong>数据隐私</strong></td>
+                <td>本地运行，零数据上传</td>
+                <td>云端存储</td>
+                <td>云端存储</td>
+                <td>云端存储</td>
+                <td>云端存储</td>
+            </tr>
+            <tr>
+                <td><strong>AI 引擎</strong></td>
+                <td>多引擎（Claude/Gemini/Codex/等）</td>
+                <td>自研 AI</td>
+                <td>自研 ATS 算法</td>
+                <td>GPT 驱动</td>
+                <td>自动投递为主</td>
+            </tr>
+            <tr>
+                <td><strong>评估深度</strong></td>
+                <td>六维度 A-F 评估 + 薪酬调研</td>
+                <td>基础匹配度</td>
+                <td>ATS 关键词匹配</td>
+                <td>ATS 优化为主</td>
+                <td>自动投递为主</td>
+            </tr>
+            <tr>
+                <td><strong>门户扫描</strong></td>
+                <td>45+ 公司自动扫描</td>
+                <td>手动添加</td>
+                <td>不支持</td>
+                <td>不支持</td>
+                <td>部分支持</td>
+            </tr>
+            <tr>
+                <td><strong>批量处理</strong></td>
+                <td>✅ 并行 Worker</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ 自动投递</td>
+            </tr>
+            <tr>
+                <td><strong>面试准备</strong></td>
+                <td>STAR+R 故事库 + 谈判脚本</td>
+                <td>基础面试跟踪</td>
+                <td>不支持</td>
+                <td>不支持</td>
+                <td>不支持</td>
+            </tr>
+            <tr>
+                <td><strong>可定制性</strong></td>
+                <td>完全可定制（AI 自修改）</td>
+                <td>有限</td>
+                <td>有限</td>
+                <td>有限</td>
+                <td>有限</td>
+            </tr>
+            <tr>
+                <td><strong>技术门槛</strong></td>
+                <td>中高（需要终端操作）</td>
+                <td>低（Web 界面）</td>
+                <td>低（Web 界面）</td>
+                <td>低（Web 界面）</td>
+                <td>低（Web 界面）</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="highlight-box">
+        <p><strong>核心差异化:</strong> Career-Ops 是唯一一个<strong>完全开源、本地运行、多 AI 引擎支持</strong>的求职工具。它的深度评估框架（六维度 A-F 评分）远超竞品的关键词匹配水平。但它的 CLI 属性意味着<strong>目标用户主要是技术背景的求职者</strong>，对非技术用户有一定门槛。</p>
+    </div>
+</div>
+
+<!-- 综合评分 -->
+<div class="section">
+    <h2>⭐ 六、综合评分</h2>
+
+    <div class="score-grid">
+        <div class="score-card">
+            <div class="score-num score-high">9.0</div>
+            <div class="score-label">创新性</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-high">8.5</div>
+            <div class="score-label">技术实现</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-high">9.5</div>
+            <div class="score-label">实用性</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-high">9.0</div>
+            <div class="score-label">社区活跃度</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-mid">7.0</div>
+            <div class="score-label">易用性</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-high">8.5</div>
+            <div class="score-label">可扩展性</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-high">9.5</div>
+            <div class="score-label">数据隐私</div>
+        </div>
+        <div class="score-card">
+            <div class="score-num score-high">8.8</div>
+            <div class="score-label">综合评分</div>
+        </div>
+    </div>
+
+    <h3>评分解读</h3>
+    <ul>
+        <li><strong>创新性 (9.0):</strong> 首创 CLI-native 求职范式，多 AI 引擎统一架构设计极具前瞻性</li>
+        <li><strong>技术实现 (8.5):</strong> Go TUI + Node.js + Playwright 的组合稳健，但批处理模式下 PDF 生成的 Token 消耗仍有优化空间</li>
+        <li><strong>实用性 (9.5):</strong> 覆盖求职全生命周期——从职位发现、评估、简历生成到面试准备和薪酬谈判</li>
+        <li><strong>社区活跃度 (9.0):</strong> 48.9K Stars，已有中国、印度等区域性 Fork，WIRED/Product Hunt 等媒体报道</li>
+        <li><strong>易用性 (7.0):</strong> 需要终端操作和基础开发知识，对非技术用户门槛较高；但 AI 自定制功能部分弥补了这一不足</li>
+        <li><strong>可扩展性 (8.5):</strong> 模块化设计 + AI 自修改能力使得扩展非常灵活，但多 AI 后端的兼容性维护成本较高</li>
+        <li><strong>数据隐私 (9.5):</strong> 完全本地运行，数据零上传，在隐私保护方面做到了极致</li>
+    </ul>
+
+    <h3>投资/使用建议</h3>
+    <div class="highlight-box">
+        <p><strong>强烈推荐技术背景求职者使用。</strong>Career-Ops 代表了 AI 求职工具的未来方向——不是替代人类判断，而是增强人类决策。其开源、本地优先的理念在数据隐私日益重要的今天尤为可贵。48.9K Stars 和创建者的真实成功案例证明了其可行性。对于团队/企业级招聘场景，可以考虑基于此项目构建内部人才推荐系统。</p>
+    </div>
+</div>
+
+<div class="footer">
+    <p>📊 报告由 AI 深度分析生成 · 数据来源: GitHub、WebSearch · 分析日期: 2026-06-09</p>
+    <p>Sources: <a href="https://github.com/santifer/career-ops" style="color:var(--accent)">GitHub</a> · <a href="https://career-ops.org" style="color:var(--accent)">官网</a> · <a href="https://santifer.io/career-ops-system" style="color:var(--accent)">作者博客</a> · <a href="https://apidog.com/blog/automate-job-search/" style="color:var(--accent)">Apidog 分析</a></p>
+</div>
+
+</body>
+</html>
