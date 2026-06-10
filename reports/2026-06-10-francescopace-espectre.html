@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESPectre 深度分析报告 | GitHub Trending 2026-06-10</title>
+<style>
+  :root {
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --accent: #f59e0b;
+    --bg: #0f172a;
+    --bg-card: #1e293b;
+    --bg-card-hover: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --danger: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+  .header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+  }
+  .header .subtitle {
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+    position: relative;
+  }
+  .header .meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .meta-tag {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--primary-light);
+  }
+
+  /* Score Bar */
+  .score-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .score-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .score-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+  .score-card .score-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .score-card .score-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .score-card .score-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 0.8rem;
+    overflow: hidden;
+  }
+  .score-card .score-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  /* Sections */
+  .section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+  }
+  .section h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-light);
+  }
+  .section h2 .icon { font-size: 1.4rem; }
+  .section p, .section li { color: var(--text); font-size: 0.95rem; }
+  .section ul { padding-left: 1.2rem; }
+  .section li { margin-bottom: 0.5rem; }
+
+  /* Comparison Table */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  .comparison-table th {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary-light);
+    border-bottom: 2px solid var(--primary);
+  }
+  .comparison-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .comparison-table tr:hover td { background: rgba(99, 102, 241, 0.05); }
+  .comparison-table .highlight { color: var(--success); font-weight: 600; }
+  .comparison-table .dim { color: var(--text-muted); }
+
+  /* Tags */
+  .tag-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .tag {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--primary-light);
+  }
+  .tag.green { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.25); color: var(--success); }
+  .tag.amber { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); color: var(--warning); }
+  .tag.blue { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.25); color: var(--info); }
+
+  /* Highlight Box */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .highlight-box h3 {
+    color: var(--primary-light);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+  .footer a { color: var(--primary-light); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    .header h1 { font-size: 1.8rem; }
+    .section { padding: 1.2rem; }
+    .comparison-table { font-size: 0.8rem; }
+    .comparison-table th, .comparison-table td { padding: 0.5rem 0.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>📡 ESPectre</h1>
+    <p class="subtitle">基于 Wi-Fi 信道状态信息（CSI）频谱分析的运动检测系统</p>
+    <div class="meta">
+      <span class="meta-tag">⭐ ~8,400 Stars</span>
+      <span class="meta-tag">🔀 640 Forks</span>
+      <span class="meta-tag">📜 GPLv3</span>
+      <span class="meta-tag">🔧 ESP32 / C++ / ESPHome</span>
+      <span class="meta-tag">🏠 Home Assistant 原生集成</span>
+    </div>
+    <div class="tag-group" style="justify-content: center; margin-top: 1rem;">
+      <span class="tag green">隐私优先</span>
+      <span class="tag blue">无需标定</span>
+      <span class="tag">IoT</span>
+      <span class="tag">智能家居</span>
+      <span class="tag amber">WiFi CSI</span>
+      <span class="tag">嵌入式</span>
+    </div>
+  </div>
+
+  <!-- Score Section -->
+  <div class="score-section">
+    <div class="score-card">
+      <div class="score-value">8.5</div>
+      <div class="score-label">综合评分</div>
+      <div class="score-bar"><div class="score-fill" style="width: 85%; background: linear-gradient(90deg, #22c55e, #6366f1);"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-value">9.5</div>
+      <div class="score-label">创新性</div>
+      <div class="score-bar"><div class="score-fill" style="width: 95%; background: #818cf8;"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-value">8.0</div>
+      <div class="score-label">实用性</div>
+      <div class="score-bar"><div class="score-fill" style="width: 80%; background: #3b82f6;"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-value">9.0</div>
+      <div class="score-label">社区活跃度</div>
+      <div class="score-bar"><div class="score-fill" style="width: 90%; background: #f59e0b;"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-value">8.5</div>
+      <div class="score-label">文档质量</div>
+      <div class="score-bar"><div class="score-fill" style="width: 85%; background: #22c55e;"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-value">7.5</div>
+      <div class="score-label">稳定性</div>
+      <div class="score-bar"><div class="score-fill" style="width: 75%; background: #ef4444;"></div></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2><span class="icon">📋</span> 项目概述</h2>
+    <p>
+      <strong>ESPectre</strong> 是由 Francesco Pace 开发的一款开源运动检测系统，它通过分析 Wi-Fi 信号中的<strong>信道状态信息（Channel State Information, CSI）</strong>来检测人体运动。该项目运行在廉价的 ESP32 微控制器上（成本仅约 €10），无需摄像头、麦克风或任何专用传感器硬件，即可实现对人体存在的感知。
+    </p>
+    <p style="margin-top: 0.8rem;">
+      当人在房间内移动时，会干扰 Wi-Fi 无线电波的传播路径，ESPectre 通过捕捉这些微小的信号变化来推断运动状态。它原生支持通过 <strong>ESPHome</strong> 集成到 <strong>Home Assistant</strong> 智能家居平台中，可替代传统 PIR 红外传感器或毫米波雷达。
+    </p>
+    <div class="highlight-box">
+      <h3>🔑 一句话总结</h3>
+      <p>用一块 €10 的 ESP32 开发板，让普通的 Wi-Fi 信号变成全屋运动传感器 — 无摄像头、无麦克风、纯信号处理。</p>
+    </div>
+    <ul style="margin-top: 0.8rem;">
+      <li><strong>仓库地址：</strong><a href="https://github.com/francescopace/espectre" style="color: var(--primary-light);">github.com/francescopace/espectre</a></li>
+      <li><strong>官网：</strong><a href="https://espectre.dev/" style="color: var(--primary-light);">espectre.dev</a></li>
+      <li><strong>最新版本：</strong>2.2.0</li>
+      <li><strong>协议：</strong>GPLv3</li>
+      <li><strong>主要语言：</strong>C++ (ESP-IDF / ESPHome)</li>
+    </ul>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2><span class="icon">🏗️</span> 技术架构</h2>
+
+    <h3 style="color: var(--primary-light); margin: 1rem 0 0.5rem; font-size: 1rem;">核心原理：Wi-Fi CSI 感知</h3>
+    <p>
+      Wi-Fi CSI（信道状态信息）描述了无线信号在发射端和接收端之间传播时经历的物理信道特性，包括多径衰落、信号衰减和相位偏移等。当人体在 Wi-Fi 信号覆盖区域内移动时，会改变信号的反射和散射路径，导致 CSI 数据发生可检测的扰动。
+    </p>
+    <p style="margin-top: 0.5rem;">
+      ESPectre 利用 ESP32 的 Wi-Fi 射频子系统提取 CSI 数据，然后通过专用算法（<strong>NBVI 算法</strong>）对信号进行实时分析，过滤噪声和环境漂移，最终输出运动/静止状态判定。
+    </p>
+
+    <h3 style="color: var(--primary-light); margin: 1.5rem 0 0.5rem; font-size: 1rem;">系统分层架构</h3>
+    <div style="background: var(--bg); border-radius: 8px; padding: 1.2rem; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; overflow-x: auto;">
+<pre style="color: var(--text);">
+┌─────────────────────────────────────────────┐
+│         Home Assistant 集成层                │
+│   (ESPHome 组件 → 自动化 / 仪表板)           │
+├─────────────────────────────────────────────┤
+│         ESPectre 应用层                       │
+│   (运动检测逻辑 · NBVI 算法 · 标定管理)       │
+├─────────────────────────────────────────────┤
+│         ESPHome 框架层                        │
+│   (组件注册 · YAML 配置 · OTA 升级)          │
+├─────────────────────────────────────────────┤
+│         ESP-IDF / Wi-Fi 射频层               │
+│   (CSI 数据提取 · 802.11 协议栈)             │
+├─────────────────────────────────────────────┤
+│         ESP32 硬件层                          │
+│   (Wi-Fi 收发器 · MCU · GPIO)               │
+└─────────────────────────────────────────────┘
+</pre>
+    </div>
+
+    <h3 style="color: var(--primary-light); margin: 1.5rem 0 0.5rem; font-size: 1rem;">关键模块</h3>
+    <ul>
+      <li><strong>CSI 数据采集模块：</strong>利用 ESP32 的 Wi-Fi 射频子系统以高频率（可达 180 包/秒）提取 CSI 数据，包括子载波幅度和相位信息</li>
+      <li><strong>NBVI 算法引擎：</strong>核心信号处理算法，解决信号漂移和环境变化问题，无需手动标定即可适应不同环境</li>
+      <li><strong>ESPHome 集成组件：</strong>原生 ESPHome 外部组件，支持 YAML 声明式配置，提供运动/静止二元传感器实体</li>
+      <li><strong>Micro-ESPectre：</strong>独立的 R&D 分支，面向快速原型开发、算法实验和学术研究，支持更灵活的参数调整</li>
+      <li><strong>低功耗模式：</strong>支持 ESP32 的 Light Sleep 模式，适合电池供电场景</li>
+    </ul>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2><span class="icon">💡</span> 核心创新点</h2>
+
+    <div class="highlight-box">
+      <h3>1. 🚀 零额外硬件的运动检测</h3>
+      <p>传统方案需要 PIR 传感器（无法检测静止目标）或毫米波雷达（成本高、配置复杂）。ESPectre 仅需一块标准 ESP32 开发板，利用已有的 Wi-Fi 射频前端即可完成运动检测，将 BOM 成本降至接近零。</p>
+    </div>
+
+    <div class="highlight-box">
+      <h3>2. 🧠 NBVI 自适应算法 — 无需标定</h3>
+      <p>大多数 Wi-Fi CSI 感知系统需要在部署时进行繁琐的标定流程。ESPectre 引入了 <strong>NBVI（Normalized Bessel Variance Index）算法</strong>，能够自动适应环境变化和信号漂移，真正实现了"即插即用"的部署体验。</p>
+    </div>
+
+    <div class="highlight-box">
+      <h3>3. 🔒 隐私优先设计</h3>
+      <p>不使用摄像头或麦克风，完全基于 RF 信号分析。无法获取图像或声音信息，从根本上杜绝了隐私泄露风险。特别适合浴室、卧室等私密空间的 occupancy sensing。</p>
+    </div>
+
+    <div class="highlight-box">
+      <h3>4. 🏠 Home Assistant 深度集成</h3>
+      <p>通过 ESPHome 原生集成，用户只需在 YAML 配置文件中添加几行代码即可部署。支持 OTA 固件更新、自动发现、以及 Home Assistant 自动化联动，对智能家居用户极为友好。</p>
+    </div>
+
+    <div class="highlight-box">
+      <h3>5. 🧱 Micro-ESPectre 研究平台</h3>
+      <p>提供了独立的研发分支（Micro-ESPectre），面向学术研究者和极客用户，支持快速算法实验和参数调优，降低了 Wi-Fi 感知领域的研究门槛。</p>
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2><span class="icon">🎯</span> 应用场景</h2>
+
+    <h3 style="color: var(--primary-light); margin: 0.5rem 0; font-size: 1rem;">🏠 智能家居自动化</h3>
+    <ul>
+      <li>人来自动开灯 / 人走自动关灯（替代 PIR 传感器，支持穿墙检测）</li>
+      <li>基于房间占用的 HVAC 自动调节（空调、地暖联动）</li>
+      <li>安防联动：异常时段检测到运动时触发报警</li>
+      <li>浴室/卧室等私密空间的隐私安全 occupancy sensing</li>
+    </ul>
+
+    <h3 style="color: var(--primary-light); margin: 1rem 0 0.5rem; font-size: 1rem;">🏢 办公空间管理</h3>
+    <ul>
+      <li>会议室占用检测（无需摄像头，保护隐私）</li>
+      <li>工位使用率分析，优化空间利用</li>
+      <li>节能管理：基于真实占用自动控制照明和空调</li>
+    </ul>
+
+    <h3 style="color: var(--primary-light); margin: 1rem 0 0.5rem; font-size: 1rem;">👵 养老关怀与健康监护</h3>
+    <ul>
+      <li>独居老人日常活动模式监测（跌倒预警辅助）</li>
+      <li>异常长时间不活动自动通知家属</li>
+      <li>隐私安全的非侵入式监测方案</li>
+    </ul>
+
+    <h3 style="color: var(--primary-light); margin: 1rem 0 0.5rem; font-size: 1rem;">🎓 学术研究</h3>
+    <ul>
+      <li>Wi-Fi CSI 感知算法的研究验证平台</li>
+      <li>嵌入式 RF 感知教学实验</li>
+      <li>人机交互（HCI）领域新型输入方式的探索</li>
+    </ul>
+
+    <h3 style="color: var(--primary-light); margin: 1rem 0 0.5rem; font-size: 1rem;">🎮 创意应用</h3>
+    <ul>
+      <li>基于身体手势的浏览器游戏控制（Hackaday 报道了一个基于 ESPectre 的 USB 躲鬼游戏）</li>
+      <li>手势识别和空间交互原型</li>
+    </ul>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2><span class="icon">⚖️</span> 竞品对比</h2>
+    <p style="margin-bottom: 1rem;">以下将 ESPectre 与当前主流的运动/存在检测方案进行对比：</p>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>特性</th>
+          <th>ESPectre<br><small>(Wi-Fi CSI)</small></th>
+          <th>mmWave 雷达<br><small>(如 HLK-LD2410)</small></th>
+          <th>PIR 红外传感器<br><small>(如 HC-SR501)</small></th>
+          <th>TOMMY Sense<br><small>(商业竞品)</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>硬件成本</strong></td>
+          <td class="highlight">€5-10 (ESP32)</td>
+          <td>€5-15</td>
+          <td class="highlight">€1-3</td>
+          <td>€20-40</td>
+        </tr>
+        <tr>
+          <td><strong>静止人体检测</strong></td>
+          <td class="highlight">✅ 支持</td>
+          <td class="highlight">✅ 支持（微动）</td>
+          <td class="dim">❌ 不支持</td>
+          <td class="highlight">✅ 支持</td>
+        </tr>
+        <tr>
+          <td><strong>穿墙检测</strong></td>
+          <td class="highlight">✅ 支持</td>
+          <td class="dim">⚠️ 部分</td>
+          <td class="dim">❌ 不支持</td>
+          <td class="dim">⚠️ 部分</td>
+        </tr>
+        <tr>
+          <td><strong>定位精度</strong></td>
+          <td>房间级别</td>
+          <td class="highlight">亚房间级别</td>
+          <td class="dim">区域级别</td>
+          <td>房间级别</td>
+        </tr>
+        <tr>
+          <td><strong>隐私保护</strong></td>
+          <td class="highlight">✅ 无摄像头/麦克风</td>
+          <td class="highlight">✅ 无摄像头/麦克风</td>
+          <td class="highlight">✅ 无摄像头/麦克风</td>
+          <td class="highlight">✅ 无摄像头/麦克风</td>
+        </tr>
+        <tr>
+          <td><strong>部署难度</strong></td>
+          <td class="highlight">低（ESPHome YAML）</td>
+          <td>中等（需调参）</td>
+          <td class="highlight">极低</td>
+          <td class="highlight">低</td>
+        </tr>
+        <tr>
+          <td><strong>HA 原生集成</strong></td>
+          <td class="highlight">✅ ESPHome</td>
+          <td>⚠️ 需第三方</td>
+          <td class="highlight">✅ GPIO/Zigbee</td>
+          <td class="highlight">✅ 原生</td>
+        </tr>
+        <tr>
+          <td><strong>需要标定</strong></td>
+          <td class="highlight">❌ 不需要</td>
+          <td>⚠️ 通常需要</td>
+          <td class="highlight">❌ 不需要</td>
+          <td class="highlight">❌ 不需要</td>
+        </tr>
+        <tr>
+          <td><strong>开源</strong></td>
+          <td class="highlight">✅ GPLv3</td>
+          <td class="dim">⚠️ 固件闭源</td>
+          <td class="dim">N/A（纯硬件）</td>
+          <td class="dim">❌ 商业闭源</td>
+        </tr>
+        <tr>
+          <td><strong>多设备分区</strong></td>
+          <td class="dim">❌ 暂不支持</td>
+          <td>⚠️ 有限</td>
+          <td class="dim">❌ 不支持</td>
+          <td class="highlight">✅ 支持</td>
+        </tr>
+        <tr>
+          <td><strong>生态成熟度</strong></td>
+          <td>⭐ 新兴（快速成长）</td>
+          <td>⭐⭐⭐ 成熟</td>
+          <td>⭐⭐⭐⭐⭐ 非常成熟</td>
+          <td>⭐⭐ 成长中</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box" style="margin-top: 1rem;">
+      <h3>📊 竞争力分析</h3>
+      <p>
+        ESPectre 的核心竞争力在于<strong>零额外硬件成本 + 隐私优先 + 开源可定制</strong>的三重组合。虽然 mmWave 雷达在定位精度和微动检测方面更优，PIR 在简单场景中更可靠，但 ESPectre 在"穿墙检测 + 无需标定 + 低成本"这个交叉领域几乎没有直接竞争者。对于 Home Assistant 用户来说，它是一个极具吸引力的补充方案。
+      </p>
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="section">
+    <h2><span class="icon">📊</span> 综合评分详解</h2>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>评分</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>创新性</strong></td>
+          <td style="color: var(--success); font-weight: 700; font-size: 1.1rem;">9.5 / 10</td>
+          <td>将学术界的 Wi-Fi CSI 感知技术以极低成本消费级方案呈现，NBVI 算法解决了实际部署中的标定难题，属于 IoT 领域的标杆级创新</td>
+        </tr>
+        <tr>
+          <td><strong>实用性</strong></td>
+          <td style="color: var(--info); font-weight: 700; font-size: 1.1rem;">8.0 / 10</td>
+          <td>ESPHome 集成极大降低了部署门槛，但原始 ESP32 上信号噪声较大，推荐使用 ESP32-S3 等较新芯片。穿墙检测虽可用但精度受限</td>
+        </tr>
+        <tr>
+          <td><strong>社区活跃度</strong></td>
+          <td style="color: var(--warning); font-weight: 700; font-size: 1.1rem;">9.0 / 10</td>
+          <td>8,400+ Stars、640 Forks，被 Hackaday、Hacker News、Reddit 等广泛报道。Home Assistant 社区活跃讨论，Seeed Studio 官方提供部署教程</td>
+        </tr>
+        <tr>
+          <td><strong>文档质量</strong></td>
+          <td style="color: var(--success); font-weight: 700; font-size: 1.1rem;">8.5 / 10</td>
+          <td>拥有独立官网 espectre.dev，提供完整的入门指南和配置文档。SETUP.md 中包含详细的竞品对比。但算法原理的深度文档仍有提升空间</td>
+        </tr>
+        <tr>
+          <td><strong>稳定性</strong></td>
+          <td style="color: var(--warning); font-weight: 700; font-size: 1.1rem;">7.5 / 10</td>
+          <td>社区反馈中存在不同硬件间表现差异较大的情况。在原始 ESP32 上噪声较大，ESP32-S3 表现更佳。作为快速迭代中的项目，稳定性仍在持续改进</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--primary);">
+          <td><strong>🏆 综合评分</strong></td>
+          <td style="color: var(--accent); font-weight: 800; font-size: 1.3rem;">8.5 / 10</td>
+          <td><strong>强烈推荐关注</strong> — IoT 领域的颠覆性创新项目，适合智能家居爱好者、IoT 开发者和 Wi-Fi 感知研究者</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 信息来源 -->
+  <div class="section">
+    <h2><span class="icon">🔗</span> 参考链接</h2>
+    <ul>
+      <li><a href="https://github.com/francescopace/espectre" style="color: var(--primary-light);">GitHub 仓库 — francescopace/espectre</a></li>
+      <li><a href="https://espectre.dev/" style="color: var(--primary-light);">ESPectre 官网</a></li>
+      <li><a href="https://hackaday.com/2026/01/28/make-your-own-esp32-based-person-sensor-no-special-hardware-needed/" style="color: var(--primary-light);">Hackaday — Make Your Own ESP32-Based Person Sensor</a></li>
+      <li><a href="https://community.home-assistant.io/t/espectre-wi-fi-motion-detection-for-home-assistant/961251" style="color: var(--primary-light);">Home Assistant 社区讨论</a></li>
+      <li><a href="https://news.ycombinator.com/item?id=45953977" style="color: var(--primary-light);">Hacker News 讨论</a></li>
+      <li><a href="https://www.iotforall.com/wifi-motion-sensor-iot" style="color: var(--primary-light);">IoT For All — How I Turned My Wi-Fi Into a Motion Sensor</a></li>
+      <li><a href="https://www.reddit.com/r/homeassistant/comments/1q1znib/motion_detection_system_based_on_wifi_spectre/" style="color: var(--primary-light);">Reddit — r/homeassistant 讨论</a></li>
+      <li><a href="https://wiki.seeedstudio.com/xiao-esp32--series-espresense/" style="color: var(--primary-light);">Seeed Studio XIAO ESP32 部署指南</a></li>
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>📅 分析日期：2026-06-10 | 🤖 由 GitHub Trending Deep Analyzer 自动生成</p>
+    <p style="margin-top: 0.5rem;">数据来源：GitHub、Hackaday、Home Assistant Community、Reddit、Hacker News</p>
+  </div>
+
+</div>
+</body>
+</html>
