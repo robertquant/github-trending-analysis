@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMed 深度分析报告 | GitHub Trending</title>
+    <style>
+        :root {
+            --primary: #0D6E6E;
+            --primary-light: #D6EBEB;
+            --accent: #F5E27A;
+            --danger: #C5453A;
+            --bg: #FAFBFC;
+            --card: #FFFFFF;
+            --text: #0E1116;
+            --text-secondary: #57606A;
+            --border: #D0D7DE;
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .header {
+            background: linear-gradient(135deg, #0A5656 0%, #0D6E6E 50%, #1A8F8F 100%);
+            color: white;
+            padding: 48px 24px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .header .subtitle { font-size: 1.1em; opacity: 0.9; margin-bottom: 20px; }
+        .header .meta { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 0.9em; opacity: 0.85; }
+        .header .meta span { display: flex; align-items: center; gap: 6px; }
+        .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+        .score-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 32px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .score-ring {
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0deg, var(--primary) 316.8deg, #E5E5E5 316.8deg);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+        .score-ring::after {
+            content: '';
+            width: 110px; height: 110px;
+            background: var(--card);
+            border-radius: 50%;
+            position: absolute;
+        }
+        .score-ring .value {
+            position: relative; z-index: 1;
+            font-size: 2.4em; font-weight: 700; color: var(--primary);
+        }
+        .score-details {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px; margin-top: 24px;
+        }
+        .score-item { text-align: center; }
+        .score-item .label { font-size: 0.8em; color: var(--text-secondary); margin-bottom: 4px; }
+        .score-item .val { font-size: 1.5em; font-weight: 600; color: var(--primary); }
+
+        .section {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 28px 32px;
+            margin-bottom: 28px;
+        }
+        .section h2 {
+            font-size: 1.35em;
+            color: var(--primary);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section h3 { font-size: 1.1em; margin: 18px 0 10px; color: #1A1A2E; }
+        .section p { margin-bottom: 12px; color: var(--text); }
+        .section ul, .section ol { margin: 8px 0 16px 24px; }
+        .section li { margin-bottom: 6px; }
+
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.92em; }
+        th { background: var(--primary); color: white; padding: 10px 14px; text-align: left; }
+        td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: var(--primary-light); }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin: 2px 3px;
+        }
+        .tag-green { background: #D4EDDA; color: #155724; }
+        .tag-blue { background: #D6EBEB; color: #0D6E6E; }
+        .tag-orange { background: #FFF3CD; color: #856404; }
+        .tag-red { background: #F7DCD8; color: #C5453A; }
+
+        .highlight-box {
+            background: linear-gradient(135deg, var(--primary-light), #F0F9F9);
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+        }
+        .warning-box {
+            background: #FFF8E1;
+            border-left: 4px solid #F5A623;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+        }
+        .code-block {
+            background: #161B22;
+            color: #E6EDF3;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            margin: 12px 0;
+            line-height: 1.5;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .comparison-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .comparison-card h4 { color: var(--primary); margin-bottom: 8px; }
+
+        .footer {
+            text-align: center;
+            padding: 32px 24px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 640px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.6em; }
+            .section { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🏥 OpenMed 深度分析报告</h1>
+    <div class="subtitle">本地优先的开源医疗 AI — 临床数据永不离开设备</div>
+    <div class="meta">
+        <span>📦 maziyarpanahi/openmed</span>
+        <span>⭐ GitHub Trending</span>
+        <span>📅 2026-06-10 分析</span>
+        <span>📄 Apache-2.0</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 综合评分 -->
+    <div class="score-section">
+        <h2 style="border:none; margin-bottom:8px;">🏆 综合评分</h2>
+        <div class="score-ring"><span class="value">8.8</span></div>
+        <p style="color:var(--text-secondary); margin-bottom:0;">满分 10 分 | 评级：卓越（Excellent）</p>
+        <div class="score-details">
+            <div class="score-item"><div class="val">9.2</div><div class="label">技术创新</div></div>
+            <div class="score-item"><div class="val">9.0</div><div class="label">实用性</div></div>
+            <div class="score-item"><div class="val">8.5</div><div class="label">社区活跃度</div></div>
+            <div class="score-item"><div class="val">9.0</div><div class="label">商业潜力</div></div>
+            <div class="score-item"><div class="val">8.8</div><div class="label">文档质量</div></div>
+            <div class="score-item"><div class="val">8.5</div><div class="label">代码质量</div></div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2>📋 一、项目概述</h2>
+        <p><strong>OpenMed</strong> 是由法国国家科学研究中心（CNRS）研究工程师 <strong>Maziyar Panahi</strong> 创建的开源医疗 AI 工具包，致力于让临床 NLP（自然语言处理）完全在本地设备上运行，确保患者隐私数据永不离开设备。</p>
+
+        <div class="highlight-box">
+            <strong>核心理念：</strong>"Clinical AI that never leaves the device" — 一行代码将临床文本转化为结构化洞察，无需云服务、无 API 密钥、无供应商锁定。
+        </div>
+
+        <h3>核心数据</h3>
+        <table>
+            <tr><th>指标</th><th>数值</th></tr>
+            <tr><td>PyPI 累计下载量</td><td><strong>600 万+</strong>（不到一年）</td></tr>
+            <tr><td>专用医疗模型</td><td><strong>1,000+</strong></td></tr>
+            <tr><td>PII 检查点</td><td><strong>247</strong></td></tr>
+            <tr><td>支持语言</td><td><strong>12 种</strong>（含中文、阿拉伯语、日语等）</td></tr>
+            <tr><td>许可证</td><td>Apache-2.0</td></tr>
+            <tr><td>学术引用</td><td>arXiv:2508.01630</td></tr>
+            <tr><td>最新版本</td><td>1.5.5</td></tr>
+            <tr><td>AWS Marketplace 模型</td><td>45 个</td></tr>
+        </table>
+
+        <h3>技术标签</h3>
+        <span class="tag tag-blue">医疗 NLP</span>
+        <span class="tag tag-blue">命名实体识别 (NER)</span>
+        <span class="tag tag-green">PII 去标识化</span>
+        <span class="tag tag-green">本地推理</span>
+        <span class="tag tag-orange">Apple MLX</span>
+        <span class="tag tag-orange">HIPAA 合规</span>
+        <span class="tag tag-blue">Transformer</span>
+        <span class="tag tag-green">Swift / iOS</span>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2>⚙️ 二、技术架构</h2>
+
+        <h3>2.1 整体架构</h3>
+        <p>OpenMed 采用 <strong>"本地优先"</strong>（Local-first）架构设计，所有推理完全在设备端完成。系统由以下核心层组成：</p>
+
+        <div class="code-block">
+临床文本输入
+    │
+    ▼
+┌─────────────────────────────────┐
+│       OpenMed 推理引擎          │
+│  (100% on-device, 无网络调用)    │
+│                                 │
+│  ┌────────────┐ ┌─────────────┐ │
+│  │  NER 模型  │ │  PII 模型   │ │
+│  │  (疾病/药物 │ │  (去标识化  │ │
+│  │   /基因等)  │ │   /脱敏)    │ │
+│  └────────────┘ └─────────────┘ │
+│                                 │
+│  推理后端:                       │
+│  • PyTorch (CPU / CUDA)         │
+│  • Apple MLX (Apple Silicon)    │
+│  • CoreML (iOS/macOS 备选)      │
+└─────────────────────────────────┘
+    │
+    ├──→ 医疗实体结构化输出
+    ├──→ PII 检测结果
+    └──→ 去标识化文本
+        </div>
+
+        <h3>2.2 核心模型</h3>
+        <table>
+            <tr><th>模型</th><th>专业领域</th><th>实体类型</th><th>参数量</th></tr>
+            <tr><td><code>disease_detection_superclinical</code></td><td>疾病检测</td><td>DISEASE, CONDITION, DIAGNOSIS</td><td>434M</td></tr>
+            <tr><td><code>pharma_detection_superclinical</code></td><td>药物识别</td><td>DRUG, MEDICATION, TREATMENT</td><td>434M</td></tr>
+            <tr><td><code>pii_superclinical_large</code></td><td>PII 去标识化</td><td>NAME, DATE, SSN, PHONE, EMAIL, ADDRESS</td><td>434M</td></tr>
+            <tr><td><code>anatomy_detection_electramed</code></td><td>解剖结构</td><td>ANATOMY, ORGAN, BODY_PART</td><td>109M</td></tr>
+            <tr><td><code>gene_detection_genecorpus</code></td><td>基因蛋白</td><td>GENE, PROTEIN</td><td>109M</td></tr>
+        </table>
+
+        <h3>2.3 Privacy Filter 架构</h3>
+        <p>OpenMed 的 PII 检测基于 <strong>OpenAI Privacy Filter</strong> 架构（GPT-oss 风格的稀疏 MoE Transformer），结合局部注意力机制、Sink Token、RoPE+YaRN 位置编码，以及 tiktoken <code>o200k_base</code> 分词器。提供三种模型变体：</p>
+
+        <table>
+            <tr><th>变体</th><th>PyTorch</th><th>MLX</th><th>MLX 8-bit</th></tr>
+            <tr><td>OpenAI Privacy Filter</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Nemotron-PII 微调版</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>OpenMed 多语言版</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        </table>
+
+        <h3>2.4 部署方式</h3>
+        <ul>
+            <li><strong>Python API：</strong>一行代码调用，<code>pip install "openmed[hf]"</code></li>
+            <li><strong>REST 服务：</strong>基于 FastAPI 的 Docker 友好 REST API，支持模型生命周期管理</li>
+            <li><strong>批处理：</strong>内置 <code>BatchProcessor</code>，CPU 吞吐提升最高 3.3×，MLX 提升 2.2×</li>
+            <li><strong>Swift / iOS：</strong>通过 OpenMedKit 原生集成到 iPhone / iPad / macOS 应用</li>
+            <li><strong>离线 / 气隙环境：</strong>指向本地模型目录即可运行，无需联网</li>
+        </ul>
+
+        <h3>2.5 Apple Silicon 加速</h3>
+        <div class="highlight-box">
+            MLX 在 Apple Silicon 上比 CPU PyTorch 快 <strong>24–33 倍</strong>，使得在 iPhone 上实时运行医疗 NER 和 PII 去标识化成为可能。
+        </div>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2>💡 三、核心创新点</h2>
+
+        <h3>1. 本地优先的隐私架构</h3>
+        <p>OpenMed 最大的创新在于将医疗 NLP 推理完全放在本地。在医疗行业，患者数据隐私是头等大事（HIPAA、GDPR 等法规要求）。传统云端 API 方案意味着患者数据必须发送到第三方服务器，而 OpenMed 彻底消除了这一风险。</p>
+
+        <h3>2. 跨平台统一模型名称</h3>
+        <p>同一模型名称可在不同平台自动适配：在 Apple Silicon 上使用 MLX 加速，在非 Apple 硬件上自动回退到 PyTorch 检查点。开发者只需维护一套代码。</p>
+
+        <h3>3. 智能实体合并（Smart Entity Merging）</h3>
+        <p>解决了 Transformer 分词器将连续 PII 片段（如日期 "01/15/1970"）碎片化的问题，通过后处理智能合并，保持实体完整性。</p>
+
+        <h3>4. 多语言去标识化体系</h3>
+        <p>支持 12 种语言的 PII 检测与去标识化，覆盖全球主要语言，并针对各国特有的身份标识（巴西 CPF、荷兰 BSN、印度 Aadhaar、意大利 Codice Fiscale 等）提供本地化支持。</p>
+
+        <h3>5. 多种脱敏策略</h3>
+        <ul>
+            <li><strong>mask：</strong>用标签替换（如 <code>[NAME]</code>, <code>[DATE]</code>）</li>
+            <li><strong>replace：</strong>基于 Faker 的格式保持替换，地区感知</li>
+            <li><strong>hash：</strong>加密哈希</li>
+            <li><strong>shift_dates：</strong>日期偏移（可配置偏移天数）</li>
+        </ul>
+
+        <h3>6. 从研究到生产的完整路径</h3>
+        <p>提供 Python API → REST API → Docker → iOS App 的完整部署链，并且有 AWS Marketplace 集成和 SageMaker Notebook 支持。</p>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2>🎯 四、应用场景</h2>
+
+        <table>
+            <tr><th>场景</th><th>描述</th><th>OpenMed 角色</th></tr>
+            <tr>
+                <td><strong>医院电子病历处理</strong></td>
+                <td>从非结构化临床文本中提取疾病、药物、诊断信息</td>
+                <td>NER 实体提取 → 结构化存储</td>
+            </tr>
+            <tr>
+                <td><strong>患者隐私保护</strong></td>
+                <td>在共享临床数据前去除个人身份信息</td>
+                <td>PII 检测 + 多策略去标识化</td>
+            </tr>
+            <tr>
+                <td><strong>医学研究数据准备</strong></td>
+                <td>为临床研究批量处理和脱敏大量病历</td>
+                <td>BatchProcessor 批量处理</td>
+            </tr>
+            <tr>
+                <td><strong>移动端临床助手</strong></td>
+                <td>在 iPhone/iPad 上实时扫描临床文档</td>
+                <td>OpenMedKit + MLX 离线推理</td>
+            </tr>
+            <tr>
+                <td><strong>药物警戒</strong></td>
+                <td>从不良事件报告中提取药物和不良反应信息</td>
+                <td>药物检测 NER 模型</td>
+            </tr>
+            <tr>
+                <td><strong>基因组学分析</strong></td>
+                <td>从文献中提取基因和蛋白质信息</td>
+                <td>基因检测专用模型</td>
+            </tr>
+            <tr>
+                <td><strong>跨国医疗数据合规</strong></td>
+                <td>满足不同国家/地区隐私法规的脱敏需求</td>
+                <td>12 语言 PII 检测 + 本地化身份标识</td>
+            </tr>
+        </table>
+
+        <div class="warning-box">
+            <strong>⚠️ 适用边界：</strong>OpenMed 是 NLP/NER 工具包，不提供医疗诊断或治疗建议功能。它处理的是文本信息提取和隐私保护，而非影像诊断或临床决策支持。
+        </div>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2>📊 五、竞品对比</h2>
+
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h4>🏥 OpenMed</h4>
+                <ul>
+                    <li>✅ 100% 本地推理</li>
+                    <li>✅ 1,000+ 专用模型</li>
+                    <li>✅ 12 种语言</li>
+                    <li>✅ Apple MLX 加速</li>
+                    <li>✅ Apache-2.0 开源</li>
+                    <li>✅ iOS 原生支持</li>
+                    <li>✅ HIPAA 18 项标识符</li>
+                    <li>✅ 离线 / 气隙部署</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h4>☁️ 云端医疗 API（如 Google Healthcare NLP, AWS Comprehend Medical）</h4>
+                <ul>
+                    <li>❌ 数据必须发送到云端</li>
+                    <li>⚠️ 模型数量有限</li>
+                    <li>⚠️ 语言支持有限</li>
+                    <li>❌ 无 Apple Silicon 优化</li>
+                    <li>❌ 按调用收费</li>
+                    <li>❌ 无 iOS 原生支持</li>
+                    <li>✅ HIPAA 合规</li>
+                    <li>❌ 必须联网</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h4>🧪 spaCy / medspaCy</h4>
+                <ul>
+                    <li>✅ 本地推理</li>
+                    <li>⚠️ 需要手动配置规则</li>
+                    <li>❌ 深度学习模型有限</li>
+                    <li>❌ 无 MLX 优化</li>
+                    <li>✅ MIT 开源</li>
+                    <li>❌ 无 iOS 支持</li>
+                    <li>⚠️ PII 功能需额外配置</li>
+                    <li>✅ 离线部署</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h4>🔬 Hugging Face Biomedical Models</h4>
+                <ul>
+                    <li>✅ 模型种类丰富</li>
+                    <li>⚠️ 需自行集成和部署</li>
+                    <li>✅ 多语言</li>
+                    <li>❌ 无统一 API</li>
+                    <li>✅ 多种开源许可</li>
+                    <li>❌ 无 iOS 原生</li>
+                    <li>❌ 无 PII 功能</li>
+                    <li>⚠️ 部分需联网下载</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong>竞争优势总结：</strong>OpenMed 的核心差异化在于 <strong>"本地优先 + 医疗专精 + 跨平台统一"</strong> 的三位一体定位。在医疗隐私法规日益严格的大背景下，这是一个极具市场契合度的解决方案。
+        </div>
+    </div>
+
+    <!-- 创始人背景 -->
+    <div class="section">
+        <h2>👤 六、创始人背景</h2>
+        <p><strong>Maziyar Panahi</strong> 是法国国家科学研究中心（CNRS）下属 ISC-PIF 研究所的大数据工程师和系统管理员，同时也是生成式 AI 医疗领域的领导者。</p>
+        <ul>
+            <li>📍 位于巴黎，隶属于法国国家科研网络</li>
+            <li>📚 Google Scholar 引用 403+ 次</li>
+            <li>📄 发表 OpenMed NER 学术论文（arXiv:2508.01630）</li>
+            <li>💼 LinkedIn 自述："I'm building OpenMed, a clinical AI agent operating system for healthcare"</li>
+            <li>🏆 2026 年 1 月入选 GitHub Top 33 热门项目</li>
+        </ul>
+    </div>
+
+    <!-- 综合评价 -->
+    <div class="section">
+        <h2>📝 七、综合评价</h2>
+
+        <h3>✅ 优势</h3>
+        <ul>
+            <li><strong>隐私优先设计</strong>：100% 本地推理，完全消除了数据泄露风险，这是医疗行业的刚性需求</li>
+            <li><strong>惊人的增长速度</strong>：不到一年 600 万 PyPI 下载，说明市场验证充分</li>
+            <li><strong>技术深度</strong>：基于 SOTA Transformer 架构，有学术论文支撑</li>
+            <li><strong>全栈覆盖</strong>：从 Python SDK 到 REST API 到 iOS 原生应用，部署链完整</li>
+            <li><strong>Apple 生态整合</strong>：MLX 加速 24-33×，在移动端医疗 AI 领域具有先发优势</li>
+            <li><strong>真正的开源</strong>：Apache-2.0 许可，无商业陷阱</li>
+        </ul>
+
+        <h3>⚠️ 风险与挑战</h3>
+        <ul>
+            <li><strong>单人维护风险：</strong>核心开发依赖一个人，Bus Factor = 1</li>
+            <li><strong>模型精度验证：</strong>医疗场景对精度要求极高，需要更多第三方验证</li>
+            <li><strong>监管合规路径：</strong>作为医疗 AI 工具，各国医疗器械法规可能适用</li>
+            <li><strong>商业化模式不明：</strong>目前为非营利社区项目，可持续性依赖资助</li>
+            <li><strong>竞品追赶：</strong>大厂（Google、AWS）可能推出类似本地化方案</li>
+        </ul>
+
+        <h3>🔮 发展前景</h3>
+        <p>随着全球医疗数据隐私法规（HIPAA、GDPR、中国《个人信息保护法》等）日益严格，以及对医疗 AI 本地化部署需求的增长，OpenMed 处于一个快速膨胀的赛道。其 Apple Silicon 原生支持赋予了在移动医疗场景中的独特竞争优势。如果能够建立更广泛的社区贡献体系和明确的商业化路径，有望成为医疗 NLP 基础设施的关键组件。</p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>📄 本报告由 AI 自动生成 | 数据来源：GitHub、PyPI、arXiv、Hugging Face</p>
+    <p>分析日期：2026-06-10 | 项目地址：<a href="https://github.com/maziyarpanahi/openmed">github.com/maziyarpanahi/openmed</a></p>
+</div>
+
+</body>
+</html>
