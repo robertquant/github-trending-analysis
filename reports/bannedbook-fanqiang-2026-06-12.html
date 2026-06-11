@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：bannedbook/fanqiang</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f97316;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            border-radius: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #4338ca;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 60%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #c7d2fe, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+        .header .subtitle {
+            color: var(--text-muted);
+            margin-top: 0.8rem;
+            font-size: 1rem;
+            position: relative;
+        }
+        .header .repo-link {
+            display: inline-block;
+            margin-top: 1.2rem;
+            padding: 0.6rem 1.5rem;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .header .repo-link:hover { transform: scale(1.05); }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        .stat-card .label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+
+        /* Section */
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .icon { font-size: 1.5rem; }
+        .section p, .section li {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+        .section ul { padding-left: 1.5rem; }
+        .section li { margin-bottom: 0.5rem; }
+
+        /* Score Grid */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .score-item {
+            background: #0f172a;
+            border-radius: 0.75rem;
+            padding: 1.2rem;
+        }
+        .score-item .score-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .score-item .score-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+        .score-bar {
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        /* Tech Tags */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .tech-tag {
+            background: #1e1b4b;
+            color: var(--primary-light);
+            padding: 0.35rem 0.85rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid #4338ca;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.9rem;
+        }
+        th {
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        /* Language Bar */
+        .lang-bar {
+            display: flex;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .lang-bar > div { height: 100%; }
+        .lang-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .lang-legend span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .lang-legend span::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Innovation Cards */
+        .innovation-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .innovation-card {
+            background: #0f172a;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border-left: 3px solid var(--primary);
+        }
+        .innovation-card h3 {
+            font-size: 1rem;
+            color: var(--primary-light);
+            margin-bottom: 0.5rem;
+        }
+        .innovation-card p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--card-border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🔍 bannedbook/fanqiang 深度分析报告</h1>
+        <p class="subtitle">科学上网工具集合 · 多协议 · 多平台 · 开源免费</p>
+        <a class="repo-link" href="https://github.com/bannedbook/fanqiang" target="_blank">⭐ GitHub 仓库</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="value" style="color: var(--accent-orange);">⭐ 46.2K</div>
+            <div class="label">Stars</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="color: var(--accent-blue);">🍴 8K</div>
+            <div class="label">Forks</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="color: var(--accent-green);">👁️ 1.2K</div>
+            <div class="label">Watchers</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="color: var(--accent-purple);">📦 1,406</div>
+            <div class="label">Commits</div>
+        </div>
+    </div>
+
+    <!-- Section 1: 项目概述 -->
+    <div class="section">
+        <h2><span class="icon">📋</span> 项目概述</h2>
+        <p>
+            <strong>bannedbook/fanqiang</strong> 是 GitHub 上最具影响力的科学上网开源项目之一，截至 2026 年 6 月拥有超过 46,200 颗 Star。
+            该项目由 <strong>bannedbook</strong> 组织维护，是一个面向中国大陆用户的综合性网络自由工具集合，涵盖教程、客户端工具包、
+            自建服务端指南等多种资源。
+        </p>
+        <p style="margin-top: 1rem;">
+            项目名称中的 "翻墙"（Fanqiang）直译为 "scaling the wall"，是中文互联网中对绕过网络审查的通俗说法。
+            项目以 <strong>"一键翻墙包"</strong> 为核心产品形态，将多种主流代理工具集成到浏览器便携包中，
+            用户无需复杂配置即可使用。项目自创建以来持续更新，积累了 1,406 次提交，体现了社区的高度活跃性。
+        </p>
+        <div class="tech-tags">
+            <span class="tech-tag">v2ray</span>
+            <span class="tech-tag">Shadowsocks</span>
+            <span class="tech-tag">Trojan</span>
+            <span class="tech-tag">Brook</span>
+            <span class="tech-tag">Goflyway</span>
+            <span class="tech-tag">Lightsocks</span>
+            <span class="tech-tag">Psiphon</span>
+            <span class="tech-tag">Daze</span>
+            <span class="tech-tag">SSR</span>
+        </div>
+    </div>
+
+    <!-- Section 2: 技术架构 -->
+    <div class="section">
+        <h2><span class="icon">🏗️</span> 技术架构</h2>
+        <p>项目采用多工具并行集成的架构设计，支持多平台、多协议、多客户端。整体结构如下：</p>
+        <table>
+            <tr><th>目录模块</th><th>平台</th><th>说明</th></tr>
+            <tr><td><code>ChromeGo/</code></td><td>Windows</td><td>Chrome 一键翻墙包（核心产品）</td></tr>
+            <tr><td><code>ChromeGoMac/</code></td><td>macOS</td><td>Mac 版 Chrome 一键翻墙包</td></tr>
+            <tr><td><code>EdgeGo/</code></td><td>Windows</td><td>Edge 浏览器一键翻墙包</td></tr>
+            <tr><td><code>FirefoxFqLinux/</code></td><td>Linux</td><td>Firefox Linux 版翻墙包</td></tr>
+            <tr><td><code>android/</code> & <code>apk/</code></td><td>Android</td><td>安卓客户端及教程</td></tr>
+            <tr><td><code>ios/</code></td><td>iOS</td><td>iPhone/iPad 教程及工具</td></tr>
+            <tr><td><code>macos/</code></td><td>macOS</td><td>Mac 翻墙软件教程</td></tr>
+            <tr><td><code>linux/</code></td><td>Linux</td><td>Linux 翻墙教程</td></tr>
+            <tr><td><code>router/</code></td><td>路由器</td><td>梅林/OpenWRT 路由器翻墙</td></tr>
+            <tr><td><code>game/</code></td><td>游戏机</td><td>PS4/PS5/Switch 游戏加速</td></tr>
+            <tr><td><code>fqnews/</code> & <code>fqnews2/</code></td><td>Android</td><td>翻墙新闻 Android APP</td></tr>
+            <tr><td><code>tor-browser-portable/</code></td><td>跨平台</td><td>Tor 浏览器便携版</td></tr>
+        </table>
+
+        <h3 style="margin-top: 1.5rem; font-size: 1rem;">语言构成</h3>
+        <div class="lang-bar">
+            <div style="width: 64%; background: #A97BFF;" title="Kotlin"></div>
+            <div style="width: 11.5%; background: #F7DF1E;" title="JavaScript"></div>
+            <div style="width: 10.3%; background: #E34F26;" title="HTML"></div>
+            <div style="width: 7.5%; background: #B07219;" title="Java"></div>
+            <div style="width: 3.1%; background: #89E051;" title="Shell"></div>
+            <div style="width: 1.9%; background: #3572A5;" title="Python"></div>
+            <div style="width: 1.7%; background: #6E7681;" title="Other"></div>
+        </div>
+        <div class="lang-legend">
+            <span><i style="background:#A97BFF;"></i> Kotlin 64.0%</span>
+            <span><i style="background:#F7DF1E;"></i> JavaScript 11.5%</span>
+            <span><i style="background:#E34F26;"></i> HTML 10.3%</span>
+            <span><i style="background:#B07219;"></i> Java 7.5%</span>
+            <span><i style="background:#89E051;"></i> Shell 3.1%</span>
+            <span><i style="background:#3572A5;"></i> Python 1.9%</span>
+            <span><i style="background:#6E7681;"></i> Other 1.7%</span>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; font-size: 1rem;">集成协议与工具链</h3>
+        <ul>
+            <li><strong>V2Ray</strong> — 多协议代理平台，支持 VMess、VLESS 等，高度可定制</li>
+            <li><strong>Shadowsocks/SSR</strong> — 轻量级加密代理协议，部署简单</li>
+            <li><strong>Trojan</strong> — 基于 TLS 的代理协议，伪装能力强</li>
+            <li><strong>Brook</strong> — Go 语言编写的跨平台代理工具</li>
+            <li><strong>Goflyway</strong> — 基于 HTTP/2 的代理工具</li>
+            <li><strong>Lightsocks</strong> — 轻量级 SOCKS5 代理</li>
+            <li><strong>Daze</strong> — 新一代代理协议</li>
+            <li><strong>Psiphon（赛风）</strong> — 开源跨平台工具，由 Psiphon Inc. 维护</li>
+            <li><strong>蓝灯（Lantern）</strong> — P2P 分布式代理工具</li>
+        </ul>
+    </div>
+
+    <!-- Section 3: 核心创新点 -->
+    <div class="section">
+        <h2><span class="icon">💡</span> 核心创新点</h2>
+        <div class="innovation-cards">
+            <div class="innovation-card">
+                <h3>🔧 一键式体验</h3>
+                <p>ChromeGo 等一键翻墙包将多个代理工具预配置集成到浏览器便携包中，用户解压即用，无需安装和手动配置，极大降低了使用门槛。</p>
+            </div>
+            <div class="innovation-card">
+                <h3>🌐 全平台覆盖</h3>
+                <p>支持 Windows、macOS、Linux、Android、iOS、路由器（梅林/OpenWRT）、游戏机（PS/Switch/Xbox），几乎覆盖所有主流联网设备。</p>
+            </div>
+            <div class="innovation-card">
+                <h3>🔄 多协议并行</h3>
+                <p>集成 Goflyway、v2ray、Daze、SSR、Brook、Lightsocks、Trojan、蓝灯、Psiphon 等 N 多工具，用户可按顺序逐一尝试，确保在不同网络环境下都能找到可用方案。</p>
+            </div>
+            <div class="innovation-card">
+                <h3>📚 教程+工具一体化</h3>
+                <p>不仅提供开箱即用的工具包，还包含详尽的自建服务端教程（V2Ray、Shadowsocks）、各平台客户端配置指南、机场推荐等完整知识体系。</p>
+            </div>
+            <div class="innovation-card">
+                <h3>🎮 游戏加速场景</h3>
+                <p>独创性地覆盖了游戏机翻墙场景，提供 PS4/PS5 通过局域网共享翻墙、SStap/Netch 游戏加速器、Switch 加速等教程。</p>
+            </div>
+            <div class="innovation-card">
+                <h3>📱 自研 FQNews App</h3>
+                <p>开发了翻墙新闻安卓 APP（基于 Kotlin），为用户提供最新翻墙资讯和工具更新信息，发布为独立 Release。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: 应用场景 -->
+    <div class="section">
+        <h2><span class="icon">🎯</span> 应用场景</h2>
+        <ul>
+            <li><strong>个人用户日常上网</strong> — 通过 ChromeGo 一键翻墙包，快速访问全球互联网资源</li>
+            <li><strong>开发者访问技术资源</strong> — 访问 Google、GitHub、Stack Overflow 等被限制的开发者资源</li>
+            <li><strong>学术研究人员</strong> — 查阅海外学术论文、使用 Google Scholar 等学术工具</li>
+            <li><strong>外贸与国际业务</strong> — 访问海外社交媒体、营销工具、客户沟通平台</li>
+            <li><strong>自建代理服务器</strong> — 通过项目教程，自行搭建 V2Ray/Shadowsocks 服务端</li>
+            <li><strong>路由器级共享</strong> — 通过梅林/OpenWRT 路由器实现全家庭设备的透明代理</li>
+            <li><strong>游戏加速</strong> — PS4/PS5/Switch 游戏下载加速和在线游戏延迟优化</li>
+            <li><strong>注册海外服务</strong> — 包含注册 ChatGPT、Apple 美区账号等实用教程</li>
+        </ul>
+    </div>
+
+    <!-- Section 5: 竞品对比 -->
+    <div class="section">
+        <h2><span class="icon">⚔️</span> 竞品对比</h2>
+        <table>
+            <tr>
+                <th>对比维度</th>
+                <th>bannedbook/fanqiang</th>
+                <th>单一工具项目<br>(如 v2ray-core)</th>
+                <th>Clash 系客户端<br>(如 Clash Verge)</th>
+            </tr>
+            <tr>
+                <td><strong>定位</strong></td>
+                <td>综合工具集+教程</td>
+                <td>单一协议核心</td>
+                <td>规则代理客户端</td>
+            </tr>
+            <tr>
+                <td><strong>使用门槛</strong></td>
+                <td style="color: var(--accent-green);">极低（一键包）</td>
+                <td>较高（需手动配置）</td>
+                <td>中等（需导入订阅）</td>
+            </tr>
+            <tr>
+                <td><strong>协议数量</strong></td>
+                <td style="color: var(--accent-green);">9+ 种并行</td>
+                <td>单一协议族</td>
+                <td>多协议（SS/SSR/VMess/Trojan）</td>
+            </tr>
+            <tr>
+                <td><strong>平台覆盖</strong></td>
+                <td style="color: var(--accent-green);">全平台 + 路由器 + 游戏机</td>
+                <td>主要 PC/移动端</td>
+                <td>PC + 移动端</td>
+            </tr>
+            <tr>
+                <td><strong>教程资源</strong></td>
+                <td style="color: var(--accent-green);">极其丰富</td>
+                <td>较少（官方文档）</td>
+                <td>中等（社区文档）</td>
+            </tr>
+            <tr>
+                <td><strong>免费服务器</strong></td>
+                <td style="color: var(--accent-green);">内置免费节点</td>
+                <td>无</td>
+                <td>无（需自备）</td>
+            </tr>
+            <tr>
+                <td><strong>定制性</strong></td>
+                <td>较低（开箱即用）</td>
+                <td style="color: var(--accent-green);">极高</td>
+                <td>高（规则自定义）</td>
+            </tr>
+            <tr>
+                <td><strong>技术深度</strong></td>
+                <td>中等（集成层面）</td>
+                <td style="color: var(--accent-green);">极深（协议层面）</td>
+                <td>深（路由规则层面）</td>
+            </tr>
+            <tr>
+                <td><strong>GitHub Stars</strong></td>
+                <td style="color: var(--accent-green);">~46K</td>
+                <td>~45K (v2ray)</td>
+                <td>~20K (Clash Verge)</td>
+            </tr>
+        </table>
+        <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.85rem;">
+            💡 <strong>核心差异化：</strong>fanqiang 的独特价值在于"低门槛+全场景覆盖"——它不追求任何单一工具的技术极致，
+            而是将所有可用工具打包整合并提供免费节点，让零基础用户也能快速接入。
+        </p>
+    </div>
+
+    <!-- Section 6: 综合评分 -->
+    <div class="section">
+        <h2><span class="icon">📊</span> 综合评分</h2>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-label">⭐ 社区影响力</div>
+                <div class="score-value" style="color: var(--accent-green);">9.5 / 10</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 95%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">🔧 易用性</div>
+                <div class="score-value" style="color: var(--accent-green);">9.0 / 10</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 90%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">📐 技术创新</div>
+                <div class="score-value" style="color: var(--accent-orange);">6.5 / 10</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 65%; background: var(--accent-orange);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">🛡️ 安全性</div>
+                <div class="score-value" style="color: var(--accent-orange);">6.0 / 10</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 60%; background: var(--accent-orange);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">📚 文档质量</div>
+                <div class="score-value" style="color: var(--accent-green);">8.5 / 10</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 85%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">🔄 活跃度</div>
+                <div class="score-value" style="color: var(--accent-green);">8.0 / 10</div>
+                <div class="score-bar"><div class="score-bar-fill" style="width: 80%; background: var(--accent-green);"></div></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem; padding: 1.2rem; background: #0f172a; border-radius: 0.75rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem;">综合评分</div>
+            <div style="font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                7.9 / 10
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;">
+                ⭐ 推荐指数：★★★★☆ — 网络自由入门的首选工具集
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>📅 报告生成时间：2026-06-12 | 数据来源：GitHub API + Web Research</p>
+        <p style="margin-top: 0.5rem;">本报告仅供参考，不构成任何法律建议。请遵守当地法律法规。</p>
+    </div>
+
+</div>
+</body>
+</html>
