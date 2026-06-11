@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：apple/container — Apple 原生容器运行时</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #f0883e;
+            --accent2: #58a6ff;
+            --green: #3fb950;
+            --red: #f85149;
+            --purple: #bc8cff;
+            --code-bg: #1c2128;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 60px 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 {
+            font-size: 2.4em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #f0883e, #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+        .header .meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .header .meta span {
+            background: rgba(255,255,255,0.1);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h3 {
+            font-size: 1.15em;
+            margin: 18px 0 10px;
+            color: var(--accent2);
+        }
+        .section p { margin-bottom: 12px; color: var(--text); }
+        .section ul, .section ol { padding-left: 24px; margin-bottom: 12px; }
+        .section li { margin-bottom: 6px; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .badge-orange { background: rgba(240,136,62,0.2); color: var(--accent); }
+        .badge-blue { background: rgba(88,166,255,0.2); color: var(--accent2); }
+        .badge-green { background: rgba(63,185,80,0.2); color: var(--green); }
+        .badge-purple { background: rgba(188,140,255,0.2); color: var(--purple); }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .score-card {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+        .score-card .label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .score-card .value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .score-card .bar {
+            margin-top: 8px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-card .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table th {
+            background: var(--code-bg);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .comparison-table tr:hover { background: rgba(255,255,255,0.03); }
+        .highlight-box {
+            background: rgba(88,166,255,0.08);
+            border-left: 4px solid var(--accent2);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .warn-box {
+            background: rgba(248,81,73,0.08);
+            border-left: 4px solid var(--red);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .arch-diagram {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin: 16px 0;
+        }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            border-top: 1px solid var(--border);
+        }
+        @media (max-width: 640px) {
+            .header { padding: 30px 16px; }
+            .header h1 { font-size: 1.6em; }
+            .section { padding: 18px; }
+            .score-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🍎 apple/container</h1>
+    <div class="subtitle">Apple 原生 Linux 容器运行时 — 深度技术分析报告</div>
+    <div class="meta">
+        <span>📅 分析日期：2026-06-12</span>
+        <span>🏷️ 版本：v0.8.0</span>
+        <span>💻 语言：Swift</span>
+        <span>⚡ 平台：Apple Silicon + macOS 26</span>
+    </div>
+    <div class="tag-list" style="justify-content:center; margin-top:14px;">
+        <span class="badge badge-orange">容器化</span>
+        <span class="badge badge-blue">虚拟化</span>
+        <span class="badge badge-green">OCI 兼容</span>
+        <span class="badge badge-purple">开源</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2>📋 项目概述</h2>
+        <p><strong>apple/container</strong> 是 Apple 于 WWDC 2025 首次发布的开源项目，旨在为 macOS 提供原生的 Linux 容器运行能力。该项目完全使用 Swift 编写，针对 Apple Silicon（M1/M2/M3/M4 系列芯片）深度优化，通过轻量级虚拟机（Lightweight VM）实现 Linux 容器的创建与运行。</p>
+        <p>该项目由两个核心组件构成：</p>
+        <ul>
+            <li><strong>container（CLI 工具）</strong>：命令行工具，提供类似 Docker 的用户体验，用于管理容器的生命周期、镜像构建与分发。</li>
+            <li><strong>Containerization（Swift 框架）</strong>：底层 Swift 包，提供容器、镜像和进程管理的 API，基于 Apple Virtualization Framework 构建。</li>
+        </ul>
+        <p>项目完全兼容 OCI（Open Container Initiative）标准，可以拉取、运行和推送任何标准容器注册表中的镜像。截至 2026 年 6 月，该项目已发布至 v0.8.0 版本，经历了 7 个月的快速迭代，并在 WWDC 2026 上引入了"Container Machines"新特性。</p>
+
+        <div class="highlight-box">
+            <strong>🔑 关键数据：</strong>
+            开源于 WWDC 2025（2025 年 6 月）发布 · 当前版本 v0.8.0 · 纯 Swift 编写 · 仅支持 macOS 26+ 和 Apple Silicon · OCI 标准兼容
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2>🏗️ 技术架构</h2>
+
+        <h3>整体架构设计</h3>
+        <p>apple/container 采用 <strong>"VM-per-container"（每容器一虚拟机）</strong> 架构模型。每个 Linux 容器都运行在自己独立的轻量级虚拟机中，而非共享宿主机内核（如传统 Linux 容器方案）。这种设计在安全性和隔离性方面具有显著优势。</p>
+
+        <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────┐
+│                      macOS 26 (Apple Silicon)            │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │          container CLI (Swift)                     │   │
+│  │   build · run · pull · push · images · compose    │   │
+│  └────────────────┬─────────────────────────────────┘   │
+│                   │ API                                   │
+│  ┌────────────────▼─────────────────────────────────┐   │
+│  │      Containerization Framework (Swift Package)    │   │
+│  │  ┌─────────────┐ ┌──────────────┐ ┌───────────┐ │   │
+│  │  │ OCI Image   │ │ Container    │ │ Process    │ │   │
+│  │  │ Management  │ │ Runtime      │ │ Management │ │   │
+│  │  └──────┬──────┘ └──────┬───────┘ └─────┬─────┘ │   │
+│  │         │               │               │         │   │
+│  └─────────┼───────────────┼───────────────┼─────────┘   │
+│            │               │               │              │
+│  ┌─────────▼───────────────▼───────────────▼─────────┐   │
+│  │     Apple Virtualization Framework                 │   │
+│  │     (Hardware-accelerated virtualization)          │   │
+│  └───────────────────────┬───────────────────────────┘   │
+│                          │                                │
+│  ┌───────────┐  ┌───────▼───┐  ┌───────────┐            │
+│  │   VM #1   │  │   VM #2   │  │   VM #3   │            │
+│  │ Container │  │ Container │  │ Container │            │
+│  │ (Linux)   │  │ (Linux)   │  │ (Linux)   │            │
+│  └───────────┘  └───────────┘  └───────────┘            │
+└─────────────────────────────────────────────────────────┘</div>
+
+        <h3>核心技术组件</h3>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>组件</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>container</code> CLI</td>
+                    <td>用户交互的命令行工具，提供 build/run/pull/push 等子命令，语法与 Docker CLI 高度相似</td>
+                </tr>
+                <tr>
+                    <td><code>Containerization</code></td>
+                    <td>Swift 包，提供底层 API：OCI 镜像管理、容器运行时、进程管理、网络配置</td>
+                </tr>
+                <tr>
+                    <td>Virtualization.framework</td>
+                    <td>Apple 系统框架，提供硬件加速的虚拟化支持，是整个架构的基础</td>
+                </tr>
+                <tr>
+                    <td>轻量级 Linux 内核</td>
+                    <td>经过高度优化的最小化 Linux 内核配置，实现亚秒级启动</td>
+                </tr>
+                <tr>
+                    <td>OCI 镜像格式</td>
+                    <td>完全兼容 OCI 标准，支持从 Docker Hub 等标准注册表拉取/推送镜像</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>网络与存储</h3>
+        <ul>
+            <li><strong>DNS 解析</strong>：内置 DNS 服务，容器间可通过名称互相解析</li>
+            <li><strong>端口映射</strong>：支持主机到容器的端口映射，便于开发调试</li>
+            <li><strong>镜像分层</strong>：OCI 标准分层存储，支持增量构建和高效分发</li>
+            <li><strong>文件系统</strong>：利用 macOS 原生文件系统特性，提供高效的 I/O 性能</li>
+        </ul>
+
+        <h3>WWDC 2026 新特性：Container Machines</h3>
+        <p>在 WWDC 2026 上，Apple 引入了 <strong>Container Machines</strong> 概念——一种轻量级、持久化的 Linux 环境工具。与传统的临时性容器不同，Container Machines 提供持久化的 Linux 运行环境，适用于需要长期运行的开发场景。</p>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2>💡 核心创新点</h2>
+
+        <h3>1. VM-per-Container 安全模型</h3>
+        <p>不同于 Docker 等传统方案共享 Linux 内核的做法，apple/container 为每个容器创建独立的轻量级虚拟机。这意味着：</p>
+        <ul>
+            <li>容器间的<strong>内核级隔离</strong>，安全性大幅提升</li>
+            <li>单个容器被攻破<strong>不会影响</strong>其他容器或宿主机</li>
+            <li>利用 Apple Silicon 的硬件虚拟化支持，性能开销极低</li>
+        </ul>
+
+        <h3>2. 亚秒级启动速度</h3>
+        <p>通过高度优化的 Linux 内核配置和最小化运行时环境，容器启动时间达到<strong>亚秒级（&lt;1s）</strong>，显著快于 Docker Desktop 的启动流程。</p>
+
+        <h3>3. 原生 macOS 集成</h3>
+        <ul>
+            <li>利用 Apple 的 <code>Virtualization.framework</code> 实现硬件加速虚拟化</li>
+            <li>与 macOS 安全模型深度集成，符合 Apple 的安全与隐私标准</li>
+            <li>利用 Rosetta 2 实现透明二进制翻译（如需要）</li>
+        </ul>
+
+        <h3>4. Swift 原生生态</h3>
+        <p>作为纯 Swift 项目，可以无缝集成到 Swift 应用中。开发者可以直接通过 Swift API 编程管理容器，为 macOS 应用提供 Linux sidecar 能力。</p>
+
+        <h3>5. OCI 标准兼容</h3>
+        <p>完全兼容 OCI（Open Container Initiative）镜像标准，现有的 Docker Hub、GHCR 等注册表中的镜像可以直接使用，降低了迁移成本。</p>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2>🎯 应用场景</h2>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>描述</th>
+                    <th>适配度</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>🖥️ 本地开发环境</td>
+                    <td>在 Mac 上快速启动 Linux 开发环境（数据库、Redis、Nginx 等），无需额外安装</td>
+                    <td><span class="badge badge-green">★★★★★</span></td>
+                </tr>
+                <tr>
+                    <td>🧪 CI/CD 本地测试</td>
+                    <td>在本地模拟 CI 环境进行测试，确保构建一致性</td>
+                    <td><span class="badge badge-green">★★★★★</span></td>
+                </tr>
+                <tr>
+                    <td>📱 macOS 应用 Sidecar</td>
+                    <td>为 macOS 桌面应用运行 Linux sidecar 进程，处理后台任务</td>
+                    <td><span class="badge badge-green">★★★★★</span></td>
+                </tr>
+                <tr>
+                    <td>🔧 微服务本地调试</td>
+                    <td>在本地运行微服务架构的各个组件，进行端到端调试</td>
+                    <td><span class="badge badge-blue">★★★★☆</span></td>
+                </tr>
+                <tr>
+                    <td>📚 学习与教学</td>
+                    <td>安全、隔离的 Linux 环境用于教学和实验</td>
+                    <td><span class="badge badge-blue">★★★★☆</span></td>
+                </tr>
+                <tr>
+                    <td>☁️ 生产部署</td>
+                    <td>目前仅限 macOS，不适合生产服务器部署</td>
+                    <td><span class="badge badge-orange">★★☆☆☆</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <strong>💡 最佳适用人群：</strong>使用 Apple Silicon Mac 的开发者，尤其是需要在本地运行 Linux 容器服务（数据库、中间件、微服务）的 Web/后端开发者，以及希望将 Linux sidecar 集成到 macOS 应用中的 Swift 开发者。
+        </div>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2>⚔️ 竞品对比</h2>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>apple/container</th>
+                    <th>Docker Desktop</th>
+                    <th>OrbStack</th>
+                    <th>Podman</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>启动速度</strong></td>
+                    <td>🟢 亚秒级</td>
+                    <td>🟡 数秒级</td>
+                    <td>🟢 秒级</td>
+                    <td>🟡 数秒级</td>
+                </tr>
+                <tr>
+                    <td><strong>内存占用</strong></td>
+                    <td>🟢 极低</td>
+                    <td>🔴 较高</td>
+                    <td>🟢 低</td>
+                    <td>🟡 中等</td>
+                </tr>
+                <tr>
+                    <td><strong>macOS 集成</strong></td>
+                    <td>🟢 原生</td>
+                    <td>🟡 良好</td>
+                    <td>🟢 优秀</td>
+                    <td>🟡 一般</td>
+                </tr>
+                <tr>
+                    <td><strong>生态成熟度</strong></td>
+                    <td>🔴 早期阶段</td>
+                    <td>🟢 非常成熟</td>
+                    <td>🟢 成熟</td>
+                    <td>🟢 成熟</td>
+                </tr>
+                <tr>
+                    <td><strong>编排能力</strong></td>
+                    <td>🔴 有限</td>
+                    <td>🟢 Compose/Swarm</td>
+                    <td>🟢 Compose</td>
+                    <td>🟢 Compose/Kube</td>
+                </tr>
+                <tr>
+                    <td><strong>安全隔离</strong></td>
+                    <td>🟢 VM 级别</td>
+                    <td>🟡 共享内核</td>
+                    <td>🟡 共享内核</td>
+                    <td>🟡 Rootless</td>
+                </tr>
+                <tr>
+                    <td><strong>Apple Silicon 优化</strong></td>
+                    <td>🟢 原生优化</td>
+                    <td>🟡 通过 Rosetta</td>
+                    <td>🟢 良好</td>
+                    <td>🟡 通过 Rosetta</td>
+                </tr>
+                <tr>
+                    <td><strong>Swift 集成</strong></td>
+                    <td>🟢 原生 API</td>
+                    <td>🔴 无</td>
+                    <td>🔴 无</td>
+                    <td>🔴 无</td>
+                </tr>
+                <tr>
+                    <td><strong>价格</strong></td>
+                    <td>🟢 免费开源</td>
+                    <td>🟡 个人免费/企业付费</td>
+                    <td>🟡 个人免费/团队付费</td>
+                    <td>🟢 免费开源</td>
+                </tr>
+                <tr>
+                    <td><strong>平台支持</strong></td>
+                    <td>🔴 macOS 26+</td>
+                    <td>🟢 全平台</td>
+                    <td>🟢 macOS</td>
+                    <td>🟢 全平台</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warn-box">
+            <strong>⚠️ 当前局限：</strong>
+            <ul style="margin-top:8px;">
+                <li>仅支持 macOS 26+ 和 Apple Silicon，平台覆盖面有限</li>
+                <li>项目处于 v0.x 阶段，API 稳定性不保证（直到 1.0.0 才会保证兼容性）</li>
+                <li>编排工具（如 Docker Compose 对等方案）尚不完善</li>
+                <li>社区生态和工具链仍在早期建设阶段</li>
+                <li>不支持在容器中运行 macOS 本身</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2>📊 综合评分</h2>
+
+        <div class="score-grid">
+            <div class="score-card">
+                <div class="label">技术创新</div>
+                <div class="value" style="color: var(--green);">9.0</div>
+                <div class="bar"><div class="bar-fill" style="width:90%; background: var(--green);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">代码质量</div>
+                <div class="value" style="color: var(--accent2);">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%; background: var(--accent2);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">实用价值</div>
+                <div class="value" style="color: var(--accent);">7.5</div>
+                <div class="bar"><div class="bar-fill" style="width:75%; background: var(--accent);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">生态成熟度</div>
+                <div class="value" style="color: var(--accent);">5.5</div>
+                <div class="bar"><div class="bar-fill" style="width:55%; background: var(--accent);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">社区活跃度</div>
+                <div class="value" style="color: var(--accent2);">8.0</div>
+                <div class="bar"><div class="bar-fill" style="width:80%; background: var(--accent2);"></div></div>
+            </div>
+            <div class="score-card">
+                <div class="label">文档质量</div>
+                <div class="value" style="color: var(--green);">8.5</div>
+                <div class="bar"><div class="bar-fill" style="width:85%; background: var(--green);"></div></div>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin: 20px 0;">
+            <div style="font-size:0.9em; color:var(--text-secondary); margin-bottom:4px;">⭐ 综合评分</div>
+            <div style="font-size:3em; font-weight:800; background:linear-gradient(90deg, #3fb950, #58a6ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">7.8 / 10</div>
+            <div style="color:var(--text-secondary); margin-top:6px;">🌟 高度推荐关注 | Apple 生态开发者的未来容器标准</div>
+        </div>
+
+        <h3>评分解读</h3>
+        <ul>
+            <li><strong>技术创新（9.0）</strong>：VM-per-container 模型在桌面容器领域是重要创新，Swift 原生 API 和 Apple Silicon 优化展现了独特优势。</li>
+            <li><strong>代码质量（8.5）</strong>：Apple 官方维护，Swift 代码风格一致，架构清晰，但仍在快速迭代中。</li>
+            <li><strong>实用价值（7.5）</strong>：对 Apple Silicon Mac 开发者极具价值，但平台限制明显。</li>
+            <li><strong>生态成熟度（5.5）</strong>：目前仍处于 0.x 版本，工具链和编排能力尚不完善，社区插件/扩展较少。</li>
+            <li><strong>社区活跃度（8.0）</strong>：Apple 官方品牌加持，GitHub 社区活跃，但贡献者以 Apple 员工为主。</li>
+            <li><strong>文档质量（8.5）</strong>：官方文档完善，有 WWDC 视频教程，CLI 帮助信息清晰。</li>
+        </ul>
+    </div>
+
+    <!-- 发展前景 -->
+    <div class="section">
+        <h2>🔮 发展前景</h2>
+        <p>apple/container 代表了 Apple 对容器化技术的正式布局。结合 WWDC 2025 和 WWDC 2026 的持续推进，可以看出以下趋势：</p>
+        <ol>
+            <li><strong>持续演进</strong>：从 0.1.0 到 0.8.0 的快速迭代表明 Apple 投入大量工程资源，预计将在 2026-2027 年间达到 1.0 稳定版。</li>
+            <li><strong>生态扩展</strong>：Podman Desktop 已推出 Apple Container 扩展，Docker 社区也在探讨将其作为 Docker Desktop 的替代后端。</li>
+            <li><strong>Xcode 集成预期</strong>：未来可能与 Xcode 深度集成，为 iOS/macOS 开发者提供一键容器化服务。</li>
+            <li><strong>Container Machines 持久化</strong>：WWDC 2026 引入的 Container Machines 将容器从临时环境扩展为持久化开发环境，应用场景大幅拓宽。</li>
+        </ol>
+
+        <div class="highlight-box">
+            <strong>📌 总结：</strong>apple/container 是 Apple 生态中容器技术的"第一方答案"。虽然在跨平台兼容性和生态成熟度上暂时不及 Docker，但在 Apple Silicon Mac 上的性能、安全性和原生集成方面具有无可比拟的优势。对于 Apple 生态开发者而言，这是一个值得密切跟踪和提前布局的项目。
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>📅 报告生成日期：2026-06-12 | 数据来源：GitHub、Apple Developer、WWDC、技术社区</p>
+    <p>由 AI 深度分析引擎自动生成 | 仅供参考，不构成技术选型建议</p>
+</div>
+
+</body>
+</html>
