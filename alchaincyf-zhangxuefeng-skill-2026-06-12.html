@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告：alchaincyf/zhangxuefeng-skill | GitHub Trending</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-card: #1c2128;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-purple: #bc8cff;
+    --accent-cyan: #39d353;
+    --border-color: #30363d;
+    --gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero Section */
+  .hero {
+    background: var(--gradient-hero);
+    padding: 60px 0 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 400px;
+    height: 400px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+  .hero .container { position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  .hero .subtitle {
+    font-size: 18px;
+    color: rgba(255,255,255,0.85);
+    max-width: 700px;
+    line-height: 1.6;
+  }
+
+  /* Stats Bar */
+  .stats-bar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px 0;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .stat-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+  }
+  .stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent-blue);
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Main Content */
+  .main { padding: 40px 0 60px; }
+
+  .section {
+    margin-bottom: 48px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 32px;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .icon-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+  .icon-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+  .icon-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+  .icon-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+  .icon-red { background: rgba(248,81,73,0.15); color: var(--accent-red); }
+  .icon-cyan { background: rgba(57,211,83,0.15); color: var(--accent-cyan); }
+
+  .content-text { color: var(--text-secondary); line-height: 1.8; }
+  .content-text p { margin-bottom: 12px; }
+  .content-text strong { color: var(--text-primary); }
+
+  /* Feature Cards */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .feature-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .feature-card h4 {
+    color: var(--accent-blue);
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .feature-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Model Cards */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .model-card {
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: 0 10px 10px 0;
+    padding: 18px 20px;
+  }
+  .model-card h4 {
+    color: var(--accent-purple);
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .model-card .desc {
+    color: var(--text-primary);
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .model-card .source {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  /* Score Section */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .score-item {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+  }
+  .score-item .score-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    position: relative;
+  }
+  .score-item .score-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .score-s9 { background: conic-gradient(var(--accent-green) 324deg, var(--bg-tertiary) 324deg); color: var(--accent-green); }
+  .score-s8 { background: conic-gradient(var(--accent-blue) 288deg, var(--bg-tertiary) 288deg); color: var(--accent-blue); }
+  .score-s7 { background: conic-gradient(var(--accent-orange) 252deg, var(--bg-tertiary) 252deg); color: var(--accent-orange); }
+  .score-s6 { background: conic-gradient(var(--accent-red) 216deg, var(--bg-tertiary) 216deg); color: var(--accent-red); }
+
+  /* Comparison Table */
+  .comparison-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 16px;
+    font-size: 14px;
+  }
+  .comparison-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+  }
+  .comparison-table th:first-child { border-radius: 8px 0 0 0; }
+  .comparison-table th:last-child { border-radius: 0 8px 0 0; }
+  .comparison-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+  }
+  .comparison-table tr:hover td { background: rgba(88,166,255,0.05); }
+  .comparison-table .highlight { color: var(--accent-green); font-weight: 600; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    margin: 2px 4px;
+  }
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+  .tag-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+  .tag-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+
+  /* Timeline */
+  .timeline { margin-top: 16px; }
+  .timeline-item {
+    padding: 12px 0 12px 24px;
+    border-left: 2px solid var(--border-color);
+    position: relative;
+  }
+  .timeline-item::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    position: absolute;
+    left: -6px;
+    top: 18px;
+  }
+  .timeline-item .date {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .timeline-item .event {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 30px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .footer a { color: var(--accent-blue); text-decoration: none; }
+
+  /* Quote Block */
+  .quote-block {
+    border-left: 3px solid var(--accent-orange);
+    padding: 16px 20px;
+    margin: 16px 0;
+    background: rgba(210,153,34,0.08);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: var(--text-secondary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 28px; }
+    .hero .subtitle { font-size: 15px; }
+    .section { padding: 20px; }
+    .feature-grid, .model-grid, .score-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">📊 GitHub Trending 深度分析 · 2026-06-12</div>
+    <h1>alchaincyf/zhangxuefeng-skill</h1>
+    <p class="subtitle">张雪峰的认知操作系统 —— 基于 Agent Skills 协议的可运行思维框架，将张雪峰的教育咨询智慧蒸馏为 AI Agent 可执行的认知模型</p>
+    <div style="margin-top:20px;">
+      <span class="tag tag-blue">Agent Skills</span>
+      <span class="tag tag-green">认知蒸馏</span>
+      <span class="tag tag-purple">教育科技</span>
+      <span class="tag tag-orange">MIT License</span>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-bar">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">⭐ 8,181</div>
+        <div class="stat-label">Stars</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">🍴 2,433</div>
+        <div class="stat-label">Forks</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">📝 9</div>
+        <div class="stat-label">Commits</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">🐛 22</div>
+        <div class="stat-label">Open Issues</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">📅 2026-04-05</div>
+        <div class="stat-label">创建日期</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">📦 5.1 MB</div>
+        <div class="stat-label">仓库大小</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Main Content -->
+<section class="main">
+  <div class="container">
+
+    <!-- Section 1: 项目概述 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-blue">📋</span>
+        项目概述
+      </div>
+      <div class="content-text">
+        <p><strong>zhangxuefeng-skill</strong> 是一个基于开放的 <strong>Agent Skills 协议</strong>构建的 AI 认知蒸馏项目，由中国独立开发者<strong>花叔（Huashu / alchaincyf）</strong>创建。项目的核心目标是将中国教育咨询领域的标志性人物<strong>张雪峰</strong>的认知模式、决策逻辑和表达风格，系统地提炼并封装为一个可供 AI Agent 运行的"思维框架"。</p>
+
+        <div class="quote-block">
+          「不是语录合集，是可运行的思维框架。」—— 项目 README
+        </div>
+
+        <p>该项目由<strong>女娲.skill（nuwa-skill）</strong>自动生成。女娲的工作流程是：输入一个人物名字 → 6 个 Agent 并行调研（著作/对话/表达/批评/决策/时间线）→ 交叉验证提炼心智模型 → 构建 SKILL.md → 质量验证。整个蒸馏过程基于 <strong>5 本著作、15+ 篇权威媒体深度采访、30+ 条一手语录、11 个关键决策记录和完整人生时间线</strong>的深度调研。</p>
+
+        <p>项目兼容 <strong>50+ AI Agent Runtime</strong>，包括 Claude Code、Codex CLI、Cursor、OpenClaw、Hermes Agent、Gemini CLI、OpenCode 等，真正实现了"一次蒸馏，到处运行"。</p>
+      </div>
+    </div>
+
+    <!-- Section 2: 技术架构 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-green">🏗️</span>
+        技术架构
+      </div>
+      <div class="content-text">
+        <p>项目的核心是 <strong>Agent Skills 协议</strong>—— 一个开放的 AI Agent 技能分发标准。技术架构可以概括为以下几个层次：</p>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>📄 SKILL.md 核心文件</h4>
+          <p>项目的灵魂文件，包含 YAML frontmatter（元数据）+ Markdown 正文（心智模型、决策启发式、表达DNA）。本质是一份精心结构化的 Markdown 文档，可被任何支持该协议的 AI Runtime 自动加载。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🔬 多维调研引擎</h4>
+          <p>由女娲.skill 驱动的 6 Agent 并行调研架构：著作分析、对话抽取、表达DNA解码、外部批评收集、决策模式分析、人生时间线重建。输出 6 个独立调研文件，支持交叉验证。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🔌 跨 Runtime 兼容层</h4>
+          <p>通过 <code>npx skills add</code> 统一安装命令，自动检测当前 Runtime（Claude Code / Codex / Cursor / OpenClaw / Hermes 等 55+ runtime），将 skill 放到对应目录。支持手动安装和纯文本引用模式。</p>
+        </div>
+        <div class="feature-card">
+          <h4>✅ 质量验证体系</h4>
+          <p>蒸馏完成后自动进行 3 个已知测试 + 1 个边缘测试 + 1 个风格测试，确保输出的思维模型在忠实度和可用性上达标。SKILL.md 持续迭代优化（如 darwin round 调优机制）。</p>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="section-title" style="font-size:16px;">
+          <span>📁 仓库结构</span>
+        </div>
+        <pre style="background:var(--bg-tertiary);padding:16px;border-radius:8px;font-size:13px;color:var(--text-secondary);overflow-x:auto;border:1px solid var(--border-color);">
+zhangxuefeng-skill/
+├── README.md                    # 项目说明文档
+├── SKILL.md                     # 核心：可运行的认知操作系统
+├── LICENSE                      # MIT 许可证
+├── references/
+│   └── research/                # 6个深度调研文件
+│       ├── 01-writings.md       # 著作与系统思考
+│       ├── 02-conversations.md  # 深度采访与对谈
+│       ├── 03-expression-dna.md # 表达风格DNA
+│       ├── 04-external-views.md # 他者视角与批评
+│       ├── 05-decisions.md      # 重大决策分析
+│       └── 06-timeline.md       # 完整人生时间线
+├── examples/
+│   └── demo-conversation.md     # 实战对话记录
+└── assets/                      # 静态资源</pre>
+      </div>
+    </div>
+
+    <!-- Section 3: 核心创新点 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-purple">💡</span>
+        核心创新点
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>🧠 认知蒸馏而非简单模仿</h4>
+          <p>不同于传统的 ChatGPT "角色扮演"（套用一个人设模板），该项目通过系统化调研提炼出<strong>5个核心心智模型</strong>、<strong>8条决策启发式</strong>和完整的<strong>表达DNA</strong>。AI 不是在"扮演"张雪峰，而是在用张雪峰的认知框架分析问题。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🔄 可复用的蒸馏方法论</h4>
+          <p>女娲.skill 提供了一套完整的"人物蒸馏流水线"——输入名字，自动完成调研、提炼、验证全流程。目前已成功蒸馏乔布斯、马斯克、纳瓦尔、芒格、费曼、塔勒布等多个认知操作系统，证明了方法的通用性。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🌐 开放的 Agent Skills 协议</h4>
+          <p>基于开放的 Agent Skills 标准构建，不绑定任何特定 AI Runtime。一次蒸馏，可在 Claude Code、Codex、Cursor、Gemini CLI 等 50+ runtime 中运行，真正实现了"认知资产的跨平台分发"。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🎭 保留内在张力与矛盾</h4>
+          <p>特别值得关注的是，项目刻意保留了被蒸馏人物的<strong>5对内在张力</strong>（如"寒门代言人 vs 亿万富翁"），避免了脸谱化。这种对复杂性的尊重，使蒸馏出的认知模型更加立体和真实。</p>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <div class="section-title" style="font-size:16px;">
+          <span>🧩 五个核心心智模型</span>
+        </div>
+        <div class="model-grid">
+          <div class="model-card">
+            <h4>1. 社会筛子论</h4>
+            <div class="desc">社会就是一个大筛子，用学历筛孩子，用房子筛父母，用工作筛家庭。</div>
+            <div class="source">来源：讲座/直播（反复使用20+次）</div>
+          </div>
+          <div class="model-card">
+            <h4>2. 选择 &gt; 努力</h4>
+            <div class="desc">方向错误的努力是浪费，选对赛道比拼命奔跑重要。</div>
+            <div class="source">来源：两本书直接命名、自身跨界经历</div>
+          </div>
+          <div class="model-card">
+            <h4>3. 就业倒推法</h4>
+            <div class="desc">从毕业后的就业数据倒推今天的专业选择，看中间50%的人去了哪。</div>
+            <div class="source">来源：峰学蔚来商业模式基础</div>
+          </div>
+          <div class="model-card">
+            <h4>4. 阶层现实主义</h4>
+            <div class="desc">家里没矿别谈理想，先谋生再谋爱，先站稳再登高。</div>
+            <div class="source">来源：始终区分不同家庭的不同策略</div>
+          </div>
+          <div class="model-card">
+            <h4>5. 争议即传播</h4>
+            <div class="desc">温吞的建议没人记住，把观点推到极端才有传播力。</div>
+            <div class="source">来源：新闻学争议后商业数据不降反升</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: 应用场景 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-orange">🎯</span>
+        应用场景
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>🎓 高考志愿填报</h4>
+          <p>学生和家长可以在 AI Agent 中以张雪峰的认知框架分析专业选择，获取基于就业数据、家庭背景、城市因素的多维度建议。尤其在每年6-7月高考志愿填报季，实用价值极高。</p>
+        </div>
+        <div class="feature-card">
+          <h4>📚 考研决策辅助</h4>
+          <p>为面临"考研还是工作"选择的大学生提供基于中位数就业数据、第一学历限制、时间成本考量的系统分析，帮助做出更理性的决策。</p>
+        </div>
+        <div class="feature-card">
+          <h4>💼 职业规划咨询</h4>
+          <p>利用"不可替代性检验""500强测试""10年后压迫测试"等框架，为职场新人提供 AI 辅助的职业规划建议，特别是在 AI 时代如何选择"不被取代"的职业方向。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🔧 认知蒸馏范本</h4>
+          <p>对于 AI 开发者来说，该项目本身就是"如何将人类专家知识蒸馏为 AI 可执行框架"的最佳实践范本。开发者可以参照此模式，蒸馏自己领域专家的认知模型。</p>
+        </div>
+        <div class="feature-card">
+          <h4>🤖 Agent Skills 生态建设</h4>
+          <p>作为 Agent Skills 协议的标杆项目，为 AI Agent 生态的技能分发和复用提供了示范。类似 App Store 之于 iOS，Agent Skills 正在构建一个"认知技能市场"。</p>
+        </div>
+        <div class="feature-card">
+          <h4>📖 教育与传播</h4>
+          <p>通过张雪峰这一高认知度人物，降低了公众理解"AI Agent Skill"概念的门槛。将复杂的技术概念包装为大众熟悉的场景，具有很强的科普和教育价值。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: 竞品对比 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-cyan">⚖️</span>
+        竞品对比
+      </div>
+      <div class="content-text">
+        <p>在"将名人/专家思维模型蒸馏为 AI 可用技能"这一领域，目前主要有以下几种方案：</p>
+      </div>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>维度</th>
+            <th>zhangxuefeng-skill</th>
+            <th>传统 System Prompt</th>
+            <th>知识库 RAG</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>知识来源</strong></td>
+            <td class="highlight">5本著作+15+采访+30+语录+11决策+完整时间线</td>
+            <td>人工编写几百字描述</td>
+            <td>上传文档，向量检索</td>
+          </tr>
+          <tr>
+            <td><strong>认知深度</strong></td>
+            <td class="highlight">心智模型+决策启发式+表达DNA+内在张力</td>
+            <td>角色设定+行为指南</td>
+            <td>原文引用，缺乏提炼</td>
+          </tr>
+          <tr>
+            <td><strong>可复现性</strong></td>
+            <td class="highlight">女娲.skill 自动蒸馏流水线</td>
+            <td>手动编写，不可复现</td>
+            <td>依赖文档质量，不可复现</td>
+          </tr>
+          <tr>
+            <td><strong>跨平台</strong></td>
+            <td class="highlight">50+ Runtime 兼容</td>
+            <td>绑定特定 AI 平台</td>
+            <td>依赖特定 RAG 框架</td>
+          </tr>
+          <tr>
+            <td><strong>质量保证</strong></td>
+            <td class="highlight">3已知+1边缘+1风格 测试</td>
+            <td>主观判断</td>
+            <td>检索准确率测试</td>
+          </tr>
+          <tr>
+            <td><strong>分发方式</strong></td>
+            <td class="highlight">标准化协议（npx skills add）</td>
+            <td>复制粘贴</td>
+            <td>手动配置</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="content-text" style="margin-top:16px;">
+        <p><strong>竞争优势：</strong>zhangxuefeng-skill 的核心壁垒在于<strong>系统性</strong>和<strong>可复现性</strong>。它不是一个 prompt 工程的产物，而是一套完整的方法论输出。女娲.skill 的存在意味着任何人都可以用同样的流程蒸馏其他专家，这赋予了项目极强的扩展性和生态价值。</p>
+      </div>
+    </div>
+
+    <!-- Section 6: 综合评分 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-red">📊</span>
+        综合评分
+      </div>
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-ring score-s9">9.0</div>
+          <div class="score-label">创新性</div>
+        </div>
+        <div class="score-item">
+          <div class="score-ring score-s9">9.0</div>
+          <div class="score-label">实用性</div>
+        </div>
+        <div class="score-item">
+          <div class="score-ring score-s8">8.5</div>
+          <div class="score-label">技术深度</div>
+        </div>
+        <div class="score-item">
+          <div class="score-ring score-s9">9.0</div>
+          <div class="score-label">文档质量</div>
+        </div>
+        <div class="score-item">
+          <div class="score-ring score-s8">8.0</div>
+          <div class="score-label">社区活跃度</div>
+        </div>
+        <div class="score-item">
+          <div class="score-ring score-s9">9.0</div>
+          <div class="score-label">可扩展性</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:24px;">
+        <div style="font-size:42px;font-weight:800;color:var(--accent-green);">8.8 / 10</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-top:4px;">综合评分 · 极力推荐</div>
+      </div>
+      <div class="content-text" style="margin-top:24px;">
+        <p><strong>评分说明：</strong></p>
+        <p>🟢 <strong>创新性 9.0</strong> — 将"认知蒸馏"从概念落地为可执行的开放协议，女娲.skill 的 6 Agent 并行调研+交叉验证+自动测试流水线是方法论层面的创新。</p>
+        <p>🟢 <strong>实用性 9.0</strong> — 直击高考志愿、考研决策、职业规划三大刚需场景，每年影响数千万家庭。张雪峰的高认知度使推广成本极低。</p>
+        <p>🟢 <strong>技术深度 8.5</strong> — 虽然核心是 Markdown+YAML 而非传统代码，但其多维调研架构、质量验证体系、darwin 调优机制展现了扎实的系统设计能力。</p>
+        <p>🟢 <strong>文档质量 9.0</strong> — README 结构清晰、示例丰富、安装指南详尽。6 个调研文件公开透明，方法论完全可复现。</p>
+        <p>🟡 <strong>社区活跃度 8.0</strong> — 8181 Stars 和 2433 Forks 说明用户认可度高，但仅 1 位贡献者、9 次 commit，项目迭代节奏偏慢。</p>
+        <p>🟢 <strong>可扩展性 9.0</strong> — 女娲.skill 生态已产出 6+ 人物技能，Agent Skills 协议兼容 50+ Runtime，标准化程度高，扩展潜力巨大。</p>
+      </div>
+    </div>
+
+    <!-- Section 7: 项目时间线 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-blue">📅</span>
+      项目时间线
+      </div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="date">2026-04-05</div>
+          <div class="event">项目创建，发布初始版本 SKILL.md</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">2026-04-09</div>
+          <div class="event">品牌更名：AI进化论-花生 → 花叔</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">2026-04-10</div>
+          <div class="event">更新小红书显示名为"花叔"</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">2026-04-21</div>
+          <div class="event">README 添加 hero 动画（由 huashu-design skill 制作）</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">2026-05-22</div>
+          <div class="event">README 重构为 Runtime-neutral 格式，适配 Agent Skills 标准</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">2026-05-28</div>
+          <div class="event">SKILL.md 优化：darwin round1（+dim3 fallback +dim4 checkpoint +dim9 blacklist）</div>
+        </div>
+        <div class="timeline-item">
+          <div class="date">2026-06-12</div>
+          <div class="event">⭐ 突破 8,181 Stars，登上 GitHub Trending</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 8: 总结 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-green">📝</span>
+        分析师总结
+      </div>
+      <div class="content-text">
+        <p><strong>zhangxuefeng-skill</strong> 是一个非常值得关注的项目，它代表了 AI Agent 生态从"工具"向"认知资产"演进的一个重要方向。项目的核心价值不在于张雪峰本身，而在于它展示了一套<strong>可复现、可扩展、可分发</strong>的人类专家认知蒸馏方法论。</p>
+
+        <p>在技术层面，项目虽不涉及复杂编程（核心是 Markdown），但其系统设计——6 Agent 并行调研、交叉验证、多维心智模型提炼、darwin 调优机制——展现了工程化的思维。选择 Agent Skills 开放协议作为分发标准，避免了平台锁定，为生态建设奠定了基础。</p>
+
+        <p>在商业层面，选择张雪峰作为中国区首发人物是精准的市场定位——高考志愿填报是中国家庭每年最大的教育决策场景之一，张雪峰的超高认知度极大地降低了用户理解和接受的门槛。</p>
+
+        <p><strong>潜在风险：</strong>依赖单一人物 IP 可能面临版权和争议风险；仅 1 位贡献者的"一人项目"模式可持续性存疑；AI 生成的认知模型可能存在事实偏差。</p>
+
+        <p><strong>总体评价：</strong>这是一个将 AI 技术与中国社会刚需场景完美结合的优秀案例，推荐关注女娲.skill 生态的后续发展。</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>GitHub Trending 深度分析报告 · 由 AI 自动生成 · <a href="https://github.com/alchaincyf/zhangxuefeng-skill">查看原项目</a></p>
+    <p style="margin-top:8px;">分析日期：2026-06-12 · 数据来源：GitHub API + 项目 README</p>
+  </div>
+</footer>
+
+</body>
+</html>
