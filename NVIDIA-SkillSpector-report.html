@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA/SkillSpector 深度分析报告</title>
+    <style>
+        :root {
+            --primary: #76B900;
+            --primary-dark: #5a8f00;
+            --bg: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2333;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --border: #30363d;
+            --accent-blue: #58a6ff;
+            --accent-purple: #bc8cff;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --gradient-1: linear-gradient(135deg, #76B900 0%, #00b4d8 100%);
+            --gradient-2: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            padding: 80px 40px 60px;
+            background: var(--gradient-2);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(118, 185, 0, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 180, 216, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .badge-green { border-color: var(--accent-green); color: var(--accent-green); }
+        .badge-blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .badge-purple { border-color: var(--accent-purple); color: var(--accent-purple); }
+        .badge-orange { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            max-width: 700px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .meta-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .meta-item .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .meta-item .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .section-icon.green { background: rgba(63,185,80,0.15); }
+        .section-icon.blue { background: rgba(88,166,255,0.15); }
+        .section-icon.purple { background: rgba(188,140,255,0.15); }
+        .section-icon.orange { background: rgba(240,136,62,0.15); }
+        .section-icon.red { background: rgba(248,81,73,0.15); }
+        .section-icon.yellow { background: rgba(210,153,34,0.15); }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .card h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--accent-blue);
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        .card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .card ul {
+            padding-left: 20px;
+            color: var(--text-secondary);
+        }
+
+        .card ul li {
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 40px;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .stat-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        /* Categories Table */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 12px;
+        }
+
+        .category-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .category-count {
+            min-width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(118, 185, 0, 0.12);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .category-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .category-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Pipeline Diagram */
+        .pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .pipeline-stage {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .pipeline-stage h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .pipeline-stage .stage-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .stage-badge.fast {
+            background: rgba(63,185,80,0.15);
+            color: var(--accent-green);
+        }
+
+        .stage-badge.smart {
+            background: rgba(188,140,255,0.15);
+            color: var(--accent-purple);
+        }
+
+        .pipeline-arrow {
+            text-align: center;
+            font-size: 24px;
+            color: var(--text-secondary);
+            padding: 8px 0;
+        }
+
+        /* Score Gauge */
+        .score-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+        }
+
+        .gauge-wrapper {
+            text-align: center;
+        }
+
+        .gauge {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+
+        .gauge svg {
+            transform: rotate(-90deg);
+        }
+
+        .gauge-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-score {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .gauge-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .score-details {
+            max-width: 400px;
+        }
+
+        .score-bar {
+            margin-bottom: 14px;
+        }
+
+        .score-bar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .score-bar-header .name { color: var(--text); font-weight: 500; }
+        .score-bar-header .val { color: var(--primary); font-weight: 700; }
+
+        .score-bar-track {
+            height: 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: rgba(118, 185, 0, 0.08);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            color: var(--primary);
+        }
+
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .check { color: var(--accent-green); font-weight: 700; }
+        .cross { color: var(--accent-red); }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-string { color: #a5d6ff; }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(248, 81, 73, 0.06);
+            border: 1px solid rgba(248, 81, 73, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .warning-box h4 {
+            color: var(--accent-red);
+            margin-bottom: 8px;
+        }
+
+        .info-box {
+            background: rgba(88, 166, 255, 0.06);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .info-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 24px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 40px 20px 30px; }
+            .hero h1 { font-size: 32px; }
+            .hero .subtitle { font-size: 16px; }
+            .container { padding: 24px 16px; }
+            .score-container { gap: 30px; }
+            .gauge { width: 140px; height: 140px; }
+            .gauge-score { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<div class="hero">
+    <div class="hero-content">
+        <div class="badge-row">
+            <span class="badge badge-green">&#9989; 开源</span>
+            <span class="badge badge-blue">Python</span>
+            <span class="badge badge-purple">Apache 2.0</span>
+            <span class="badge badge-orange">NVIDIA 出品</span>
+        </div>
+        <h1>NVIDIA/SkillSpector</h1>
+        <p class="subtitle">AI Agent Skills 安全扫描器 — 在安装 Agent 技能之前，检测漏洞、恶意模式和安全风险</p>
+        <div class="meta-grid">
+            <div class="meta-item">
+                <div class="label">GitHub Stars</div>
+                <div class="value">~2.1k</div>
+            </div>
+            <div class="meta-item">
+                <div class="label">检测模式</div>
+                <div class="value">64</div>
+            </div>
+            <div class="meta-item">
+                <div class="label">安全类别</div>
+                <div class="value">16</div>
+            </div>
+            <div class="meta-item">
+                <div class="label">许可证</div>
+                <div class="value" style="font-size:18px;">Apache 2.0</div>
+            </div>
+            <div class="meta-item">
+                <div class="label">语言</div>
+                <div class="value" style="font-size:18px;">Python 3.12+</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon green">&#128220;</div>
+            <h2 class="section-title">项目概述</h2>
+        </div>
+        <div class="card">
+            <h3>背景与动机</h3>
+            <p>随着 AI Agent 生态的爆发式增长（Claude Code、Codex CLI、Gemini CLI 等），Agent Skills（技能插件）成为了扩展 AI 能力的核心机制。然而，这些技能在安装时往往获得隐式信任，缺乏充分的安全审查。</p>
+            <p>NVIDIA 基于学术研究「Agent Skills in the Wild: An Empirical Study of Security Vulnerabilities at Scale」（Liu et al., 2026）的发现，开发了 SkillSpector：</p>
+            <ul>
+                <li><strong>26.1%</strong> 的技能包含至少一个安全漏洞</li>
+                <li><strong>5.2%</strong> 的技能存在明显的恶意意图</li>
+                <li>包含可执行脚本的技能被攻击的可能性是普通技能的 <strong>2.12 倍</strong></li>
+                <li>研究覆盖了 <strong>42,447</strong> 个来自主要市场的技能样本</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>核心定位</h3>
+            <p>SkillSpector 致力于回答一个关键问题：<strong>"这个技能是否安全安装？"</strong> 它是一个专为 AI Agent Skills 设计的静态安全扫描器，能够在安装前检测潜在的安全威胁。</p>
+            <p>支持多种输入格式：Git 仓库、URL、Zip 文件、本地目录或单个文件。输出格式包括终端报告、JSON、Markdown 和 SARIF（适配 CI/CD 集成）。</p>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon blue">&#128736;</div>
+            <h2 class="section-title">技术架构</h2>
+        </div>
+
+        <div class="card">
+            <h3>整体架构</h3>
+            <p>SkillSpector 基于 <strong>LangGraph 工作流</strong>构建，采用共享工件上下文（shared artifact context）设计模式。核心流程包括：技能规范化 → 上下文构建 → 检测管线执行 → 结果过滤 → 风险评分。</p>
+        </div>
+
+        <div class="pipeline">
+            <div class="pipeline-stage">
+                <span class="stage-badge fast">&#9889; Stage 1: 静态分析</span>
+                <h3>快速静态扫描引擎</h3>
+                <ul style="padding-left:20px; color:var(--text-secondary);">
+                    <li><strong>11 个静态分析器</strong>并行执行基于正则表达式的模式匹配</li>
+                    <li><strong>AST 行为分析</strong>：检测 exec()、eval()、subprocess 等危险调用</li>
+                    <li><strong>实时漏洞查询</strong>：通过 OSV.dev API 查询已知 CVE（覆盖 PyPI/npm）</li>
+                    <li><strong>YARA 签名引擎</strong>：检测已知恶意软件、WebShell、挖矿程序</li>
+                    <li><strong>污点追踪</strong>：从数据源到汇点的数据流分析</li>
+                    <li>特点：高召回率（捕获大部分问题），中等精确率（存在一些误报）</li>
+                </ul>
+            </div>
+            <div class="pipeline-arrow">&#8595;</div>
+            <div class="pipeline-stage">
+                <span class="stage-badge smart">&#129302; Stage 2: LLM 语义分析（可选）</span>
+                <h3>智能语义评估</h3>
+                <ul style="padding-left:20px; color:var(--text-secondary);">
+                    <li><strong>上下文意图评估</strong>：理解代码的实际意图而非仅匹配模式</li>
+                    <li><strong>误报过滤</strong>：精确率提升至约 87%</li>
+                    <li><strong>人可读解释</strong>：生成每个发现的自然语言描述</li>
+                    <li><strong>防越狱保护</strong>：LLM 提示词包含防护措施，防止恶意技能操纵分析过程</li>
+                    <li>支持 OpenAI、Anthropic、NVIDIA Build 等多种 LLM Provider</li>
+                    <li>支持本地模型：Ollama、vLLM、llama.cpp</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top:16px;">
+            <h4>&#128161; 技术亮点</h4>
+            <p style="color:var(--text-secondary); font-size:14px;">
+                SkillSpector 不仅可以通过命令行使用，还提供 <strong>Python API</strong>，可通过 <code>from skillspector import graph</code> 直接调用 LangGraph 工作流，方便集成到自动化工具链中。SARIF 格式输出支持 GitHub Code Scanning、VS Code 等工具的原生集成。
+            </p>
+        </div>
+    </div>
+
+    <!-- 16大检测类别 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon orange">&#128737;</div>
+            <h2 class="section-title">16 大检测类别详解</h2>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card">
+                <div class="stat-value">64</div>
+                <div class="stat-label">漏洞检测模式</div>
+                <div class="stat-desc">覆盖 AI Agent Skill 全生命周期威胁</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">16</div>
+                <div class="stat-label">安全类别</div>
+                <div class="stat-desc">从注入攻击到供应链安全</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">严重级别</div>
+                <div class="stat-desc">CRITICAL / HIGH / MEDIUM / LOW / INFO</div>
+            </div>
+        </div>
+
+        <div class="categories-grid">
+            <div class="category-item">
+                <div class="category-count">5</div>
+                <div class="category-info">
+                    <h4>Prompt Injection（提示注入）</h4>
+                    <p>指令覆盖、隐藏指令、数据窃取命令、行为操控、有害内容</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">4</div>
+                <div class="category-info">
+                    <h4>Data Exfiltration（数据外泄）</h4>
+                    <p>外部传输、环境变量收集、文件系统枚举、上下文泄露</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">3</div>
+                <div class="category-info">
+                    <h4>Privilege Escalation（权限提升）</h4>
+                    <p>过度权限、Root 执行、凭证访问</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">6</div>
+                <div class="category-info">
+                    <h4>Supply Chain（供应链）</h4>
+                    <p>未锁定依赖、远程脚本、混淆代码、已知CVE、废弃依赖、仿冒包名</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">4</div>
+                <div class="category-info">
+                    <h4>Excessive Agency（过度授权）</h4>
+                    <p>无限制工具访问、自主决策、范围蔓延、无界资源消耗</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">3</div>
+                <div class="category-info">
+                    <h4>Output Handling（输出处理）</h4>
+                    <p>未验证输出注入、跨上下文输出、无界输出</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">3</div>
+                <div class="category-info">
+                    <h4>System Prompt Leakage（系统提示泄露）</h4>
+                    <p>直接泄露、间接提取、工具侧信道外泄</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">3</div>
+                <div class="category-info">
+                    <h4>Memory Poisoning（记忆投毒）</h4>
+                    <p>持久化上下文注入、上下文窗口填充、记忆篡改</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">3</div>
+                <div class="category-info">
+                    <h4>Tool Misuse（工具滥用）</h4>
+                    <p>参数滥用、链式绕过、不安全默认配置</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">2</div>
+                <div class="category-info">
+                    <h4>Rogue Agent（恶意代理）</h4>
+                    <p>自我修改代码、会话持久化</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">3</div>
+                <div class="category-info">
+                    <h4>Trigger Abuse（触发器滥用）</h4>
+                    <p>过宽触发器、影子命令、关键词诱饵</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">8</div>
+                <div class="category-info">
+                    <h4>Behavioral AST（行为 AST 分析）</h4>
+                    <p>exec/eval/动态导入/subprocess/os.system/compile/getattr/危险链</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">5</div>
+                <div class="category-info">
+                    <h4>Taint Tracking（污点追踪）</h4>
+                    <p>直接/间接污点流、凭证外泄链、文件读取外泄、外部输入到代码执行</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">4</div>
+                <div class="category-info">
+                    <h4>YARA Signatures（YARA 签名）</h4>
+                    <p>恶意软件、WebShell、挖矿程序、黑客工具/漏洞利用</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">4</div>
+                <div class="category-info">
+                    <h4>MCP Least Privilege（MCP 最小权限）</h4>
+                    <p>未声明能力、通配符权限、缺失权限声明、过度声明权限</p>
+                </div>
+            </div>
+            <div class="category-item">
+                <div class="category-count">4</div>
+                <div class="category-info">
+                    <h4>MCP Tool Poisoning（MCP 工具投毒）</h4>
+                    <p>隐藏指令、Unicode 欺骗、参数描述注入、描述-行为不一致</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 风险评分系统 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon red">&#127919;</div>
+            <h2 class="section-title">风险评分系统</h2>
+        </div>
+
+        <div class="card">
+            <h3>评分算法</h3>
+            <table class="comparison-table" style="margin-bottom:16px;">
+                <thead>
+                    <tr>
+                        <th>严重级别</th>
+                        <th>分值</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>CRITICAL</td><td>+50</td><td>可能造成严重危害的漏洞</td></tr>
+                    <tr><td>HIGH</td><td>+25</td><td>高风险安全问题</td></tr>
+                    <tr><td>MEDIUM</td><td>+10</td><td>中等风险</td></tr>
+                    <tr><td>LOW</td><td>+5</td><td>低风险问题</td></tr>
+                </tbody>
+            </table>
+            <p>若技能包含可执行脚本，总分乘以 <strong>1.3 倍系数</strong>。最终评分为 0-100 分。</p>
+        </div>
+
+        <div class="card">
+            <h3>风险等级与建议</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>评分</th>
+                        <th>等级</th>
+                        <th>建议</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color:var(--accent-green); font-weight:700;">0 - 20</td>
+                        <td>LOW</td>
+                        <td><strong style="color:var(--accent-green);">SAFE</strong> — 安全，可安装</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--accent-yellow); font-weight:700;">21 - 50</td>
+                        <td>MEDIUM</td>
+                        <td><strong style="color:var(--accent-yellow);">CAUTION</strong> — 谨慎安装</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--accent-orange); font-weight:700;">51 - 80</td>
+                        <td>HIGH</td>
+                        <td><strong style="color:var(--accent-orange);">DO NOT INSTALL</strong> — 不建议安装</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--accent-red); font-weight:700;">81 - 100</td>
+                        <td>CRITICAL</td>
+                        <td><strong style="color:var(--accent-red);">DO NOT INSTALL</strong> — 严重风险</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon purple">&#128161;</div>
+            <h2 class="section-title">核心创新点</h2>
+        </div>
+
+        <div class="card">
+            <h3>1. 首个针对 AI Agent Skills 的专业安全扫描器</h3>
+            <p>不同于传统代码安全扫描工具（如 Semgrep、SonarQube），SkillSpector 是首个专门为 AI Agent Skills 设计的安全检测工具。它理解 SKILL.md 文件格式、MCP 工具协议、Agent 技能的触发器机制等 AI 原生概念。</p>
+        </div>
+
+        <div class="card">
+            <h3>2. 两阶段混合检测管线</h3>
+            <p>将快速的静态分析（正则匹配 + AST 分析 + YARA 签名）与深度的 LLM 语义分析相结合，在速度和精度之间取得平衡。静态阶段保证高召回率，LLM 阶段将精确率提升至约 87%。</p>
+        </div>
+
+        <div class="card">
+            <h3>3. MCP 协议安全检测</h3>
+            <p>独有地对 MCP（Model Context Protocol）工具投毒和最小权限违规进行检测，包括 Unicode 欺骗（同形字、RTL 覆盖）、参数描述注入、隐藏指令等高级攻击手段。</p>
+        </div>
+
+        <div class="card">
+            <h3>4. 实时漏洞数据库查询</h3>
+            <p>通过 OSV.dev API 实时查询依赖项的已知漏洞，覆盖 PyPI 和 npm 生态的数万个安全公告。支持自动离线回退，即使在没有网络的环境中也能使用内置的备用列表。</p>
+        </div>
+
+        <div class="card">
+            <h3>5. NVIDIA Verified Agent Skills 生态</h3>
+            <p>SkillSpector 是 NVIDIA Verified Agent Skills 体系的核心组件。每个通过验证的技能都会生成一张<strong>技能卡（Skill Card）</strong>——机器可读的信任记录，说明技能功能、构建者和安全态势。这构成了一个完整的技能安全治理框架。</p>
+        </div>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon yellow">&#127919;</div>
+            <h2 class="section-title">应用场景</h2>
+        </div>
+
+        <div class="card">
+            <h3>&#128104;&#8205;&#128187; 个人开发者</h3>
+            <p>在从 GitHub 或技能市场安装 Agent Skills 之前，运行 SkillSpector 进行安全扫描，避免安装含有恶意代码的技能（如环境变量窃取、后门、数据外泄）。</p>
+        </div>
+
+        <div class="card">
+            <h3>&#127970; 企业安全团队</h3>
+            <p>将 SkillSpector 集成到 CI/CD 管线中（通过 SARIF 输出格式），对内部开发的 Agent Skills 进行自动化安全审查。配合 GitHub Code Scanning 或 VS Code 插件实现安全左移。</p>
+        </div>
+
+        <div class="card">
+            <h3>&#127760; 技能市场运营方</h3>
+            <p>作为技能发布流程的安全关卡，在用户可访问之前对所有提交的技能进行安全扫描。NVIDIA 已将 SkillSpector 作为其 Verified Agent Skills 发布验证管线的一部分。</p>
+        </div>
+
+        <div class="card">
+            <h3>&#128218; 安全研究人员</h3>
+            <p>利用 SkillSpector 的 64 种检测模式和 Python API，对大规模技能市场进行安全研究。其 LangGraph 架构支持扩展自定义分析器。</p>
+        </div>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon red">&#9879;</div>
+            <h2 class="section-title">竞品对比</h2>
+        </div>
+
+        <div class="card" style="overflow-x:auto;">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>SkillSpector</th>
+                        <th>VirusTotal</th>
+                        <th>通用静态分析<br>(Semgrep等)</th>
+                        <th>其他 AI 技能<br>扫描器</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Agent Skills 专项检测</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="check">&#10004;</td>
+                    </tr>
+                    <tr>
+                        <td>Prompt 注入检测</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                        <td style="color:var(--accent-yellow);">&#9888; 部分</td>
+                    </tr>
+                    <tr>
+                        <td>MCP 工具投毒检测</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>LLM 语义分析</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                        <td style="color:var(--accent-yellow);">&#9888; 部分</td>
+                    </tr>
+                    <tr>
+                        <td>AST 行为分析</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="check">&#10004;</td>
+                        <td style="color:var(--accent-yellow);">&#9888; 部分</td>
+                    </tr>
+                    <tr>
+                        <td>YARA 签名引擎</td>
+                        <td class="check">&#10004;</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>实时 CVE 查询</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td style="color:var(--accent-yellow);">&#9888; 部分</td>
+                        <td class="cross">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>污点追踪</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>SKILL.md 文件理解</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="cross">&#10008;</td>
+                        <td class="check">&#10004;</td>
+                    </tr>
+                    <tr>
+                        <td>开源免费</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                        <td style="color:var(--accent-yellow);">&#9888; 部分开源</td>
+                        <td style="color:var(--accent-yellow);">&#9888; 部分开源</td>
+                    </tr>
+                    <tr>
+                        <td>Python API</td>
+                        <td class="check">&#10004;</td>
+                        <td class="check">&#10004;</td>
+                        <td class="check">&#10004;</td>
+                        <td class="cross">&#10008;</td>
+                    </tr>
+                    <tr>
+                        <td>检测模式数量</td>
+                        <td><strong>64</strong></td>
+                        <td>未知</td>
+                        <td>数百+</td>
+                        <td>10-30</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="warning-box">
+            <h4>&#9888; 行业挑战</h4>
+            <p style="color:var(--text-secondary); font-size:14px;">
+                根据 2026 年一项涵盖 <strong>238,180 个技能</strong>的大规模研究，七个主流 AI 技能安全扫描器仅在 <strong>0.12%</strong> 的情况下达成一致。这反映出 AI 安全扫描领域仍处于早期阶段，工具间的一致性有待提升。利用 GitHub 仓库上下文和元数据可以将误报率降低约 <strong>99%</strong>。
+            </p>
+        </div>
+    </div>
+
+    <!-- 快速上手 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon green">&#128640;</div>
+            <h2 class="section-title">快速上手</h2>
+        </div>
+
+        <div class="card">
+            <h3>安装</h3>
+            <div class="code-block">
+<span class="code-comment"># 克隆仓库</span>
+git clone https://github.com/NVIDIA/skillspector.git
+<span class="code-keyword">cd</span> skillspector
+
+<span class="code-comment"># 创建虚拟环境</span>
+uv venv .venv && <span class="code-keyword">source</span> .venv/bin/activate
+
+<span class="code-comment"># 安装</span>
+make install
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>基本使用</h3>
+            <div class="code-block">
+<span class="code-comment"># 扫描本地技能目录</span>
+skillspector scan ./my-skill/
+
+<span class="code-comment"># 扫描 Git 仓库</span>
+skillspector scan https://github.com/user/my-skill
+
+<span class="code-comment"># 输出 SARIF 格式（适配 CI/CD）</span>
+skillspector scan ./my-skill/ --format sarif --output report.sarif
+
+<span class="code-comment"># 仅静态分析（不使用 LLM，速度更快）</span>
+skillspector scan ./my-skill/ --no-llm
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Python API 集成</h3>
+            <div class="code-block">
+<span class="code-keyword">from</span> skillspector <span class="code-keyword">import</span> graph
+
+<span class="code-comment"># 调用 LangGraph 工作流</span>
+result = graph.invoke({
+    <span class="code-string">"input_path"</span>: <span class="code-string">"/path/to/skill"</span>,
+    <span class="code-string">"output_format"</span>: <span class="code-string">"json"</span>,
+    <span class="code-string">"use_llm"</span>: <span class="code-keyword">True</span>,
+})
+
+<span class="code-comment"># 访问结果</span>
+<span class="code-keyword">print</span>(f<span class="code-string">"Risk Score: {result['risk_score']}/100"</span>)
+<span class="code-keyword">print</span>(f<span class="code-string">"Severity: {result['risk_severity']}"</span>)
+            </div>
+        </div>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon purple">&#11088;</div>
+            <h2 class="section-title">综合评分</h2>
+        </div>
+
+        <div class="score-container">
+            <div class="gauge-wrapper">
+                <div class="gauge">
+                    <svg width="180" height="180" viewBox="0 0 180 180">
+                        <circle cx="90" cy="90" r="78" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+                        <circle cx="90" cy="90" r="78" fill="none" stroke="url(#gaugeGrad)" stroke-width="12"
+                                stroke-dasharray="490" stroke-dashoffset="73.5" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#76B900"/>
+                                <stop offset="100%" style="stop-color:#00b4d8"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="gauge-text">
+                        <div class="gauge-score">9.0</div>
+                        <div class="gauge-label">/ 10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="score-details">
+                <div class="score-bar">
+                    <div class="score-bar-header">
+                        <span class="name">技术创新性</span>
+                        <span class="val">9.5 / 10</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:95%; background:var(--gradient-1);"></div>
+                    </div>
+                </div>
+                <div class="score-bar">
+                    <div class="score-bar-header">
+                        <span class="name">实用价值</span>
+                        <span class="val">9.0 / 10</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:90%; background:var(--gradient-1);"></div>
+                    </div>
+                </div>
+                <div class="score-bar">
+                    <div class="score-bar-header">
+                        <span class="name">工程质量</span>
+                        <span class="val">9.0 / 10</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:90%; background:var(--gradient-1);"></div>
+                    </div>
+                </div>
+                <div class="score-bar">
+                    <div class="score-bar-header">
+                        <span class="name">生态完整性</span>
+                        <span class="val">8.5 / 10</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:85%; background:var(--gradient-1);"></div>
+                    </div>
+                </div>
+                <div class="score-bar">
+                    <div class="score-bar-header">
+                        <span class="name">社区活跃度</span>
+                        <span class="val">8.5 / 10</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:85%; background:var(--gradient-1);"></div>
+                    </div>
+                </div>
+                <div class="score-bar">
+                    <div class="score-bar-header">
+                        <span class="name">文档完善度</span>
+                        <span class="val">9.5 / 10</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill" style="width:95%; background:var(--gradient-1);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon green">&#128203;</div>
+            <h2 class="section-title">总结与展望</h2>
+        </div>
+
+        <div class="card">
+            <h3>项目评价</h3>
+            <p>NVIDIA/SkillSpector 是 AI Agent 安全领域的<strong>里程碑式项目</strong>。它不仅是首个专为 Agent Skills 设计的安全扫描器，更代表了 NVIDIA 构建 AI Agent 安全治理生态的战略布局。</p>
+            <p><strong>核心优势：</strong></p>
+            <ul>
+                <li>覆盖 16 大类别 64 种检测模式，检测范围行业最全</li>
+                <li>两阶段分析管线兼顾速度和精度</li>
+                <li>独有 MCP 协议安全检测能力</li>
+                <li>完整的 Python API 和多种输出格式，易于集成</li>
+                <li>由 NVIDIA 背书，与 Verified Agent Skills 生态深度整合</li>
+            </ul>
+            <p><strong>局限与挑战：</strong></p>
+            <ul>
+                <li>仅支持静态分析，无法检测运行时行为</li>
+                <li>无法分析非英语内容、图片中的文本、加密/编译代码</li>
+                <li>行业整体工具一致性较低（七款工具仅 0.12% 一致率）</li>
+                <li>LLM 语义分析需要额外的 API 费用</li>
+            </ul>
+            <p><strong>展望：</strong>随着 AI Agent 生态的快速发展，SkillSpector 作为安全基础设施的重要性将持续增长。NVIDIA 已将其纳入 Verified Agent Skills 发布管线，未来有望成为 AI Agent Skills 安全扫描的事实标准。</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>NVIDIA/SkillSpector 深度分析报告 | 分析日期：2026-06-12</p>
+    <p>
+        <a href="https://github.com/NVIDIA/SkillSpector" target="_blank">GitHub 仓库</a> &middot;
+        <a href="https://docs.nvidia.com/skills/scanning-agent-skills" target="_blank">官方文档</a> &middot;
+        <a href="https://developer.nvidia.com/blog/nvidia-verified-agent-skills-provide-capability-governance-for-ai-agents/" target="_blank">NVIDIA Blog</a>
+    </p>
+</div>
+
+</body>
+</html>
