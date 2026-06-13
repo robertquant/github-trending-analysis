@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告 · chatwoot/chatwoot</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-soft: #121a30;
+    --card: #151d36;
+    --card-2: #1a2542;
+    --border: rgba(255,255,255,0.08);
+    --text: #e8ecf5;
+    --muted: #9aa6c2;
+    --brand: #1f93ff;
+    --brand-2: #21d4fd;
+    --accent: #ff7849;
+    --green: #2fd38a;
+    --amber: #ffc44d;
+    --red: #ff6b6b;
+    --shadow: 0 10px 40px rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 80% -10%, rgba(33,212,253,0.10), transparent 60%),
+                radial-gradient(900px 500px at -10% 10%, rgba(31,147,255,0.12), transparent 55%),
+                var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* HERO */
+  header.hero {
+    position: relative;
+    overflow: hidden;
+    padding: 64px 0 56px;
+    border-bottom: 1px solid var(--border);
+    background:
+      linear-gradient(180deg, rgba(31,147,255,0.06), transparent),
+      var(--bg);
+  }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brand-2);
+    border: 1px solid rgba(33,212,253,0.35);
+    background: rgba(33,212,253,0.07);
+    padding: 6px 14px; border-radius: 999px;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 5vw, 54px);
+    line-height: 1.1; font-weight: 800; margin: 22px 0 14px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #fff, #bfe3ff 60%, #21d4fd);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero .sub { font-size: 18px; color: var(--muted); max-width: 720px; }
+  .hero .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .chip {
+    font-size: 13px; color: var(--text);
+    background: var(--card); border: 1px solid var(--border);
+    padding: 7px 13px; border-radius: 8px;
+  }
+  .chip b { color: var(--muted); font-weight: 500; margin-right: 6px; }
+
+  /* SCORE STRIP */
+  .score-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    margin-top: 40px;
+  }
+  .score-card {
+    background: linear-gradient(180deg, var(--card-2), var(--card));
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 16px; box-shadow: var(--shadow);
+  }
+  .score-card .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .score-card .v { font-size: 30px; font-weight: 800; margin-top: 4px; }
+  .score-card .bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 6px; margin-top: 10px; overflow: hidden; }
+  .score-card .bar > span { display: block; height: 100%; border-radius: 6px; }
+
+  /* SECTIONS */
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section h2 {
+    font-size: 28px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  section h2 .num {
+    font-size: 14px; font-weight: 700; color: var(--bg);
+    background: linear-gradient(90deg, var(--brand-2), var(--brand));
+    width: 30px; height: 30px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  section .lead { color: var(--muted); margin-bottom: 26px; max-width: 820px; }
+  h3 { font-size: 18px; margin: 24px 0 10px; color: #cfe0ff; }
+
+  p { margin-bottom: 12px; color: #d7def0; }
+  ul, ol { margin: 6px 0 14px 4px; }
+  li { margin-bottom: 8px; color: #d7def0; }
+  strong { color: #fff; }
+  a { color: var(--brand-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: rgba(31,147,255,0.12); color: #bfe3ff;
+    padding: 2px 6px; border-radius: 5px; font-size: 0.88em;
+  }
+  pre {
+    background: #0a1124; border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; overflow-x: auto; margin: 14px 0;
+  }
+  pre code { background: none; color: #c8d6f5; padding: 0; font-size: 13px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 760px) {
+    .grid2, .grid3, .score-strip { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: linear-gradient(180deg, var(--card-2), var(--card));
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .card .ic { font-size: 22px; margin-bottom: 8px; }
+  .card h4 { font-size: 16px; margin-bottom: 6px; color: #fff; }
+  .card p { font-size: 14px; color: var(--muted); margin: 0; }
+
+  /* TABLE */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; }
+  table { width: 100%; border-collapse: collapse; min-width: 620px; }
+  th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+  th { background: var(--card-2); color: #cfe0ff; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td .yes { color: var(--green); font-weight: 700; }
+  td .no { color: var(--red); font-weight: 700; }
+  td .mid { color: var(--amber); font-weight: 700; }
+
+  /* ARCH DIAGRAM */
+  .arch {
+    background: #0a1124; border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px; margin: 16px 0; overflow-x: auto;
+  }
+  .arch pre { margin: 0; border: none; background: none; }
+
+  /* RATING */
+  .rating-row { display: grid; grid-template-columns: 200px 1fr 60px; gap: 14px; align-items: center; margin-bottom: 14px; }
+  .rating-row .label { font-size: 14px; color: #d7def0; }
+  .rating-row .track { height: 10px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+  .rating-row .track > span { display: block; height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); }
+  .rating-row .val { font-weight: 800; text-align: right; }
+  @media (max-width: 600px){ .rating-row { grid-template-columns: 1fr 50px; } .rating-row .label { grid-column: 1 / -1; } }
+
+  .final {
+    text-align: center; padding: 30px; border-radius: 16px;
+    background: linear-gradient(180deg, rgba(47,211,138,0.10), rgba(31,147,255,0.08));
+    border: 1px solid var(--border); margin-top: 20px;
+  }
+  .final .big { font-size: 56px; font-weight: 800; letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #2fd38a, #21d4fd); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .verdict { display: inline-block; margin-top: 8px; padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 14px;
+    background: rgba(47,211,138,0.15); color: var(--green); border: 1px solid rgba(47,211,138,0.3); }
+
+  .tag { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 6px; margin: 2px;
+    background: rgba(31,147,255,0.12); color: #bfe3ff; border: 1px solid rgba(31,147,255,0.2); }
+
+  footer { padding: 40px 0 60px; color: var(--muted); font-size: 13px; text-align: center; }
+  .pill-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; }
+  .pill-nav a { font-size: 13px; color: var(--muted); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; }
+  .pill-nav a:hover { color: #fff; border-color: var(--brand); text-decoration: none; }
+  .note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--brand); padding: 4px 0 4px 14px; margin: 12px 0; }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">★ GitHub Trending 深度分析</span>
+    <h1>chatwoot/chatwoot</h1>
+    <p class="sub">开源的全渠道客户互动平台（Omnichannel Customer Engagement Suite）——自托管时代的 Intercom / Zendesk 替代方案，把网站实时聊天、邮件、WhatsApp、Messenger、Instagram、Telegram 等所有对话收敛进同一个收件箱。</p>
+
+    <div class="meta">
+      <span class="chip"><b>类型</b>客户服务 / 客户互动平台</span>
+      <span class="chip"><b>许可</b>MIT License</span>
+      <span class="chip"><b>主语言</b>Ruby (Rails)</span>
+      <span class="chip"><b>部署</b>Docker · K8s · SaaS 云版</span>
+      <span class="chip"><b>仓库</b><a href="https://github.com/chatwoot/chatwoot" target="_blank">github.com/chatwoot/chatwoot</a></span>
+    </div>
+
+    <div class="score-strip">
+      <div class="score-card">
+        <div class="k">综合评分</div>
+        <div class="v">8.7<span style="font-size:16px;color:var(--muted)">/10</span></div>
+        <div class="bar"><span style="width:87%;background:linear-gradient(90deg,var(--green),var(--brand-2))"></span></div>
+      </div>
+      <div class="score-card">
+        <div class="k">成熟度</div>
+        <div class="v">9.0</div>
+        <div class="bar"><span style="width:90%;background:var(--green)"></span></div>
+      </div>
+      <div class="score-card">
+        <div class="k">社区活跃度</div>
+        <div class="v">8.8</div>
+        <div class="bar"><span style="width:88%;background:var(--brand)"></span></div>
+      </div>
+      <div class="score-card">
+        <div class="k">上手难度</div>
+        <div class="v" style="color:var(--amber)">中等</div>
+        <div class="bar"><span style="width:60%;background:var(--amber)"></span></div>
+      </div>
+    </div>
+
+    <nav class="pill-nav">
+      <a href="#overview">项目概述</a>
+      <a href="#arch">技术架构</a>
+      <a href="#innovation">核心创新点</a>
+      <a href="#scenarios">应用场景</a>
+      <a href="#compare">竞品对比</a>
+      <a href="#scoring">综合评分</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===================== OVERVIEW ===================== -->
+<section id="overview">
+  <div class="wrap">
+    <h2><span class="num">01</span>项目概述</h2>
+    <p class="lead">Chatwoot 是一款以"对话为中心"的开源客户互动套件。它把分散在各个渠道的客户消息汇聚到统一的团队收件箱（Shared Inbox），让客服、销售和市场团队在同一个界面上协作处理对话。</p>
+
+    <p><strong>定位与起源：</strong>Chatwoot 由 Sojan Jose 等人发起，最初的目标非常直接——做一个<strong>可以自托管、数据完全归自己所有</strong>的 Intercom/Zendesk 替代品。它的名字源自 "Chat" + "Hoot"（呼应专有客服工具 Omnichannel 的理念）。项目以 MIT 许可开源，同时官方提供托管云服务（chatwoot.com）作为商业模式，形成了典型的"开源核心 + 托管服务"双轨模式。</p>
+
+    <p><strong>核心理念：</strong>真正意义上的"全渠道"——客户从哪个渠道来（网站、邮件、WhatsApp、社交媒体），客服就在同一个收件箱里回复，上下文、联系人信息、历史记录全部打通。对重视数据主权、合规要求高、或希望深度定制客服流程的企业而言，它是商业 SaaS 之外最具竞争力的选择之一。</p>
+
+    <h3>核心能力一览</h3>
+    <div class="grid3">
+      <div class="card"><div class="ic">💬</div><h4>统一收件箱</h4><p>多渠道对话汇聚一处，支持团队协作、内部备注、@提及和会话转派。</p></div>
+      <div class="card"><div class="ic">🌐</div><h4>实时聊天 Widget</h4><p>可高度自定义品牌化的网站聊天组件，支持离线留言与继续会话。</p></div>
+      <div class="card"><div class="ic">📱</div><h4>多渠道接入</h4><p>WhatsApp、FB Messenger、Instagram、Telegram、LINE、邮件、SMS（Twilio）等。</p></div>
+      <div class="card"><div class="ic">🤖</div><h4>机器人与自动化</h4><p>对接 Dialogflow、Rasa、自定义 Webhook；支持自动分配规则与宏命令。</p></div>
+      <div class="card"><div class="ic">🧠</div><h4>AI 助手集成</h4><p>可接入 OpenAI/ChatGPT 辅助起草回复、总结长会话、意图识别。</p></div>
+      <div class="card"><div class="ic">📊</div><h4>报表与知识库</h4><p>坐席绩效、会话量、CSAT 满意度报表；内置帮助中心/知识库文章。</p></div>
+    </div>
+
+    <div class="note">说明：本报告撰写时网络检索工具因配额限制不可用，技术细节基于 Chatwoot 项目的既有公开信息与稳定架构特征整理。版本细节请以官方仓库 README 与 CHANGELOG 为准。</div>
+  </div>
+</section>
+
+<!-- ===================== ARCHITECTURE ===================== -->
+<section id="arch">
+  <div class="wrap">
+    <h2><span class="num">02</span>技术架构</h2>
+    <p class="lead">Chatwoot 是一个经典且成熟的 Rails 单体应用，辅以独立的聊天 Widget 子工程与可选的企业模块，部署上全面拥抱容器化。</p>
+
+    <h3>技术栈</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>后端</h4>
+        <p><strong>Ruby on Rails</strong>（API 模式）作为核心，遵循 MVC + Service Object 模式；<strong>Sidekiq</strong> 处理异步任务（消息分发、Webhook、报表计算）；<strong>ActionCable</strong>（WebSocket）支撑实时消息推送。</p>
+      </div>
+      <div class="card">
+        <h4>数据层</h4>
+        <p><strong>PostgreSQL</strong> 作为主数据库，承载账户、收件箱、会话、联系人、消息等核心域模型；<strong>Redis</strong> 用作缓存、Sidekiq 队列与 Pub/Sub。</p>
+      </div>
+      <div class="card">
+        <h4>前端</h4>
+        <p>管理/坐席仪表盘基于 <strong>React</strong>（项目早期为 Vue.js，后已迁移到 React 体系）；聊天 Widget SDK 是可嵌入的轻量前端组件，框架无关。</p>
+      </div>
+      <div class="card">
+        <h4>部署与运维</h4>
+        <p><strong>Docker / Docker Compose</strong> 一键起本地环境；提供 <strong>Helm Charts / Kubernetes</strong> 清单用于生产级弹性部署；同时支持 Linux VM 安装脚本与 Heroku 等 PaaS。</p>
+      </div>
+    </div>
+
+    <h3>架构拓扑</h3>
+    <div class="arch">
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│  客户端：浏览器仪表盘 · iOS/Android App · 网站 Chat Widget │
+└────────────────────────────┬─────────────────────────────┘
+                             │  HTTPS / WebSocket
+                  ┌──────────▼──────────┐
+                  │  Nginx (反向代理/负载)│
+                  └──────────┬──────────┘
+                             │
+            ┌────────────────▼─────────────────┐
+            │   Rails API Server (Ruby)         │
+            │   仪表盘 + REST API + ActionCable │
+            └──────┬─────────────────┬──────────┘
+                   │                 │
+         ┌─────────▼──────┐   ┌──────▼──────────────┐
+         │  PostgreSQL    │   │  Redis              │
+         │  (主数据库)     │   │  (缓存/队列/PubSub) │
+         └────────────────┘   └──────┬──────────────┘
+                                     │
+                            ┌────────▼─────────┐
+                            │  Sidekiq Workers │  ← 消息分发/Webhook/报表
+                            └────────┬─────────┘
+                                     │
+                  ┌──────────────────▼───────────────────┐
+                  │  外部渠道适配器 (Channel Adapters)    │
+                  │  WhatsApp · Messenger · Telegram · …  │
+                  └───────────────────────────────────────┘
+</code></pre>
+    </div>
+
+    <h3>典型仓库目录结构</h3>
+    <div class="arch">
+<pre><code>chatwoot/
+├── app/              # Rails 应用：models / controllers / services / jobs
+│   ├── models/       # 域模型：Conversation, Inbox, Account, Contact …
+│   ├── services/     # 业务逻辑（Service Object 模式）
+│   ├── jobs/         # Sidekiq 异步任务
+│   └── listeners/    # 事件监听（基于事件驱动）
+├── lib/              # 核心工具类与渠道集成
+├── dashboard/        # 坐席/管理端前端 (React)
+├── widget/           # 可嵌入的聊天 Widget
+├── enterprise/       # 企业版增值功能（基于开源协议）
+├── config/           # Rails 配置、路由、环境
+├── docker/           # Dockerfile & compose
+├── deployment/       # Helm Charts / K8s 清单
+└── spec/             # RSpec 测试套件
+</code></pre>
+    </div>
+
+    <h3>关键设计要点</h3>
+    <ul>
+      <li><strong>多租户架构：</strong>以 Account（账户）为核心做数据隔离，天然适合 SaaS 与多品牌运营，每个账户下可建多个 Inbox 与 Team。</li>
+      <li><strong>事件驱动：</strong>大量业务通过事件监听器（listeners）解耦——新消息到达、会话被分配、CSAT 提交等都可触发 Webhook 与自动化，扩展性好。</li>
+      <li><strong>渠道适配器模式：</strong>每个外部渠道（WhatsApp/Messenger 等）以 Adapter 形式接入，新增渠道只需实现统一的消息收发接口，对核心逻辑零侵入。</li>
+      <li><strong>实时能力：</strong>基于 ActionCable 的 WebSocket 通道，坐席端与客户 Widget 端都能获得毫秒级的"对方正在输入"、新消息推送等实时体验。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== INNOVATION ===================== -->
+<section id="innovation">
+  <div class="wrap">
+    <h2><span class="num">03</span>核心创新点</h2>
+    <p class="lead">Chatwoot 并非以"技术炫技"取胜，而是以工程化与产品化的成熟度构建了真正可用的开源客服体系。以下几个维度构成其核心竞争力。</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>① 真正的全渠道统一</h4>
+        <p>大多数开源工具只做单渠道（如纯网站聊天）。Chatwoot 把 WhatsApp Business、Messenger、Instagram、Telegram、LINE、邮件、SMS、API 渠道在数据模型层就统一为同一套"会话（Conversation）+ 消息（Message）"，跨渠道联系人合并让一个客户的多个触点历史完整可见。</p>
+      </div>
+      <div class="card">
+        <h4>② 数据主权与自托管</h4>
+        <p>这是它相对 Intercom/Zendesk 最大的差异化。金融、医疗、政务等强合规行业，以及重视客户数据资产的企业，可以在自有基础设施上完整运行，规避数据出境与第三方锁定风险。</p>
+      </div>
+      <div class="card">
+        <h4>③ 开源核心 + 云服务双轨</h4>
+        <p>MIT 开源保证社区活力与生态，同时官方云版（chatwoot.com）提供托管收入反哺开发。企业增值功能放在 enterprise/ 目录，形成了可持续的开源商业化样本。</p>
+      </div>
+      <div class="card">
+        <h4>④ 可扩展的机器人与 AI 生态</h4>
+        <p>内建对接 Dialogflow、Rasa 等对话式 AI 框架，并支持自定义 Webhook Bot；近期可接入大语言模型（如 OpenAI/ChatGPT）做回复起草、会话摘要与意图识别，把"AI 增强坐席"能力带入开源自托管栈。</p>
+      </div>
+      <div class="card">
+        <h4>⑤ 工程化与可观测性</h4>
+        <p>完整的 RSpec 测试套件、清晰的 Service Object 分层、Sidekiq 异步化、完善的 Webhook 与 REST API，使其在中等规模生产环境中稳定可运维，而非只是"Demo 级"开源项目。</p>
+      </div>
+      <div class="card">
+        <h4>⑥ 移动端覆盖</h4>
+        <p>提供 iOS / Android 原生坐席 App，让客服团队在移动端也能接管与回复会话，这在同类型开源项目中并不多见。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SCENARIOS ===================== -->
+<section id="scenarios">
+  <div class="wrap">
+    <h2><span class="num">04</span>应用场景</h2>
+    <p class="lead">Chatwoot 适合"需要持续与客户对话、且重视数据控制权"的各类组织。典型场景如下：</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>🏢 企业级客户支持</h4>
+        <p>SaaS 公司、电商、在线教育等用统一收件箱承接售前咨询与售后支持，配合自动分配、SLA、CSAT 与报表管理坐席团队。</p>
+      </div>
+      <div class="card">
+        <h4>🔒 强合规行业</h4>
+        <p>金融、医疗、法律、政务等对数据驻留有严格要求的场景，自托管 Chatwoot 满足数据不出本地的合规需求。</p>
+      </div>
+      <div class="card">
+        <h4>💬 社交媒体客服运营</h4>
+        <p>品牌方需要在 WhatsApp / Instagram / Messenger / Telegram 等多社媒承接客户消息，Chatwoot 把它们收敛到一个团队工作台。</p>
+      </div>
+      <div class="card">
+        <h4>🛒 电商与跨境交易</h4>
+        <p>结合 Shopify 等集成，在对话中直接处理订单咨询、物流与退换货，WhatsApp 渠道对跨境/新兴市场尤其关键。</p>
+      </div>
+      <div class="card">
+        <h4>🤖 AI Bot 落地底座</h4>
+        <p>作为对话前端的"承接层"——Bot 先处理高频问题，复杂问题平滑转人工；也可接 LLM 做坐席辅助。</p>
+      </div>
+      <div class="card">
+        <h4>🏗️ 内部二次开发平台</h4>
+        <p>有定制需求的企业基于其清晰架构与 API 二次开发，构建行业专属客服/CRM 融合产品。</p>
+      </div>
+    </div>
+
+    <h3>适合的用户画像</h3>
+    <p>
+      <span class="tag">初创 & 中小企业（自托管降本）</span>
+      <span class="tag">SaaS 产品方</span>
+      <span class="tag">电商 / 跨境团队</span>
+      <span class="tag">强合规行业 IT 团队</span>
+      <span class="tag">希望摆脱 SaaS 锁定的企业</span>
+      <span class="tag">需要多社媒客服的运营团队</span>
+    </p>
+  </div>
+</section>
+
+<!-- ===================== COMPARISON ===================== -->
+<section id="compare">
+  <div class="wrap">
+    <h2><span class="num">05</span>竞品对比</h2>
+    <p class="lead">将 Chatwoot 与商业巨头（Intercom、Zendesk）以及同类开源方案（Rocket.Chat、Papercups）横向对比。</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>维度</th>
+            <th>Chatwoot</th>
+            <th>Intercom / Zendesk</th>
+            <th>Rocket.Chat</th>
+            <th>Papercups</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>开源 / 自托管</td><td class="yes">✅ 是 (MIT)</td><td class="no">❌ 闭源</td><td class="yes">✅ 是</td><td class="mid">⚠️ 维护放缓</td></tr>
+          <tr><td>数据主权</td><td class="yes">✅ 完全自有</td><td class="no">❌ 厂商托管</td><td class="yes">✅ 完全自有</td><td class="yes">✅ 完全自有</td></tr>
+          <tr><td>全渠道客服</td><td class="yes">✅ 强项</td><td class="yes">✅ 强项</td><td class="mid">⚠️ 偏团队协作</td><td class="mid">⚠️ 较基础</td></tr>
+          <tr><td>定位重心</td><td>客服 / 客户互动</td><td>客服 / CRM 营收</td><td>团队通讯 / 协作</td><td>轻量开源客服</td></tr>
+          <tr><td>成本</td><td class="yes">免费自托管 / 云版按席</td><td class="no">❌ 高（按席订阅）</td><td class="yes">免费自托管</td><td class="yes">免费自托管</td></tr>
+          <tr><td>实时聊天 Widget</td><td class="yes">✅ 可定制</td><td class="yes">✅ 可定制</td><td class="mid">⚠️ 有但非核心</td><td class="yes">✅ 核心</td></tr>
+          <tr><td>WhatsApp / 社媒</td><td class="yes">✅ 丰富</td><td class="yes">✅ 丰富</td><td class="mid">⚠️ 部分支持</td><td class="mid">⚠️ 较少</td></tr>
+          <tr><td>AI / Bot 生态</td><td class="mid">⚠️ 中等（可接 LLM）</td><td class="yes">✅ 原生 AI 强</td><td class="mid">⚠️ 中等</td><td class="no">❌ 弱</td></tr>
+          <tr><td>社区成熟度</td><td class="yes">✅ 高</td><td>—（商业）</td><td class="yes">✅ 高</td><td class="no">❌ 偏低</td></tr>
+          <tr><td>移动端 App</td><td class="yes">✅ iOS/Android</td><td class="yes">✅ 有</td><td class="yes">✅ 有</td><td class="no">❌ 无</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>差异化总结</h3>
+    <ul>
+      <li><strong>vs Intercom/Zendesk：</strong>Chatwoot 在功能广度上接近，核心差异是<strong>开源、可自托管、零许可费</strong>，代价是部分高级 AI/营销自动化不如商业产品开箱即用。</li>
+      <li><strong>vs Rocket.Chat：</strong>Rocket.Chat 更偏"团队 Slack 替代品 + 客服外延"，Chatwoot 则是<strong>从客服场景原生出发</strong>，客户互动工作流更顺。</li>
+      <li><strong>vs Papercups：</strong>Papercups 更轻量但维护节奏放缓，Chatwoot 功能更完整、社区更活跃，是更稳妥的长期选择。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SCORING ===================== -->
+<section id="scoring">
+  <div class="wrap">
+    <h2><span class="num">06</span>综合评分</h2>
+    <p class="lead">从六个维度对 Chatwoot 进行量化评估（满分 10 分）。</p>
+
+    <div style="margin-top:24px">
+      <div class="rating-row"><div class="label">功能完整性</div><div class="track"><span style="width:88%"></span></div><div class="val">8.8</div></div>
+      <div class="rating-row"><div class="label">技术架构质量</div><div class="track"><span style="width:86%"></span></div><div class="val">8.6</div></div>
+      <div class="rating-row"><div class="label">社区活跃度</div><div class="track"><span style="width:88%"></span></div><div class="val">8.8</div></div>
+      <div class="rating-row"><div class="label">文档与易用性</div><div class="track"><span style="width:84%"></span></div><div class="val">8.4</div></div>
+      <div class="rating-row"><div class="label">创新与差异化</div><div class="track"><span style="width:85%"></span></div><div class="val">8.5</div></div>
+      <div class="rating-row"><div class="label">生态与可扩展性</div><div class="track"><span style="width:90%"></span></div><div class="val">9.0</div></div>
+    </div>
+
+    <div class="final">
+      <div class="big">8.7<span style="font-size:22px;color:var(--muted)"> / 10</span></div>
+      <div class="verdict">强烈推荐 · 成熟可用的开源自托管客服平台</div>
+      <p style="margin-top:16px;color:var(--muted);max-width:640px;margin-left:auto;margin-right:auto;">
+        Chatwoot 是当前开源生态中<strong style="color:#fff">最完整、最成熟</strong>的全渠道客户互动平台之一。对于追求数据主权、希望摆脱商业 SaaS 锁定的团队，它是一个高确定性的选择；对于仅需轻量客服的团队，则可按需裁剪使用。
+      </p>
+    </div>
+
+    <h3>客观不足与风险</h3>
+    <ul>
+      <li><strong>Ruby 栈门槛：</strong>Rails + Sidekiq 的技术栈对纯前端/Node 团队二次开发有一定学习成本。</li>
+      <li><strong>资源占用：</strong>完整自托管（Rails + Postgres + Redis + Sidekiq）对小机器不算轻量，需要合理的运维资源。</li>
+      <li><strong>原生 AI 不及商业巨头：</strong>开箱的 AI 自动化能力依赖外部接入（Dialogflow/OpenAI），不如 Intercom Fin 等商业 AI 原生深。</li>
+      <li><strong>企业功能在 enterprise 目录：</strong>部分高级能力以企业许可形式提供，自托管用户需留意功能边界。</li>
+    </ul>
+
+    <h3>结论</h3>
+    <p>Chatwoot 凭借<strong>开源、自托管、全渠道统一、工程成熟</strong>四大特质，稳居开源自托管客服赛道的头部。在数据合规与定制化需求日益增长的背景下，它的价值 proposition 清晰且持续。本次评分 <strong>8.7/10</strong>，建议作为企业客服/客户互动基础设施的优先候选进行 PoC 验证。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>本报告由 GitHub Trending 深度分析流程自动生成 · 生成日期 2026-06-14</p>
+    <p>项目地址：<a href="https://github.com/chatwoot/chatwoot" target="_blank">github.com/chatwoot/chatwoot</a> · 官网：<a href="https://www.chatwoot.com" target="_blank">chatwoot.com</a></p>
+    <p style="margin-top:8px">注：因联网检索工具配额限制，部分细节基于项目既有公开信息整理，最新版本特性请以官方文档为准。</p>
+  </div>
+</footer>
+
+</body>
+</html>
