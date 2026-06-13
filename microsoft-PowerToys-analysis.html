@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>microsoft/PowerToys 深度分析报告</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-card-hover: #222d3f;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #bc8cff;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --gradient-blue: linear-gradient(135deg, #58a6ff, #388bfd);
+            --gradient-green: linear-gradient(135deg, #3fb950, #238636);
+            --gradient-purple: linear-gradient(135deg, #bc8cff, #8957e5);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a2332 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .header-badge {
+            display: inline-block;
+            background: var(--gradient-blue);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .header .project-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-size: 14px;
+            position: relative;
+        }
+        .header .project-link:hover { text-decoration: underline; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--gradient-blue);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-card .stat-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        /* Section Cards */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2 .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .section h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+            color: var(--accent-blue);
+        }
+        .section p, .section li {
+            color: var(--text-secondary);
+            font-size: 14.5px;
+            line-height: 1.8;
+        }
+        .section ul, .section ol {
+            padding-left: 20px;
+        }
+        .section li { margin-bottom: 6px; }
+
+        /* Module Table */
+        .module-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .module-table th {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 13px;
+            text-align: left;
+            padding: 10px 16px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .module-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13.5px;
+            color: var(--text-secondary);
+        }
+        .module-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+        .module-table .module-name {
+            color: var(--accent-blue);
+            font-weight: 500;
+        }
+
+        /* Tag */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 2px;
+        }
+        .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+        .tag-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .tag-purple { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+        .tag-orange { background: rgba(240,136,62,0.15); color: var(--accent-orange); }
+
+        /* Score Bars */
+        .score-item {
+            margin-bottom: 16px;
+        }
+        .score-item .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .score-item .score-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .score-item .score-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+        .score-bar {
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* Language Chart */
+        .lang-chart {
+            display: flex;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        .lang-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            min-width: 40px;
+        }
+        .lang-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .lang-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .lang-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Comparison Table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .compare-table th {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            padding: 10px 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .compare-table th:first-child { text-align: left; }
+        .compare-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .compare-table td:first-child { text-align: left; color: var(--text-primary); font-weight: 500; }
+        .compare-table tr:hover td { background: var(--bg-card-hover); }
+        .check { color: var(--accent-green); font-weight: bold; }
+        .cross { color: var(--accent-red); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header { padding: 28px 20px; }
+            .header h1 { font-size: 24px; }
+            .section { padding: 20px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-badge">🔥 GitHub Trending 深度分析</div>
+        <h1>Microsoft PowerToys</h1>
+        <p class="subtitle">Windows 高级用户的终极效率工具集 — 超过 20 个强大实用工具的开源合集</p>
+        <a class="project-link" href="https://github.com/microsoft/PowerToys" target="_blank">🔗 github.com/microsoft/PowerToys</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">⭐ 134,327</div>
+            <div class="stat-label">GitHub Stars</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">🍴 8,063</div>
+            <div class="stat-label">Forks</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">📦 v0.100.0</div>
+            <div class="stat-label">最新版本 (2026-06-10)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">📜 MIT</div>
+            <div class="stat-label">开源协议</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">🔧 7200+</div>
+            <div class="stat-label">开放 Issues</div>
+        </div>
+    </div>
+
+    <!-- 项目概述 -->
+    <div class="section">
+        <h2><span class="icon" style="background:var(--gradient-blue);color:#fff;">📋</span> 项目概述</h2>
+        <p>Microsoft PowerToys 是由微软官方维护的开源项目，旨在为 Windows 高级用户提供一系列系统级实用工具，以提升工作效率和自定义体验。该项目最早可追溯至 Windows 95 时代的 PowerToys 概念，于 2019 年 5 月在 GitHub 上以全新架构开源重启。</p>
+        <br>
+        <p>PowerToys 不是单一的软件，而是一个<strong>工具集合平台</strong>，包含 20+ 个独立模块，覆盖窗口管理、快捷启动、批量重命名、OCR 文字提取、颜色选取、键盘映射等多个场景。它以「一站式安装、按需启用」的理念著称，每个工具都可以独立开启或关闭。</p>
+        <br>
+        <p>截止 2026 年 6 月，PowerToys 已积累超过 <strong>13.4 万 Stars</strong>，是 GitHub 上 Star 数最高的 Windows 桌面项目之一，也是微软在开源社区中最成功的项目之一。项目拥有活跃的社区贡献者群体，核心团队包含多位微软全职工程师。</p>
+
+        <h3>🏷️ 标签</h3>
+        <div>
+            <span class="tag tag-blue">windows</span>
+            <span class="tag tag-green">fancyzones</span>
+            <span class="tag tag-purple">command-palette</span>
+            <span class="tag tag-orange">keyboard-manager</span>
+            <span class="tag tag-blue">advanced-paste</span>
+            <span class="tag tag-green">color-picker</span>
+            <span class="tag tag-purple">powerrename</span>
+            <span class="tag tag-orange">windows-11</span>
+            <span class="tag tag-blue">windows-10</span>
+            <span class="tag tag-green">microsoft-powertoys</span>
+        </div>
+    </div>
+
+    <!-- 技术架构 -->
+    <div class="section">
+        <h2><span class="icon" style="background:var(--gradient-green);color:#fff;">🏗️</span> 技术架构</h2>
+
+        <h3>语言构成</h3>
+        <div class="lang-chart">
+            <div class="lang-segment" style="width:55%;background:#555555;">C (55%)</div>
+            <div class="lang-segment" style="width:26%;background:#178600;">C# (26%)</div>
+            <div class="lang-segment" style="width:16%;background:#f34b7d;">C++ (16%)</div>
+            <div class="lang-segment" style="width:3%;background:#012456;">其他</div>
+        </div>
+        <div class="lang-legend">
+            <div class="lang-legend-item"><div class="lang-dot" style="background:#555"></div>C — 底层系统钩子与性能关键模块</div>
+            <div class="lang-legend-item"><div class="lang-dot" style="background:#178600"></div>C# — 业务逻辑、UI、设置界面</div>
+            <div class="lang-legend-item"><div class="lang-dot" style="background:#f34b7d"></div>C++ — 桌面交互、窗口管理引擎</div>
+            <div class="lang-legend-item"><div class="lang-dot" style="background:#012456"></div>其他 — PowerShell/Python/JS (构建脚本)</div>
+        </div>
+
+        <h3>架构设计</h3>
+        <ul>
+            <li><strong>宿主进程 (Host Process)</strong>：PowerToys.exe 作为后台常驻进程，管理所有模块的生命周期，负责统一调度和配置同步</li>
+            <li><strong>模块隔离 (Module Isolation)</strong>：每个工具作为独立模块运行，单个模块崩溃不会影响其他模块或宿主进程</li>
+            <li><strong>IPC 通信机制</strong>：模块间通过内部进程间通信 (Inter-Process Communication) 协调工作</li>
+            <li><strong>WinUI 3 统一界面</strong>：使用微软最新的 WinUI 3 框架构建统一的设置界面，遵循 Windows 11 设计语言</li>
+            <li><strong>插件系统 (Plugin System)</strong>：Command Palette 支持第三方扩展，开发者可通过 SDK 创建自定义插件</li>
+            <li><strong>.NET 10 运行时</strong>：v0.100 已升级至 .NET 10，带来更好的性能和内存管理</li>
+            <li><strong>WiX 打包</strong>：使用 WiX Toolset 生成 MSI 安装包，支持用户级和机器级两种安装模式</li>
+        </ul>
+
+        <h3>核心模块一览</h3>
+        <table class="module-table">
+            <thead>
+                <tr>
+                    <th>模块</th>
+                    <th>功能</th>
+                    <th>适用场景</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="module-name">Command Palette</td>
+                    <td>快速启动器 + 扩展平台，支持第三方插件</td>
+                    <td>快速搜索应用、文件、执行命令</td>
+                </tr>
+                <tr>
+                    <td class="module-name">FancyZones</td>
+                    <td>高级窗口布局管理器，自定义网格分区</td>
+                    <td>多窗口高效布局，尤其适合宽屏显示器</td>
+                </tr>
+                <tr>
+                    <td class="module-name">PowerToys Run</td>
+                    <td>类 Alfred 的快速启动器（被 Command Palette 取代）</td>
+                    <td>快速打开应用、搜索文件</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Keyboard Manager</td>
+                    <td>键盘按键重映射与自定义快捷键</td>
+                    <td>个性化键盘布局，提升输入效率</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Text Extractor</td>
+                    <td>基于 OCR 的屏幕文字提取工具</td>
+                    <td>快速复制屏幕上不可选择的文字</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Color Picker</td>
+                    <td>系统级颜色选取器，支持 HEX/RGB/HSL</td>
+                    <td>设计工作、前端开发取色</td>
+                </tr>
+                <tr>
+                    <td class="module-name">PowerRename</td>
+                    <td>基于正则表达式的批量文件重命名</td>
+                    <td>文件管理、批量处理</td>
+                </tr>
+                <tr>
+                    <td class="module-name">File Locksmith</td>
+                    <td>查看并释放被占用的文件锁</td>
+                    <td>排查文件删除/移动失败问题</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Mouse Without Borders</td>
+                    <td>一套键鼠控制多台电脑</td>
+                    <td>多设备办公场景</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Advanced Paste</td>
+                    <td>增强剪贴板功能（纯文本粘贴等）</td>
+                    <td>格式清理、跨应用粘贴</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Peek</td>
+                    <td>快速文件预览（Space 键唤起）</td>
+                    <td>快速浏览文件内容</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Workspaces</td>
+                    <td>保存和恢复窗口布局</td>
+                    <td>项目切换、多工作区管理</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Shortcut Guide (新)</td>
+                    <td>上下文感知的快捷键指南面板</td>
+                    <td>学习新应用的快捷键</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Image Resizer</td>
+                    <td>右键批量调整图片尺寸</td>
+                    <td>图片批处理</td>
+                </tr>
+                <tr>
+                    <td class="module-name">Crop And Lock</td>
+                    <td>裁剪窗口到指定区域</td>
+                    <td>专注特定区域内容</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 核心创新点 -->
+    <div class="section">
+        <h2><span class="icon" style="background:var(--gradient-purple);color:#fff;">💡</span> 核心创新点</h2>
+
+        <h3>1. Command Palette — 可扩展的命令中枢 (v0.100 重大升级)</h3>
+        <p>这是 PowerToys 从 v0.99 开始引入的革命性功能，旨在成为 Windows 的"Spotlight/Raycast"。v0.100 带来了全新的 <strong>Extension Gallery（扩展商店）</strong>，用户可以在不离开 Command Palette 的情况下浏览、安装、更新和管理第三方扩展。同时，<strong>多显示器 Dock 支持</strong>让每个显示器拥有独立的 Dock 配置，实现了真正意义上的多屏幕工作流定制。</p>
+
+        <h3>2. 全新 Shortcut Guide — 上下文感知的快捷键系统</h3>
+        <p>v0.100 重头戏，从零构建的全新快捷键指南工具。它能自动检测当前活动应用，并在屏幕侧边显示与当前操作相关的快捷键。支持应用快捷键、Windows 系统快捷键和 PowerToys 工具快捷键的统一展示，社区还可通过 PR 添加更多应用支持。</p>
+
+        <h3>3. FancyZones — 桌面窗口管理的工业级方案</h3>
+        <p>FancyZones 是 Windows 生态中最强大的窗口管理器之一。用户可自定义复杂的网格布局，通过拖拽将窗口吸附到预设区域。它支持多显示器独立布局、快捷键快速切换布局模板，是 PowerToys 中使用率最高的功能之一。</p>
+
+        <h3>4. 模块化架构与社区驱动</h3>
+        <p>PowerToys 采用高度模块化的插件架构，每个工具可独立启用/禁用，系统稳定性极高。项目积极吸纳社区贡献，Command Palette 的扩展生态正在蓬勃发展，Shortcut Guide 的应用数据库也由社区共建。</p>
+
+        <h3>5. .NET 10 升级与性能优化</h3>
+        <p>v0.100 将整个运行时升级至 .NET 10，带来了更小的安装包体积（已显著减小）、更快的启动速度和更低的内存占用。自动更新机制也得到增强，更新可靠性大幅提升。</p>
+    </div>
+
+    <!-- 应用场景 -->
+    <div class="section">
+        <h2><span class="icon" style="background: linear-gradient(135deg,#f0883e,#d29922);color:#fff;">🎯</span> 应用场景</h2>
+
+        <table class="module-table">
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>推荐模块组合</th>
+                    <th>典型用户</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="module-name">多显示器/宽屏办公</td>
+                    <td>FancyZones + Workspaces + Command Palette Dock</td>
+                    <td>金融分析师、视频编辑、项目经理</td>
+                </tr>
+                <tr>
+                    <td class="module-name">开发者效率提升</td>
+                    <td>Command Palette + Keyboard Manager + Peek + Text Extractor</td>
+                    <td>软件工程师、全栈开发者</td>
+                </tr>
+                <tr>
+                    <td class="module-name">UI/UX 设计工作</td>
+                    <td>Color Picker + Screen Ruler + Image Resizer + Peek</td>
+                    <td>UI 设计师、前端工程师</td>
+                </tr>
+                <tr>
+                    <td class="module-name">内容创作与管理</td>
+                    <td>PowerRename + Advanced Paste + File Explorer Add-ons</td>
+                    <td>博主、内容运营、数据分析师</td>
+                </tr>
+                <tr>
+                    <td class="module-name">多设备协同</td>
+                    <td>Mouse Without Borders + Environment Variables</td>
+                    <td>IT 管理员、跨设备办公用户</td>
+                </tr>
+                <tr>
+                    <td class="module-name">文件系统管理</td>
+                    <td>File Locksmith + Peek + File Explorer Add-ons + PowerRename</td>
+                    <td>系统管理员、普通高级用户</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 竞品对比 -->
+    <div class="section">
+        <h2><span class="icon" style="background: linear-gradient(135deg,#f85149,#da3633);color:#fff;">⚔️</span> 竞品对比</h2>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>功能维度</th>
+                    <th>PowerToys</th>
+                    <th>AutoHotkey</th>
+                    <th>Rectangle (macOS)</th>
+                    <th>Wox / ueli</th>
+                    <th>ShareX</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>工具数量</td>
+                    <td><span class="check">20+ 集成</span></td>
+                    <td>脚本自定义</td>
+                    <td>仅窗口管理</td>
+                    <td>仅启动器</td>
+                    <td>仅截图/录屏</td>
+                </tr>
+                <tr>
+                    <td>窗口管理</td>
+                    <td><span class="check">✓ FancyZones</span></td>
+                    <td>需编写脚本</td>
+                    <td><span class="check">✓ 核心</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>快速启动器</td>
+                    <td><span class="check">✓ Command Palette</span></td>
+                    <td>可定制</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="check">✓ 核心</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>OCR 文字识别</td>
+                    <td><span class="check">✓ 内置</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td>有限支持</td>
+                </tr>
+                <tr>
+                    <td>扩展生态</td>
+                    <td><span class="check">✓ 正在成长</span></td>
+                    <td><span class="check">✓ 脚本生态</span></td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="check">✓ 插件</span></td>
+                    <td><span class="check">✓ 上传器</span></td>
+                </tr>
+                <tr>
+                    <td>官方支持</td>
+                    <td><span class="check">✓ 微软团队</span></td>
+                    <td>社区</td>
+                    <td>独立开发者</td>
+                    <td>社区</td>
+                    <td>社区</td>
+                </tr>
+                <tr>
+                    <td>学习成本</td>
+                    <td>低 (GUI 配置)</td>
+                    <td>高 (脚本语言)</td>
+                    <td>极低</td>
+                    <td>低</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td>安装体积</td>
+                    <td>~100-200MB</td>
+                    <td>~5MB</td>
+                    <td>~10MB</td>
+                    <td>~50MB</td>
+                    <td>~30MB</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>竞品分析结论</h3>
+        <p>PowerToys 的核心竞争优势在于其<strong>「一站式」集成方案</strong>。虽然每个单项功能都有专业替代品（如 FancyZones 不如 yabai/Komorebi 灵活，Command Palette 不如 Raycast 成熟），但将 20+ 个常用工具打包到一个统一界面中，且由微软官方维护，这是任何单一竞品无法比拟的。对于 Windows 用户而言，PowerToys 基本上消除了「为每个小需求单独安装一个软件」的痛点。</p>
+    </div>
+
+    <!-- 综合评分 -->
+    <div class="section">
+        <h2><span class="icon" style="background: linear-gradient(135deg,#d29922,#f0883e);color:#fff;">📊</span> 综合评分</h2>
+
+        <div class="score-item">
+            <div class="score-header">
+                <span class="score-label">🔥 社区活跃度</span>
+                <span class="score-value">9.5 / 10</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" style="width:95%;background:var(--gradient-green);"></div>
+            </div>
+        </div>
+
+        <div class="score-item">
+            <div class="score-header">
+                <span class="score-label">🏗️ 技术架构质量</span>
+                <span class="score-value">8.5 / 10</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" style="width:85%;background:var(--gradient-blue);"></div>
+            </div>
+        </div>
+
+        <div class="score-item">
+            <div class="score-header">
+                <span class="score-label">💡 创新性</span>
+                <span class="score-value">8.0 / 10</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" style="width:80%;background:var(--gradient-purple);"></div>
+            </div>
+        </div>
+
+        <div class="score-item">
+            <div class="score-header">
+                <span class="score-label">🎯 实用性</span>
+                <span class="score-value">9.5 / 10</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" style="width:95%;background:var(--gradient-green);"></div>
+            </div>
+        </div>
+
+        <div class="score-item">
+            <div class="score-header">
+                <span class="score-label">📖 文档与生态</span>
+                <span class="score-value">8.5 / 10</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" style="width:85%;background:var(--gradient-blue);"></div>
+            </div>
+        </div>
+
+        <div class="score-item">
+            <div class="score-header">
+                <span class="score-label">🔮 未来潜力</span>
+                <span class="score-value">9.0 / 10</span>
+            </div>
+            <div class="score-bar">
+                <div class="score-bar-fill" style="width:90%;background: linear-gradient(135deg,#d29922,#f0883e);"></div>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:28px;padding:20px;background:var(--bg-secondary);border-radius:12px;">
+            <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">综合评分</div>
+            <div style="font-size:48px;font-weight:800;background:linear-gradient(135deg,#58a6ff,#bc8cff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">8.8 / 10</div>
+            <div style="font-size:14px;color:var(--text-secondary);margin-top:4px;">🌟 强烈推荐</div>
+        </div>
+    </div>
+
+    <!-- 总结 -->
+    <div class="section">
+        <h2><span class="icon" style="background:var(--gradient-blue);color:#fff;">📝</span> 总结</h2>
+        <p>Microsoft PowerToys 是 Windows 生态中不可多得的「必装软件」。它以微软官方的信誉背书、活跃的开源社区和持续迭代的模块化工具集，为 Windows 高级用户提供了前所未有的生产力提升方案。</p>
+        <br>
+        <p>v0.100 版本的发布标志着 PowerToys 正在从「工具合集」进化为<strong>可扩展的平台</strong>。Command Palette 的 Extension Gallery 和全新 Shortcut Guide 展示了项目在用户体验和可扩展性上的野心。随着 .NET 10 的采用和 1.0 正式版的临近，PowerToys 有望成为 Windows 生产力工具的事实标准。</p>
+        <br>
+        <p><strong>推荐人群</strong>：所有 Windows 10/11 高级用户、开发者、设计师、内容创作者。如果你使用 Windows 并且觉得系统默认功能不够用，PowerToys 几乎一定能解决你的某个痛点。</p>
+    </div>
+
+    <!-- Top Contributors -->
+    <div class="section">
+        <h2><span class="icon" style="background:var(--gradient-green);color:#fff;">👥</span> 核心贡献者 (Top 10)</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            <span class="tag tag-blue">@crutkas (822 commits)</span>
+            <span class="tag tag-green">@bao-qian (680)</span>
+            <span class="tag tag-purple">@qianlifeng (507)</span>
+            <span class="tag tag-orange">@jaimecbernardo (416)</span>
+            <span class="tag tag-blue">@niels9001 (362)</span>
+            <span class="tag tag-green">@yuyoyuppe (338)</span>
+            <span class="tag tag-purple">@jjw24 (334)</span>
+            <span class="tag tag-orange">@stefansjfw (311)</span>
+            <span class="tag tag-blue">@davidegiacometti (262)</span>
+            <span class="tag tag-green">@jiripolasek (250)</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>📅 分析日期：2026-06-13 | 数据来源：GitHub API | 由 AI 自动生成</p>
+        <p>microsoft/PowerToys — github.com/microsoft/PowerToys</p>
+    </div>
+
+</div>
+</body>
+</html>
