@@ -1,11 +1,48 @@
 {
-  "date": "2026-06-13",
-  "pending": [],
+  "date": "2026-06-14",
+  "fetched_at": "2026-06-14",
+  "pending": [
+    "chatwoot/chatwoot",
+    "andrewyng/aisuite",
+    "swc-project/swc"
+  ],
+  "skipped_already_analyzed": [
+    "iptv-org/iptv",
+    "addyosmani/agent-skills",
+    "obra/superpowers",
+    "apple/container",
+    "music-assistant/server",
+    "kenn-io/agentsview",
+    "LMCache/LMCache",
+    "microsoft/PowerToys",
+    "NVIDIA/SkillSpector",
+    "bannedbook/fanqiang",
+    "x1xhlol/system-prompts-and-models-of-ai-tools"
+  ],
   "done": [
     "mattermost/mattermost",
     "iptv-org/iptv",
     "microsoft/PowerToys",
     "LMCache/LMCache",
     "music-assistant/server"
-  ]
+  ],
+  "projects": [
+    {
+      "name": "chatwoot/chatwoot",
+      "status": "pending"
+    },
+    {
+      "name": "andrewyng/aisuite",
+      "status": "pending"
+    },
+    {
+      "name": "swc-project/swc",
+      "status": "pending"
+    }
+  ],
+  "counts": {
+    "total_today": 14,
+    "pending": 3,
+    "skipped": 11
+  }
 }
