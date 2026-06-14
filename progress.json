@@ -2,7 +2,6 @@
   "date": "2026-06-15",
   "fetched_at": "2026-06-15",
   "pending": [
-    "freeCodeCamp/freeCodeCamp",
     "pytest-dev/pytest",
     "meshery/meshery",
     "cypress-io/cypress",
@@ -20,11 +19,13 @@
     "music-assistant/server",
     "andrewyng/aisuite"
   ],
-  "done": [],
+  "done": [
+    "freeCodeCamp/freeCodeCamp"
+  ],
   "projects": [
     {
       "name": "freeCodeCamp/freeCodeCamp",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "pytest-dev/pytest",
@@ -57,7 +58,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 8,
-    "skipped": 7
+    "pending": 7,
+    "skipped": 7,
+    "done": 1
   }
 }
