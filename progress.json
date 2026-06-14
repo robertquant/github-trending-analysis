@@ -2,7 +2,6 @@
   "date": "2026-06-15",
   "fetched_at": "2026-06-15",
   "pending": [
-    "pytest-dev/pytest",
     "meshery/meshery",
     "cypress-io/cypress",
     "GorvGoyl/Clone-Wars",
@@ -20,7 +19,8 @@
     "andrewyng/aisuite"
   ],
   "done": [
-    "freeCodeCamp/freeCodeCamp"
+    "freeCodeCamp/freeCodeCamp",
+    "pytest-dev/pytest"
   ],
   "projects": [
     {
@@ -29,7 +29,7 @@
     },
     {
       "name": "pytest-dev/pytest",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "meshery/meshery",
@@ -58,8 +58,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 7,
+    "pending": 6,
     "skipped": 7,
-    "done": 1
+    "done": 2
   }
 }
