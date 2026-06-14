@@ -1,9 +1,7 @@
 {
   "date": "2026-06-14",
   "fetched_at": "2026-06-14",
-  "pending": [
-    "swc-project/swc"
-  ],
+  "pending": [],
   "skipped_already_analyzed": [
     "iptv-org/iptv",
     "addyosmani/agent-skills",
@@ -24,7 +22,8 @@
     "LMCache/LMCache",
     "music-assistant/server",
     "chatwoot/chatwoot",
-    "andrewyng/aisuite"
+    "andrewyng/aisuite",
+    "swc-project/swc"
   ],
   "projects": [
     {
@@ -37,12 +36,12 @@
     },
     {
       "name": "swc-project/swc",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "counts": {
     "total_today": 14,
-    "pending": 1,
+    "pending": 0,
     "skipped": 11
   }
 }
