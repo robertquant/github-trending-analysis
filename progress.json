@@ -1,47 +1,63 @@
 {
-  "date": "2026-06-14",
-  "fetched_at": "2026-06-14",
-  "pending": [],
+  "date": "2026-06-15",
+  "fetched_at": "2026-06-15",
+  "pending": [
+    "freeCodeCamp/freeCodeCamp",
+    "pytest-dev/pytest",
+    "meshery/meshery",
+    "cypress-io/cypress",
+    "GorvGoyl/Clone-Wars",
+    "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
+    "Free-TV/IPTV",
+    "puppeteer/puppeteer"
+  ],
   "skipped_already_analyzed": [
     "iptv-org/iptv",
-    "addyosmani/agent-skills",
-    "obra/superpowers",
-    "apple/container",
-    "music-assistant/server",
-    "kenn-io/agentsview",
-    "LMCache/LMCache",
-    "microsoft/PowerToys",
-    "NVIDIA/SkillSpector",
-    "bannedbook/fanqiang",
-    "x1xhlol/system-prompts-and-models-of-ai-tools"
-  ],
-  "done": [
-    "mattermost/mattermost",
-    "iptv-org/iptv",
-    "microsoft/PowerToys",
-    "LMCache/LMCache",
-    "music-assistant/server",
+    "swc-project/swc",
     "chatwoot/chatwoot",
-    "andrewyng/aisuite",
-    "swc-project/swc"
+    "NVIDIA/SkillSpector",
+    "shiyu-coder/Kronos",
+    "music-assistant/server",
+    "andrewyng/aisuite"
   ],
+  "done": [],
   "projects": [
     {
-      "name": "chatwoot/chatwoot",
-      "status": "done"
+      "name": "freeCodeCamp/freeCodeCamp",
+      "status": "pending"
     },
     {
-      "name": "andrewyng/aisuite",
-      "status": "done"
+      "name": "pytest-dev/pytest",
+      "status": "pending"
     },
     {
-      "name": "swc-project/swc",
-      "status": "done"
+      "name": "meshery/meshery",
+      "status": "pending"
+    },
+    {
+      "name": "cypress-io/cypress",
+      "status": "pending"
+    },
+    {
+      "name": "GorvGoyl/Clone-Wars",
+      "status": "pending"
+    },
+    {
+      "name": "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
+      "status": "pending"
+    },
+    {
+      "name": "Free-TV/IPTV",
+      "status": "pending"
+    },
+    {
+      "name": "puppeteer/puppeteer",
+      "status": "pending"
     }
   ],
   "counts": {
-    "total_today": 14,
-    "pending": 0,
-    "skipped": 11
+    "total_today": 15,
+    "pending": 8,
+    "skipped": 7
   }
 }
