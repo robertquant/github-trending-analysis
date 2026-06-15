@@ -2,7 +2,6 @@
   "date": "2026-06-15",
   "fetched_at": "2026-06-15",
   "pending": [
-    "meshery/meshery",
     "cypress-io/cypress",
     "GorvGoyl/Clone-Wars",
     "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
@@ -20,7 +19,8 @@
   ],
   "done": [
     "freeCodeCamp/freeCodeCamp",
-    "pytest-dev/pytest"
+    "pytest-dev/pytest",
+    "meshery/meshery"
   ],
   "projects": [
     {
@@ -33,7 +33,7 @@
     },
     {
       "name": "meshery/meshery",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "cypress-io/cypress",
@@ -58,8 +58,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 6,
+    "pending": 5,
     "skipped": 7,
-    "done": 2
+    "done": 3
   }
 }
