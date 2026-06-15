@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告 · Introduction to Autonomous Robots</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#161c24; --panel2:#1d2530; --line:#27313e;
+    --txt:#e6edf3; --mut:#8b98a9; --accent:#58a6ff; --accent2:#3fb950;
+    --gold:#d29922; --red:#f85149; --purple:#bc8cff;
+    --shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0b0f14 0,#0f1419 100%); color:var(--txt);
+    line-height:1.75; -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px 80px}
+
+  /* HERO */
+  .hero{
+    background:
+      radial-gradient(1200px 400px at 80% -10%, rgba(88,166,255,.18), transparent),
+      radial-gradient(900px 360px at 0% 0%, rgba(63,185,80,.12), transparent),
+      linear-gradient(135deg,#10161e,#0c1116);
+    border:1px solid var(--line); border-radius:20px; padding:42px 40px; margin-top:32px;
+    box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;inset:0;background:
+    repeating-linear-gradient(45deg,transparent,transparent 38px,rgba(255,255,255,.012) 38px,rgba(255,255,255,.012) 39px);
+    pointer-events:none}
+  .kicker{color:var(--accent);font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+  .hero h1{font-size:34px;line-height:1.25;font-weight:800;letter-spacing:-.5px;margin-bottom:10px}
+  .hero .sub{color:var(--mut);font-size:16px;max-width:680px}
+  .authors{margin-top:18px;color:#c9d4e0;font-size:15px}
+  .authors b{color:var(--txt)}
+  .badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+    padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--mut)}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--accent2)}
+  .badge b{color:var(--txt)}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 16px}
+  .stat .n{font-size:26px;font-weight:800;color:var(--accent);line-height:1}
+  .stat .l{color:var(--mut);font-size:12.5px;margin-top:8px}
+
+  /* SECTION */
+  section{margin-top:38px}
+  h2{font-size:23px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),#2f81f7);color:#0b0f14;font-size:15px;font-weight:800;flex-shrink:0}
+  .lead{color:var(--mut);font-size:14px;margin:0 0 18px 46px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 26px;box-shadow:var(--shadow)}
+  .card p{margin-bottom:12px}.card p:last-child{margin-bottom:0}
+  strong{color:#fff}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px dotted rgba(88,166,255,.4)}
+  a:hover{border-bottom-style:solid}
+  code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;background:rgba(110,118,129,.18);
+    color:#79c0ff;padding:2px 7px;border-radius:6px;font-size:13px}
+  ul{margin:8px 0 0;padding-left:4px;list-style:none}
+  ul li{position:relative;padding-left:22px;margin:9px 0;color:#cdd6e1}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--accent2);font-size:13px;top:1px}
+
+  /* grid 2col */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .mini{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .mini h3{font-size:16px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:9px}
+  .mini h3 .ic{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+
+  /* topic map */
+  .topics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .topic{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 16px}
+  .topic .ch{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:1px}
+  .topic .tt{color:#fff;font-weight:700;font-size:15px;margin:5px 0 6px}
+  .topic .dd{color:var(--mut);font-size:12.5px;line-height:1.6}
+
+  /* innovation */
+  .innov{display:grid;gap:14px}
+  .innov .row{display:flex;gap:16px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .innov .ic{font-size:24px;flex-shrink:0;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.25)}
+  .innov h3{font-size:16px;color:#fff;margin-bottom:5px}
+  .innov p{color:var(--mut);font-size:13.5px}
+
+  /* compare table */
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel);border-radius:14px;overflow:hidden;
+    border:1px solid var(--line)}
+  .tbl th,.tbl td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  .tbl th{background:#1a222c;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl td:first-child{font-weight:700;color:#fff}
+  .tbl tr:hover td{background:rgba(255,255,255,.02)}
+  .yes{color:var(--accent2);font-weight:700}.no{color:var(--mut)}
+  .tag{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11.5px;font-weight:600}
+  .tag.t1{background:rgba(88,166,255,.15);color:var(--accent)}
+  .tag.t2{background:rgba(63,185,80,.15);color:var(--accent2)}
+  .tag.t3{background:rgba(210,153,34,.15);color:var(--gold)}
+  .tag.t4{background:rgba(188,140,255,.15);color:var(--purple)}
+
+  /* score */
+  .score-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;box-shadow:var(--shadow)}
+  .score-top{display:flex;align-items:center;gap:26px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:24px}
+  .ring{position:relative;width:130px;height:130px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .num b{font-size:38px;font-weight:800;line-height:1}
+  .ring .num span{font-size:11px;color:var(--mut);letter-spacing:1px;margin-top:3px}
+  .score-verdict{flex:1;min-width:240px}
+  .score-verdict .grade{display:inline-block;font-size:13px;font-weight:700;letter-spacing:1px;padding:5px 14px;border-radius:999px;
+    background:rgba(63,185,80,.15);color:var(--accent2);border:1px solid rgba(63,185,80,.3);margin-bottom:12px}
+  .score-verdict p{color:#cdd6e1;font-size:14.5px}
+  .bars{display:grid;gap:14px}
+  .bar .hd{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px}
+  .bar .hd span:first-child{color:#cdd6e1;font-weight:600}.bar .hd span:last-child{color:var(--accent);font-weight:700}
+  .track{height:9px;border-radius:6px;background:var(--panel2);overflow:hidden}
+  .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+  /* timeline */
+  .tl{position:relative;padding-left:26px}
+  .tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .tl .ev{position:relative;padding-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-26px;top:4px;width:14px;height:14px;border-radius:50%;
+    background:var(--accent);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--accent)}
+  .tl .ev .y{color:var(--gold);font-weight:700;font-size:13px}
+  .tl .ev .t{color:#cdd6e1;font-size:14px;margin-top:3px}
+
+  footer{text-align:center;color:var(--mut);font-size:12.5px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--mut);font-size:12.5px;margin-top:14px}
+  .meta-row b{color:#cdd6e1}
+  @media(max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .grid2{grid-template-columns:1fr}
+    .topics{grid-template-columns:1fr}
+    .hero{padding:30px 22px}.hero h1{font-size:26px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="kicker">GitHub 深度分析报告 · 教育资源 / 机器人学</div>
+    <h1>Introduction to Autonomous Robots</h1>
+    <div class="sub">一本聚焦<strong>自主机器人计算原理</strong>的开源教科书：覆盖机构、传感器、执行器与算法，由 MIT Press 出版，源码以 LaTeX 形式完整开放于 GitHub。</div>
+    <div class="authors">作者：<b>Nikolaus Correll</b> · Bradley Hayes · Christoffer Heckman · Alessandro Roncone　|　MIT Press, 2022</div>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span>TeX</span>
+      <span class="badge"><span class="dot" style="background:var(--gold)"></span>CC-BY-NC-ND 4.0</span>
+      <span class="badge"><span class="dot" style="background:var(--purple)"></span>MIT Press 出版</span>
+      <span class="badge"><span class="dot" style="background:var(--accent)"></span>CU Boulder</span>
+      <span class="badge"><span class="dot" style="background:var(--red)"></span>课堂验证</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="n">2,980</div><div class="l">⭐ Stars</div></div>
+    <div class="stat"><div class="n">647</div><div class="l">⑂ Forks</div></div>
+    <div class="stat"><div class="n">13 年</div><div class="l">🎂 仓库年龄（自 2013）</div></div>
+    <div class="stat"><div class="n">7</div><div class="l">🐞 Open Issues</div></div>
+  </div>
+
+  <!-- 1. 概述 -->
+  <section>
+    <h2><span class="num">1</span>项目概述</h2>
+    <div class="lead">一本把"算法视角"引入本科机器人学的标杆教材</div>
+    <div class="card">
+      <p><strong>Introduction to Autonomous Robots</strong>（全称：<em>Mechanisms, Sensors, Actuators, and Algorithms</em>）是科罗拉多大学博尔德分校（CU Boulder）Nikolaus Correll 教授联合 Bradley Hayes、Christoffer Heckman、Alessandro Roncone 撰写的<strong>开源教科书</strong>，由 MIT Press 于 2022 年正式出版。</p>
+      <p>它的核心定位是填补一个长期空白：传统机器人学教材（如 Siciliano、Murray-Li-Sastry）几乎都面向<strong>研究生</strong>，而本书把<strong>计算原理</strong>下沉到<strong>大三/大四本科生</strong>，只需大学二年级水平的线性代数、概率论、三角学与统计学即可入门。全书在课堂上经过多年验证，以循序渐进的方式讲解机器人自主性背后的<strong>硬件（机构/传感器/执行器）与软件（算法）如何平衡</strong>。</p>
+      <p>区别于"只读 PDF"的传统教材，本项目把<strong>整本书的 LaTeX 源码</strong>完全开放在 GitHub 上，任何人都可以克隆、编译、二次创作（非商用），并配套 Webots 仿真习题库与 QR 码链接的在线讲座视频——这正是它登上 GitHub Trending 的原因。</p>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="num">2</span>技术架构与构建体系</h2>
+    <div class="lead">一份"可编译的教科书"——LaTeX 即源码</div>
+    <div class="grid2">
+      <div class="mini">
+        <h3><span class="ic" style="background:rgba(88,166,255,.12)">📄</span>源码与排版</h3>
+        <ul>
+          <li>主语言 <strong>TeX/LaTeX</strong>，主文件 <code>book.tex</code></li>
+          <li>使用 <code>pdflatex</code> + <code>bibtex</code> 多次编译以解析交叉引用与文献</li>
+          <li>ImageMagick 处理缺失图片格式转换</li>
+          <li>支持 <strong>Overleaf</strong> 在线一键编译（上传 ZIP 或 fork 后导入）</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h3><span class="ic" style="background:rgba(63,185,80,.12)">🔧</span>配套与生态</h3>
+        <ul>
+          <li>官网 <code>introduction-to-autonomous-robots.github.io</code> 由 <strong>Jekyll</strong> 构建</li>
+          <li><strong>Webots</strong> 开源、跨平台仿真——配套习题库</li>
+          <li>正文内嵌 <strong>QR 码</strong>链接到在线讲座视频与动画</li>
+          <li>LibreTexts、SourceForge 提供镜像分发</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <p style="font-size:14px;color:var(--mut)"><strong style="color:#fff">许可证设计</strong>：源码采用 <strong>CC-BY-NC-ND 4.0</strong>（知识共享署名-非商业-禁止演绎），允许在教学等非商业场景下使用书中图片与内容（需署名）；但<strong>禁止在线公开发布编译后的 PDF</strong>——印刷版版权归 MIT Press。因此读者需自行克隆仓库编译 PDF，这是一种巧妙的"开源源码 + 商业印刷"双轨模式。</p>
+    </div>
+  </section>
+
+  <!-- 3. 内容体系 -->
+  <section>
+    <h2><span class="num">3</span>内容体系（知识地图）</h2>
+    <div class="lead">从机构到智能——一条完整的自主性认知链</div>
+    <div class="topics">
+      <div class="topic"><div class="ch">PART · 机构</div><div class="tt">移动与抓取</div><div class="dd">运动学（Locomotion）、抓取（Grasping）及由此产生的力分析</div></div>
+      <div class="topic"><div class="ch">PART · 机构</div><div class="tt">运动学</div><div class="dd">机械臂与轮式平台的<strong>正向/逆向运动学</strong>求解</div></div>
+      <div class="topic"><div class="ch">PART · 感知</div><div class="tt">传感器与执行器</div><div class="dd">各类传感器/执行器的工作原理及其在自主系统中的应用</div></div>
+      <div class="topic"><div class="ch">PART · 感知</div><div class="tt">计算机视觉</div><div class="dd">视觉算法、特征检测（Feature Detection）与目标识别</div></div>
+      <div class="topic"><div class="ch">PART · 不确定性</div><div class="tt">误差传播</div><div class="dd">机器人系统中不确定性建模与误差传播分析</div></div>
+      <div class="topic"><div class="ch">PART · 不确定性</div><div class="tt">定位与建图</div><div class="dd">Localization 与 Mapping——机器人如何"知道自己在哪里"</div></div>
+      <div class="topic"><div class="ch">PART · 规划</div><div class="tt">路径规划</div><div class="dd">Path Planning——从 A* 到图搜索的导航算法</div></div>
+      <div class="topic"><div class="ch">PART · 学习</div><div class="tt">神经网络入门</div><div class="dd">人工神经网络导论，含 <strong>CNN（卷积）与 RNN（循环）</strong>变体</div></div>
+      <div class="topic"><div class="ch">PART · 进阶</div><div class="tt">智能与具身</div><div class="dd">计算与物理具身的关联，附录含论文写作、反向传播等</div></div>
+    </div>
+  </section>
+
+  <!-- 4. 核心创新点 -->
+  <section>
+    <h2><span class="num">4</span>核心创新点</h2>
+    <div class="lead">它做对了什么，让它从同类教材中脱颖而出</div>
+    <div class="innov">
+      <div class="row">
+        <div class="ic">🎓</div>
+        <div><h3>面向本科生的"算法视角"机器人学</h3>
+          <p>大多数广覆盖机器人机构与动力学的教材都面向研究生。本书把门槛降至大三/大四，提供本科生急需的"设计与控制自主机器人的计算基础"。</p></div>
+      </div>
+      <div class="row">
+        <div class="ic">⚖️</div>
+        <div><h3>软硬件平衡的教学法</h3>
+          <p>始终强调硬件（机构/传感器/执行器）与软件（算法）对机器人自主性的<strong>双重影响</strong>，避免"只讲数学不讲实物"或反之的失衡。</p></div>
+      </div>
+      <div class="row">
+        <div class="ic">📚</div>
+        <div><h3>真正"开源可编译"的教材源码</h3>
+          <p>MIT Press 把正式出版教材的 <strong>完整 LaTeX 源码</strong>放上 GitHub——这在出版界极为罕见。教师可自由裁剪章节、学生可亲手编译，形成可演化的"活教材"。</p></div>
+      </div>
+      <div class="row">
+        <div class="ic">📱</div>
+        <div><h3>QR 码 + 在线视频的多模态融合</h3>
+          <p>正文嵌入 QR 码直达讲座视频与动画，把"静态纸质书"升级为多媒体学习入口。</p></div>
+      </div>
+      <div class="row">
+        <div class="ic">🤖</div>
+        <div><h3>Webots 仿真习题库</h3>
+          <p>配套一个持续增长的、开源跨平台仿真（Webots）习题库——读者无需实体机器人即可动手实践，极大降低教学门槛。</p></div>
+      </div>
+      <div class="row">
+        <div class="ic">🧠</div>
+        <div><h3>把深度学习纳入经典机器人教材</h3>
+          <p>引入人工神经网络（CNN/RNN）章节，让传统机器人学教材与现代 AI 视觉方法接轨，呼应具身智能（Embodied AI）趋势。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 应用场景 -->
+  <section>
+    <h2><span class="num">5</span>应用场景</h2>
+    <div class="lead">谁在读、谁在用</div>
+    <div class="grid2">
+      <div class="mini">
+        <h3><span class="ic" style="background:rgba(88,166,255,.12)">🏫</span>高校教学</h3>
+        <ul>
+          <li>大三/大四 CS、机械、电子工程的<strong>机器人学导论</strong>课程教材</li>
+          <li>研究生入门的"补课"读本，建立系统观</li>
+          <li>开放教科书计划（Open Textbook Library）收录，被全球高校选用</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h3><span class="ic" style="background:rgba(63,185,80,.12)">👨‍💻</span>自学与转行</h3>
+        <ul>
+          <li>具备线性代数+概率基础的<strong>自学者</strong>系统性入门机器人学</li>
+          <li>想从 Web/算法转机器人/具身智能的工程师</li>
+          <li>用 Webots 仿真零成本练手</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h3><span class="ic" style="background:rgba(210,153,34,.12)">🔬</span>科研与二次创作</h3>
+        <ul>
+          <li>研究者基于 LaTeX 源码定制课程讲义</li>
+          <li>结合最新论文做<strong>开源课件</strong>演进</li>
+          <li>ROV/无人机/机械臂项目的设计参考</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h3><span class="ic" style="background:rgba(188,140,255,.12)">🏭</span>行业入门</h3>
+        <ul>
+          <li>自动驾驶、仓储机器人、人形机器人的<strong>基础知识底座</strong></li>
+          <li>硬件工程师理解算法、算法工程师理解机构的桥梁</li>
+          <li>技术面试机器人岗的知识梳理</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 竞品对比 -->
+  <section>
+    <h2><span class="num">6</span>竞品对比</h2>
+    <div class="lead">五大经典机器人学教材横向对照</div>
+    <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>教材</th><th>核心定位</th><th>目标读者</th><th>开源</th><th>最适场景</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Introduction to Autonomous Robots<br><span class="tag t1">本文主角</span></td>
+          <td>计算原理：机构+感知+规划+学习，软硬件平衡</td>
+          <td>大三/大四本科生</td>
+          <td class="yes">✅ LaTeX 全开放</td>
+          <td>本科机器人学导论、系统入门</td>
+        </tr>
+        <tr>
+          <td>Probabilistic Robotics<br><span class="tag t2">Thrun 等</span></td>
+          <td>概率算法：贝叶斯滤波、卡尔曼/粒子滤波、SLAM</td>
+          <td>研究生</td>
+          <td class="no">❌ 闭源</td>
+          <td>感知、状态估计、自主导航（"机器人大脑"）</td>
+        </tr>
+        <tr>
+          <td>Modern Robotics<br><span class="tag t3">Lynch & Park</span></td>
+          <td>几何力学：旋量理论、运动学/动力学、控制</td>
+          <td>高年级/研究生</td>
+          <td class="yes">✅ 附带开源代码</td>
+          <td>机器人机构、操作、现代几何方法</td>
+        </tr>
+        <tr>
+          <td>Robotics: Modelling, Planning & Control<br><span class="tag t4">Siciliano 等</span></td>
+          <td>建模、运动学/动力学、规划与控制（经典机械臂）</td>
+          <td>研究生</td>
+          <td class="no">❌ 闭源</td>
+          <td>机械臂控制、轨迹规划（"建模与控制"）</td>
+        </tr>
+        <tr>
+          <td>Intro to Autonomous <em>Mobile</em> Robots<br><span class="tag t3">Siegwart 等</span></td>
+          <td>移动机器人：运动学、感知、定位、规划</td>
+          <td>高年级/研究生</td>
+          <td class="no">❌ 闭源</td>
+          <td>移动/轮式机器人专题（与本书最易混淆）</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <p style="font-size:14px;color:var(--mut)"><strong style="color:#fff">一句话定位</strong>：Thrun 讲"大脑"（估计与不确定性），Lynch/Siciliano 讲"几何与控制"，而 <strong>Correll 这本是少有的把硬件、算法、学习打通、且面向本科、完全开源</strong>的"全栈入门书"——这正是它在 GitHub 上独树一帜的价值。</p>
+    </div>
+  </section>
+
+  <!-- 7. 综合评分 -->
+  <section>
+    <h2><span class="num">7</span>综合评分</h2>
+    <div class="lead">基于权威性、内容质量、开放性、社区与实用性的多维评估</div>
+    <div class="score-box">
+      <div class="score-top">
+        <div class="ring">
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="56" fill="none" stroke="#27313e" stroke-width="11"/>
+            <circle cx="65" cy="65" r="56" fill="none" stroke="url(#g)" stroke-width="11" stroke-linecap="round"
+              stroke-dasharray="351.86" stroke-dashoffset="52.8"/>
+            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#58a6ff"/><stop offset="1" stop-color="#3fb950"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="num"><b>8.5</b><span>/ 10.0</span></div>
+        </div>
+        <div class="score-verdict">
+          <div class="grade">★ 强烈推荐 · 优质开源教育资源</div>
+          <p>由 MIT Press 背书、CU Boulder 名师执笔、源码完全开源，且精准填补"本科生机器人学"空白。扣分点在于：作为教材类仓库，其社区互动与版本迭代节奏天然弱于软件项目，且 PDF 不能自由分发。</p>
+        </div>
+      </div>
+      <div class="bars">
+        <div class="bar"><div class="hd"><span>权威性与学术背书</span><span>9.5</span></div><div class="track"><div class="fill" style="width:95%"></div></div></div>
+        <div class="bar"><div class="hd"><span>内容质量与系统性</span><span>9.0</span></div><div class="track"><div class="fill" style="width:90%"></div></div></div>
+        <div class="bar"><div class="hd"><span>开放性与可及性</span><span>8.5</span></div><div class="track"><div class="fill" style="width:85%"></div></div></div>
+        <div class="bar"><div class="hd"><span>教学实用性（Webots/QR）</span><span>9.0</span></div><div class="track"><div class="fill" style="width:90%"></div></div></div>
+        <div class="bar"><div class="hd"><span>GitHub 社区热度</span><span>7.0</span></div><div class="track"><div class="fill" style="width:70%"></div></div></div>
+        <div class="bar"><div class="hd"><span>时效性（含 CNN/RNN）</span><span>8.0</span></div><div class="track"><div class="fill" style="width:80%"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 项目时间线 -->
+  <section>
+    <h2><span class="num">8</span>项目时间线</h2>
+    <div class="lead">从一个教授的个人仓库到 MIT Press 正式出版物</div>
+    <div class="card">
+      <div class="tl">
+        <div class="ev"><div class="y">2013 · 11 月</div><div class="t">仓库创建，最初为 Correll 教授的个人 LaTeX 教材项目</div></div>
+        <div class="ev"><div class="y">2016 – 2021</div><div class="t">作为早期开源教材（CC-BY-NC）在课堂持续打磨，建立读者群</div></div>
+        <div class="ev"><div class="y">2022 · 06 月</div><div class="t">MIT Press 正式出版（ISBN 978-0-262-04755-5），仓库迁移至专属组织账号，引入 Webots 仿真与 QR 视频</div></div>
+        <div class="ev"><div class="y">2026 · 02 月</div><div class="t">最近一次代码推送；登上 GitHub Trending——具身智能热潮下的经典教材"翻红"</div></div>
+      </div>
+      <div class="meta-row">
+        <span>📦 仓库体积：<b>~453 MB</b></span>
+        <span>👁️ 订阅者：<b>89</b></span>
+        <span>🌿 默认分支：<b>master</b></span>
+        <span>🏷️ Topics：<b>book · boulder · cu · robotics</b></span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>本报告由 AI 深度分析生成 · 数据截至 2026-06-15 · 综合公开网络与 GitHub API 信息</p>
+    <p style="margin-top:6px">参考来源：GitHub · MIT Press · CU Boulder Correll Lab · Open Textbook Library · LibreTexts</p>
+  </footer>
+
+</div>
+</body>
+</html>
