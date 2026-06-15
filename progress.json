@@ -2,7 +2,6 @@
   "date": "2026-06-16",
   "fetched_at": "2026-06-16",
   "pending": [
-    "teslamate-org/teslamate",
     "krahets/hello-algo",
     "trycua/cua",
     "Raphire/Win11Debloat",
@@ -20,11 +19,13 @@
     "Free-TV/IPTV",
     "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots"
   ],
-  "done": [],
+  "done": [
+    "teslamate-org/teslamate"
+  ],
   "projects": [
     {
       "name": "teslamate-org/teslamate",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "krahets/hello-algo",
@@ -45,8 +46,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 5,
+    "pending": 4,
     "skipped": 10,
-    "done": 0
+    "done": 1
   }
 }

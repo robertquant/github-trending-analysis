@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeslaMate 深度分析报告 — teslamate-org/teslamate</title>
+<style>
+  :root{
+    --bg:#0b0d12;
+    --bg-2:#10131b;
+    --card:#141826;
+    --card-2:#1a2030;
+    --line:#2a3447;
+    --text:#eef2fb;
+    --muted:#9aa8c4;
+    --accent:#e82127;          /* Tesla red */
+    --accent-2:#ff5a3c;        /* charging orange */
+    --accent-3:#3b82f6;        /* electric blue */
+    --tesla:#e82127;
+    --good:#22c55e;
+    --warn:#f5a623;
+    --bad:#ff5c5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 85% -10%,#3a0c0e 0%,transparent 55%),
+               radial-gradient(900px 700px at -10% 10%,#0e1a3a30 0%,transparent 60%),
+               var(--bg);
+    color:var(--text);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+
+  /* HERO */
+  .hero{
+    position:relative;overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg-2) 100%);
+    padding:40px 38px;
+    margin-bottom:34px;
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.8);
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    color:var(--tesla);
+    background:rgba(232,33,39,.10);
+    border:1px solid rgba(232,33,39,.35);
+    padding:6px 14px;border-radius:999px;margin-bottom:18px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--tesla);box-shadow:0 0 12px var(--tesla)}
+  h1{
+    font-size:40px;line-height:1.2;font-weight:800;letter-spacing:-.5px;
+    margin-bottom:10px;
+    background:linear-gradient(90deg,#fff 0%,#ffd9da 60%,#ff8e90 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .repo{font-family:"SF Mono",Menlo,Consolas,monospace;color:var(--accent-3);font-size:15px;margin-bottom:16px;display:block}
+  .hero p.lede{color:var(--muted);font-size:16px;max-width:820px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .chip{
+    font-size:13px;color:var(--muted);
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--line);
+    padding:7px 13px;border-radius:9px;
+  }
+  .chip b{color:var(--text);font-weight:600}
+
+  /* SCORE STRIP */
+  .score-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;
+  }
+  .score-card{
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  }
+  .score-card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .score-card .v{font-size:24px;font-weight:800;margin-top:4px;color:#fff}
+  .score-card .v small{font-size:13px;color:var(--muted);font-weight:500}
+  .stars{color:var(--warn)}
+
+  /* SECTIONS */
+  section{margin-top:34px;animation:fade .6s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h2{
+    font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:9px;font-size:14px;font-weight:800;
+    background:linear-gradient(135deg,var(--tesla),var(--accent-2));color:#fff;
+    flex:0 0 auto;
+  }
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;
+  }
+  p{margin-bottom:12px;color:#d6e2f7}
+  .card p:last-child{margin-bottom:0}
+  strong{color:#fff}
+  code,kbd{
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;
+    background:rgba(232,33,39,.12);color:#ffb3b5;
+    padding:2px 7px;border-radius:6px;border:1px solid rgba(232,33,39,.22);
+  }
+
+  /* GRID */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mini{
+    background:var(--card-2);border:1px solid var(--line);border-radius:13px;padding:16px 18px;
+  }
+  .mini h4{font-size:14.5px;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .mini p{font-size:13px;color:var(--muted);margin:0}
+
+  /* ARCH DIAGRAM */
+  .arch{
+    display:flex;flex-direction:column;gap:10px;margin-top:14px;
+  }
+  .arch .layer{
+    border:1px dashed var(--line);border-radius:12px;padding:13px 16px;
+    background:rgba(255,255,255,.02);display:flex;justify-content:space-between;align-items:center;gap:14px;
+    font-size:14px;
+  }
+  .arch .layer .tag{font-size:11px;color:var(--muted);font-family:monospace;white-space:nowrap}
+  .arrow{text-align:center;color:var(--accent);font-size:18px;line-height:1}
+
+  /* CODE BLOCK */
+  pre.code{
+    background:#080b12;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-top:16px;overflow-x:auto;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;color:#cfe6ff;line-height:1.7;
+  }
+  pre.code .k{color:var(--accent-2)}
+  pre.code .s{color:var(--warn)}
+  pre.code .c{color:#5b748f;font-style:italic}
+  pre.code .r{color:var(--accent)}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--bg-2);color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  td.win{color:var(--good);font-weight:600}
+  td.lose{color:var(--bad)}
+  td.mid{color:var(--warn)}
+  .yes{color:var(--good)}
+  .no{color:var(--bad)}
+  .partial{color:var(--warn)}
+
+  /* SCORE BARS */
+  .scores{display:flex;flex-direction:column;gap:14px}
+  .bar-row{display:grid;grid-template-columns:160px 1fr 46px;align-items:center;gap:14px}
+  .bar-row .lbl{font-size:13.5px;color:#d6e2f7}
+  .bar{height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--tesla),var(--accent-2));}
+  .bar-row .val{font-size:14px;font-weight:700;text-align:right;color:#fff}
+
+  .final{
+    margin-top:8px;display:flex;align-items:center;gap:18px;
+    background:linear-gradient(135deg,rgba(232,33,39,.14),rgba(59,130,246,.12));
+    border:1px solid var(--line);border-radius:14px;padding:18px 22px;
+  }
+  .final .big{font-size:42px;font-weight:800;line-height:1;
+    background:linear-gradient(90deg,var(--tesla),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .final .verdict{font-size:14px;color:var(--muted)}
+  .final .verdict b{color:#fff}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:10px}
+  ul.clean li{position:relative;padding-left:22px;font-size:14px;color:#d6e2f7}
+  ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--accent)}
+  .pros{color:var(--good)}
+  .cons{color:var(--bad)}
+
+  footer{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center}
+  a{color:var(--accent-3);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  @media(max-width:760px){
+    h1{font-size:28px}
+    .score-strip{grid-template-columns:1fr 1fr}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .bar-row{grid-template-columns:120px 1fr 40px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="badge"><span class="dot"></span>GitHub Trending · 深度分析报告</span>
+    <h1>TeslaMate</h1>
+    <span class="repo">github.com/teslamate-org/teslamate</span>
+    <p class="lede">
+      一个<strong>强大、开源、完全自主托管（self-hosted）的特斯拉数据记录与分析平台</strong>。TeslaMate 通过官方
+      <strong>Tesla API</strong> 与 <strong>Streaming API</strong> 实时采集车辆的行驶、充电、能效、电量衰减等数据，
+      存入 <strong>PostgreSQL</strong>，并借助 <strong>Grafana</strong> 提供开箱即用、业界顶级的可视化看板。它用
+      <strong>Elixir / Erlang OTP</strong> 打造，是 homelab 与特斯拉车主圈最负盛名的"数据主权"工具。
+    </p>
+
+    <div class="meta-row">
+      <span class="chip">⭐ <b>6,000+</b> Stars</span>
+      <span class="chip">🍴 <b>750+</b> Forks</span>
+      <span class="chip">🛠️ <b>Elixir</b> + Phoenix</span>
+      <span class="chip">🗄️ <b>PostgreSQL</b></span>
+      <span class="chip">📊 <b>Grafana</b> 看板</span>
+      <span class="chip">📡 <b>MQTT</b> 智能家居</span>
+      <span class="chip">🐳 <b>Docker</b> 多架构</span>
+      <span class="chip">📄 <b>开源 (MIT)</b></span>
+    </div>
+
+    <div class="score-strip">
+      <div class="score-card"><div class="k">综合评分</div><div class="v">8.0<small>/10</small></div></div>
+      <div class="score-card"><div class="k">GitHub Stars</div><div class="v stars">6K+</div></div>
+      <div class="score-card"><div class="k">首版发布</div><div class="v">2019<small> · v1.0</small></div></div>
+      <div class="score-card"><div class="k">技术栈</div><div class="v" style="font-size:18px">Elixir<small> · OTP / BEAM</small></div></div>
+    </div>
+  </header>
+
+  <!-- 1. 项目概述 -->
+  <section>
+    <h2><span class="num">1</span>项目概述</h2>
+    <p class="sub">一句话定位：把你的特斯拉变成一台可量化、可回溯、可自动化的"数据资产"。</p>
+    <div class="card">
+      <p>
+        <strong>TeslaMate</strong> 是一款面向特斯拉车主的<strong>自托管数据记录器（data logger）</strong>。它最初由
+        <strong>Adrian Kumpf（@adriankumpf）</strong>于 <strong>2019 年</strong> 创建，灵感来自更早期的 TeslaLogger 项目，
+        但从第一天起就以"现代软件工程范式"重新构建——选择 <strong>Elixir</strong> 语言、清晰的分层架构、PostgreSQL 持久化、
+        Grafana 可视化，并全面容器化。如今项目已迁移至 <strong>teslamate-org</strong> 组织，由社区共同维护。
+      </p>
+      <p>
+        它要解决的核心痛点是：特斯拉官方 App 与车机只给你"当下的状态"，却不给你<strong>历史</strong>——无法回顾每一次行程的能耗曲线、
+        无法追踪电池容量在数年间的衰减趋势、无法精确统计充电花了多少钱、更无法把"车辆到家的瞬间"接入智能家居做自动化。TeslaMate
+        把这些数据持续地、细粒度地沉淀到你自己掌控的数据库里，把"用车经验"升级为<strong>可分析的数据资产</strong>。
+      </p>
+      <p>
+        截至当前，TeslaMate 仓库累计 <strong>6,000+ Stars、750+ Forks</strong>，在 self-hosted 汽车类目中长期稳居第一。
+        项目采用 <strong>MIT</strong> 许可证，通过 Docker / Docker Compose 一键部署，支持 x86 与 ARM（树莓派、NAS、家庭服务器皆可）。
+        生态衍生出 TeslaMateApi（Go 编写的 REST 包装层）、TeslaMate ABRP（行程规划对接）等大量周边项目，是特斯拉数据自助化的事实标准。
+      </p>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="num">2</span>技术架构</h2>
+    <p class="sub">核心机制：Elixir/OTP 调度器持续拉取 Tesla 云端数据，落库 Postgres，再以 Grafana + MQTT 多路输出。</p>
+    <div class="card">
+      <p>
+        TeslaMate 是一个典型的<strong>事件驱动 + 轮询混合架构</strong>。其采集层由 <strong>Elixir</strong> 的并发原语
+        （GenServer / Supervisor 树，运行于 <strong>Erlang BEAM 虚拟机</strong>）驱动，天然适合"一台车一个轻量进程"、
+        "可弹性扩展多车"、"崩溃自动重启"这类长期常驻、高容错的采集任务。Web 管理界面基于 <strong>Phoenix</strong> 框架
+        （大量采用 <strong>LiveView</strong> 实现实时、无重载的交互体验）。
+      </p>
+
+      <div class="arch">
+        <div class="layer"><span>🚗 特斯拉车辆（产生遥测数据）</span><span class="tag">车辆硬件</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>☁️ Tesla Cloud API：REST Fleet API（轮询状态）+ Streaming API（WebSocket 高频实时流）</span><span class="tag">数据源</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>⚙️ TeslaMate 核心（Elixir/Phoenix）：调度器 / 流采集器 / 地理围栏 / 成本引擎</span><span class="tag">OTP 应用</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>🗄️ PostgreSQL：行程、充电、位置、状态、电量等全量持久化</span><span class="tag">时序 + 关系数据</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>📊 Grafana（预置看板） &nbsp;·&nbsp; 📡 Mosquitto MQTT → Home Assistant &nbsp;·&nbsp; 🌐 TeslaMateApi (Go REST)</span><span class="tag">多路输出</span></div>
+      </div>
+
+      <p style="margin-top:18px">
+        采集层面 TeslaMate 同时使用两条通道：<strong>Tesla REST API</strong> 按"车辆睡眠友好"的间隔轮询电量、位置、里程等状态
+        （会在车辆休眠时主动停采，保护 12V 电瓶与电池），而 <strong>Tesla Streaming API</strong> 在车辆处于"行驶/充电"等活跃状态时
+        建立 WebSocket，推送秒级高频遥测（车速、功率、海拔、胎压等），从而在数据精度与续航之间取得平衡。地理围栏引擎
+        （<code>geofences</code>）会把原始 GPS 坐标自动翻译为可读地址，并识别"到家/到公司"等事件。
+      </p>
+
+      <pre class="code"><span class="c"># 官方推荐的 docker-compose 部署形态（精简示意）</span>
+services:
+  teslamate:
+    image: teslamate/teslamate:latest
+    <span class="k">environment</span>:
+      - <span class="r">ENCRYPTION_KEY</span>=<span class="s">change-me</span>     <span class="c"># 用于加密 Tesla 令牌</span>
+      - <span class="r">DATABASE_HOST</span>=db
+      - <span class="r">MQTT_HOST</span>=mosquitto
+    ports: [<span class="s">"4000:4000"</span>]
+  db:        { image: postgres, ... }     <span class="c"># 数据持久层</span>
+  grafana:   { image: grafana/grafana, ... }   <span class="c"># 可视化看板</span>
+  mosquitto: { image: eclipse-mosquitto, ... } <span class="c"># 实时事件总线</span></pre>
+
+      <div class="grid-3" style="margin-top:20px">
+        <div class="mini"><h4>🧠 BEAM 并发</h4><p>Erlang VM 的轻量进程模型，一台车一进程，容错、可扩展、长期常驻不卡顿。</p></div>
+        <div class="mini"><h4>🔌 双 API 采集</h4><p>REST 轮询 + Streaming WebSocket，兼顾休眠友好与高频精度。</p></div>
+        <div class="mini"><h4>🗄️ Postgres 持久化</h4><p>数据完全归你所有，结构化存储，可自由查询、导出、二次分析。</p></div>
+        <div class="mini"><h4>📊 Grafana 看板</h4><p>项目预置十余个高质量看板：行程、充电、能效、衰减、年度报告。</p></div>
+        <div class="mini"><h4>📡 MQTT 总线</h4><p>把实时车辆状态发布到 MQTT，无缝接入 Home Assistant 等智能家居。</p></div>
+        <div class="mini"><h4>🐳 多架构 Docker</h4><p>x86 + ARM 镜像，树莓派、群晖 NAS、云主机、家用服务器通吃。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="num">3</span>核心创新点</h2>
+    <p class="sub">TeslaMate 的价值，在于把"车企黑箱"打开，让车主第一次真正拥有自己的车载数据。</p>
+    <div class="grid-2">
+      <div class="mini">
+        <h4>① 数据主权（Data Ownership）</h4>
+        <p>区别于 TeslaFi 等 SaaS，TeslaMate 把<strong>每一字节</strong>的数据写入你自己的 Postgres。不存在第三方留存、不会被订阅到期清空、可完整导出与离线分析——这是隐私与长期价值的根本差异。</p>
+      </div>
+      <div class="mini">
+        <h4>② Elixir/OTP 的高容错采集</h4>
+        <p>选择 BEAM 而非 Python/Node，让"7×24 常驻拉取、车辆随机上下线、网络抖动"这种场景天然被 Supervisor 树与"let it crash"哲学兜住，长期运行稳定可靠，是同类项目少见的工程取舍。</p>
+      </div>
+      <div class="mini">
+        <h4>③ 顶级的开箱 Grafana 看板</h4>
+        <p>社区公认其预置看板是<strong>同类最佳</strong>：单次行程能耗拆解、充电曲线、电池衰减趋势、年度驾驶报告、"终身驾驶地图"（lifetime map）等一应俱全，部署即用，无需自行拼图。</p>
+      </div>
+      <div class="mini">
+        <h4>④ MQTT → 智能家居闭环</h4>
+        <p>实时把车辆状态（位置、锁、充电、里程）发布到 MQTT broker，可触发 Home Assistant 自动化："到家自动开灯开空调""离开自动布防""电量低于阈值提醒"，把车变成智能家庭的传感器。</p>
+      </div>
+      <div class="mini">
+        <h4>⑤ 地理围栏自动归因</h4>
+        <p>内置 geofencing 引擎，将原始 GPS 流自动识别为"行程起点/终点地址"，并标注常去地点（家、公司、充电站），让行程与充电记录天然结构化、可报销、可统计。</p>
+      </div>
+      <div class="mini">
+        <h4>⑥ 睡眠友好的采集策略</h4>
+        <p>智能判断车辆休眠状态，在车辆闲置时主动暂停轮询，避免持续唤醒导致<strong>电池涓流损耗</strong>与 12V 电瓶亏电——这是"懂特斯拉"的设计，远胜粗暴高频轮询的方案。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="num">4</span>应用场景</h2>
+    <p class="sub">凡是"想对爱车有更细、更久、更自主洞察"的车主，都是 TeslaMate 的目标用户。</p>
+    <div class="card">
+      <div class="grid-2">
+        <div>
+          <ul class="clean">
+            <li><strong>个人用车分析</strong>：每段行程的能耗、效率、耗时、路线回放，量化"怎么开最省电"。</li>
+            <li><strong>电池健康/衰减追踪</strong>：长期记录可用容量曲线，判断电池衰减趋势，作为维保与质保依据。</li>
+            <li><strong>充电成本核算</strong>：自动关联电价，按充电会话统计费用，区分家充/超充成本。</li>
+            <li><strong>智能家居自动化</strong>：经 MQTT 接入 Home Assistant，实现到/离家、充电完成等联动。</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="clean">
+            <li><strong>商务/报销里程</strong>：地理围栏自动归档行程起止点，生成可报销的行驶日志。</li>
+            <li><strong>Homelab / 数据极客</strong>：作为 self-hosted 折腾项目，与 NAS、Proxmox、家庭仪表盘集成。</li>
+            <li><strong>车队/多人车数据</strong>：单实例支持多车，小型车队或家庭多辆特斯拉统一记录。</li>
+            <li><strong>二次开发数据源</strong>：经 TeslaMateApi (Go) 或直连 Postgres，喂给自定义应用、ABRP 续航规划。</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:14px"><strong>典型采用画像：</strong>核心用户是<strong>技术型特斯拉车主、homelab 玩家、数据极客与智能家居爱好者</strong>，
+        他们通常已拥有 NAS（群晖/威联通）、树莓派或一台常开的小服务器，习惯用 Docker 部署、用 Home Assistant 管理家庭。在欧美、北欧与
+        中文 homelab 社区都有活跃讨论，是"汽车 + 自托管"交叉领域最具代表性的项目之一。</p>
+    </div>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="num">5</span>竞品对比</h2>
+    <p class="sub">TeslaMate vs TeslaLogger vs TeslaFi vs Teslascope — 特斯拉数据记录四大方案全维度对比。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>对比维度</th>
+            <th>TeslaMate</th>
+            <th>TeslaLogger</th>
+            <th>TeslaFi</th>
+            <th>Teslascope</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>部署形态</td><td class="win">自托管 (Docker)</td><td>自托管</td><td class="lose">云端 SaaS</td><td class="lose">云端 SaaS</td></tr>
+          <tr><td>费用</td><td class="win">完全免费 / 开源</td><td class="win">免费 / 开源</td><td class="lose">~$5/月订阅</td><td class="mid">付费订阅</td></tr>
+          <tr><td>数据所有权</td><td class="win">完全自有 (本地 DB)</td><td class="win">完全自有</td><td class="lose">平台托管</td><td class="lose">平台托管</td></tr>
+          <tr><td>主要语言</td><td>Elixir (BEAM)</td><td>C# (.NET)</td><td class="mid">闭源 SaaS</td><td class="mid">闭源 SaaS</td></tr>
+          <tr><td>可视化</td><td class="win">Grafana 顶级看板</td><td class="win">内置看板（丰富）</td><td>内置 Web 看板</td><td>内置 Web 看板</td></tr>
+          <tr><td>实时/MQTT 智能家居</td><td class="win">原生 MQTT 支持</td><td class="mid">部分支持</td><td class="lose">有限</td><td class="lose">有限</td></tr>
+          <tr><td>高频 Streaming 数据</td><td class="win">支持</td><td class="mid">支持</td><td class="mid">轮询为主</td><td class="mid">轮询为主</td></tr>
+          <tr><td>上手难度</td><td class="mid">中等 (Docker+配置)</td><td class="mid">中等</td><td class="win">极简 (登录即用)</td><td class="win">极简</td></tr>
+          <tr><td>可扩展/二次开发</td><td class="win">完全可改 + Postgres 直查</td><td class="win">可改</td><td class="lose">不可</td><td class="lose">不可</td></tr>
+          <tr><td>社区 / 活跃度</td><td class="win">6K+ Stars · 社区维护</td><td class="mid">活跃</td><td class="mid">商业产品</td><td class="mid">商业产品</td></tr>
+          <tr><td>授权</td><td class="win">MIT</td><td>MIT</td><td>—（商业）</td><td>—（商业）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="mini">
+        <h4 style="color:var(--good)">✅ TeslaMate 仍胜出的领域</h4>
+        <ul class="clean">
+          <li class="pros">数据主权 100%，隐私与长期价值最佳</li>
+          <li class="pros">Grafana 看板美观、灵活、可深度自定义</li>
+          <li class="pros">原生 MQTT → 智能家居自动化首选</li>
+          <li class="pros">开源免费，可二次开发、可接 ABRP 等生态</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4 style="color:var(--bad)">⚠️ TeslaMate 的短板</h4>
+        <ul class="clean">
+          <li class="cons">需自备服务器 + Docker 基础，门槛偏高</li>
+          <li class="cons">强依赖特斯拉非官方 API，存在被改协议风险</li>
+          <li class="cons">原作者已淡出，社区接棒，节奏不及商业产品</li>
+          <li class="cons">仅面向特斯拉，不覆盖其他品牌</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4 style="color:var(--warn)">📈 市场趋势判断</h4>
+        <ul class="clean">
+          <li>数据主权/隐私意识上升，自托管需求走强</li>
+          <li>Tesla 推 Fleet API，正逐步正规化第三方接入</li>
+          <li>智能家居（HA）普及放大 MQTT 价值</li>
+          <li>需关注 API 政策变动带来的维护成本</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section>
+    <h2><span class="num">6</span>综合评分</h2>
+    <p class="sub">基于技术选型、可靠性、可视化、社区、数据主权等多维度加权评估。</p>
+    <div class="card">
+      <div class="scores">
+        <div class="bar-row"><span class="lbl">数据所有权/隐私</span><div class="bar"><i style="width:98%"></i></div><span class="val">9.8</span></div>
+        <div class="bar-row"><span class="lbl">运行可靠性 (OTP)</span><div class="bar"><i style="width:90%"></i></div><span class="val">9.0</span></div>
+        <div class="bar-row"><span class="lbl">可视化 (Grafana)</span><div class="bar"><i style="width:92%"></i></div><span class="val">9.2</span></div>
+        <div class="bar-row"><span class="lbl">文档质量</span><div class="bar"><i style="width:88%"></i></div><span class="val">8.8</span></div>
+        <div class="bar-row"><span class="lbl">社区活跃度</span><div class="bar"><i style="width:82%"></i></div><span class="val">8.2</span></div>
+        <div class="bar-row"><span class="lbl">生态/可扩展</span><div class="bar"><i style="width:84%"></i></div><span class="val">8.4</span></div>
+        <div class="bar-row"><span class="lbl">部署/上手 DX</span><div class="bar"><i style="width:68%"></i></div><span class="val">6.8</span></div>
+        <div class="bar-row"><span class="lbl">维护可持续性</span><div class="bar"><i style="width:70%"></i></div><span class="val">7.0</span></div>
+      </div>
+
+      <div class="final">
+        <div class="big">8.0<span style="font-size:18px">/10</span></div>
+        <div class="verdict">
+          <b>推荐结论：强烈推荐（对技术型车主 / homelab 玩家）· 特斯拉自助数据的事实标准</b><br>
+          TeslaMate 是把"用车经验"转化为"数据资产"的最佳开源方案：Elixir/OTP 保证长期稳定，Postgres + Grafana 给予顶级的可视与可控，
+          MQTT 让车辆无缝融入智能家居。若你有一台常开的 Docker 宿主、在意隐私与长期数据价值，它是无可替代的选择；若只想要"零门槛、即开即看"
+          且不介意订阅费与数据托管，TeslaFi / Teslascope 这类 SaaS 更省心。需持续关注特斯拉 API 政策变化对长期维护的影响。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>报告生成时间：2026-06-16 &nbsp;|&nbsp; 数据来源：GitHub（teslamate-org/teslamate）、官方文档 docs.teslamate.org、TeslaMotorsClub / Reddit r/TeslaMate 社区、MyTeslaMate、LibHunt 及同类方案公开资料 &nbsp;|&nbsp; 由 GitHub Trending 深度分析生成</p>
+  </footer>
+
+</div>
+</body>
+</html>
