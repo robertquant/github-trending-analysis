@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告 · krahets/hello-algo《Hello 算法》</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --card: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #9da7b3;
+    --accent: #58a6ff;
+    --accent-2: #3fb950;
+    --accent-3: #d2a8ff;
+    --warn: #f0883e;
+    --gold: #f7c948;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    padding: 72px 0 56px;
+    background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(88,166,255,.18), transparent 60%),
+      radial-gradient(900px 500px at 10% 0%, rgba(210,168,255,.14), transparent 55%),
+      var(--bg);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(88,166,255,.1);
+    border: 1px solid rgba(88,166,255,.35);
+    color: var(--accent);
+    font-size: 13px; font-weight: 600;
+    padding: 6px 14px; border-radius: 999px;
+    letter-spacing: .5px;
+  }
+  .hero h1 {
+    font-size: 44px; line-height: 1.2; margin: 22px 0 14px;
+    background: linear-gradient(120deg, #fff 30%, #9dc7ff 70%, #d2a8ff);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .hero .subtitle { font-size: 19px; color: var(--text-dim); max-width: 680px; }
+  .hero .repo-line {
+    margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .hero a.repo {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #022; font-weight: 700;
+    text-decoration: none; padding: 11px 20px; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(88,166,255,.25);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .hero a.repo:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(88,166,255,.35); }
+  .hero a.site {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--text); border: 1px solid var(--border);
+    text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 600;
+  }
+  .hero a.site:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Stat strip */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; margin-top: 38px;
+  }
+  .stat { background: var(--card); padding: 22px 18px; text-align: center; }
+  .stat .num { font-size: 26px; font-weight: 800; color: var(--gold); }
+  .stat .lbl { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Section */
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  .eyebrow { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  h2 { font-size: 30px; margin: 10px 0 22px; letter-spacing: -0.3px; }
+  h3 { font-size: 20px; margin: 28px 0 12px; color: #fff; }
+  p { color: var(--text-dim); margin-bottom: 14px; }
+  p strong, li strong { color: var(--text); }
+  ul, ol { color: var(--text-dim); padding-left: 22px; margin-bottom: 14px; }
+  li { margin-bottom: 8px; }
+  a.inline { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+  a.inline:hover { opacity: .85; }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: rgba(110,118,129,.2); color: #e6edf3;
+    padding: 2px 7px; border-radius: 6px; font-size: 13.5px;
+  }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 26px; margin-bottom: 18px;
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .card:hover { border-color: rgba(88,166,255,.4); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+  @media (max-width: 720px){
+    .stats{ grid-template-columns: repeat(2,1fr); }
+    .grid2,.grid3{ grid-template-columns: 1fr; }
+    .hero h1{ font-size: 32px; }
+  }
+
+  .chip {
+    display: inline-block; font-size: 12.5px; font-weight: 600;
+    padding: 5px 12px; border-radius: 999px; margin: 4px 6px 4px 0;
+    background: rgba(63,185,80,.1); color: var(--accent-2);
+    border: 1px solid rgba(63,185,80,.3);
+  }
+  .chip.blue { background: rgba(88,166,255,.1); color: var(--accent); border-color: rgba(88,166,255,.3); }
+  .chip.purple { background: rgba(210,168,255,.12); color: var(--accent-3); border-color: rgba(210,168,255,.3); }
+
+  /* Tech stack list */
+  .stack li { display: flex; gap: 10px; align-items: flex-start; }
+  .stack li::before { content: "▸"; color: var(--accent); }
+
+  /* Innovation */
+  .feature { display: flex; gap: 16px; margin-bottom: 16px; }
+  .feature .ico {
+    flex: 0 0 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 22px;
+    background: rgba(88,166,255,.12); border: 1px solid rgba(88,166,255,.25);
+  }
+  .feature h4 { font-size: 16px; color: #fff; margin-bottom: 4px; }
+  .feature p { margin: 0; font-size: 14.5px; }
+
+  /* Comparison table */
+  table.cmp { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14.5px; }
+  table.cmp th, table.cmp td { padding: 13px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.cmp th { color: var(--text-dim); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+  table.cmp tr:hover td { background: rgba(255,255,255,.02); }
+  table.cmp .hl { color: var(--gold); font-weight: 700; }
+  .bars { display: inline-flex; gap: 3px; }
+  .bars i { width: 9px; height: 14px; border-radius: 2px; background: #30363d; display: inline-block; }
+  .bars i.on { background: var(--accent-2); }
+
+  /* Score */
+  .score-wrap { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: center; }
+  @media (max-width:720px){ .score-wrap{ grid-template-columns:1fr; } }
+  .score-ring { width: 200px; height: 200px; border-radius: 50%;
+    background: conic-gradient(var(--accent-2) 0% 93%, #30363d 93% 100%);
+    display: grid; place-items: center; margin: 0 auto; }
+  .score-ring .inner { width: 156px; height: 156px; border-radius: 50%; background: var(--card);
+    display: grid; place-items: center; text-align: center; }
+  .score-ring .big { font-size: 48px; font-weight: 800; color: var(--gold); line-height: 1; }
+  .score-ring .unit { font-size: 18px; color: var(--text-dim); }
+  .score-ring .cap { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
+  .score-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .score-row .name { width: 130px; font-size: 14.5px; color: var(--text); }
+  .score-row .track { flex: 1; height: 10px; background: #30363d; border-radius: 6px; overflow: hidden; }
+  .score-row .fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 6px; }
+  .score-row .val { width: 48px; text-align: right; font-weight: 700; color: var(--gold); }
+
+  .quote { border-left: 3px solid var(--accent); padding: 4px 0 4px 18px; color: var(--text-dim); font-style: italic; margin: 10px 0 18px; }
+  .quote b { color: var(--text); font-style: normal; }
+
+  footer { padding: 40px 0 64px; color: var(--text-dim); font-size: 13.5px; }
+  footer .meta { margin-top: 10px; }
+  .tagline { color: var(--accent); }
+  .hr-soft { border: none; border-top: 1px dashed var(--border); margin: 22px 0; }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">⭐ GitHub Trending · 深度分析</span>
+    <h1>krahets/hello-algo<br>《Hello 算法》</h1>
+    <p class="subtitle">一本开源免费、新手友好的数据结构与算法入门教程 —— 以动画图解 + 一键运行代码，为初学者绘制一张清晰的"算法知识地图"。</p>
+    <div class="repo-line">
+      <a class="repo" href="https://github.com/krahets/hello-algo" target="_blank" rel="noopener">🐙 GitHub 仓库</a>
+      <a class="site" href="https://www.hello-algo.com/" target="_blank" rel="noopener">🌐 在线阅读 hello-algo.com</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="num">64.9k+</div><div class="lbl">GitHub Stars</div></div>
+      <div class="stat"><div class="num">12+</div><div class="lbl">支持编程语言</div></div>
+      <div class="stat"><div class="num">~500</div><div class="lbl">动画图解</div></div>
+      <div class="stat"><div class="num">4</div><div class="lbl">文档语言版本</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 概述 ===== -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">01 · 项目概述</div>
+    <h2>这是什么？为什么这么火？</h2>
+    <p><strong>《Hello 算法》</strong>（<code>krahets/hello-algo</code>）是由作者 <strong>靳宇栋（@krahets）</strong>主导编写的开源数据结构与算法入门教程，托管在 GitHub 上并配套官方网站 <a class="inline" href="https://www.hello-algo.com/" target="_blank" rel="noopener">hello-algo.com</a> 免费阅读。项目目标是打造一本"开源免费、新手友好"的算法书，让初学者能在平滑的学习曲线下探索数据结构与算法的完整知识地图。</p>
+    <p>它之所以能在 GitHub 上斩获 <strong>64.9k+ Stars</strong>，核心在于用三个抓手击中了算法入门的最大痛点：抽象难懂、上手门槛高、理论与实践脱节。它用<strong>动画图解</strong>把抽象概念可视化，用<strong>一键运行的可执行代码</strong>把理论与实践打通，再用<strong>十余种主流语言</strong>的实现让不同技术栈的学习者都能直接上手。</p>
+
+    <div class="card">
+      <h3 style="margin-top:0">🎯 项目三大目标</h3>
+      <ul style="margin-bottom:0">
+        <li><strong>开源免费</strong> —— 所有读者均可在线免费获取全书内容，降低学习成本。</li>
+        <li><strong>新手友好</strong> —— 适合零基础算法学习者自主入门，循序渐进。</li>
+        <li><strong>动画讲解</strong> —— 尽可能保证平滑的学习曲线，对图遍历等抽象概念配置动画教程。</li>
+      </ul>
+    </div>
+
+    <p>项目还获得了多位业界、学界权威的背书，这在算法教程类项目中相当罕见：</p>
+    <div class="grid2">
+      <div class="card">
+        <div class="quote">"一本通俗易懂的数据结构与算法入门书，引导读者手脑并用地学习，强烈推荐算法初学者阅读。"<br><b>—— 邓俊辉，清华大学计算机系教授</b></div>
+      </div>
+      <div class="card">
+        <div class="quote">"如果我当年学数据结构与算法的时候有《Hello 算法》，学起来应该会简单 10 倍！"<br><b>—— 李沐，亚马逊资深首席科学家</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 技术架构 ===== -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">02 · 技术架构</div>
+    <h2>一本"书"背后的工程化体系</h2>
+    <p>虽然面向读者呈现的是一本教科书，但 <code>hello-algo</code> 在工程实现上是一个相当成熟的<strong>多语言文档站工程项目</strong>。它的核心价值恰恰在于：把"内容生产 + 多语言代码维护 + 多语言文档 + 自动化构建部署"这套复杂流程，工程化得足够干净。</p>
+
+    <div class="grid2">
+      <div class="card stack">
+        <h3 style="margin-top:0">🏗️ 文档站点构建</h3>
+        <ul>
+          <li><strong>MkDocs</strong> 作为静态站点生成器，配合 <strong>MkDocs Material</strong> 主题，提供现代化、响应式的阅读体验。</li>
+          <li>通过 <code>mkdocs.yml</code> 集中管理导航、插件、主题配置。</li>
+          <li><code>overrides/</code> 目录覆盖默认模板，实现自定义布局、CSS 与交互。</li>
+          <li><code>hooks/</code> 注册自定义 Python 脚本处理构建逻辑。</li>
+        </ul>
+      </div>
+      <div class="card stack">
+        <h3 style="margin-top:0">🌐 国际化（i18n）</h3>
+        <ul>
+          <li>基于 <strong>mkdocs-static-i18n</strong> 插件实现多语言文档。</li>
+          <li>文档支持：<strong>简体中文、繁体中文、English、日本語</strong> 四种版本。</li>
+          <li>多语言代码与多语言文档解耦，可独立维护、独立审校。</li>
+          <li>由社区贡献者协作完成翻译与代码审阅（如 @codingonion、@Gonglja 等）。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card stack">
+        <h3 style="margin-top:0">⚙️ 自动化构建与部署</h3>
+        <ul>
+          <li>通过 <strong>GitHub Actions</strong> 工作流（<code>.github/workflows/</code>）实现 CI/CD。</li>
+          <li>代码推送后自动构建静态站点，并部署到 <strong>GitHub Pages</strong>。</li>
+          <li>构建脚本（<code>build.sh</code>）封装多语言/多目标的编译流程。</li>
+          <li> Releases 通道提供 PDF 等离线版本下载。</li>
+        </ul>
+      </div>
+      <div class="card stack">
+        <h3 style="margin-top:0">💻 多语言代码实现</h3>
+        <ul>
+          <li>同一算法提供 <strong>12+ 种语言</strong>的等价实现与对照阅读。</li>
+          <li>覆盖：<strong>Python、Java、C++、C、C#、JavaScript、TypeScript、Go、Swift、Rust、Dart、Zig</strong> 等。</li>
+          <li>术语冲突时以 <strong>Python</strong> 表述为准（如用 <code>None</code> 表示"空"）。</li>
+          <li>代码均可<strong>一键运行</strong>，降低环境配置门槛。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">📚 内容知识体系</h3>
+      <p style="margin-bottom:12px">全书按"基础 → 数据结构 → 算法 → 算法思想"四层递进组织：</p>
+      <div>
+        <span class="chip">初识算法</span>
+        <span class="chip blue">复杂度分析（时间 / 空间）</span>
+        <span class="chip purple">数组与链表</span>
+        <span class="chip">栈与队列</span>
+        <span class="chip blue">哈希表</span>
+        <span class="chip purple">树</span>
+        <span class="chip">堆</span>
+        <span class="chip blue">图</span>
+        <span class="chip purple">搜索</span>
+        <span class="chip">排序</span>
+        <span class="chip blue">分治</span>
+        <span class="chip purple">回溯</span>
+        <span class="chip">动态规划</span>
+        <span class="chip blue">贪心</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 核心创新点 ===== -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">03 · 核心创新点</div>
+    <h2>它凭什么比传统教材更"好用"</h2>
+
+    <div class="feature">
+      <div class="ico">🎬</div>
+      <div>
+        <h4>动画图解：让抽象算法"看得见"</h4>
+        <p>全书提供约 <strong>500 幅动画图解</strong>，把排序、树遍历、动态规划状态转移等抽象过程逐帧可视化。这是它相对传统文字教材最大的差异化优势——学习者无需在大脑中"脑补"算法执行过程。</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="ico">▶️</div>
+      <div>
+        <h4>一键运行代码：打通理论与实践</h4>
+        <p>每个知识点都配套<strong>可一键运行</strong>的源代码，读者可以"手脑并用"，边读边跑、边改边验证，真正理解算法底层工作原理，而不是停留在纸面背诵。</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="ico">🌍</div>
+      <div>
+        <h4>12+ 语言对照：跨技术栈无障碍</h4>
+        <p>同一套数据结构与算法用十余种主流语言实现并对照阅读，Python / Java / C++ / Go / Rust / Swift 等任一技术栈的学习者都能直接套用，也方便横向比较语言特性。</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="ico">📈</div>
+      <div>
+        <h4>平滑学习曲线 + 知识地图</h4>
+        <p>内容编排循序渐进，并主动为抽象章节配置动画教程。它不是题海，而是先帮读者建立<strong>完整的知识地图</strong>，再在其上展开细节，避免了"刷题却不懂为什么"的常见困境。</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="ico">💬</div>
+      <div>
+        <h4>活跃社区 + 3000+ 问答沉淀</h4>
+        <p>依托 GitHub Issues / Discussions 形成高度活跃的社区，沉淀了大量问答与勘误反馈，形成"内容—读者—贡献者"的正向飞轮，让书本持续迭代优化。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 应用场景 ===== -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">04 · 应用场景</div>
+    <h2>谁应该读它？什么时候用？</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3 style="margin-top:0">🎓 零基础入门</h3>
+        <p style="margin-bottom:0">非科班、转码、自学者建立数据结构与算法的第一块基石，动画 + 可运行代码极大降低理解门槛。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">💼 求职面试准备</h3>
+        <p style="margin-bottom:0">校招 / 跳槽刷题前的"先修课"，先建立完整知识地图与底层理解，再配合刷题事半功倍。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">🏫 教学辅助教材</h3>
+        <p style="margin-bottom:0">高校《数据结构》《算法》课程的优质补充读物，老师可用动画演示、学生可用代码实操。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">🔧 工程师基础回炉</h3>
+        <p style="margin-bottom:0">有实战经验但底层薄弱的工程师，系统性补齐复杂度分析、数据结构选型等内功。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">🌐 多语言学习者</h3>
+        <p style="margin-bottom:0">想用新语言（如 Rust / Go / Zig）练手的学习者，可通过对照实现快速熟悉语言特性与惯用法。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">📚 开源贡献入门</h3>
+        <p style="margin-bottom:0">友好的文档 / 翻译 / 代码贡献流程，是参与高质量开源项目的理想起点。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 竞品对比 ===== -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">05 · 竞品对比</div>
+    <h2>它和其他算法学习资源有何不同</h2>
+    <p>算法学习赛道竞争激烈，《Hello 算法》在其中的定位非常清晰：做"第一本入门书"。下表将其与三类主流资源横向对比：</p>
+
+    <div class="card" style="padding:0; overflow:hidden">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th>维度</th>
+            <th>Hello 算法</th>
+            <th>算法导论 (CLRS)</th>
+            <th>labuladong</th>
+            <th>代码随想录</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>核心定位</td>
+            <td class="hl">零基础入门 · 知识地图</td>
+            <td>学术经典 · 理论权威</td>
+            <td>刷题框架 · 体系构建</td>
+            <td>逐题精讲 · 面试实战</td>
+          </tr>
+          <tr>
+            <td>教学形式</td>
+            <td class="hl">动画图解 + 可运行代码</td>
+            <td>纯文本 + 严密数学推导</td>
+            <td>解题框架模板</td>
+            <td>按题分类精讲</td>
+          </tr>
+          <tr>
+            <td>难度门槛</td>
+            <td class="hl">⭐ 入门</td>
+            <td>⭐⭐⭐⭐ 学术</td>
+            <td>⭐⭐⭐ 进阶</td>
+            <td>⭐⭐ 中等</td>
+          </tr>
+          <tr>
+            <td>实战刷题性</td>
+            <td>中（打基础）</td>
+            <td>低</td>
+            <td>高</td>
+            <td>很高</td>
+          </tr>
+          <tr>
+            <td>可视化 / 趣味性</td>
+            <td class="hl">很高</td>
+            <td>低</td>
+            <td>中</td>
+            <td>中</td>
+          </tr>
+          <tr>
+            <td>多语言代码</td>
+            <td class="hl">12+ 语言对照</td>
+            <td>伪代码</td>
+            <td>多语言（含 Go/Java/Python）</td>
+            <td>多语言</td>
+          </tr>
+          <tr>
+            <td>开源 / 免费</td>
+            <td class="hl">完全开源免费</td>
+            <td>付费出版物</td>
+            <td>部分免费</td>
+            <td>免费 + 付费课程</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">🎯 推荐学习路径</h3>
+      <p style="margin-bottom:0"><strong>《Hello 算法》</strong>（入门 · 建知识地图）→ <strong>代码随想录</strong>（逐题精讲 · 面试突击）→ <strong>labuladong</strong>（框架总结 · 体系提升）→ <strong>《算法导论》</strong>（理论深造）。<br>《Hello 算法》最适合作为这条路径的<strong>起点</strong>，而非与其他三者直接竞争——它的差异化护城河正是"动画可视化 + 一键运行 + 零门槛 + 完全开源"。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 综合评分 ===== -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">06 · 综合评分</div>
+    <h2>整体评价</h2>
+    <div class="score-wrap">
+      <div>
+        <div class="score-ring">
+          <div class="inner">
+            <div><span class="big">9.3</span><span class="unit"> / 10</span></div>
+            <div class="cap">综合评分 · 强烈推荐</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="score-row"><span class="name">文档与内容质量</span><div class="track"><div class="fill" style="width:96%"></div></div><span class="val">9.6</span></div>
+        <div class="score-row"><span class="name">教学设计</span><div class="track"><div class="fill" style="width:95%"></div></div><span class="val">9.5</span></div>
+        <div class="score-row"><span class="name">可视化与趣味性</span><div class="track"><div class="fill" style="width:97%"></div></div><span class="val">9.7</span></div>
+        <div class="score-row"><span class="name">工程化与技术实现</span><div class="track"><div class="fill" style="width:90%"></div></div><span class="val">9.0</span></div>
+        <div class="score-row"><span class="name">多语言 / 国际化</span><div class="track"><div class="fill" style="width:94%"></div></div><span class="val">9.4</span></div>
+        <div class="score-row"><span class="name">社区活跃度</span><div class="track"><div class="fill" style="width:91%"></div></div><span class="val">9.1</span></div>
+        <div class="score-row"><span class="name">开源可持续性</span><div class="track"><div class="fill" style="width:93%"></div></div><span class="val">9.3</span></div>
+      </div>
+    </div>
+
+    <hr class="hr-soft">
+    <h3>✅ 优势</h3>
+    <ul>
+      <li><strong>可视化教学天花板</strong>：~500 幅动画图解，把抽象算法讲透，传统教材难以企及。</li>
+      <li><strong>实践闭环</strong>：一键运行代码 + 12+ 语言对照，学完即能动手。</li>
+      <li><strong>零门槛 + 完全免费开源</strong>：极大降低算法入门的金钱与心理成本。</li>
+      <li><strong>权威背书 + 高活跃社区</strong>：清华教授、亚马逊首席科学家推荐，3000+ 问答沉淀。</li>
+    </ul>
+    <h3>⚠️ 局限</h3>
+    <ul>
+      <li><strong>偏入门</strong>：深度与理论严谨性不及《算法导论》，进阶竞赛 / 高级面试场景需另找资源。</li>
+      <li><strong>非刷题导向</strong>：实战题量与"套路"总结弱于 labuladong / 代码随想录，需搭配使用。</li>
+      <li><strong>更新依赖社区</strong>：部分前沿或冷门主题覆盖深度取决于贡献者投入。</li>
+    </ul>
+    <h3>📝 一句话总结</h3>
+    <p style="font-size:16px"><span class="tagline"><strong>如果你只能选一本算法入门书，就选它。</strong></span>《Hello 算法》用动画图解重新定义了算法入门教材的"可读性"上限，是 2026 年 GitHub 上最值得收藏的中文开源教程之一。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><strong>krahets/hello-algo《Hello 算法》深度分析报告</strong></p>
+    <div class="meta">
+      📅 报告日期：2026-06-16 &nbsp;|&nbsp; 🏷️ 类型：开源教程 / 数据结构与算法 &nbsp;|&nbsp; 🔗 仓库：<a class="inline" href="https://github.com/krahets/hello-algo" target="_blank" rel="noopener">github.com/krahets/hello-algo</a><br>
+      本报告由 GitHub Trending 深度分析师自动生成，数据来源于公开网络搜索，Star 数等指标随时间动态变化，仅供参考。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
