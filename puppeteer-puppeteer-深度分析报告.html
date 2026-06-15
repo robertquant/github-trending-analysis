@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puppeteer 深度分析报告 — puppeteer/puppeteer</title>
+<style>
+  :root{
+    --bg:#0a1320;
+    --bg-2:#0d1a2c;
+    --card:#102036;
+    --card-2:#152844;
+    --line:#21406a;
+    --text:#e9f1ff;
+    --muted:#9db5d8;
+    --accent:#2fd9b5;
+    --accent-2:#37a6ff;
+    --accent-3:#b07cff;
+    --warn:#ffb454;
+    --bad:#ff6b6b;
+    --pptr:#2fd9b5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 80% -10%,#143a5a 0%,transparent 55%),
+               radial-gradient(900px 700px at -10% 10%,#1b3a6a30 0%,transparent 60%),
+               var(--bg);
+    color:var(--text);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+
+  /* HERO */
+  .hero{
+    position:relative;overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg-2) 100%);
+    padding:40px 38px;
+    margin-bottom:34px;
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.8);
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    color:var(--pptr);
+    background:rgba(47,217,181,.10);
+    border:1px solid rgba(47,217,181,.30);
+    padding:6px 14px;border-radius:999px;margin-bottom:18px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--pptr);box-shadow:0 0 12px var(--pptr)}
+  h1{
+    font-size:38px;line-height:1.2;font-weight:800;letter-spacing:-.5px;
+    margin-bottom:10px;
+    background:linear-gradient(90deg,#fff 0%,#d4f7ee 55%,#a9e9d8 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .repo{font-family:"SF Mono",Menlo,Consolas,monospace;color:var(--accent-2);font-size:15px;margin-bottom:16px;display:block}
+  .hero p.lede{color:var(--muted);font-size:16px;max-width:800px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .chip{
+    font-size:13px;color:var(--muted);
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--line);
+    padding:7px 13px;border-radius:9px;
+  }
+  .chip b{color:var(--text);font-weight:600}
+
+  /* SCORE STRIP */
+  .score-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;
+  }
+  .score-card{
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  }
+  .score-card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .score-card .v{font-size:24px;font-weight:800;margin-top:4px;color:#fff}
+  .score-card .v small{font-size:13px;color:var(--muted);font-weight:500}
+  .stars{color:var(--warn)}
+
+  /* SECTIONS */
+  section{margin-top:34px;animation:fade .6s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h2{
+    font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:9px;font-size:14px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#03121f;
+    flex:0 0 auto;
+  }
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;
+  }
+  p{margin-bottom:12px;color:#d6e2f7}
+  .card p:last-child{margin-bottom:0}
+  strong{color:#fff}
+  code,kbd{
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;
+    background:rgba(47,217,181,.12);color:#aef0dd;
+    padding:2px 7px;border-radius:6px;border:1px solid rgba(47,217,181,.2);
+  }
+
+  /* GRID */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mini{
+    background:var(--card-2);border:1px solid var(--line);border-radius:13px;padding:16px 18px;
+  }
+  .mini h4{font-size:14.5px;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .mini p{font-size:13px;color:var(--muted);margin:0}
+
+  /* ARCH DIAGRAM */
+  .arch{
+    display:flex;flex-direction:column;gap:10px;margin-top:14px;
+  }
+  .arch .layer{
+    border:1px dashed var(--line);border-radius:12px;padding:13px 16px;
+    background:rgba(255,255,255,.02);display:flex;justify-content:space-between;align-items:center;gap:14px;
+    font-size:14px;
+  }
+  .arch .layer .tag{font-size:11px;color:var(--muted);font-family:monospace;white-space:nowrap}
+  .arrow{text-align:center;color:var(--accent);font-size:18px;line-height:1}
+
+  /* CODE BLOCK */
+  pre.code{
+    background:#0a1726;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-top:16px;overflow-x:auto;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;color:#cfe6ff;line-height:1.7;
+  }
+  pre.code .k{color:var(--pptr)}
+  pre.code .s{color:#ffb454}
+  pre.code .c{color:#5b748f;font-style:italic}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--bg-2);color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  td.win{color:var(--accent);font-weight:600}
+  td.lose{color:var(--bad)}
+  td.mid{color:var(--warn)}
+  .yes{color:var(--accent)}
+  .no{color:var(--bad)}
+  .partial{color:var(--warn)}
+
+  /* SCORE BARS */
+  .scores{display:flex;flex-direction:column;gap:14px}
+  .bar-row{display:grid;grid-template-columns:160px 1fr 46px;align-items:center;gap:14px}
+  .bar-row .lbl{font-size:13.5px;color:#d6e2f7}
+  .bar{height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+  .bar-row .val{font-size:14px;font-weight:700;text-align:right;color:#fff}
+
+  .final{
+    margin-top:8px;display:flex;align-items:center;gap:18px;
+    background:linear-gradient(135deg,rgba(47,217,181,.12),rgba(176,124,255,.12));
+    border:1px solid var(--line);border-radius:14px;padding:18px 22px;
+  }
+  .final .big{font-size:42px;font-weight:800;line-height:1;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .final .verdict{font-size:14px;color:var(--muted)}
+  .final .verdict b{color:#fff}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:10px}
+  ul.clean li{position:relative;padding-left:22px;font-size:14px;color:#d6e2f7}
+  ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--accent)}
+  .pros{color:var(--accent)}
+  .cons{color:var(--bad)}
+
+  footer{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center}
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  @media(max-width:760px){
+    h1{font-size:28px}
+    .score-strip{grid-template-columns:1fr 1fr}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .bar-row{grid-template-columns:120px 1fr 40px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="badge"><span class="dot"></span>GitHub Trending · 深度分析报告</span>
+    <h1>Puppeteer</h1>
+    <span class="repo">github.com/puppeteer/puppeteer</span>
+    <p class="lede">
+      由 Google Chrome DevTools 团队出品的<strong>无头浏览器自动化库</strong>。Puppeteer 提供一套高级 Node.js API，
+      通过 <strong>Chrome DevTools Protocol（CDP）</strong> 与新兴的 <strong>WebDriver BiDi</strong> 协议控制 Chrome / Chromium / Firefox，
+      以一行代码即可启动浏览器、点击、截图、抓取页面与生成 PDF。它是"无头 Chrome 时代"的奠基者，也是当下 JavaScript 生态
+      最具影响力的浏览器自动化与爬虫底座之一。
+    </p>
+
+    <div class="meta-row">
+      <span class="chip">⭐ <b>90,000+</b> Stars</span>
+      <span class="chip">🍴 <b>9,400+</b> Forks</span>
+      <span class="chip">👥 <b>600+</b> Contributors</span>
+      <span class="chip">📦 <b>~4.5M</b> 周下载</span>
+      <span class="chip">🏷️ <b>v24.x</b></span>
+      <span class="chip">💻 <b>TypeScript</b></span>
+      <span class="chip">📄 <b>Apache-2.0</b></span>
+    </div>
+
+    <div class="score-strip">
+      <div class="score-card"><div class="k">综合评分</div><div class="v">8.3<small>/10</small></div></div>
+      <div class="score-card"><div class="k">GitHub Stars</div><div class="v stars">90K+</div></div>
+      <div class="score-card"><div class="k">首版发布</div><div class="v">2017<small> · 8 月</small></div></div>
+      <div class="score-card"><div class="k">维护方</div><div class="v" style="font-size:18px">Google<small> · Chrome DevTools</small></div></div>
+    </div>
+  </header>
+
+  <!-- 1. 项目概述 -->
+  <section>
+    <h2><span class="num">1</span>项目概述</h2>
+    <p class="sub">一句话定位：用 Node.js 像写普通脚本一样驱动真实浏览器。</p>
+    <div class="card">
+      <p>
+        <strong>Puppeteer</strong> 是一个 Node.js 库，为 <strong>Chrome / Chromium / Firefox</strong> 提供一套高级（high-level）API。
+        它最初由 <strong>Google Chrome DevTools 团队</strong>于 <strong>2017 年 8 月</strong>开源，其名字"Puppeteer（提线木偶师）"
+        形象地揭示了本质：你的 Node.js 脚本是"操偶师"，通过底层协议的"线"实时操控浏览器这只"木偶"。
+      </p>
+      <p>
+        Puppeteer 的诞生几乎是与 Chrome 官方<strong>无头模式（Headless Chrome）</strong>同步推进的——它甚至在 headless Chrome 趋于稳定之前
+        就让"用脚本跑真实浏览器"成为一件零配置、几行代码就能上手的事，因此被公认为<strong>推动无头浏览器自动化普及的关键力量</strong>。
+        时至今日，它仍是无数爬虫框架、E2E 测试方案、PDF/截图服务与可视化回归工具最底层的"发动机"。
+      </p>
+      <p>
+        截至 2026 年中，Puppeteer 仓库累计 <strong>90,000+ Stars、9,400+ Forks、600+ 贡献者</strong>，npm 周下载量约 <strong>450 万次</strong>，
+        长期稳居 JavaScript 自动化领域 Star 数前列。项目采用 <strong>Apache-2.0</strong> 许可证，以 TypeScript 重写，
+        由 Google 主导维护、社区共同贡献，最新主线为 <strong>v24 系列</strong>，已全面拥抱 W3C 标准化的 WebDriver BiDi 协议。
+      </p>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="num">2</span>技术架构</h2>
+    <p class="sub">核心机制：通过 WebSocket 直连浏览器调试协议，把底层命令包装成开发者友好的 API。</p>
+    <div class="card">
+      <p>
+        Puppeteer 的核心是一条<strong>"Node.js 脚本 ↔ 浏览器调试端口"</strong>的直连通道。它启动一个 Chrome/Chromium/Firefox 进程并开启远程调试端点，
+        随后通过一条 <strong>WebSocket 连接</strong>以 <strong>Chrome DevTools Protocol（CDP）</strong>或 <strong>WebDriver BiDi</strong> 协议
+        与之双向通信。开发者调用的高层方法（如 <code>page.click()</code>、<code>page.screenshot()</code>、<code>page.evaluate()</code>），
+        在内部都被翻译成对应协议域（Network、Page、Runtime、DOM 等）的原始命令。
+      </p>
+
+      <div class="arch">
+        <div class="layer"><span>🧑‍💻 开发者脚本（Node.js / TypeScript）</span><span class="tag">require('puppeteer')</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>🪆 Puppeteer 高级 API（Page / Browser / Frame / ElementHandle）</span><span class="tag">高层封装</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>🔌 连接层：CDP Client 或 WebDriver BiDi Client</span><span class="tag">WebSocket 双向通信</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>🌐 真实浏览器进程（Chrome / Chromium / Firefox · 有头或无头）</span><span class="tag">DevTools 端口</span></div>
+      </div>
+
+      <p style="margin-top:18px">
+        在包结构上，Puppeteer 拆分为两个发布件：<code>puppeteer</code>（默认下载一份兼容版 Chromium，开箱即用）与
+        <code>puppeteer-core</code>（不捆绑浏览器，自带浏览器路径，适合云函数/容器/Docker 等受控环境）。浏览器默认以
+        <strong>无头模式</strong>运行，也可一键切换到有头模式进行可视化调试。
+      </p>
+
+      <pre class="code"><span class="c">// 经典示例：3 行代码截图一个完整渲染的页面</span>
+<span class="k">import</span> puppeteer <span class="k">from</span> <span class="s">'puppeteer'</span>;
+
+<span class="k">const</span> browser = <span class="k">await</span> puppeteer.launch();          <span class="c">// 启动无头 Chromium</span>
+<span class="k">const</span> page = <span class="k">await</span> browser.newPage();
+<span class="k">await</span> page.goto(<span class="s">'https://example.com'</span>);          <span class="c">// 等待完整渲染（含 JS）</span>
+<span class="k">await</span> page.screenshot({ path: <span class="s">'example.png'</span> }); <span class="c">// 整页截图</span>
+<span class="k">await</span> browser.close();</pre>
+
+      <div class="grid-3" style="margin-top:20px">
+        <div class="mini"><h4>🔌 CDP 原生</h4><p>直连 Chrome DevTools Protocol，拥有近乎"开发者工具"级别的底层控制力。</p></div>
+        <div class="mini"><h4>🧭 WebDriver BiDi</h4><p>v23 起支持、v24 起为 Firefox 默认协议，向 W3C 跨浏览器标准对齐。</p></div>
+        <div class="mini"><h4>🪶 默认无头</h4><p>开箱即以无头模式运行，无需 GUI，天然适配服务器/CI/容器环境。</p></div>
+        <div class="mini"><h4>🧩 双包设计</h4><p><code>puppeteer</code> 自带浏览器，<code>puppeteer-core</code> 由你提供，灵活适配各部署形态。</p></div>
+        <div class="mini"><h4>🛰️ 网络/性能域</h4><p>可拦截请求、mock 响应、监听网络事件、采集性能指标与 Trace。</p></div>
+        <div class="mini"><h4>📦 零配置</h4><p>安装即用，浏览器版本与库版本自动对齐，免去环境调试之苦。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="num">3</span>核心创新点</h2>
+    <p class="sub">它不只是"又一个驱动"，而是定义了现代无头浏览器自动化的范式。</p>
+    <div class="grid-2">
+      <div class="mini">
+        <h4>① CDP 的首个"大众化"封装</h4>
+        <p>在 Puppeteer 之前，直接用 CDP 写自动化意味着处理大量底层 WebSocket 消息与命令 ID。Puppeteer 率先把这套复杂协议封装成直观的异步 API，把"无头浏览器"从极客玩具变成了人人可用的生产力工具。</p>
+      </div>
+      <div class="mini">
+        <h4>② 推动无头 Chrome 走向主流</h4>
+        <p>Puppeteer 与 Chrome headless 几乎同期成熟，二者相互成就：它让无头浏览器自动化真正可用、可普及，反向也推动了浏览器官方持续完善 headless 与调试协议。</p>
+      </div>
+      <div class="mini">
+        <h4>③ 一等公民的截图与 PDF 能力</h4>
+        <p><code>page.screenshot()</code> 与 <code>page.pdf()</code> 把"网页转图片/PDF"这件过去需要 PhantomJS + 插件才能做的事，压缩到一行 API，成为报表、票据、预渲染、网页归档的事实标准。</p>
+      </div>
+      <div class="mini">
+        <h4>④ 拥抱 WebDriver BiDi 标准化</h4>
+        <p>v23 引入、v24 为 Firefox 默认——Puppeteer 正从"Chrome 专属协议"迈向 W3C 标准化的跨浏览器协议。Selenium 官方公开"欢迎 Puppeteer 加入 WebDriver 世界"，标志着生态从分裂走向融合。</p>
+      </div>
+      <div class="mini">
+        <h4>⑤ 网络拦截与请求塑造</h4>
+        <p>原生支持请求拦截、响应 mock、自定义 header、条件性阻断资源（图片/字体/广告），既能加速爬取、构造稳定测试数据，也能做反爬对抗与性能优化。</p>
+      </div>
+      <div class="mini">
+        <h4>⑥ 自动等待与真实渲染</h4>
+        <p>对 SPA 的等待语义、<code>page.evaluate()</code> 注入执行任意 JS，让 Puppeteer 能拿到 JS 渲染后的真实 DOM——这是传统 HTTP 爬虫根本拿不到的"最终页面"。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="num">4</span>应用场景</h2>
+    <p class="sub">Puppeteer 在"需要真实浏览器渲染或交互"的场景里几乎无处不在。</p>
+    <div class="card">
+      <div class="grid-2">
+        <div>
+          <ul class="clean">
+            <li><strong>动态网页爬虫</strong>：抓取需要 JS 渲染、懒加载、登录态的 SPA 内容，拿到"最终 DOM"。</li>
+            <li><strong>UI / E2E 测试</strong>：配合 Jest / Mocha 编写端到端用例，模拟真实用户点击与表单。</li>
+            <li><strong>截图与可视化回归</strong>：整页截图、多视口截图、像素级对比，守护 UI 不回退。</li>
+            <li><strong>PDF 生成</strong>：把页面/报表/票据导出为高质量 PDF。</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="clean">
+            <li><strong>SEO 预渲染 / SSR 兜底</strong>：为客户端渲染的 SPA 生成静态快照，便于搜索引擎抓取。</li>
+            <li><strong>表单与流程自动化</strong>：批量登录、提交、签到、数据录入等重复性交互任务。</li>
+            <li><strong>性能与网络监控</strong>：采集 Lighthouse 指标、Trace、网络瀑布图，做自动化性能巡检。</li>
+            <li><strong>作为底层"引擎"</strong>：被无数上层框架（爬虫、测试、报表服务）作为浏览器驱动底座。</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:14px"><strong>典型采用画像：</strong>Puppeteer 的使用者横跨<strong>前端工程师、QA/测试工程师、数据工程师与后端开发者</strong>，
+        在互联网、电商、金融、SaaS、媒体与数据服务行业尤为常见。许多知名爬虫框架（如 Crawlee、Apify SDK）、报表/截图服务以及
+        Lighthouse 等都直接或间接构建于其上，使其成为浏览器自动化基础设施级别的存在。</p>
+    </div>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="num">5</span>竞品对比</h2>
+    <p class="sub">Puppeteer vs Playwright vs Selenium vs Cypress — 四大主流浏览器自动化方案全维度对比。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>对比维度</th>
+            <th>Puppeteer</th>
+            <th>Playwright</th>
+            <th>Selenium</th>
+            <th>Cypress</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>定位</td><td>浏览器自动化库</td><td>测试 + 自动化框架</td><td>测试框架</td><td>E2E 测试框架</td></tr>
+          <tr><td>底层协议</td><td>CDP / WebDriver BiDi</td><td>CDP / BiDi（多引擎）</td><td class="lose">WebDriver Classic</td><td>浏览器内驻留</td></tr>
+          <tr><td>语言支持</td><td class="lose">JS / TS</td><td class="win">JS · Python · Java · .NET</td><td class="win">多语言</td><td class="lose">JS / TS</td></tr>
+          <tr><td>浏览器覆盖</td><td class="mid">Chromium · Firefox（WebKit 弱）</td><td class="win">Chromium · Firefox · WebKit</td><td class="win">全浏览器 + 移动</td><td class="mid">Chromium · 部分 Firefox</td></tr>
+          <tr><td>爬虫/通用自动化</td><td class="win">业界标杆</td><td class="win">优秀</td><td class="mid">一般</td><td class="lose">不适合</td></tr>
+          <tr><td>测试编排/并行</td><td class="mid">需配合运行器</td><td class="win">内置免费并行</td><td class="mid">需 Grid</td><td class="lose">需付费 Cloud</td></tr>
+          <tr><td>自动等待</td><td class="mid">部分</td><td class="win">原生强</td><td class="lose">弱（手写）</td><td class="win">原生强</td></tr>
+          <tr><td>反爬对抗/隐匿</td><td class="mid">中（需插件增强）</td><td class="mid">中</td><td class="lose">易被检测</td><td class="lose">易被检测</td></tr>
+          <tr><td>调试体验</td><td class="mid">无头为主</td><td class="win">Trace Viewer 强</td><td class="lose">一般</td><td class="win">时间旅行（标杆）</td></tr>
+          <tr><td>GitHub Stars</td><td class="win">90,000+</td><td>82,000+</td><td>32,000+</td><td>49,000+</td></tr>
+          <tr><td>初始发布</td><td>2017</td><td>2020</td><td>2004</td><td>2014 / 公开 2017</td></tr>
+          <tr><td>背后主体</td><td>Google（Chrome DevTools）</td><td>Microsoft</td><td>Conservancy（社区）</td><td>Cypress.io</td></tr>
+          <tr><td>授权</td><td>Apache-2.0</td><td>Apache-2.0</td><td>Apache-2.0</td><td>MIT（Cloud 付费）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="mini">
+        <h4 style="color:var(--accent)">✅ Puppeteer 仍胜出的领域</h4>
+        <ul class="clean">
+          <li class="pros">通用浏览器自动化/爬虫的事实标杆</li>
+          <li class="pros">CDP 直连，底层控制力与灵活性极强</li>
+          <li class="pros">截图/PDF 一等公民，API 极简</li>
+          <li class="pros">Google 主导、生态庞大、教程海量</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4 style="color:var(--bad)">⚠️ Puppeteer 的短板</h4>
+        <ul class="clean">
+          <li class="cons">仅 JS/TS，单一语言绑定</li>
+          <li class="cons">WebKit/Safari 支持薄弱</li>
+          <li class="cons">作为"库"无内置测试编排/并行</li>
+          <li class="cons">反爬隐匿能力需第三方插件补足</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4 style="color:var(--warn)">📈 市场趋势判断</h4>
+        <ul class="clean">
+          <li>Playwright 是测试赛道最强挑战者</li>
+          <li>Puppeteer 在"自动化/爬虫"赛道仍稳固</li>
+          <li>WebDriver BiDi 让其与生态走向融合</li>
+          <li>AI Agent 浏览器操作带来新增长点</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section>
+    <h2><span class="num">6</span>综合评分</h2>
+    <p class="sub">基于技术、生态、体验、市场等多维度加权评估。</p>
+    <div class="card">
+      <div class="scores">
+        <div class="bar-row"><span class="lbl">文档质量</span><div class="bar"><i style="width:92%"></i></div><span class="val">9.2</span></div>
+        <div class="bar-row"><span class="lbl">开发者体验 (DX)</span><div class="bar"><i style="width:88%"></i></div><span class="val">8.8</span></div>
+        <div class="bar-row"><span class="lbl">生态成熟度</span><div class="bar"><i style="width:88%"></i></div><span class="val">8.8</span></div>
+        <div class="bar-row"><span class="lbl">社区活跃度</span><div class="bar"><i style="width:87%"></i></div><span class="val">8.7</span></div>
+        <div class="bar-row"><span class="lbl">执行性能</span><div class="bar"><i style="width:85%"></i></div><span class="val">8.5</span></div>
+        <div class="bar-row"><span class="lbl">商业可持续性</span><div class="bar"><i style="width:85%"></i></div><span class="val">8.5</span></div>
+        <div class="bar-row"><span class="lbl">技术创新</span><div class="bar"><i style="width:82%"></i></div><span class="val">8.2</span></div>
+        <div class="bar-row"><span class="lbl">跨浏览器支持</span><div class="bar"><i style="width:65%"></i></div><span class="val">6.5</span></div>
+      </div>
+
+      <div class="final">
+        <div class="big">8.3<span style="font-size:18px">/10</span></div>
+        <div class="verdict">
+          <b>推荐结论：强烈推荐 · 浏览器自动化与爬虫的事实底座</b><br>
+          Puppeteer 是"用 Node.js 驱动真实浏览器"最成熟、最简洁的选择。对爬虫、截图/PDF、表单自动化与通用浏览器任务，它是首选引擎；
+          对严肃的 E2E 测试工程，可优先考虑 Playwright（多浏览器/多语言/内置并行）。二者同源、API 相近，迁移成本可控。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>报告生成时间：2026-06-16 &nbsp;|&nbsp; 数据来源：GitHub、npm trends、pptr.dev 官方文档、Chrome Developers 博客、Selenium 博客、社区评测 &nbsp;|&nbsp; 由 GitHub Trending 深度分析生成</p>
+  </footer>
+
+</div>
+</body>
+</html>

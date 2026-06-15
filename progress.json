@@ -1,9 +1,7 @@
 {
   "date": "2026-06-15",
   "fetched_at": "2026-06-15",
-  "pending": [
-    "puppeteer/puppeteer"
-  ],
+  "pending": [],
   "skipped_already_analyzed": [
     "iptv-org/iptv",
     "swc-project/swc",
@@ -20,7 +18,8 @@
     "cypress-io/cypress",
     "GorvGoyl/Clone-Wars",
     "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
-    "Free-TV/IPTV"
+    "Free-TV/IPTV",
+    "puppeteer/puppeteer"
   ],
   "projects": [
     {
@@ -53,13 +52,13 @@
     },
     {
       "name": "puppeteer/puppeteer",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 1,
+    "pending": 0,
     "skipped": 7,
-    "done": 7
+    "done": 8
   }
 }
