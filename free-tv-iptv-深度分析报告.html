@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free-TV/IPTV 深度分析报告 — 全球免费电视 M3U 精选播放列表</title>
+<style>
+  :root{
+    --bg:#07131a;
+    --bg-2:#0a1c26;
+    --card:#0f2531;
+    --card-2:#143341;
+    --line:#1f4a5c;
+    --text:#e6f4f7;
+    --muted:#8fb4c0;
+    --accent:#2ee6c8;
+    --accent-2:#4aa3ff;
+    --accent-3:#ffd24a;
+    --warn:#ffb454;
+    --bad:#ff6b6b;
+    --good:#5fcf80;
+    --tv:#2ee6c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 85% -10%,#0d3b3a 0%,transparent 55%),
+               radial-gradient(900px 700px at -10% 10%,#103a5230 0%,transparent 60%),
+               var(--bg);
+    color:var(--text);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+
+  /* HERO */
+  .hero{
+    position:relative;overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg-2) 100%);
+    padding:40px 38px;
+    margin-bottom:34px;
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.8);
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(46,230,200,.025) 3px 4px);
+    mix-blend-mode:overlay;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    color:var(--tv);
+    background:rgba(46,230,200,.10);
+    border:1px solid rgba(46,230,200,.30);
+    padding:6px 14px;border-radius:999px;margin-bottom:18px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--tv);box-shadow:0 0 12px var(--tv)}
+  h1{
+    font-size:38px;line-height:1.2;font-weight:800;letter-spacing:-.5px;
+    margin-bottom:10px;
+    background:linear-gradient(90deg,#fff 0%,#c8fff2 55%,#2ee6c8 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .repo{font-family:"SF Mono",Menlo,Consolas,monospace;color:var(--accent-2);font-size:15px;margin-bottom:16px;display:block}
+  .hero p.lede{color:var(--muted);font-size:16px;max-width:820px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .chip{
+    font-size:13px;color:var(--muted);
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--line);
+    padding:7px 13px;border-radius:9px;
+  }
+  .chip b{color:var(--text);font-weight:600}
+
+  /* SCORE STRIP */
+  .score-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;
+  }
+  .score-card{
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  }
+  .score-card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .score-card .v{font-size:24px;font-weight:800;margin-top:6px;color:var(--text)}
+  .score-card.accent .v{color:var(--tv)}
+
+  /* SECTION */
+  section.block{
+    border:1px solid var(--line);border-radius:18px;
+    background:linear-gradient(180deg,var(--card) 0%,var(--bg-2) 100%);
+    padding:30px 30px;margin-bottom:24px;
+  }
+  h2{
+    font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;
+    display:flex;align-items:center;gap:11px;
+  }
+  .num{
+    width:30px;height:30px;flex:none;border-radius:9px;
+    display:grid;place-items:center;font-size:14px;font-weight:800;
+    background:linear-gradient(135deg,var(--tv),var(--accent-3));color:#07131a;
+  }
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  p{margin-bottom:12px;color:#d3e8ee}
+  ul{margin:6px 0 14px 4px;padding-left:6px;list-style:none}
+  ul li{position:relative;padding-left:22px;margin-bottom:9px;color:#d3e8ee}
+  ul li::before{content:"▸";position:absolute;left:2px;top:0;color:var(--tv);font-weight:800}
+
+  a{color:var(--accent-2);text-decoration:none;border-bottom:1px dashed rgba(74,163,255,.4)}
+  a:hover{border-bottom-style:solid}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;margin:8px 0 6px;font-size:14px}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;background:rgba(255,255,255,.025)}
+  td code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;color:#aef3e6;background:rgba(46,230,200,.08);padding:2px 7px;border-radius:6px}
+
+  .pill{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;font-weight:600}
+  .pill.good{color:var(--good);background:rgba(95,207,128,.12)}
+  .pill.warn{color:var(--warn);background:rgba(255,180,84,.12)}
+  .pill.bad{color:var(--bad);background:rgba(255,107,107,.12)}
+  .pill.neutral{color:var(--accent-2);background:rgba(74,163,255,.12)}
+
+  /* GRID */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .mini{border:1px solid var(--line);border-radius:14px;padding:18px 20px;background:rgba(255,255,255,.025)}
+  .mini h3{font-size:15px;margin-bottom:8px;color:#fff}
+  .mini p{font-size:13.5px;color:var(--muted);margin-bottom:0}
+
+  /* PHILOSOPHY CARDS */
+  .phil{border:1px solid var(--line);border-radius:14px;padding:18px 20px;background:linear-gradient(180deg,rgba(46,230,200,.05),rgba(255,255,255,.02))}
+  .phil .ic{font-size:22px}
+  .phil h3{font-size:15.5px;margin:8px 0;color:#fff}
+  .phil p{font-size:13.5px;color:var(--muted);margin:0}
+
+  /* CODE BLOCK */
+  pre{
+    background:#06101680;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;overflow:auto;font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:12.5px;color:#aef3e6;margin:10px 0 4px;line-height:1.7;
+  }
+  pre .c{color:var(--muted)}
+  pre .t{color:var(--accent-3)}
+
+  /* SCORE BAR */
+  .scorewrap{margin-top:6px}
+  .srow{display:flex;align-items:center;gap:14px;margin-bottom:11px}
+  .srow .lbl{width:170px;font-size:13.5px;color:#d3e8ee;flex:none}
+  .sbar{flex:1;height:9px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+  .sbar > i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--tv),var(--accent-3))}
+  .srow .val{width:42px;text-align:right;font-weight:700;font-size:13.5px;color:var(--tv);flex:none}
+
+  .bigscore{
+    display:flex;align-items:center;gap:22px;
+    background:linear-gradient(135deg,rgba(46,230,200,.10),rgba(255,210,74,.08));
+    border:1px solid rgba(46,230,200,.30);border-radius:16px;padding:22px 26px;margin-top:14px;
+  }
+  .bigscore .ring{font-size:50px;font-weight:900;color:var(--tv);line-height:1}
+  .bigscore .ring small{font-size:20px;color:var(--muted);font-weight:700}
+  .bigscore .desc{color:#dff3f6;font-size:14.5px}
+
+  .quote{border-left:3px solid var(--tv);padding:6px 0 6px 16px;color:var(--muted);font-style:italic;margin:8px 0}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px;line-height:1.9}
+  .tagrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .tag{font-size:12px;color:var(--accent-2);background:rgba(74,163,255,.08);border:1px solid rgba(74,163,255,.22);padding:5px 11px;border-radius:8px}
+  @media(max-width:760px){
+    .score-strip{grid-template-columns:repeat(2,1fr)}
+    .grid2,.grid3{grid-template-columns:1fr}
+    h1{font-size:30px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="badge"><span class="dot"></span>GitHub Trending 深度分析</span>
+    <h1>Free-TV/IPTV — 全球免费电视频道的精选 M3U 播放列表</h1>
+    <span class="repo">github.com/Free-TV/IPTV</span>
+    <p class="lede">一个以<b>「质量优于数量」</b>为核心哲学的开源 IPTV 播放列表项目。它把全世界<b>真正免费</b>的电视频道（地面波 OTA 免费台 + Pluto TV / Plex TV / Samsung TV Plus 等免费网络电视）聚合为一份 <code>m3u8</code> 清单，只需把一个 raw 链接贴进 VLC / IPTV Smarters / TiviMate 等任意播放器即可观看。覆盖<b>全球 70+ 国家与地区</b>，并以 Markdown 为单一事实源、Python 脚本自动生成成品，主打<b>纯净、合法、可用</b>。</p>
+    <div class="meta-row">
+      <span class="chip"><b>类型：</b>媒体资源 / IPTV 播放列表</span>
+      <span class="chip"><b>产物：</b>playlist.m3u8</span>
+      <span class="chip"><b>源码语言：</b>Python（生成器）+ Markdown（数据源）</span>
+      <span class="chip"><b>覆盖：</b>70+ 国家/地区</span>
+      <span class="chip"><b>内容定位：</b>免费 · 主流 · 高清优先</span>
+      <span class="chip"><b>镜像：</b>SourceForge</span>
+    </div>
+
+    <div class="score-strip">
+      <div class="score-card accent"><div class="k">核心哲学</div><div class="v">少即是多</div></div>
+      <div class="score-card"><div class="k">使用方式</div><div class="v">一行 URL</div></div>
+      <div class="score-card"><div class="k">每频道流</div><div class="v">仅 1 条</div></div>
+      <div class="score-card"><div class="k">合法性</div><div class="v">仅免费台</div></div>
+    </div>
+  </header>
+
+  <!-- 1. 项目概述 -->
+  <section class="block">
+    <h2><span class="num">1</span>项目概述</h2>
+    <p class="sub">What &amp; Why —— 一份"只收录真正免费、且能用"的电视频道清单</p>
+    <p><b>Free-TV/IPTV</b> 是一个开源的 <b>M3U 播放列表项目</b>，目标极其聚焦：把<b>全世界真正免费的电视频道</b>整理成一份可直接被任意 IPTV 播放器消费的 <code>.m3u8</code> 文件。这里的"免费"被严格定义 —— 要么是<b>地面波/卫星免费开锁广播</b>（DVB-T / DVB-S / 模拟信号），要么是<b>官方在互联网上免费提供</b>的流（Pluto TV、Plex TV、Redbox Live TV、Roku TV、Samsung TV Plus、YouTube 直播频道等）。</p>
+    <ul>
+      <li><b>核心价值主张</b>：把"找免费直播源"这件反复碰运气的事，收敛为<b>一个稳定可订阅的 raw 链接</b> —— 把它贴进播放器即可，链接长期有效、社区持续维护。</li>
+      <li><b>使用门槛极低</b>：不需要注册、不需要客户端、不需要 API Key，一个 <code>https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8</code> 走天下。</li>
+      <li><b>覆盖广度</b>：收录来自全球 <b>70+ 国家与地区</b>的免费频道（README 以国旗序列直观呈现），从美、加、英到日、韩、印、中东、拉美均有覆盖。</li>
+      <li><b>明确的合法性边界</b>：项目哲学白纸黑字声明 —— <b>不收录付费频道</b>、不收录仅靠商业订阅才能观看的内容；以"是否在该国被官方免费提供"作为唯一收录标准。</li>
+    </ul>
+    <div class="quote">"This is an M3U playlist for free TV channels around the World — either free locally (over the air) or free on the Internet." —— 项目 README</div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section class="block">
+    <h2><span class="num">2</span>技术架构</h2>
+    <p class="sub">Markdown 即数据库 · Python 即编译器 · m3u8 即产物</p>
+    <p>项目最值得称道的设计是它的<b>数据架构</b>：它没有用数据库、没有用 CMS，而是把 <b>Markdown 表格当作"单一事实源"（Single Source of Truth）</b>，再用一个 Python 脚本把人类可读的表格"编译"成机器可消费的 <code>m3u8</code>。这让"维护播放列表"这件事变得像"编辑一份 Wiki"一样轻量。</p>
+
+    <table>
+      <thead><tr><th style="width:22%">层次</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><b>数据源层</b></td><td><code>lists/</code> 目录下的若干 <code>.md</code> 文件，每个文件代表<b>一个分组</b>（通常按国家/地区或频道类型组织）；文件首行 <code>&lt;h1&gt;</code> 即分组标题。频道信息以 Markdown 表格行存储。</td></tr>
+        <tr><td><b>状态标记</b></td><td>每条频道的 URL 列以标记驱动：<code>[&gt;]</code> 表示<b>有效流</b>（会被编入播放列表），<code>[x]</code> 表示<b>失效</b>（移入 Invalid 分类）。这是"编译期"的过滤开关。</td></tr>
+        <tr><td><b>元数据标记</b></td><td>对频道质量/属性打标：<code>Ⓢ</code> = 非 HD（标清），<code>Ⓖ</code> = GeoIP 地理封锁，<code>Ⓨ</code> = YouTube 直播源 —— 用户一眼可知链路特性。</td></tr>
+        <tr><td><b>构建层</b></td><td><code>make_playlist.py</code> 解析上述 <code>.md</code>，按规则聚合、过滤（只取 <code>[&gt;]</code>），输出根目录的 <code>playlist.m3u8</code>。</td></tr>
+        <tr><td><b>分发层</b></td><td>最终产物通过 GitHub raw 链接 <code>…/master/playlist.m3u8</code> 对外发布；用户播放器订阅该 URL 即可。另有 SourceForge 镜像。</td></tr>
+        <tr><td><b>贡献工作流</b></td><td>贡献者<b>只改 .md、不改 .m3u8</b>；通过 PR 增删频道并附"该频道确实免费"的佐证，由维护者审核合并 —— 一条清晰的、以 PR 为单位的策展流水线。</td></tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:14px">典型 <code>.md</code> 行与生成结果的对应关系示意：</p>
+<pre><span class="c"># 🇬🇧 United Kingdom          ← &lt;h1&gt; 作为分组标题</span>
+| Channel      | Logo | URL              | ...
+|--------------|------|------------------| ...
+| BBC News     | 🖼️   | <span class="t">[&gt;]</span> https://...  <span class="c">← [>] 有效，编入列表</span>
+| SomeChan     | 🖼️   | <span class="c">[x]</span>  https://...  <span class="c">← [x] 失效，跳过</span></pre>
+
+    <div class="tagrow">
+      <span class="tag">M3U / M3U8</span><span class="tag">HLS 直播流</span><span class="tag">Markdown 数据源</span><span class="tag">Python 生成器</span><span class="tag">GitHub Raw 分发</span><span class="tag">DVB-T / DVB-S</span><span class="tag">Pluto / Plex / Samsung TV+</span><span class="tag">SourceForge 镜像</span>
+    </div>
+
+    <div class="grid2" style="margin-top:18px">
+      <div class="mini">
+        <h3>🧩 上游信号源</h3>
+        <p>README 明确列出三类采集来源：<code>iptv-org/iptv/streams</code>、YouTube 直播（要求频道常驻且 URL 稳定）、Dailymotion（同 YouTube 规则）。</p>
+      </div>
+      <div class="mini">
+        <h3>📺 播放器兼容性</h3>
+        <p>标准 m3u8 产物兼容<b>几乎所有主流播放器</b>：VLC、IPTV Smarters、TiviMate、Kodi、PotPlayer，以及智能电视内置 IPTV 应用，跨平台无门槛。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section class="block">
+    <h2><span class="num">3</span>核心创新点 / 差异化价值</h2>
+    <p class="sub">它不是"又一个更大的频道大列表"，而是反其道而行 —— 砍掉冗余</p>
+
+    <div class="grid3">
+      <div class="phil">
+        <div class="ic">🎯</div>
+        <h3>① 质量优于数量（核心理念）</h3>
+        <p>明确主张"<b>支持的频道越少越好</b>"：所有频道都应能正常播放、尽量 HD、且<b>每个频道只保留一条 URL</b>（不要 +1 回看、不要备用流、不要地区变体）。这与多数竞品"无脑堆量"完全相反。</p>
+      </div>
+      <div class="phil">
+        <div class="ic">🆓</div>
+        <h3>② 严格的"仅免费"边界</h3>
+        <p>白名单式收录标准：<b>只收官方免费提供的频道</b>（地面波/卫星开锁广播等），付费订阅频道一律不收 —— 在灰色地带丛生的 IPTV 生态里，划出了一条清晰的合法性红线。</p>
+      </div>
+      <div class="phil">
+        <div class="ic">🌍</div>
+        <h3>③ "面向所有人"的内容准则</h3>
+        <p>排斥性内容策略：<b>不收成人频道、不收特定宗教频道、不收特定政党频道、不收"由他国资助针对本国"的频道</b> —— 让列表对全年龄段、全立场用户都"安全可用"。</p>
+      </div>
+      <div class="phil">
+        <div class="ic">📝</div>
+        <h3>④ Markdown 即数据库</h3>
+        <p>用 <code>.md</code> 表格作为单一事实源，状态用 <code>[&gt;]/[x]</code> 标记驱动编译。维护播放列表 = 编辑文档，<b>贡献门槛与 review 成本都极低</b>，且数据天然可读、可 diff、可审计。</p>
+      </div>
+      <div class="phil">
+        <div class="ic">🏷️</div>
+        <h3>⑤ 内嵌的可观测元数据</h3>
+        <p>用 <code>Ⓢ/Ⓖ/Ⓨ</code> 等符号标注画质、地理封锁、来源类型 —— 用户在订阅前即可预判链路质量，减少"贴进去才发现全是黑屏"的挫败感。</p>
+      </div>
+      <div class="phil">
+        <div class="ic">⚡</div>
+        <h3>⑥ 零依赖、一行接入</h3>
+        <p>终端产物是一个长期稳定的 raw URL，任何支持 m3u8 的设备贴入即用，<b>无需安装、无需账号、无中间件</b>。对非技术用户也极度友好。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section class="block">
+    <h2><span class="num">4</span>应用场景</h2>
+    <p class="sub">谁在用、怎么用、用在哪</p>
+    <table>
+      <thead><tr><th style="width:26%">场景</th><th>典型用法</th></tr></thead>
+      <tbody>
+        <tr><td><b>个人家庭观影</b></td><td>把 raw 链接贴进智能电视 / 电视盒子的 IPTV 应用，获得一份稳定、合法、跨国的免费直播频道单。</td></tr>
+        <tr><td><b>移居/旅居海外</b></td><td>想看母国免费新闻台、综合台的侨民，通过该列表订阅来源国的官方免费直播，无需付费 IPTV 服务。</td></tr>
+        <tr><td><b>语言学习 / 资讯沉浸</b></td><td>语言学习者订阅目标语种（英/西/法/意/日等）的新闻、综合频道，营造原汁原味的"听力输入"环境。</td></tr>
+        <tr><td><b>媒体中心 / 家庭服务器</b></td><td>自托管 Kodi / Jellyfin / Plex + xTeVe / Threadfin 等用户，把它作为直播电视（Live TV）的合法频道来源。</td></tr>
+        <tr><td><b>智能电视替换有线电视</b></td><td>剪线族（cord-cutter）用免费 FAST（免费广告支持电视）频道替代传统有线电视订阅，零月费。</td></tr>
+        <tr><td><b>开发者二次聚合</b></td><td>把它作为<b>上游信号源</b>，构建自研 IPTV 中间件、EPG 联动、画质筛选工具（README 亦将其列为可复用来源）。</td></tr>
+        <tr><td><b>教学 / 演示</b></td><td>HLS / m3u8 协议教学、媒体播放器测试，需要一个"公开、稳定、合法"的真实直播流集合作为样本。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section class="block">
+    <h2><span class="num">5</span>竞品 / 相关项目对比</h2>
+    <p class="sub">同处"IPTV 清单生态"，但策展哲学截然不同</p>
+    <table>
+      <thead>
+        <tr>
+          <th>项目</th>
+          <th>核心理念</th>
+          <th>频道规模</th>
+          <th>对本项目</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Free-TV / IPTV</b></td>
+          <td>质量优于数量 · 每台仅 1 流 · 仅主流 · 仅免费</td>
+          <td>精选数百</td>
+          <td><span class="pill neutral">本仓</span></td>
+        </tr>
+        <tr>
+          <td><b>iptv-org / iptv</b></td>
+          <td>尽可能全面收录全球公开频道，按国家/类别细分</td>
+          <td>数千～万级</td>
+          <td><span class="pill warn">对照</span>更大更全，但失效率更高、噪音更多；本仓即以上游 streams 为采集源之一</td>
+        </tr>
+        <tr>
+          <td><b>iptv-org / epg</b></td>
+          <td>为海量频道生成 XMLTV 电子节目指南</td>
+          <td>—</td>
+          <td><span class="pill good">互补</span>本仓不含 EPG，可搭配它补节目单</td>
+        </tr>
+        <tr>
+          <td><b>Romaxa55 / world_ip_tv</b></td>
+          <td>GitHub Actions 每日自动验活，主打"24/7 能播"</td>
+          <td>中等</td>
+          <td><span class="pill warn">对照</span>重"自动验活"，本仓重"人工策展"</td>
+        </tr>
+        <tr>
+          <td><b>nasimali / epg-auto</b></td>
+          <td>每 24 小时自动合并生成 XMLTV EPG</td>
+          <td>—</td>
+          <td><span class="pill good">互补</span>为本仓频道补 EPG 的可选工具</td>
+        </tr>
+        <tr>
+          <td><b>付费/灰色 IPTV 服务</b></td>
+          <td>转播付费/加密频道，常处于法律灰色地带</td>
+          <td>大</td>
+          <td><span class="pill bad">对立</span>本仓明确拒绝此类内容，主打合规</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px;color:var(--muted)"><b>结论</b>：在 IPTV 清单生态里，<b>iptv-org 走的是"大而全"，Free-TV/IPTV 走的是"小而精"</b>。两者并非替代关系，而是不同取舍：要广度用前者，要"贴进去大概率能播、且合法干净"用后者。本仓还常被作为上游信号源，被其他工具二次加工。</p>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section class="block">
+    <h2><span class="num">6</span>综合评分</h2>
+    <p class="sub">基于"策展型 IPTV 播放列表"的定位逐项评估</p>
+
+    <div class="bigscore">
+      <div class="ring">7.7<small> / 10</small></div>
+      <div class="desc">
+        <b>定位评分：克制而专业的免费电视"精选单"。</b><br>
+        在"免费 IPTV 清单"这条赛道里，它以<b>质量优于数量</b>的鲜明哲学、清晰的合法性边界、以及优雅的"Markdown 即数据库"架构脱颖而出。扣分主要来自<b>策展型项目的固有局限</b> —— 频道绝对数量有限、不内置 EPG、人工维护存在失效滞后、对上游流的可用性强依赖。
+      </div>
+    </div>
+
+    <div class="scorewrap" style="margin-top:22px">
+      <div class="srow"><span class="lbl">理念 / 差异化清晰度</span><span class="sbar"><i style="width:92%"></i></span><span class="val">9.2</span></div>
+      <div class="srow"><span class="lbl">易用性（一行接入）</span><span class="sbar"><i style="width:93%"></i></span><span class="val">9.3</span></div>
+      <div class="srow"><span class="lbl">合法性 / 合规边界</span><span class="sbar"><i style="width:90%"></i></span><span class="val">9.0</span></div>
+      <div class="srow"><span class="lbl">架构优雅度</span><span class="sbar"><i style="width:85%"></i></span><span class="val">8.5</span></div>
+      <div class="srow"><span class="lbl">内容覆盖广度</span><span class="sbar"><i style="width:70%"></i></span><span class="val">7.0</span></div>
+      <div class="srow"><span class="lbl">链路稳定性（依赖上游）</span><span class="sbar"><i style="width:62%"></i></span><span class="val">6.2</span></div>
+      <div class="srow"><span class="lbl">功能完备性（无 EPG）</span><span class="sbar"><i style="width:60%"></i></span><span class="val">6.0</span></div>
+      <div class="srow"><span class="lbl">维护自动化程度</span><span class="sbar"><i style="width:61%"></i></span><span class="val">6.1</span></div>
+    </div>
+
+    <h2 style="margin-top:30px;font-size:18px"><span class="num" style="width:26px;height:26px;font-size:12px">★</span>优势与风险</h2>
+    <div class="grid2" style="margin-top:6px">
+      <div class="mini">
+        <h3 style="color:var(--good)">✓ 优势</h3>
+        <ul>
+          <li>"质量优于数量"哲学，订阅即高可用</li>
+          <li>严格的"仅免费/仅主流"合规边界</li>
+          <li>Markdown 数据源 + Python 生成，维护极轻</li>
+          <li>标准 m3u8，全平台播放器通吃</li>
+          <li>状态/画质元数据透明，预期可管理</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h3 style="color:var(--bad)">⚠ 风险 / 局限</h3>
+        <ul>
+          <li>频道绝对数量有限，长尾需求覆盖不足</li>
+          <li>不内置 EPG，需另接 iptv-org/epg 等补节目单</li>
+          <li>人工策展，失效流存在修复滞后</li>
+          <li>强依赖上游流可用性与 GeoIP 政策</li>
+          <li>部分频道受地区封锁（Ⓖ），跨区不可播</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b>Free-TV / IPTV 深度分析报告</b> · 生成日期 2026-06-15<br>
+    数据来源：GitHub 仓库 README · iptv-org/awesome-iptv · SourceForge 镜像 · 公开报道<br>
+    仅供学习研究用途；频道数量与可用性随上游与官方政策动态变化，以仓库实际为准。
+  </footer>
+
+</div>
+</body>
+</html>
