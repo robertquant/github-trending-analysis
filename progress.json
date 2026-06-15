@@ -2,7 +2,6 @@
   "date": "2026-06-15",
   "fetched_at": "2026-06-15",
   "pending": [
-    "cypress-io/cypress",
     "GorvGoyl/Clone-Wars",
     "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
     "Free-TV/IPTV",
@@ -20,7 +19,8 @@
   "done": [
     "freeCodeCamp/freeCodeCamp",
     "pytest-dev/pytest",
-    "meshery/meshery"
+    "meshery/meshery",
+    "cypress-io/cypress"
   ],
   "projects": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "name": "cypress-io/cypress",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "GorvGoyl/Clone-Wars",
@@ -58,8 +58,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 5,
+    "pending": 4,
     "skipped": 7,
-    "done": 3
+    "done": 4
   }
 }

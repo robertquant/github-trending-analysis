@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cypress 深度分析报告 — cypress-io/cypress</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --bg-2:#0f162b;
+    --card:#141d38;
+    --card-2:#1a2546;
+    --line:#26315c;
+    --text:#e8edff;
+    --muted:#9aa7d0;
+    --accent:#5fcf80;
+    --accent-2:#4aa3ff;
+    --accent-3:#b07cff;
+    --warn:#ffb454;
+    --bad:#ff6b6b;
+    --cypress:#5fcf80;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 80% -10%,#1b2a55 0%,transparent 55%),
+               radial-gradient(900px 700px at -10% 10%,#23306330 0%,transparent 60%),
+               var(--bg);
+    color:var(--text);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+
+  /* HERO */
+  .hero{
+    position:relative;overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg-2) 100%);
+    padding:40px 38px;
+    margin-bottom:34px;
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.8);
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    color:var(--cypress);
+    background:rgba(95,207,128,.10);
+    border:1px solid rgba(95,207,128,.30);
+    padding:6px 14px;border-radius:999px;margin-bottom:18px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--cypress);box-shadow:0 0 12px var(--cypress)}
+  h1{
+    font-size:38px;line-height:1.2;font-weight:800;letter-spacing:-.5px;
+    margin-bottom:10px;
+    background:linear-gradient(90deg,#fff 0%,#cfe5ff 60%,#a9c9ff 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .repo{font-family:"SF Mono",Menlo,Consolas,monospace;color:var(--accent-2);font-size:15px;margin-bottom:16px;display:block}
+  .hero p.lede{color:var(--muted);font-size:16px;max-width:780px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .chip{
+    font-size:13px;color:var(--muted);
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--line);
+    padding:7px 13px;border-radius:9px;
+  }
+  .chip b{color:var(--text);font-weight:600}
+
+  /* SCORE STRIP */
+  .score-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;
+  }
+  .score-card{
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  }
+  .score-card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .score-card .v{font-size:24px;font-weight:800;margin-top:4px;color:#fff}
+  .score-card .v small{font-size:13px;color:var(--muted);font-weight:500}
+  .stars{color:var(--warn)}
+
+  /* SECTIONS */
+  section{margin-top:34px;animation:fade .6s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h2{
+    font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:9px;font-size:14px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent-2),var(--accent-3));color:#fff;
+    flex:0 0 auto;
+  }
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;
+  }
+  p{margin-bottom:12px;color:#d6def7}
+  .card p:last-child{margin-bottom:0}
+  strong{color:#fff}
+  code,kbd{
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;
+    background:rgba(74,163,255,.12);color:#bcd9ff;
+    padding:2px 7px;border-radius:6px;border:1px solid rgba(74,163,255,.2);
+  }
+
+  /* GRID */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mini{
+    background:var(--card-2);border:1px solid var(--line);border-radius:13px;padding:16px 18px;
+  }
+  .mini h4{font-size:14.5px;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .mini p{font-size:13px;color:var(--muted);margin:0}
+
+  /* ARCH DIAGRAM */
+  .arch{
+    display:flex;flex-direction:column;gap:10px;margin-top:14px;
+  }
+  .arch .layer{
+    border:1px dashed var(--line);border-radius:12px;padding:13px 16px;
+    background:rgba(255,255,255,.02);display:flex;justify-content:space-between;align-items:center;gap:14px;
+    font-size:14px;
+  }
+  .arch .layer .tag{font-size:11px;color:var(--muted);font-family:monospace;white-space:nowrap}
+  .arrow{text-align:center;color:var(--accent-2);font-size:18px;line-height:1}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--bg-2);color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  td.win{color:var(--accent);font-weight:600}
+  td.lose{color:var(--bad)}
+  td.mid{color:var(--warn)}
+  .yes{color:var(--accent)}
+  .no{color:var(--bad)}
+  .partial{color:var(--warn)}
+
+  /* RADAR / SCORE BARS */
+  .scores{display:flex;flex-direction:column;gap:14px}
+  .bar-row{display:grid;grid-template-columns:150px 1fr 46px;align-items:center;gap:14px}
+  .bar-row .lbl{font-size:13.5px;color:#d6def7}
+  .bar{height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent-3));}
+  .bar-row .val{font-size:14px;font-weight:700;text-align:right;color:#fff}
+
+  .final{
+    margin-top:8px;display:flex;align-items:center;gap:18px;
+    background:linear-gradient(135deg,rgba(95,207,128,.12),rgba(176,124,255,.12));
+    border:1px solid var(--line);border-radius:14px;padding:18px 22px;
+  }
+  .final .big{font-size:42px;font-weight:800;line-height:1;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .final .verdict{font-size:14px;color:var(--muted)}
+  .final .verdict b{color:#fff}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:10px}
+  ul.clean li{position:relative;padding-left:22px;font-size:14px;color:#d6def7}
+  ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--accent-2)}
+  .pros{color:var(--accent)}
+  .cons{color:var(--bad)}
+
+  footer{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center}
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  @media(max-width:760px){
+    h1{font-size:28px}
+    .score-strip{grid-template-columns:1fr 1fr}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .bar-row{grid-template-columns:120px 1fr 40px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="badge"><span class="dot"></span>GitHub Trending · 深度分析报告</span>
+    <h1>Cypress</h1>
+    <span class="repo">github.com/cypress-io/cypress</span>
+    <p class="lede">
+      面向现代 Web 应用的下一代端到端（E2E）测试框架。Cypress 颠覆了传统 Selenium 基于 WebDriver 的架构，将测试直接<strong>运行在浏览器内部</strong>，
+      以"时间旅行调试"、实时重载和极致的开发者体验（DX），成为前端 JavaScript 团队最受欢迎的测试工具之一。
+      由 Cypress.io 公司以开源核心（Open-core）模式维护，覆盖 E2E、组件、接口与可视化测试。
+    </p>
+
+    <div class="meta-row">
+      <span class="chip">⭐ <b>49,500+</b> Stars</span>
+      <span class="chip">🍴 <b>3,300+</b> Forks</span>
+      <span class="chip">👥 <b>500+</b> Contributors</span>
+      <span class="chip">📦 <b>~6.6M</b> 周下载</span>
+      <span class="chip">🏷️ <b>v15.10.0</b></span>
+      <span class="chip">💻 <b>TypeScript</b></span>
+      <span class="chip">📄 <b>MIT</b></span>
+    </div>
+
+    <div class="score-strip">
+      <div class="score-card"><div class="k">综合评分</div><div class="v">8.2<small>/10</small></div></div>
+      <div class="score-card"><div class="k">开发者体验</div><div class="v">9.5<small>/10</small></div></div>
+      <div class="score-card"><div class="k">首创年份</div><div class="v">2014<small> 公开2017</small></div></div>
+      <div class="score-card"><div class="k">企业客户</div><div class="v">3,700<small> / 78国</small></div></div>
+    </div>
+  </header>
+
+  <!-- 1. 项目概述 -->
+  <section>
+    <h2><span class="num">1</span>项目概述</h2>
+    <p class="sub">一句话定位：让前端开发者像写应用代码一样写测试。</p>
+    <div class="card">
+      <p>
+        <strong>Cypress</strong> 是一款专为现代 Web 应用（React / Vue / Angular / Svelte 等 SPA）打造的、一体化、
+        开发者优先的测试框架。与 Selenium 那种"通过外部驱动远程操控浏览器"的经典模式不同，Cypress 的测试代码
+        与被测应用<strong>运行在同一个浏览器运行时（run-loop）内</strong>，因此能够直接、同步地访问 DOM、网络请求和应用状态。
+      </p>
+      <p>
+        项目最早于 <strong>2014 年</strong>启动、2017 年公开发布，背后公司 Cypress.io 于 2015 年在美国亚特兰大成立，
+        累计融资 <strong>5,400 万美元</strong>以上，2024 年估算营收约 <strong>1,780 万美元</strong>。其商业模式为典型的开源核心：
+        测试运行器（Test Runner）完全开源免费，而 Cypress Cloud（并行编排、测试回放、AI 错误分析、UI 覆盖率等）为付费增值服务，
+        至今已通过 Cypress Cloud 录制约 <strong>50 亿次</strong>测试运行。
+      </p>
+      <p>
+        截至 2026 年初，Cypress 仍是 JavaScript E2E 测试领域的重要基石之一（约 14% 的 npm 市场份额、2,758+ 家经核实的企业用户），
+        在<strong>开发者体验和组件测试</strong>两个维度上长期领先，但在跨浏览器广度、执行速度与免费并行能力上正面临 Playwright 的强力挑战。
+      </p>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="num">2</span>技术架构</h2>
+    <p class="sub">核心差异点：Cypress 不走 WebDriver 协议，而是"驻留浏览器"架构。</p>
+    <div class="card">
+      <p>
+        Cypress 的架构可概括为三层：一个用 Electron 封装的<strong>桌面应用（Test Runner）</strong>负责 UI 与编排；
+        一个运行于 Node.js 的<strong>后台进程</strong>负责文件监听、网络代理与操作系统级交互；而真正的测试逻辑
+        <strong>运行在被测页面的浏览器内部</strong>。这种"同源执行"让它免去了 Selenium/WebDriver 那条
+        "测试脚本 → HTTP → 驱动服务 → 浏览器"的远程往返链路，从而获得更快的反馈与更稳定的同步。
+      </p>
+
+      <div class="arch">
+        <div class="layer"><span>🧑‍💻 开发者编写测试（JS / TS）</span><span class="tag">cypress run / open</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>🪟 Cypress Test Runner（Electron 桌面壳）</span><span class="tag">编排 · UI · 快照</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>⚙️ Node.js 后台进程</span><span class="tag">文件监听 · 网络代理 · 系统交互</span></div>
+        <div class="arrow">▼</div>
+        <div class="layer"><span>🌐 浏览器内运行时（与被测应用同源）</span><span class="tag">同步 DOM 访问 · 截图 · 时间旅行</span></div>
+      </div>
+
+      <div class="grid-3" style="margin-top:20px">
+        <div class="mini"><h4>🔌 同源执行</h4><p>测试与被测代码同处浏览器运行时，直接、同步地操作 DOM 与 window 对象。</p></div>
+        <div class="mini"><h4>⏱️ 自动等待</h4><p>原生内置自动重试与等待，绝大多数场景无需手写 sleep，显著降低测试抖动（flaky）。</p></div>
+        <div class="mini"><h4>🛰️ 网络拦截</h4><p><code>cy.intercept()</code> 原生拦截 / mock 任何 XHR 与 fetch 请求，便于构造稳定测试数据。</p></div>
+        <div class="mini"><h4>🧩 组件测试</h4><p>内置 React / Vue / Angular / Svelte 组件测试，无需启动整页应用即可隔离测试 UI 组件。</p></div>
+        <div class="mini"><h4>🎞️ 时间旅行</h4><p>每条命令执行时自动给 DOM 拍快照，可回放任意步骤查看当时页面状态，调试体验业界标杆。</p></div>
+        <div class="mini"><h4>☁️ Cypress Cloud</h4><p>付费云服务提供并行编排、测试回放录像、AI 错误归类与 UI 覆盖率分析。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="num">3</span>核心创新点</h2>
+    <p class="sub">它不只是"又一个测试工具"，而是重新定义了测试的写法与调试方式。</p>
+    <div class="grid-2">
+      <div class="mini">
+        <h4>① 浏览器内运行架构</h4>
+        <p>抛弃 WebDriver 远程驱动范式，测试代码直接在浏览器内执行。命令同步执行、可快照、可暂停，从根上消除了"驱动与浏览器之间通信时序"导致的 flaky 问题。</p>
+      </div>
+      <div class="mini">
+        <h4>② 时间旅行调试（Time Travel）</h4>
+        <p>命令日志中的每一个步骤都悬停即可查看当时 DOM 的精确快照，配合失败时自动录屏与截图，让"为什么这条用例失败"几乎一眼可见。</p>
+      </div>
+      <div class="mini">
+        <h4>③ 一体化工具链</h4>
+        <p>测试运行器、断言库（内置 Chai / Sinon / Mocha 风格 BDD）、mock、stub、网络拦截、截图录像全部开箱即用，无需像 Selenium 那样拼装一整套第三方组件。</p>
+      </div>
+      <div class="mini">
+        <h4>④ 组件测试（Component Testing）</h4>
+        <p>把"端到端测试的调试体验"下放到单个组件级别，在真实浏览器里以接近零成本隔离测试 React/Vue 组件，填补了 Storybook 单测与 E2E 之间的断层。</p>
+      </div>
+      <div class="mini">
+        <h4>⑤ AI 自然语言用例 cy.prompt()（v15）</h4>
+        <p>v15 引入用自然语言编写测试的能力，并支持 AI 辅助的"自愈"机制——当选择器变化时自动修复用例，降低维护成本。</p>
+      </div>
+      <div class="mini">
+        <h4>⑥ Cypress Studio 录制生成</h4>
+        <p>通过 UI 交互录制操作并自动生成可维护的测试代码，大幅降低非开发人员编写自动化测试的门槛。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="num">4</span>应用场景</h2>
+    <p class="sub">Cypress 在"以 JavaScript 为核心、重视快速反馈"的团队中价值最高。</p>
+    <div class="card">
+      <div class="grid-2">
+        <div>
+          <ul class="clean">
+            <li><strong>SPA 端到端测试</strong>：React / Vue / Angular / Svelte 单页应用的核心回归测试。</li>
+            <li><strong>组件级测试</strong>：在真实浏览器中隔离测试 UI 组件，介于单测与 E2E 之间。</li>
+            <li><strong>接口测试</strong>：用 <code>cy.request()</code> / <code>cy.intercept()</code> 直接验证后端 API。</li>
+            <li><strong>可视化回归测试</strong>：借助插件对页面截图进行像素级对比。</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="clean">
+            <li><strong>CI/CD 流水线</strong>：与 GitHub Actions、Docker 深度集成，每次推送自动跑测试。</li>
+            <li><strong>登录 / 表单 / 业务流验证</strong>：HTTP 重定向、邮件、SEO 关键流的自动化校验。</li>
+            <li><strong>测试左移</strong>：开发者本地开发时用交互式 Test Runner 边写边跑，获得即时反馈。</li>
+            <li><strong>回归护栏</strong>：配合 Cypress Cloud 做并行执行与失败归类，守护发布质量。</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:14px"><strong>企业采用画像：</strong>Enlyft 数据显示 Cypress 用户中约 <strong>46% 为中型企业（50–1000 人）</strong>，
+        行业以 IT 服务（24%）与计算机软件（21%）为主，约 60% 用户集中在美国。典型客户覆盖金融、电商、SaaS、教育等重视前端质量的中大型互联网企业。</p>
+    </div>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="num">5</span>竞品对比</h2>
+    <p class="sub">Cypress vs Playwright vs Selenium — 三大主流 Web 测试框架全维度对比。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>对比维度</th>
+            <th>Cypress</th>
+            <th>Playwright</th>
+            <th>Selenium</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>架构</td><td>浏览器内运行</td><td>现代 API，无驱动层</td><td>WebDriver 协议</td></tr>
+          <tr><td>语言支持</td><td class="lose">仅 JS / TS</td><td class="win">JS/TS · Python · Java · .NET</td><td class="win">Java · Python · C# · JS · Ruby</td></tr>
+          <tr><td>浏览器覆盖</td><td class="mid">Chromium · Firefox（WebKit 试验）</td><td class="win">Chromium · Firefox · WebKit</td><td class="win">全浏览器 + 移动(Appium)</td></tr>
+          <tr><td>执行速度</td><td class="mid">快</td><td class="win">最快（比 Selenium 快约 42%）</td><td class="lose">中—慢</td></tr>
+          <tr><td>Flaky 率</td><td class="mid">低—中</td><td class="win">极低</td><td class="lose">中—高</td></tr>
+          <tr><td>多标签 / 跨域</td><td class="lose">不支持（原生）</td><td class="win">支持</td><td class="win">支持</td></tr>
+          <tr><td>并行执行</td><td class="lose">需付费 Cloud</td><td class="win">内置免费</td><td class="mid">需手动搭建 Grid</td></tr>
+          <tr><td>组件测试</td><td class="win">成熟内置</td><td class="win">内置</td><td class="lose">需第三方</td></tr>
+          <tr><td>移动自动化</td><td class="lose">仅设备模拟</td><td class="mid">设备模拟 + 更多</td><td class="win">完整(Appium)</td></tr>
+          <tr><td>开发者体验 / 调试</td><td class="win">业界标杆（时间旅行）</td><td class="mid">优秀(trace viewer)</td><td class="lose">一般</td></tr>
+          <tr><td>GitHub Stars</td><td>49,500+</td><td class="win">82,400+</td><td>33,500+</td></tr>
+          <tr><td>npm 周下载</td><td>~6.6M（持平）</td><td class="win">~33.2M（+40% YoY）</td><td>~2.1M（下滑）</td></tr>
+          <tr><td>初始发布</td><td>2014 / 公开2017</td><td>2020</td><td>2004</td></tr>
+          <tr><td>背后主体</td><td>Cypress.io（融资 $54M）</td><td>Microsoft 开源</td><td>Software Freedom Conservancy</td></tr>
+          <tr><td>授权</td><td>MIT（Cloud 付费）</td><td>Apache-2.0</td><td>Apache-2.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="mini">
+        <h4 style="color:var(--accent)">✅ Cypress 仍胜出的领域</h4>
+        <ul class="clean">
+          <li class="pros">交互式 Test Runner + 时间旅行调试</li>
+          <li class="pros">成熟的组件测试（起步早）</li>
+          <li class="pros">纯 JS/TS 团队最低上手成本</li>
+          <li class="pros">Cypress Cloud 的编排与分析</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4 style="color:var(--bad)">⚠️ Cypress 的短板</h4>
+        <ul class="clean">
+          <li class="cons">仅支持 JS/TS，单一语言</li>
+          <li class="cons">Safari/WebKit 支持仍为试验</li>
+          <li class="cons">原生不支持多标签/跨域</li>
+          <li class="cons">并行执行需付费</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4 style="color:var(--warn)">📈 市场趋势判断</h4>
+        <ul class="clean">
+          <li>Playwright 增速最快，新项目首选</li>
+          <li>Cypress 绝对量稳定、相对份额承压</li>
+          <li>Selenium 凭借企业根基仍广</li>
+          <li>2026 大盘 $355 亿 → $1,693 亿(2034)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section>
+    <h2><span class="num">6</span>综合评分</h2>
+    <p class="sub">基于技术、生态、体验、市场等多维度加权评估。</p>
+    <div class="card">
+      <div class="scores">
+        <div class="bar-row"><span class="lbl">开发者体验 (DX)</span><div class="bar"><i style="width:95%"></i></div><span class="val">9.5</span></div>
+        <div class="bar-row"><span class="lbl">文档质量</span><div class="bar"><i style="width:90%"></i></div><span class="val">9.0</span></div>
+        <div class="bar-row"><span class="lbl">技术创新</span><div class="bar"><i style="width:85%"></i></div><span class="val">8.5</span></div>
+        <div class="bar-row"><span class="lbl">生态成熟度</span><div class="bar"><i style="width:85%"></i></div><span class="val">8.5</span></div>
+        <div class="bar-row"><span class="lbl">社区活跃度</span><div class="bar"><i style="width:80%"></i></div><span class="val">8.0</span></div>
+        <div class="bar-row"><span class="lbl">商业可持续性</span><div class="bar"><i style="width:80%"></i></div><span class="val">8.0</span></div>
+        <div class="bar-row"><span class="lbl">执行性能</span><div class="bar"><i style="width:75%"></i></div><span class="val">7.5</span></div>
+        <div class="bar-row"><span class="lbl">跨浏览器支持</span><div class="bar"><i style="width:65%"></i></div><span class="val">6.5</span></div>
+      </div>
+
+      <div class="final">
+        <div class="big">8.2<span style="font-size:18px">/10</span></div>
+        <div class="verdict">
+          <b>推荐结论：值得采用 · 前端 JS 团队首选之一</b><br>
+          Cypress 在开发者体验与组件测试上仍是行业标杆，对纯 JavaScript/TypeScript、重视快速反馈的前端团队是极具性价比的选择；
+          但若团队需要多语言、Safari 全覆盖或免费并行执行，Playwright 已是更稳妥的长期选项。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>报告生成时间：2026-06-15 &nbsp;|&nbsp; 数据来源：GitHub、npm trends、Enlyft、6sense、State of JS 2025、Cypress.io 官方 &nbsp;|&nbsp; 由 GitHub Trending 深度分析生成</p>
+  </footer>
+
+</div>
+</body>
+</html>
