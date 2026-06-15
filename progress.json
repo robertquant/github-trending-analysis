@@ -1,64 +1,52 @@
 {
-  "date": "2026-06-15",
-  "fetched_at": "2026-06-15",
-  "pending": [],
+  "date": "2026-06-16",
+  "fetched_at": "2026-06-16",
+  "pending": [
+    "teslamate-org/teslamate",
+    "krahets/hello-algo",
+    "trycua/cua",
+    "Raphire/Win11Debloat",
+    "mikeroyal/Self-Hosting-Guide"
+  ],
   "skipped_already_analyzed": [
     "iptv-org/iptv",
-    "swc-project/swc",
-    "chatwoot/chatwoot",
-    "NVIDIA/SkillSpector",
-    "shiyu-coder/Kronos",
-    "music-assistant/server",
-    "andrewyng/aisuite"
-  ],
-  "done": [
-    "freeCodeCamp/freeCodeCamp",
-    "pytest-dev/pytest",
+    "Panniantong/Agent-Reach",
     "meshery/meshery",
-    "cypress-io/cypress",
-    "GorvGoyl/Clone-Wars",
-    "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
+    "chatwoot/chatwoot",
+    "freeCodeCamp/freeCodeCamp",
+    "jwasham/coding-interview-university",
+    "rohitg00/ai-engineering-from-scratch",
+    "music-assistant/server",
     "Free-TV/IPTV",
-    "puppeteer/puppeteer"
+    "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots"
   ],
+  "done": [],
   "projects": [
     {
-      "name": "freeCodeCamp/freeCodeCamp",
-      "status": "done"
+      "name": "teslamate-org/teslamate",
+      "status": "pending"
     },
     {
-      "name": "pytest-dev/pytest",
-      "status": "done"
+      "name": "krahets/hello-algo",
+      "status": "pending"
     },
     {
-      "name": "meshery/meshery",
-      "status": "done"
+      "name": "trycua/cua",
+      "status": "pending"
     },
     {
-      "name": "cypress-io/cypress",
-      "status": "done"
+      "name": "Raphire/Win11Debloat",
+      "status": "pending"
     },
     {
-      "name": "GorvGoyl/Clone-Wars",
-      "status": "done"
-    },
-    {
-      "name": "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
-      "status": "done"
-    },
-    {
-      "name": "Free-TV/IPTV",
-      "status": "done"
-    },
-    {
-      "name": "puppeteer/puppeteer",
-      "status": "done"
+      "name": "mikeroyal/Self-Hosting-Guide",
+      "status": "pending"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 0,
-    "skipped": 7,
-    "done": 8
+    "pending": 5,
+    "skipped": 10,
+    "done": 0
   }
 }
