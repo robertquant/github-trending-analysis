@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>itsfatduck/optimizerDuck 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --bg2:#0f1626;
+    --card:#141d31;
+    --card2:#1a2540;
+    --border:#243352;
+    --txt:#e8edf7;
+    --muted:#94a3b8;
+    --accent:#f59e0b;
+    --accent2:#fbbf24;
+    --duck:#facc15;
+    --green:#22c55e;
+    --yellow:#eab308;
+    --red:#ef4444;
+    --purple:#a855f7;
+    --pink:#ec4899;
+    --cyan:#06b6d4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI','PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+    background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--txt);
+    line-height:1.75;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;
+    background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(6,182,212,.08));
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 40px;
+    overflow:hidden;
+    margin-bottom:32px;
+  }
+  .hero::before{
+    content:"";position:absolute;top:-60px;right:-60px;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(245,158,11,.25),transparent 70%);
+    border-radius:50%;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);
+    color:#fcd34d;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;
+    margin-bottom:20px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{
+    font-size:42px;line-height:1.2;font-weight:800;margin-bottom:14px;
+    background:linear-gradient(90deg,#fff,#fcd34d);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .duck-emoji{font-size:46px;vertical-align:middle;margin-right:6px}
+  .hero .sub{font-size:18px;color:var(--muted);max-width:760px;margin-bottom:28px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--border);
+    padding:7px 13px;border-radius:10px;font-size:13px;color:var(--muted);
+  }
+  .chip b{color:var(--txt);font-weight:600}
+  /* STATS */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px;
+  }
+  .stat{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 20px;
+    text-align:center;transition:transform .2s,border-color .2s;
+  }
+  .stat:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .stat .num{font-size:30px;font-weight:800;color:#fff;margin-bottom:4px}
+  .stat .lbl{font-size:13px;color:var(--muted)}
+  .stat .num.amber{color:#fbbf24}.stat .num.cyan{color:#22d3ee}.stat .num.green{color:#4ade80}.stat .num.purple{color:#c084fc}
+  /* SECTION */
+  section{margin-bottom:36px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .sec-head .ico{
+    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .sec-head h2{font-size:24px;font-weight:700}
+  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;
+  }
+  .card + .card{margin-top:18px}
+  p{color:#cbd5e1;margin-bottom:14px}
+  p strong{color:#fff}
+  a{color:#60a5fa;text-decoration:none}
+  a:hover{text-decoration:underline}
+  ul{list-style:none;padding-left:0}
+  ul li{position:relative;padding-left:22px;margin-bottom:10px;color:#cbd5e1}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--accent2)}
+  /* GRID FEATURES */
+  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .feat{
+    background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px;
+  }
+  .feat h4{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .feat ul{font-size:14px}
+  .feat ul li{margin-bottom:6px;font-size:13.5px;color:#b8c5da}
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  th{color:#fcd34d;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;background:rgba(245,158,11,.05)}
+  td{color:#cbd5e1}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .yes{color:#4ade80;font-weight:700}
+  .no{color:#f87171;font-weight:700}
+  .mid{color:#fbbf24;font-weight:700}
+  /* ARCH */
+  .arch-flow{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0}
+  .arch-node{
+    flex:1;min-width:140px;background:var(--card2);border:1px solid var(--border);
+    border-radius:12px;padding:16px;text-align:center;
+  }
+  .arch-node .t{font-size:20px;margin-bottom:6px}
+  .arch-node .n{font-weight:700;color:#fff;font-size:14px;margin-bottom:2px}
+  .arch-node .d{font-size:12px;color:var(--muted)}
+  .arrow{display:grid;place-items:center;color:var(--accent);font-size:22px}
+  /* SCORE */
+  .score-board{
+    background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(168,85,247,.08));
+    border:1px solid var(--border);border-radius:20px;padding:30px;
+  }
+  .score-total{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
+    padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--border);
+  }
+  .big-score{font-size:56px;font-weight:800;line-height:1;color:#4ade80}
+  .big-score small{font-size:24px;color:var(--muted);font-weight:600}
+  .verdict{max-width:520px}
+  .verdict .tag{
+    display:inline-block;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);
+    color:#4ade80;padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:10px;
+  }
+  .verdict p{font-size:14px;color:var(--muted)}
+  .score-bars{display:grid;grid-template-columns:1fr 1fr;gap:14px 32px}
+  .bar-item .bar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .bar-item .bar-top b{color:#fff}
+  .bar-item .bar-top span{color:var(--accent2);font-weight:700}
+  .bar-bg{height:8px;background:var(--card2);border-radius:999px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .pro-con{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+  .pro-con .box{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .pro-con h4{margin-bottom:12px;font-size:15px}
+  .pro-con .box.pro h4{color:#4ade80}
+  .pro-con .box.con h4{color:#fbbf24}
+  .pro-con ul li{font-size:13px;margin-bottom:8px;color:#b8c5da}
+  /* TIMELINE */
+  .timeline{position:relative;padding-left:8px}
+  .tl-item{position:relative;padding-left:26px;margin-bottom:16px}
+  .tl-item::before{content:"";position:absolute;left:4px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.2)}
+  .tl-item .yr{font-weight:700;color:#fcd34d;font-size:14px}
+  .tl-item .tx{font-size:14px;color:#cbd5e1}
+  /* FOOTER */
+  .footer{
+    margin-top:40px;padding-top:28px;border-top:1px solid var(--border);
+    text-align:center;color:var(--muted);font-size:13px;
+  }
+  .footer a{margin:0 6px}
+  .quote{
+    border-left:3px solid var(--accent);padding:12px 18px;background:rgba(245,158,11,.05);
+    border-radius:0 12px 12px 0;margin:16px 0;color:#cbd5e1;font-style:italic;
+  }
+  @media(max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .feat-grid,.score-bars,.pro-con{grid-template-columns:1fr}
+    h1{font-size:32px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="badge"><span class="dot"></span>GitHub Trending · C# / Windows 优化工具</div>
+    <h1><span class="duck-emoji">🦆</span>itsfatduck/optimizerDuck</h1>
+    <p class="sub">一款<b style="color:#fff">免费、开源、可逆</b>的 Windows 系统优化工具，以「性能、隐私、简洁」为核心，用现代化 Fluent 设计 GUI 替代散落的 PowerShell 脚本——把 30+ 项有据可查的系统调优、清理与管理工具收进一个可审计的 .exe。</p>
+    <div class="meta-row">
+      <span class="chip">👤 作者 <b>itsfatduck</b></span>
+      <span class="chip">💻 语言 <b>C#</b></span>
+      <span class="chip">📜 协议 <b>GPL-3.0</b></span>
+      <span class="chip">⚡ 框架 <b>.NET 10 + WPF UI</b></span>
+      <span class="chip">🌐 适用 <b>Win10 / Win11 (x64)</b></span>
+      <span class="chip">🌍 多语言 <b>10 种</b></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="num amber">3,816</div><div class="lbl">⭐ 总 Stars</div></div>
+    <div class="stat"><div class="num green">+340</div><div class="lbl">📈 今日新增</div></div>
+    <div class="stat"><div class="num cyan">~179</div><div class="lbl">🔱 Forks</div></div>
+    <div class="stat"><div class="num purple">30+</div><div class="lbl">🛠️ 优化项</div></div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(245,158,11,.15)">📋</div>
+      <h2>项目概述</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p><strong>optimizerDuck</strong> 是开发者 itsfatduck 推出的 Windows 桌面优化工具。它的核心信念是：Windows 本身没问题，但一次干净的安装总会带来一堆你从未听说过的<strong>后台服务、遥测、预装应用和计划任务</strong>，悄悄消耗 CPU、内存和磁盘；同时，一些能真正发挥硬件潜力的功能却默认未启用。</p>
+      <p>optimizerDuck 提供<strong>单一界面</strong>来清理臃肿项、解锁被埋没的好功能。它应用针对性的系统调优以减少开销、阻断不受欢迎的行为，并内置若干管理工具，让你看到「什么在跑」、移除「不想要的」，并在出问题时<strong>一键回滚</strong>任何改动。</p>
+      <div class="quote">「每一个优化都可以手动完成，optimizerDuck 只是让你更容易地应用它们。」——所有调优项均源自成熟工具与社区指南，<strong>没有 AI 生成、没有盲目堆砌</strong>。</div>
+      <p>项目采用 <strong>GPL v3</strong> 完全开源，每个 Release 都由 <strong>GitHub Actions 从公开源码自动构建</strong>，无隐藏修改、无构建后注入的未签名二进制；应用本身<strong>零遥测、零分析、零回连</strong>，完全离线运行。</p>
+    </div>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(59,130,246,.15)">🏗️</div>
+      <h2>技术架构</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p>optimizerDuck 是一个<strong>现代 .NET 原生桌面应用</strong>，技术选型偏向「正统的 Windows 客户端工程」而非脚本拼凑：</p>
+      <table>
+        <tr><th>维度</th><th>实现</th></tr>
+        <tr><td><strong>运行时框架</strong></td><td>WPF on <strong>.NET 10</strong>，使用 <strong>WPF UI</strong> 库实现 Fluent 风格界面</td></tr>
+        <tr><td><strong>部署方式</strong></td><td>无安装程序，<strong>单个 .exe</strong> 直接运行（绿色便携）</td></tr>
+        <tr><td><strong>主题系统</strong></td><td>Dark（默认）/ Light / High Contrast，支持 <strong>Mica</strong> 云母背景效果</td></tr>
+        <tr><td><strong>回滚引擎</strong></td><td>四类回滚步骤（Registry、Service、Scheduled Task、Shell），<strong>JSON 持久化状态 + 线程安全文件 I/O</strong></td></tr>
+        <tr><td><strong>特性发现</strong></td><td>优化项与功能分类通过 <strong>反射 + 自定义特性（Attribute）自动发现</strong>，无需手动注册</td></tr>
+        <tr><td><strong>备份系统</strong></td><td>本地文件夹式备份，每一次改动都写一份回滚文件，支持<strong>一键还原</strong></td></tr>
+        <tr><td><strong>构建透明</strong></td><td>Release 由 GitHub Actions 从公开源码自动产出，可自行 <code>dotnet build</code> 编译验证</td></tr>
+        <tr><td><strong>国际化</strong></td><td>社区协作翻译，覆盖 10 种语言（英/越/繁中/简中/俄/法/韩/西/日/波兰）</td></tr>
+        <tr><td><strong>权限</strong></td><td>需管理员权限运行（修改系统设置与注册表）</td></tr>
+      </table>
+
+      <h4 style="margin:22px 0 10px;color:#fcd34d">🔄 可逆性架构（核心设计）</h4>
+      <div class="arch-flow">
+        <div class="arch-node"><div class="t">🎚️</div><div class="n">用户选择优化项</div><div class="d">勾选 + 风险评级</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="t">💾</div><div class="n">先写回滚文件</div><div class="d">JSON 持久化原值</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="t">⚙️</div><div class="n">应用四类改动</div><div class="d">注册表/服务/计划任务/Shell</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="t">↩️</div><div class="n">一键回滚</div><div class="d">单项还原 / 全部回滚</div></div>
+      </div>
+      <p style="margin-top:14px">这套「<strong>先存证、再修改</strong>」的设计让 optimizerDuck 区别于许多「一锤子买卖」的优化器——任何改动都可追溯、可回退，配合风险评级（Safe / Moderate / Risky）与「<strong>不主动启用任何默认项</strong>」的原则，把控制权完整交还给用户。</p>
+    </div>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(168,85,247,.15)">💡</div>
+      <h2>核心创新点</h2>
+      <div class="line"></div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <h4>🔁 可逆性优先设计</h4>
+        <ul>
+          <li>每一次改动都先生成回滚文件，再写入系统</li>
+          <li>UI 内一键撤销单项或全部回滚</li>
+          <li>首次优化前提示创建 Windows 还原点</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🪞 反射驱动的插件式发现</h4>
+        <ul>
+          <li>优化项经反射 + 自定义特性自动注册</li>
+          <li>新增调优无需手动登记，扩展性强</li>
+          <li>架构干净、易维护、便于社区贡献</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🎯 厂商级 GPU 调优</h4>
+        <ul>
+          <li>针对 AMD / NVIDIA / Intel 分别的注册表调优</li>
+          <li>覆盖电源状态、时钟门控、显示延迟</li>
+          <li>同类脚本工具较少覆盖的细分领域</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🛡️ 透明 + 零遥测</h4>
+        <ul>
+          <li>GPL v3 全开源，GitHub Actions 自动构建</li>
+          <li>可自行 <code>dotnet build</code> 复现二进制</li>
+          <li>无任何分析、无回连，完全离线</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🚦 风险评级体系</h4>
+        <ul>
+          <li>每项调优标注 Safe / Moderate / Risky</li>
+          <li>不主动启用任何默认优化</li>
+          <li>让用户「知情后决策」而非黑箱一键</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🧰 一体化管理工具</h4>
+        <ul>
+          <li>系统仪表盘 / 启动项 / 计划任务管理</li>
+          <li>磁盘清理 / AppX 臃肿软件移除（带风险徽章）</li>
+          <li>把分散的系统操作收进一个 Fluent GUI</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心功能 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(34,197,94,.15)">⚙️</div>
+      <h2>核心功能矩阵</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <h4 style="color:#fcd34d;margin-bottom:14px">1️⃣ 系统优化（30+ 项，6 大类）</h4>
+      <table>
+        <tr><th>类别</th><th>覆盖内容</th></tr>
+        <tr><td><strong>Performance 性能</strong></td><td>基于内存的 Service Host 分组调优、进程优先级调整、键盘延迟降低、多媒体调度器优化（游戏更流畅）</td></tr>
+        <tr><td><strong>Privacy 隐私</strong></td><td>关闭 Windows 遥测、错误报告、广告 ID、定位追踪、Cortana、Copilot、内容推荐</td></tr>
+        <tr><td><strong>GPU 显卡</strong></td><td>AMD/NVIDIA/Intel 厂商专属注册表调优（电源状态、时钟门控、显示延迟）</td></tr>
+        <tr><td><strong>Power 电源</strong></td><td>关闭休眠与快速启动、USB 选择性挂起、安装高性能电源计划、关闭电源节流</td></tr>
+        <tr><td><strong>Bloatware 臃肿与服务</strong></td><td>阻止 OEM 应用重装、精细调整 200+ Windows 服务的启动类型</td></tr>
+        <tr><td><strong>User Experience 体验</strong></td><td>移除菜单显示延迟、关闭任务栏动画/透明等视觉效果，手感更跟手</td></tr>
+      </table>
+
+      <h4 style="color:#fcd34d;margin:24px 0 14px">2️⃣ 自定义（Customize，4 类）</h4>
+      <div class="feat-grid">
+        <div class="feat"><h4>🖥️ Desktop 桌面</h4><ul><li>显示/隐藏图标（此电脑、回收站、网络、控制面板）</li><li>移除快捷方式箭头叠加</li></ul></div>
+        <div class="feat"><h4>🎛️ Preferences 偏好</h4><ul><li>任务栏对齐、小组件、时钟秒数、暗色模式、文件扩展名、经典右键菜单、Bing 搜索等</li></ul></div>
+        <div class="feat"><h4>🎮 Gaming 游戏</h4><ul><li>游戏模式、Game Bar、后台录制、鼠标加速、硬件加速 GPU 调度</li></ul></div>
+        <div class="feat"><h4>💻 System 系统</h4><ul><li>开机启用 Num Lock 等</li></ul></div>
+      </div>
+
+      <h4 style="color:#fcd34d;margin:24px 0 14px">3️⃣ 内置工具（Built-in Tools）</h4>
+      <table>
+        <tr><th>工具</th><th>功能</th></tr>
+        <tr><td><strong>系统仪表盘</strong></td><td>一屏查看 CPU、内存、GPU、存储与系统详情</td></tr>
+        <tr><td><strong>启动项管理</strong></td><td>列出所有开机自启项与任务，开关切换、打开文件位置</td></tr>
+        <tr><td><strong>计划任务</strong></td><td>浏览 / 运行 / 停止 / 启用 / 禁用 / 删除 Windows 计划任务</td></tr>
+        <tr><td><strong>磁盘清理</strong></td><td>扫描清理临时文件、系统缓存、Windows Update 残留、预读取、缩略图、回收站、崩溃转储、旧系统</td></tr>
+        <tr><td><strong>臃肿软件移除</strong></td><td>列出所有可移除 AppX 包，带风险徽章（Safe / Caution / Unknown）</td></ul></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(236,72,153,.15)">🎯</div>
+      <h2>应用场景</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <div class="feat-grid">
+        <div class="feat"><h4>🆕 新机开箱清理</h4><ul><li>移除 OEM 预装与臃肿，还你一个干净系统</li></ul></div>
+        <div class="feat"><h4>🔐 隐私敏感用户</h4><ul><li>一键关闭遥测、广告 ID、定位、Copilot 数据回流</li></ul></div>
+        <div class="feat"><h4>🎮 游戏玩家调优</h4><ul><li>GPU 厂商调优 + 多媒体调度器 + 电源高性能计划，降延迟</li></ul></div>
+        <div class="feat"><h4>🐢 老旧硬件提速</h4><ul><li>关闭视觉效果与后台服务，释放 CPU/内存</li></ul></div>
+        <div class="feat"><h4>🧑‍💻 开发者环境</h4><ul><li>经典右键菜单、关闭干扰项、干净的工作机</li></ul></div>
+        <div class="feat"><h4>🖥️ 不爱命令行的用户</h4><ul><li>用 Fluent GUI 替代 PowerShell 脚本，可视化操作</li></ul></div>
+      </div>
+      <div class="quote" style="margin-top:18px">对「<strong>看得懂英文/中文 GUI，但不想碰命令行和注册表</strong>」的主流用户而言，optimizerDuck 是体验最现代化的选择之一；对极客，它的开源与可编译属性同样经得起审视。</div>
+    </div>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(234,179,8,.15)">⚔️</div>
+      <h2>竞品对比</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <table>
+        <tr>
+          <th>维度</th>
+          <th>optimizerDuck</th>
+          <th>ChrisTitusTech/winutil</th>
+          <th>O&O ShutUp10++</th>
+          <th>Raphire/Win11Debloat</th>
+        </tr>
+        <tr><td><strong>形态</strong></td><td>C# GUI（.exe）</td><td>PowerShell GUI</td><td>便携 GUI</td><td>PowerShell 脚本</td></tr>
+        <tr><td><strong>定位</strong></td><td>性能+隐私+简洁</td><td>全能瑞士军刀</td><td>纯隐私/遥测</td><td>减负+隐私+自定义</td></tr>
+        <tr><td><strong>减负/移除应用</strong></td><td class="yes">✅</td><td class="yes">✅ 最强</td><td class="no">❌</td><td class="yes">✅</td></tr>
+        <tr><td><strong>隐私/遥测控制</strong></td><td class="yes">✅</td><td class="yes">✅（集成 O&O）</td><td class="yes">✅ 最强</td><td class="yes">✅</td></tr>
+        <tr><td><strong>性能/GPU 调优</strong></td><td class="yes">✅ 厂商级</td><td class="mid">部分</td><td class="no">❌</td><td class="mid">部分</td></tr>
+        <tr><td><strong>软件安装（WinGet）</strong></td><td class="no">❌</td><td class="yes">✅</td><td class="no">❌</td><td class="no">❌</td></tr>
+        <tr><td><strong>可逆/回滚</strong></td><td class="yes">✅ 一键+文件级</td><td class="mid">部分</td><td class="yes">✅</td><td class="yes">✅</td></tr>
+        <tr><td><strong>开源</strong></td><td class="yes">✅ GPL-3.0</td><td class="yes">✅</td><td class="no">❌（免费专有）</td><td class="yes">✅ MIT</td></tr>
+        <tr><td><strong>易用性</strong></td><td class="yes">🟢 简单</td><td class="mid">🟡 中等</td><td class="yes">🟢 简单</td><td class="mid">🟡 命令行</td></tr>
+        <tr><td><strong>社区规模</strong></td><td class="mid">🔴 新兴 ~3.8k</td><td class="yes">🟢 庞大</td><td class="yes">🟢 庞大</td><td class="yes">🟢 ~48k</td></tr>
+      </table>
+      <p style="margin-top:18px"><strong>定位结论：</strong></p>
+      <ul>
+        <li><strong>ChrisTitusTech/winutil</strong> —— 功能最全的 GUI 瑞士军刀（装软件+减负+隐私），社区最成熟。</li>
+        <li><strong>O&O ShutUp10++</strong> —— 隐私精准利器，但只管遥测、不减负，且闭源。</li>
+        <li><strong>Raphire/Win11Debloat</strong> —— 纯开源、轻量、紧跟 AI 演进的脚本方案，极客与企业 IT 首选。</li>
+        <li><strong>optimizerDuck</strong> —— <strong>面向 GUI 用户的现代化新锐</strong>：以「可逆、透明、零遥测、厂商级 GPU 调优」差异化，体验最精致，适合不想碰命令行又重视安全可回滚的主流用户。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 综合评分 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(34,197,94,.15)">🏆</div>
+      <h2>综合评分</h2>
+      <div class="line"></div>
+    </div>
+    <div class="score-board">
+      <div class="score-total">
+        <div class="big-score">8.4<small> / 10</small></div>
+        <div class="verdict">
+          <span class="tag">推荐 · Tier A（新兴精品，潜力股）</span>
+          <p>设计理念领先、可逆与透明度出色、GPU 调优是亮点；作为新兴项目，社区规模与功能广度仍在追赶头部竞品，但增长势头强劲（今日 +340 ⭐）。</p>
+        </div>
+      </div>
+      <div class="score-bars">
+        <div class="bar-item"><div class="bar-top"><b>安全 / 可逆性</b><span>9.3</span></div><div class="bar-bg"><div class="bar-fill" style="width:93%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>易用性（GUI）</b><span>9.2</span></div><div class="bar-bg"><div class="bar-fill" style="width:92%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>透明度 / 开源质量</b><span>9.0</span></div><div class="bar-bg"><div class="bar-fill" style="width:90%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>技术架构</b><span>8.8</span></div><div class="bar-bg"><div class="bar-fill" style="width:88%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>文档完整性</b><span>8.5</span></div><div class="bar-bg"><div class="bar-fill" style="width:85%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>实用价值</b><span>8.4</span></div><div class="bar-bg"><div class="bar-fill" style="width:84%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>项目活跃度</b><span>8.2</span></div><div class="bar-bg"><div class="bar-fill" style="width:82%"></div></div></div>
+        <div class="bar-item"><div class="bar-top"><b>社区影响力</b><span>7.4</span></div><div class="bar-bg"><div class="bar-fill" style="width:74%"></div></div></div>
+      </div>
+      <div class="pro-con">
+        <div class="box pro">
+          <h4>✅ 优势</h4>
+          <ul>
+            <li>可逆性优先，文件级回滚 + 风险评级 + 还原点提示</li>
+            <li>GPL v3 全开源，GitHub Actions 透明构建，零遥测</li>
+            <li>.NET 10 + WPF UI 的现代 Fluent 体验</li>
+            <li>罕见的厂商级 GPU（A/N/I）调优</li>
+            <li>反射驱动的可扩展架构，社区易贡献</li>
+            <li>10 语言、免安装单 exe、上手极简</li>
+          </ul>
+        </div>
+        <div class="box con">
+          <h4>⚠️ 注意</h4>
+          <ul>
+            <li>新兴项目，社区规模远小于 winutil / Win11Debloat</li>
+            <li>无软件安装（WinGet）等「全家桶」能力</li>
+            <li>未代码签名，触发 SmartScreen 警告（开源常见）</li>
+            <li>非默认电源计划可能触发任务管理器 100% CPU 显示 Bug（仅显示）</li>
+            <li>需管理员权限；改系统设置须自担风险并做好还原点</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展脉络 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(6,182,212,.15)">📅</div>
+      <h2>发展脉络</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <div class="timeline">
+        <div class="tl-item"><span class="yr">起步</span> <span class="tx">作者 itsfatduck 以个人项目起步，定位「免费、开源、可逆」的 Windows 优化器，C# / WPF 技术栈。</span></div>
+        <div class="tl-item"><span class="yr">社区化</span> <span class="tx">引入 10 语言社区翻译、Discord 社区、贡献者体系；GitHub Actions 自动构建建立信任。</span></div>
+        <div class="tl-item"><span class="yr">破圈</span> <span class="tx">登上 GitHub Trending，被 Reddit、XDA、播客（GitHub Daily Trend）、中文科技媒体等报道，~3.8k ⭐、179 forks。</span></div>
+        <div class="tl-item"><span class="yr">2026-06-17</span> <span class="tx">今日 +340 ⭐，进入快速上升通道，成为脚本式工具之外最受关注的 GUI 新锐。</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>📎 数据来源：
+      <a href="https://github.com/itsfatduck/optimizerDuck">GitHub 仓库</a> ·
+      <a href="https://optimizerduck.vercel.app/">官网</a> ·
+      <a href="https://www.reddit.com/r/coolgithubprojects/comments/1omht1f/github_itsfatduckoptimizerduck_free_opensource/">Reddit</a> ·
+      <a href="https://github.com/itsfatduck/optimizerDuck-web">Web 仓库</a>
+    </p>
+    <p style="margin-top:8px">报告生成时间：2026-06-17 ｜ GitHub Trending 深度分析 · optimizerDuck 🦆</p>
+  </div>
+
+</div>
+</body>
+</html>

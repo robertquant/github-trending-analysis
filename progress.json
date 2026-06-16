@@ -1,9 +1,7 @@
 {
   "date": "2026-06-17",
   "fetched_at": "2026-06-17",
-  "pending": [
-    "itsfatduck/optimizerDuck"
-  ],
+  "pending": [],
   "skipped_already_analyzed": [
     "iptv-org/iptv",
     "teslamate-org/teslamate",
@@ -23,7 +21,9 @@
     "NVIDIA/SkillSpector",
     "shiyu-coder/Kronos"
   ],
-  "done": [],
+  "done": [
+    "itsfatduck/optimizerDuck"
+  ],
   "projects": [
     {
       "name": "iptv-org/iptv",
@@ -87,7 +87,7 @@
     },
     {
       "name": "itsfatduck/optimizerDuck",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "NVIDIA/SkillSpector",
@@ -100,8 +100,8 @@
   ],
   "counts": {
     "total_today": 18,
-    "pending": 1,
+    "pending": 0,
     "skipped": 17,
-    "done": 0
+    "done": 1
   }
 }
