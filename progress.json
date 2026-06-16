@@ -1,52 +1,107 @@
 {
-  "date": "2026-06-16",
-  "fetched_at": "2026-06-16",
-  "pending": [],
+  "date": "2026-06-17",
+  "fetched_at": "2026-06-17",
+  "pending": [
+    "itsfatduck/optimizerDuck"
+  ],
   "skipped_already_analyzed": [
     "iptv-org/iptv",
+    "teslamate-org/teslamate",
     "Panniantong/Agent-Reach",
     "meshery/meshery",
     "chatwoot/chatwoot",
+    "krahets/hello-algo",
     "freeCodeCamp/freeCodeCamp",
+    "trycua/cua",
     "jwasham/coding-interview-university",
     "rohitg00/ai-engineering-from-scratch",
     "music-assistant/server",
     "Free-TV/IPTV",
-    "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots"
-  ],
-  "done": [
-    "teslamate-org/teslamate",
-    "krahets/hello-algo",
-    "trycua/cua",
+    "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
     "Raphire/Win11Debloat",
-    "mikeroyal/Self-Hosting-Guide"
+    "mikeroyal/Self-Hosting-Guide",
+    "NVIDIA/SkillSpector",
+    "shiyu-coder/Kronos"
   ],
+  "done": [],
   "projects": [
     {
+      "name": "iptv-org/iptv",
+      "status": "skipped"
+    },
+    {
       "name": "teslamate-org/teslamate",
-      "status": "done"
+      "status": "skipped"
+    },
+    {
+      "name": "Panniantong/Agent-Reach",
+      "status": "skipped"
+    },
+    {
+      "name": "meshery/meshery",
+      "status": "skipped"
+    },
+    {
+      "name": "chatwoot/chatwoot",
+      "status": "skipped"
     },
     {
       "name": "krahets/hello-algo",
-      "status": "done"
+      "status": "skipped"
+    },
+    {
+      "name": "freeCodeCamp/freeCodeCamp",
+      "status": "skipped"
     },
     {
       "name": "trycua/cua",
-      "status": "done"
+      "status": "skipped"
+    },
+    {
+      "name": "jwasham/coding-interview-university",
+      "status": "skipped"
+    },
+    {
+      "name": "rohitg00/ai-engineering-from-scratch",
+      "status": "skipped"
+    },
+    {
+      "name": "music-assistant/server",
+      "status": "skipped"
+    },
+    {
+      "name": "Free-TV/IPTV",
+      "status": "skipped"
+    },
+    {
+      "name": "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
+      "status": "skipped"
     },
     {
       "name": "Raphire/Win11Debloat",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "mikeroyal/Self-Hosting-Guide",
-      "status": "done"
+      "status": "skipped"
+    },
+    {
+      "name": "itsfatduck/optimizerDuck",
+      "status": "pending"
+    },
+    {
+      "name": "NVIDIA/SkillSpector",
+      "status": "skipped"
+    },
+    {
+      "name": "shiyu-coder/Kronos",
+      "status": "skipped"
     }
   ],
   "counts": {
-    "total_today": 15,
-    "pending": 0,
-    "skipped": 10,
-    "done": 5
+    "total_today": 18,
+    "pending": 1,
+    "skipped": 17,
+    "done": 0
   }
 }
