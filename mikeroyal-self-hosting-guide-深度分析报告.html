@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mikeroyal/Self-Hosting-Guide 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --bg2:#0f1626;
+    --card:#141d31;
+    --card2:#1a2540;
+    --border:#243352;
+    --txt:#e8edf7;
+    --muted:#94a3b8;
+    --accent:#3b82f6;
+    --accent2:#06b6d4;
+    --green:#22c55e;
+    --yellow:#eab308;
+    --red:#ef4444;
+    --purple:#a855f7;
+    --pink:#ec4899;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI','PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+    background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--txt);
+    line-height:1.75;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;
+    background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(6,182,212,.08));
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 40px;
+    overflow:hidden;
+    margin-bottom:32px;
+  }
+  .hero::before{
+    content:"";position:absolute;top:-60px;right:-60px;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(59,130,246,.25),transparent 70%);
+    border-radius:50%;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.4);
+    color:#93c5fd;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;
+    margin-bottom:20px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{
+    font-size:42px;line-height:1.2;font-weight:800;margin-bottom:14px;
+    background:linear-gradient(90deg,#fff,#93c5fd);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .sub{font-size:18px;color:var(--muted);max-width:760px;margin-bottom:28px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--border);
+    padding:7px 13px;border-radius:10px;font-size:13px;color:var(--muted);
+  }
+  .chip b{color:var(--txt);font-weight:600}
+  /* STATS */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px;
+  }
+  .stat{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 20px;
+    text-align:center;transition:transform .2s,border-color .2s;
+  }
+  .stat:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .stat .num{font-size:30px;font-weight:800;color:#fff;margin-bottom:4px}
+  .stat .lbl{font-size:13px;color:var(--muted)}
+  .stat .num.blue{color:#60a5fa}.stat .num.cyan{color:#22d3ee}.stat .num.green{color:#4ade80}.stat .num.purple{color:#c084fc}
+  /* SECTION */
+  section{margin-bottom:36px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .sec-head .ico{
+    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .sec-head h2{font-size:24px;font-weight:700}
+  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;
+  }
+  .card + .card{margin-top:18px}
+  p{color:#cbd5e1;margin-bottom:14px}
+  p strong{color:#fff}
+  a{color:#60a5fa;text-decoration:none}
+  a:hover{text-decoration:underline}
+  ul{list-style:none;padding-left:0}
+  ul li{position:relative;padding-left:22px;margin-bottom:10px;color:#cbd5e1}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--accent2)}
+  /* GRID FEATURES */
+  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .feat{
+    background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px;
+  }
+  .feat h4{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .feat ul{font-size:14px}
+  .feat ul li{margin-bottom:6px;font-size:13.5px;color:#b8c5da}
+  /* SCORE */
+  .score-board{
+    background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(59,130,246,.08));
+    border:1px solid var(--border);border-radius:20px;padding:30px;
+  }
+  .score-total{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
+    padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--border);
+  }
+  .big-score{font-size:56px;font-weight:800;line-height:1;color:#4ade80}
+  .big-score small{font-size:24px;color:var(--muted);font-weight:600}
+  .verdict{max-width:520px}
+  .verdict .tag{
+    display:inline-block;background:rgba(34,197,94,.15);color:#4ade80;
+    padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;
+  }
+  .score-rows{display:grid;grid-template-columns:1fr 1fr;gap:14px 28px}
+  .score-row{display:grid;grid-template-columns:140px 1fr 50px;align-items:center;gap:12px}
+  .score-row .name{font-size:14px;color:#cbd5e1}
+  .bar{height:9px;background:var(--bg2);border-radius:5px;overflow:hidden}
+  .bar > span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .score-row .val{font-size:14px;font-weight:700;text-align:right;color:#fff}
+  /* COMPARE TABLE */
+  .cmp-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:680px}
+  th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:var(--card2);color:#93c5fd;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+  td{color:#cbd5e1}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(59,130,246,.05)}
+  .yes{color:var(--green);font-weight:600}
+  .no{color:var(--red)}
+  .mid{color:var(--yellow)}
+  .hl{background:rgba(59,130,246,.12);font-weight:600;color:#fff}
+  /* CODE */
+  code{
+    background:#0a0f1c;border:1px solid var(--border);color:#7dd3fc;
+    padding:2px 8px;border-radius:6px;font-family:'JetBrains Mono','Consolas',monospace;font-size:13.5px;
+  }
+  .code-block{
+    background:#0a0f1c;border:1px solid var(--border);border-radius:12px;padding:18px 20px;
+    overflow-x:auto;font-family:'JetBrains Mono','Consolas',monospace;font-size:13.5px;color:#a5d6ff;
+    margin:14px 0;
+  }
+  /* TIMELINE */
+  .tl{position:relative;padding-left:30px}
+  .tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border)}
+  .tl-item{position:relative;margin-bottom:22px}
+  .tl-item::before{content:"";position:absolute;left:-30px;top:6px;width:18px;height:18px;border-radius:50%;background:var(--card);border:3px solid var(--accent)}
+  .tl-item .yr{font-size:13px;color:var(--accent2);font-weight:700;margin-bottom:2px}
+  .tl-item .txt{color:#cbd5e1;font-size:14.5px}
+  .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .pc{border-radius:14px;padding:22px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(34,197,94,.06)}
+  .pc.con{background:rgba(239,68,68,.06)}
+  .pc h4{margin-bottom:14px;font-size:17px;display:flex;align-items:center;gap:8px}
+  .pc.pro h4{color:#4ade80}.pc.con h4{color:#f87171}
+  .pc ul li{font-size:14px}
+  .pc.pro ul li::before{color:var(--green)}
+  .pc.con ul li::before{color:var(--red)}
+  .quote{
+    border-left:3px solid var(--accent2);padding:6px 0 6px 18px;margin:18px 0;
+    color:#b8c5da;font-style:italic;
+  }
+  .footer{
+    margin-top:48px;padding-top:24px;border-top:1px solid var(--border);
+    text-align:center;color:var(--muted);font-size:13px;
+  }
+  .footer a{margin:0 6px}
+  .ref-list{columns:2;font-size:13px;gap:30px}
+  .ref-list li{margin-bottom:8px;break-inside:avoid}
+  @media(max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .feat-grid,.pros-cons,.score-rows{grid-template-columns:1fr}
+    h1{font-size:30px}.hero{padding:34px 22px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="badge"><span class="dot"></span> GitHub Trending · 自托管 / 家庭实验室知识指南</div>
+    <h1>mikeroyal / Self-Hosting-Guide</h1>
+    <p class="sub">一份全面、结构化的「自托管（Self-Hosting）」学习与实践指南，系统覆盖本地与私有服务器上托管和管理应用程序的方方面面——包括云、大语言模型（LLM）、WireGuard、自动化、Home Assistant 与网络等，是 HomeLab 爱好者与自托管新手的优质一站式知识库。</p>
+    <div class="meta-row">
+      <span class="chip">👤 作者 <b>Michael Royal (mikeroyal)</b></span>
+      <span class="chip">📦 类型 <b>Awesome-List / 知识指南</b></span>
+      <span class="chip">💻 主要语言 <b>Dockerfile / Markdown</b></span>
+      <span class="chip">🔔 订阅 <b>208 Watchers</b></span>
+      <span class="chip">🏷️ <b>self-hosting · homelab · docker</b></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="num blue">~20k</div><div class="lbl">⭐ GitHub Stars</div></div>
+    <div class="stat"><div class="num cyan">~1k</div><div class="lbl">🔱 Forks</div></div>
+    <div class="stat"><div class="num green">639</div><div class="lbl">📦 Commits</div></div>
+    <div class="stat"><div class="num purple">20+</div><div class="lbl">🏷️ Topics 标签</div></div>
+  </div>
+
+  <!-- 一、项目概述 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(59,130,246,.15)">📋</div>
+      <h2>一、项目概述</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p><strong>Self-Hosting-Guide</strong> 是由资深软件工程师、内容创作者兼自托管 / 家庭实验室（HomeLab）爱好者 <strong>Michael Royal（GitHub ID：mikeroyal）</strong> 维护的一个开源知识型仓库。其官方定位是："<strong>Learn all about locally hosting (on premises &amp; private web servers) and managing software applications by yourself or your organization.</strong>"（学习如何自行或为组织在本地 / 私有 Web 服务器上托管与管理软件应用的一切）。</p>
+      <p>与传统意义上的"软件项目"不同，它本质上是一份<strong>结构化的技术指南（Guide）/ Awesome-List</strong>——以一份超长的 <code>README.md</code> 为载体，把自托管领域涉及的工具、协议、概念、学习路径与外部资源，按主题分门别类地组织起来，并附以简明的说明与链接。仓库内还附带一份 <code>Getting Started with Self-Hosting.dockerfile</code>，让读者可以快速拉起一个可实践的入门环境。</p>
+      <p>该项目并非孤立存在，而是 mikeroyal 庞大"指南矩阵"中的一员。作者同期维护着 <strong>Linux-Guide、Machine-Learning-Guide、Networking-Guide、Open-Source-Security-Guide、Digital-Forensics-Guide</strong> 等一系列高质量技术指南，形成了一个覆盖基础设施、AI、安全、网络的完整知识图谱。这种"主题 + 链接 + 简释"的写作范式已成为 GitHub 上技术入门资源的事实标准之一。</p>
+      <div class="quote">「Self-Hosting Guide……包括 Cloud、LLMs、WireGuard、Automation、Home Assistant 与 Networking。」—— 项目描述</div>
+      <p>截至分析日，项目已积累约 <strong>2 万 Star、1 千 Fork、639 次提交</strong>，并登顶 GitHub Trending。在自托管这一垂直领域，它是关注度最高、内容最全面的中文圈之外的学习资源之一，深受 r/selfhosted、HomeLab 社区与隐私倡导者推崇。</p>
+    </div>
+  </section>
+
+  <!-- 二、内容架构与组织方式 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(6,182,212,.15)">🗂️</div>
+      <h2>二、内容架构与组织方式</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p>作为一个知识型仓库，它的"技术架构"实际体现为<strong>信息架构（Information Architecture）</strong>——如何把海量自托管知识组织得易于检索与学习。项目采用了成熟的 Awesome-List 范式，并在此基础上做了深度扩展。</p>
+      <p><strong>仓库物理结构：</strong></p>
+      <ul>
+        <li><strong><code>README.md</code></strong>：核心载体，一份结构化长文档，按主题分章节，每节内部按"概念 → 工具清单 → 学习资源"三层组织。</li>
+        <li><strong><code>Getting Started with Self-Hosting.dockerfile</code></strong>：可执行的入门环境，读者可用 Docker 一键拉起实践环境，体现"指南 + 可动手"的理念。仓库语言统计显示为 100% Dockerfile，正源于此。</li>
+        <li><strong><code>CONTRIBUTING.md</code></strong>：社区贡献规范，指导如何提交新工具、修正链接，保障内容的持续演进与质量。</li>
+      </ul>
+      <p><strong>主题覆盖矩阵（由 GitHub Topics 与目录映射而来）：</strong>仓库贴有 <code>search</code>、<code>linux</code>、<code>ssh</code>、<code>open-source</code>、<code>home-automation</code>、<code>raspberry-pi</code>、<code>oauth</code>、<code>awesome</code>、<code>privacy</code>、<code>authentication</code>、<code>docker-compose</code>、<code>decentralized</code>、<code>selfhosted</code>、<code>reverse-proxy</code>、<code>awesome-list</code>、<code>home-assistant</code>、<code>self-hosting</code>、<code>observability</code>、<code>wireguard</code> 等 20+ 标签，勾勒出其内容边界。</p>
+    </div>
+
+    <div class="card">
+      <p style="margin-bottom:18px"><strong>核心内容板块（知识地图）：</strong></p>
+      <div class="feat-grid">
+        <div class="feat">
+          <h4>☁️ Cloud &amp; 虚拟化</h4>
+          <ul>
+            <li>AWS / Azure / GCP / Hetzner 等公有云选型</li>
+            <li>Proxmox（家庭虚拟化首选）、ESXi、XCP-ng</li>
+            <li>私有云、对象存储（MinIO、TrueNAS）</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🐳 容器与编排</h4>
+          <ul>
+            <li>Docker &amp; Docker Compose（部署事实标准）</li>
+            <li>Kubernetes / K3s 轻量集群</li>
+            <li>Portainer、容器管理与镜像仓库</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🤖 LLMs（本地大模型）</h4>
+          <ul>
+            <li>Ollama、vLLM、text-generation-webui</li>
+            <li>本地推理、量化模型（GGUF）</li>
+            <li>开源模型私有化部署（隐私优势）</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🔒 网络 &amp; 远程访问</h4>
+          <ul>
+            <li>WireGuard（现代 VPN 标杆）</li>
+            <li>反向代理：Traefik、Nginx Proxy Manager、Caddy</li>
+            <li>Tailscale / Headscale、Cloudflare Tunnel</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🏠 Home Assistant &amp; 智能家居</h4>
+          <ul>
+            <li>Home Assistant 家庭自动化中枢</li>
+            <li>Zigbee / MQTT / 传感器生态</li>
+            <li>Raspberry Pi 边缘节点</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>⚙️ 自动化 &amp; CI/CD</h4>
+          <ul>
+            <li>Ansible 配置管理与基础设施即代码</li>
+            <li>n8n、Home Assistant 自动化</li>
+            <li>定时任务、备份与脚本编排</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🔐 认证 &amp; 安全</h4>
+          <ul>
+            <li>OAuth、SSO（Authentik、Authelia）</li>
+            <li>SSH 安全、密钥管理、Vaultwarden 密码库</li>
+            <li>隐私保护、去中心化理念</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>📊 可观测性 &amp; 运维</h4>
+          <ul>
+            <li>Prometheus + Grafana 监控</li>
+            <li>日志聚合（Loki、Uptime Kuma）</li>
+            <li>备份策略、3-2-1 原则与容灾</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p><strong>信息组织范式：</strong>每个板块通常遵循"概念入门说明 → 主流工具清单（附项目链接 + 一句话定位）→ 官方文档 / 教程 / 视频等学习资源"的三段式。这种结构使它既是<strong>索引（找工具）</strong>，又是<strong>教程地图（系统学习）</strong>，兼顾了检索性与教学性——这是它区别于纯清单类项目的关键。</p>
+    </div>
+  </section>
+
+  <!-- 三、核心创新点 / 价值主张 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(168,85,247,.15)">💡</div>
+      <h2>三、核心创新点与价值主张</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <ul>
+        <li><strong>一站式全栈覆盖，打破信息孤岛</strong>：自托管传统上散落在数十个分散资源（awesome-selfhosted 列表、各软件官方文档、个人博客、YouTube）。本指南把云、容器、网络、LLM、智能家居、安全、监控<strong>整合进单一文档</strong>，读者无需在多源之间反复跳转，极大降低了入门认知成本。</li>
+        <li><strong>"指南"而非"清单"——加了教学性的 Awesome-List</strong>：与 awesome-selfhosted 这类纯链接目录不同，它为每个领域补充了<strong>背景概念、选型建议与学习路径</strong>。读者不仅知道"有哪些工具"，还理解"为什么选、怎么学、如何组合"，从"目录"升级为"地图"。</li>
+        <li><strong>紧跟前沿：把 LLM 本地化纳入自托管版图</strong>：在描述中明确列出 <strong>Cloud、LLMs、WireGuard、Automation、Home Assistant、Networking</strong>。将"本地部署大语言模型"（Ollama 等）与经典自托管并列，体现了对 2024–2026 年 AI 私有化浪潮的敏锐捕捉——这是许多老牌指南尚未覆盖的新维度。</li>
+        <li><strong>"可动手"的指南</strong>：附带 <code>Getting Started with Self-Hosting.dockerfile</code>，把静态阅读变为可执行实践，呼应了 HomeLab 社区"边做边学"的文化。</li>
+        <li><strong>矩阵式知识生态</strong>：作为 mikeroyal 指南矩阵的成员，可与 Linux-Guide、Networking-Guide、Open-Source-Security-Guide 无缝交叉引用，形成<strong>跨主题的知识网络</strong>，单点深度有限但广度与互联性极强。</li>
+        <li><strong>强烈的隐私与去中心化价值观</strong>：标签中 <code>privacy</code>、<code>decentralized</code>、<code>open-source</code> 并列，旗帜鲜明地服务"数据主权、逃离 SaaS 锁定、去中心化"的人群，价值观清晰、社区认同感强。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(34,197,94,.15)">🎯</div>
+      <h2>四、应用场景</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <div class="feat-grid">
+        <div class="feat">
+          <h4>🐣 HomeLab 新手入门</h4>
+          <ul><li>从零搭建家庭服务器的<strong>系统化学习地图</strong>，避免碎片化摸索</li></ul>
+        </div>
+        <div class="feat">
+          <h4>🕵️ 隐私 / 数据主权倡导者</h4>
+          <ul><li>用自托管替代 Google Drive（Nextcloud）、Notion、密码托管等 SaaS，<strong>数据完全自控</strong></li></ul>
+        </div>
+        <div class="feat">
+          <h4>🏠 智能家居玩家</h4>
+          <ul><li>围绕 Home Assistant 构建本地化家庭自动化，摆脱云端依赖</li></ul>
+        </div>
+        <div class="feat">
+          <h4>🤖 AI 私有化部署者</h4>
+          <ul><li>本地运行大模型（Ollama/vLLM），保护敏感数据<strong>不出内网</strong></li></ul>
+        </div>
+        <div class="feat">
+          <h4>💰 成本敏感的规模化用户</h4>
+          <ul><li>用户量增长后，自托管摊薄单位成本，打破 SaaS 的<strong>线性计费曲线</strong></li></ul>
+        </div>
+        <div class="feat">
+          <h4>🏢 中小企业 / 组织 IT</h4>
+          <ul><li>私有部署文档协作、项目管理、IM，满足<strong>合规与定制</strong>需求</li></ul>
+        </div>
+        <div class="feat">
+          <h4>🎓 技术教学 / 培训</h4>
+          <ul><li>作为云计算、容器、网络、DevOps 的<strong>实战课程索引</strong></li></ul>
+        </div>
+        <div class="feat">
+          <h4>🔧 DevOps / SRE 工具选型</h4>
+          <ul><li>监控（Prometheus/Grafana）、反向代理、认证、备份方案的<strong>选型参考库</strong></li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(236,72,153,.15)">⚔️</div>
+      <h2>五、竞品 / 同类资源对比</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card" style="padding:24px 24px 28px">
+      <p>自托管领域的"竞品"主要是其他高知名度资源。下表从形态、覆盖广度、教学深度、是否含 AI/LLM 等维度对比：</p>
+      <div class="cmp-wrap" style="margin-top:18px">
+        <table>
+          <thead>
+            <tr>
+              <th>资源</th>
+              <th>形态</th>
+              <th>覆盖广度</th>
+              <th>教学/说明</th>
+              <th>含 LLM/AI</th>
+              <th>特色</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hl">
+              <td><strong>Self-Hosting-Guide</strong><br><small>mikeroyal</small></td>
+              <td>结构化指南</td>
+              <td class="yes">极广（全栈）</td>
+              <td class="yes">有概念+选型</td>
+              <td class="yes">✅ 明确覆盖</td>
+              <td>一站式+矩阵生态+可动手</td>
+            </tr>
+            <tr>
+              <td>awesome-selfhosted</td>
+              <td>纯软件清单</td>
+              <td class="yes">极广（按类目）</td>
+              <td class="no">几乎无说明</td>
+              <td class="no">部分</td>
+              <td>最权威的软件目录，适合"找工具"</td>
+            </tr>
+            <tr>
+              <td>awesome-sysadmin</td>
+              <td>纯工具清单</td>
+              <td class="mid">运维向</td>
+              <td class="no">无</td>
+              <td class="no">否</td>
+              <td>聚焦 SysAdmin / 运维工具</td>
+            </tr>
+            <tr>
+              <td>The Perfect Media Server</td>
+              <td>系列博客</td>
+              <td class="mid">偏媒体/存储</td>
+              <td class="yes">深度教程</td>
+              <td class="no">否</td>
+              <td>单一作者的完整实战方案</td>
+            </tr>
+            <tr>
+              <td>OpenAlternative</td>
+              <td>开源替代清单</td>
+              <td class="yes">广</td>
+              <td class="mid">简评</td>
+              <td class="no">否</td>
+              <td>主打"开源替代商业软件"视角</td>
+            </tr>
+            <tr>
+              <td>mikeroyal/Networking-Guide 等</td>
+              <td>结构化指南</td>
+              <td class="mid">垂直专题</td>
+              <td class="yes">有</td>
+              <td class="mid">视专题</td>
+              <td>同作者矩阵，与本指南互补</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:18px"><strong>对比结论：</strong><code>awesome-selfhosted</code> 是"找某个具体软件"时的<strong>权威目录</strong>，但几乎没有教学性；<code>The Perfect Media Server</code> 是单一作者的<strong>深度实战方案</strong>，但领域偏窄。<strong>Self-Hosting-Guide 的差异化在于"广度 + 教学性 + 前沿性"三者兼得</strong>——它既能在你想系统入门时充当地图，又把 LLM 本地化这类新趋势纳入版图，并通过作者矩阵提供横向延伸。三者在实践中往往<strong>互补使用</strong>而非替代。</p>
+    </div>
+  </section>
+
+  <!-- 六、综合评分 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(234,179,8,.15)">🏆</div>
+      <h2>六、综合评分</h2>
+      <div class="line"></div>
+    </div>
+    <div class="score-board">
+      <div class="score-total">
+        <div class="big-score">8.8<small> / 10</small></div>
+        <div class="verdict">
+          <span class="tag">强烈推荐 · Tier S（自托管入门资源）</span>
+          <p style="margin:0">一份广度惊人、紧跟前沿、结构清晰的自托管知识指南。作为"学习地图"与"工具索引"几乎无出其右；唯一短板是知识型项目的天然局限——内容偏链接罗列，深度依赖外部资源，需读者具备一定动手能力。</p>
+        </div>
+      </div>
+      <div class="score-rows">
+        <div class="score-row"><span class="name">内容广度</span><div class="bar"><span style="width:96%"></span></div><span class="val">9.6</span></div>
+        <div class="score-row"><span class="name">社区影响力</span><div class="bar"><span style="width:92%"></span></div><span class="val">9.2</span></div>
+        <div class="score-row"><span class="name">前沿性 / 时效</span><div class="bar"><span style="width:90%"></span></div><span class="val">9.0</span></div>
+        <div class="score-row"><span class="name">信息组织</span><div class="bar"><span style="width:90%"></span></div><span class="val">9.0</span></div>
+        <div class="score-row"><span class="name">入门友好度</span><div class="bar"><span style="width:88%"></span></div><span class="val">8.8</span></div>
+        <div class="score-row"><span class="name">可实践性</span><div class="bar"><span style="width:84%"></span></div><span class="val">8.4</span></div>
+        <div class="score-row"><span class="name">内容深度</span><div class="bar"><span style="width:80%"></span></div><span class="val">8.0</span></div>
+        <div class="score-row"><span class="name">原创度</span><div class="bar"><span style="width:78%"></span></div><span class="val">7.8</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 优劣分析 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(34,197,94,.15)">⚖️</div>
+      <h2>优势与注意事项</h2>
+      <div class="line"></div>
+    </div>
+    <div class="pros-cons">
+      <div class="pc pro">
+        <h4>✅ 核心优势</h4>
+        <ul>
+          <li><strong>覆盖全栈</strong>：云 / 容器 / 网络 / LLM / 智能家居 / 安全 / 监控一网打尽</li>
+          <li><strong>教学性强</strong>：有概念解释与选型建议，胜过纯链接清单</li>
+          <li><strong>紧跟前沿</strong>：明确纳入本地 LLM、去中心化等新趋势</li>
+          <li><strong>矩阵生态</strong>：与作者其他指南交叉引用，可横向延伸</li>
+          <li><strong>可动手</strong>：附 Dockerfile 入门环境，鼓励实践</li>
+          <li><strong>价值观清晰</strong>：隐私 / 开源 / 数据主权立场鲜明，社区认同度高</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠️ 注意事项</h4>
+        <ul>
+          <li><strong>深度依赖外部</strong>：本质是索引，深入细节需跳转原始文档</li>
+          <li><strong>链接易失效</strong>：大量外链，长期维护存在失链风险（虽有 639 提交持续修缮）</li>
+          <li><strong>非"开箱即用"软件</strong>：不能直接部署，需读者动手组装</li>
+          <li><strong>语言门槛</strong>：以英文为主，中文用户需配合翻译</li>
+          <li><strong>自托管隐性成本</strong>：指南未充分量化"自己维护的时间/精力成本"</li>
+          <li><strong>同质化</strong>：Awesome-List 范式常见，差异化更多体现在整合度而非独创</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 生态 / 发展脉络 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(59,130,246,.15)">🌿</div>
+      <h2>作者生态与发展脉络</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <div class="tl">
+        <div class="tl-item"><div class="yr">创立</div><div class="txt">仓库创建（ID 456258633），mikeroyal 作为资深工程师与 HomeLab 爱好者发起，填补"结构化自托管学习指南"空白。</div></div>
+        <div class="tl-item"><div class="yr">演进</div><div class="txt">持续 639 次提交，逐步从基础工具罗列扩展为含 Cloud、网络、安全的全栈指南，并配套贡献规范保障质量。</div></div>
+        <div class="tl-item"><div class="yr">矩阵化</div><div class="txt">发展为指南矩阵的一员，与 Linux-Guide、Networking-Guide、Open-Source-Security-Guide、Machine-Learning-Guide、Digital-Forensics-Guide 互补，构建跨主题知识网。</div></div>
+        <div class="tl-item"><div class="yr">AI 浪潮</div><div class="txt">在 Ollama 等本地大模型兴起后，将 LLMs 纳入自托管版图，成为首批把"AI 私有化"与传统自托管并列的指南之一。</div></div>
+        <div class="tl-item"><div class="yr">当下（2026）</div><div class="txt">积累约 20k Star，登顶 GitHub Trending，成为 r/selfhosted、HomeLab 社区新手的推荐起点之一。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 总结 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(6,182,212,.15)">📌</div>
+      <h2>总结</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p><strong>mikeroyal/Self-Hosting-Guide</strong> 不是一款可运行的应用，而是一份<strong>体系完整、紧跟时代、价值观鲜明的自托管知识指南</strong>。它的价值在于"把分散的自托管知识整合为一张可学习、可检索的地图"，并以教学性、前沿性（纳入本地 LLM）与作者矩阵生态，在众多 Awesome-List 中建立起差异化。</p>
+      <p>对于<strong>任何想从零搭建 HomeLab、夺回数据主权、私有化部署 AI 或系统学习云原生基础设施的人</strong>，它都是值得收藏为起点的优质资源。理解其"索引 + 地图"的本质——配合动手实践与原始文档，才能发挥最大价值。综合评分 <strong>8.8 / 10（Tier S，强烈推荐）</strong>。</p>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div>📅 数据截至 2026-06-16 · 由 GitHub Trending 深度分析生成</div>
+    <div style="margin-top:10px">
+      <a href="https://github.com/mikeroyal/Self-Hosting-Guide">GitHub 仓库</a>·
+      <a href="https://github.com/mikeroyal">作者主页</a>·
+      <a href="https://github.com/mikeroyal/Self-Hosting-Guide/blob/main/README.md">完整指南 README</a>·
+      <a href="https://mikeroyal.github.io/">作者项目集</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
