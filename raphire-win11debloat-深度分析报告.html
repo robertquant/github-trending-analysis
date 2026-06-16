@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raphire/Win11Debloat 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --bg2:#0f1626;
+    --card:#141d31;
+    --card2:#1a2540;
+    --border:#243352;
+    --txt:#e8edf7;
+    --muted:#94a3b8;
+    --accent:#3b82f6;
+    --accent2:#06b6d4;
+    --green:#22c55e;
+    --yellow:#eab308;
+    --red:#ef4444;
+    --purple:#a855f7;
+    --pink:#ec4899;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI','PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+    background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--txt);
+    line-height:1.75;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;
+    background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(6,182,212,.08));
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 40px;
+    overflow:hidden;
+    margin-bottom:32px;
+  }
+  .hero::before{
+    content:"";position:absolute;top:-60px;right:-60px;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(59,130,246,.25),transparent 70%);
+    border-radius:50%;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.4);
+    color:#93c5fd;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;
+    margin-bottom:20px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{
+    font-size:42px;line-height:1.2;font-weight:800;margin-bottom:14px;
+    background:linear-gradient(90deg,#fff,#93c5fd);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .sub{font-size:18px;color:var(--muted);max-width:760px;margin-bottom:28px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--border);
+    padding:7px 13px;border-radius:10px;font-size:13px;color:var(--muted);
+  }
+  .chip b{color:var(--txt);font-weight:600}
+  /* STATS */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px;
+  }
+  .stat{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 20px;
+    text-align:center;transition:transform .2s,border-color .2s;
+  }
+  .stat:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .stat .num{font-size:30px;font-weight:800;color:#fff;margin-bottom:4px}
+  .stat .lbl{font-size:13px;color:var(--muted)}
+  .stat .num.blue{color:#60a5fa}.stat .num.cyan{color:#22d3ee}.stat .num.green{color:#4ade80}.stat .num.purple{color:#c084fc}
+  /* SECTION */
+  section{margin-bottom:36px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .sec-head .ico{
+    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .sec-head h2{font-size:24px;font-weight:700}
+  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;
+  }
+  .card + .card{margin-top:18px}
+  p{color:#cbd5e1;margin-bottom:14px}
+  p strong{color:#fff}
+  a{color:#60a5fa;text-decoration:none}
+  a:hover{text-decoration:underline}
+  ul{list-style:none;padding-left:0}
+  ul li{position:relative;padding-left:22px;margin-bottom:10px;color:#cbd5e1}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--accent2)}
+  /* GRID FEATURES */
+  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .feat{
+    background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px;
+  }
+  .feat h4{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .feat ul{font-size:14px}
+  .feat ul li{margin-bottom:6px;font-size:13.5px;color:#b8c5da}
+  /* SCORE */
+  .score-board{
+    background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(59,130,246,.08));
+    border:1px solid var(--border);border-radius:20px;padding:30px;
+  }
+  .score-total{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
+    padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--border);
+  }
+  .big-score{font-size:56px;font-weight:800;line-height:1;color:#4ade80}
+  .big-score small{font-size:24px;color:var(--muted);font-weight:600}
+  .verdict{max-width:520px}
+  .verdict .tag{
+    display:inline-block;background:rgba(34,197,94,.15);color:#4ade80;
+    padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;
+  }
+  .score-rows{display:grid;grid-template-columns:1fr 1fr;gap:14px 28px}
+  .score-row{display:grid;grid-template-columns:140px 1fr 50px;align-items:center;gap:12px}
+  .score-row .name{font-size:14px;color:#cbd5e1}
+  .bar{height:9px;background:var(--bg2);border-radius:5px;overflow:hidden}
+  .bar > span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .score-row .val{font-size:14px;font-weight:700;text-align:right;color:#fff}
+  /* COMPARE TABLE */
+  .cmp-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+  th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:var(--card2);color:#93c5fd;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+  td{color:#cbd5e1}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(59,130,246,.05)}
+  .yes{color:var(--green);font-weight:600}
+  .no{color:var(--red)}
+  .mid{color:var(--yellow)}
+  .hl{background:rgba(59,130,246,.12);font-weight:600;color:#fff}
+  /* CODE */
+  code{
+    background:#0a0f1c;border:1px solid var(--border);color:#7dd3fc;
+    padding:2px 8px;border-radius:6px;font-family:'JetBrains Mono','Consolas',monospace;font-size:13.5px;
+  }
+  .code-block{
+    background:#0a0f1c;border:1px solid var(--border);border-radius:12px;padding:18px 20px;
+    overflow-x:auto;font-family:'JetBrains Mono','Consolas',monospace;font-size:13.5px;color:#a5d6ff;
+    margin:14px 0;
+  }
+  /* TIMELINE */
+  .tl{position:relative;padding-left:30px}
+  .tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border)}
+  .tl-item{position:relative;margin-bottom:22px}
+  .tl-item::before{content:"";position:absolute;left:-30px;top:6px;width:18px;height:18px;border-radius:50%;background:var(--card);border:3px solid var(--accent)}
+  .tl-item .yr{font-size:13px;color:var(--accent2);font-weight:700;margin-bottom:2px}
+  .tl-item .txt{color:#cbd5e1;font-size:14.5px}
+  .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .pc{border-radius:14px;padding:22px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(34,197,94,.06)}
+  .pc.con{background:rgba(239,68,68,.06)}
+  .pc h4{margin-bottom:14px;font-size:17px;display:flex;align-items:center;gap:8px}
+  .pc.pro h4{color:#4ade80}.pc.con h4{color:#f87171}
+  .pc ul li{font-size:14px}
+  .pc.pro ul li::before{color:var(--green)}
+  .pc.con ul li::before{color:var(--red)}
+  .quote{
+    border-left:3px solid var(--accent2);padding:6px 0 6px 18px;margin:18px 0;
+    color:#b8c5da;font-style:italic;
+  }
+  .footer{
+    margin-top:48px;padding-top:24px;border-top:1px solid var(--border);
+    text-align:center;color:var(--muted);font-size:13px;
+  }
+  .footer a{margin:0 6px}
+  .ref-list{columns:2;font-size:13px;gap:30px}
+  .ref-list li{margin-bottom:8px;break-inside:avoid}
+  @media(max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .feat-grid,.pros-cons,.score-rows{grid-template-columns:1fr}
+    h1{font-size:30px}.hero{padding:34px 22px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="badge"><span class="dot"></span> GitHub Trending · Windows 系统优化工具</div>
+    <h1>Raphire / Win11Debloat</h1>
+    <p class="sub">一款轻量、易用、无需安装的 PowerShell 脚本，能快速清理 Windows 10/11 中的预装臃肿软件、关闭遥测、移除侵入式界面元素，并对系统进行深度自定义。当前最流行的开源 Windows 减负工具之一。</p>
+    <div class="meta-row">
+      <span class="chip">👤 作者 <b>Raphire (Jeffrey)</b></span>
+      <span class="chip">💻 语言 <b>PowerShell</b></span>
+      <span class="chip">📜 协议 <b>MIT</b></span>
+      <span class="chip">🏷️ 最新版本 <b>2026.06.14</b></span>
+      <span class="chip">🌐 <b>Windows 10 / 11</b></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="num blue">48,256</div><div class="lbl">⭐ GitHub Stars</div></div>
+    <div class="stat"><div class="num cyan">1,945</div><div class="lbl">🔱 Forks</div></div>
+    <div class="stat"><div class="num green">27</div><div class="lbl">🤝 贡献者</div></div>
+    <div class="stat"><div class="num purple">417+</div><div class="lbl">🔧 主作者提交</div></div>
+  </div>
+
+  <!-- 一、项目概述 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(59,130,246,.15)">📋</div>
+      <h2>一、项目概述</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p><strong>Win11Debloat</strong> 是由开发者 <strong>Raphire（Jeffrey）</strong> 维护的开源 PowerShell 脚本项目，定位是「<strong>一个简单、轻量、易于使用的 Windows 减负与自定义脚本</strong>」。它的核心理念是：无需安装、一行命令即可运行，让用户无需手动在系统设置中逐项翻找、逐个卸载应用，就能快速把一台「开箱即用、塞满广告和遥测」的 Windows 变得清爽干净。</p>
+      <p>该项目是已停止维护的 <strong>Sycnex/Windows10Debloater</strong> 的精神继承者。Raphire 在原项目基础上 fork 并持续开发，将其扩展为同时覆盖 Windows 10 与 Windows 11，并更名为 Win11Debloat。截至分析日，项目已积累 <strong>超过 4.8 万 Star</strong>，是 GitHub 上同类工具中关注度最高的项目之一，且保持高频更新（最新 Release 为 2026.06.14）。</p>
+      <div class="quote">「脚本在保证不会无意中破坏任何系统功能方面下了很大功夫，但仍请自担风险使用。」—— 项目 README</div>
+      <p>项目除面向普通家庭用户外，还专门为<strong>系统管理员与高级用户</strong>设计了进阶能力：强大的命令行参数、Windows 审计模式（Audit Mode）支持，以及向其他 Windows 用户应用更改的能力，使其在企业 IT 部署场景中同样实用。</p>
+    </div>
+  </section>
+
+  <!-- 二、技术架构 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(6,182,212,.15)">🏗️</div>
+      <h2>二、技术架构</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p>Win11Debloat 是一个<strong>纯 PowerShell 脚本项目</strong>，仓库体积很小（约 2.2 MB），没有编译产物、没有重型运行时依赖，本质上由一组 <code>.ps1</code> 脚本与若干资源文件组成。这种极简架构正是其「轻量、免安装」定位的技术基础。</p>
+      <p><strong>核心组成与技术实现：</strong></p>
+      <ul>
+        <li><strong>主脚本 <code>Win11Debloat.ps1</code></strong>：入口脚本，负责整体编排、用户交互（交互式菜单）与流程控制。</li>
+        <li><strong>模块化拆分</strong>：将不同功能领域（应用卸载、注册表调整、任务栏/开始菜单设置等）拆分为独立的辅助脚本（如 <code>Get-RegFileOperations.ps1</code>），便于维护与单元测试。</li>
+        <li><strong>注册表驱动（Registry Tweaks）</strong>：绝大多数系统行为调整通过修改 Windows 注册表键值实现，这也是 topics 中标注 <code>registry-tweaks</code> 的由来——轻量、可逆、可脚本化。</li>
+        <li><strong>三种运行方式</strong>：
+          <ul>
+            <li><strong>快速方式</strong>（Quick method）：通过 PowerShell 一行命令从官方短链拉取并执行：</li>
+          </ul>
+        </li>
+      </ul>
+      <div class="code-block">& ([scriptblock]::Create((irm "https://debloat.raphi.re/")))</div>
+      <ul>
+        <li><strong>传统方式</strong>（Traditional）：下载 ZIP，双击 <code>Run.bat</code>，接受 UAC 提权。</li>
+        <li><strong>高级方式</strong>（Advanced）：手动 <code>Set-ExecutionPolicy</code> 后在 PowerShell 中以管理员身份运行，支持命令行参数。</li>
+      </ul>
+      <p><strong>运行模式与可逆性设计</strong>：脚本提供<strong>交互式菜单</strong>（默认）和<strong>命令行参数（CLI）</strong>两种使用方式，所有改动都被设计为<strong>可回退</strong>——几乎所有被移除的应用都能通过 Microsoft Store 重新安装，项目 Wiki 提供完整的「还原更改」指南。最新的 <code>2026.06.14</code> 版本还专门重构了脚本以解决 Windows Defender / Bitdefender 的误报问题。</p>
+      <p><strong>进阶/企业特性</strong>：支持 <strong>Windows 审计模式（Audit Mode）</strong>、<strong>Sysprep 模式</strong>（将更改应用到 Windows 默认用户配置文件，使所有新用户自动获得优化后的设置），以及向<strong>其他指定用户</strong>应用更改——这是面向 IT 管理员与 OEM 预装场景的关键能力。</p>
+      <div class="quote">架构小结：以「PowerShell 脚本 + 注册表调整」为骨，以「交互菜单 + CLI 参数 + 可逆设计 + Sysprep/Audit 模式」为肉，用最小的依赖实现最大化的系统自定义覆盖面。</div>
+    </div>
+  </section>
+
+  <!-- 三、核心功能与创新点 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(168,85,247,.15)">💡</div>
+      <h2>三、核心功能与创新点</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <p>Win11Debloat 的功能覆盖面非常广，几乎涵盖了 Windows 用户日常抱怨的所有「痛点」。下表按领域归类：</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <h4>🗑️ 应用卸载</h4>
+        <ul>
+          <li>批量移除各类预装 UWP/系统应用</li>
+          <li>移除后可经 Microsoft Store 重装</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🔒 隐私 & 建议内容</h4>
+        <ul>
+          <li>关闭遥测、诊断数据、活动历史、应用启动追踪、定向广告</li>
+          <li>关闭提示/技巧/建议、定位服务、查找我的设备</li>
+          <li>关闭锁屏 Spotlight、Edge/MSN 广告与新闻流、M365 广告</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🤖 AI 功能（紧跟前沿）</h4>
+        <ul>
+          <li>禁用并移除 Microsoft Copilot</li>
+          <li>关闭 Windows Recall、Click to Do</li>
+          <li>阻止 AI 服务（WSAIFabricSvc）自启动</li>
+          <li>关闭 Edge / Paint / Notepad 中的 AI 功能</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>⚙️ 系统设置</h4>
+        <ul>
+          <li>恢复旧版 Win10 风格右键菜单</li>
+          <li>关闭鼠标加速、粘滞快捷键、Storage Sense</li>
+          <li>关闭快速启动、BitLocker 自动加密、待机时联网</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🚀 Windows Update</h4>
+        <ul>
+          <li>阻止更新一发布就自动获取</li>
+          <li>阻止登录时更新后自动重启</li>
+          <li>关闭 Delivery Optimization（P2P 分发）</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🪟 开始菜单 & 搜索</h4>
+        <ul>
+          <li>清空/替换开始菜单磁贴、隐藏推荐区</li>
+          <li>关闭搜索中的 Bing 网页结果与 Copilot 集成</li>
+          <li>关闭搜索高亮（动态/品牌内容）</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>📊 任务栏</h4>
+        <ul>
+          <li>图标左对齐、隐藏搜索/任务视图/小组件/聊天</li>
+          <li>右键菜单启用「结束任务」选项</li>
+          <li>启用「最后活动点击」行为、多显示器图标显示</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>📁 文件资源管理器</h4>
+        <ul>
+          <li>显示文件扩展名、隐藏文件</li>
+          <li>自定义导航窗格、恢复常用文件夹到「此电脑」</li>
+          <li>隐藏 3D 对象/OneDrive 等冗余项</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🔀 多任务 & 可选功能</h4>
+        <ul>
+          <li>关闭窗口贴靠、Snap Assist、Snap Layout 建议</li>
+          <li>一键启用 Windows Sandbox、WSL</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <h4>🎮 其他 & 浏览器</h4>
+        <ul>
+          <li>关闭 Xbox Game Bar 及游戏录屏（消除弹窗）</li>
+          <li>清理 Brave 浏览器中的 AI/加密货币/新闻臃肿项</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <p><strong>核心创新与差异化亮点：</strong></p>
+      <ul>
+        <li><strong>紧跟 Windows 演进，覆盖最新「AI 臃肿」</strong>：第一时间提供关闭 Copilot、Recall、Click to Do 及各原生应用 AI 功能的开关，这是很多老牌减负工具尚未覆盖的前沿需求，也是其近期更新的重点（扩展 AI 遥测拦截）。</li>
+        <li><strong>「温和且可逆」的安全哲学</strong>：相较于某些激进减负工具（可能破坏系统更新或功能），Win11Debloat 明确强调「不会无意破坏系统功能」，并提供完整还原路径，降低了小白用户的试错成本。</li>
+        <li><strong>企业级部署能力</strong>：Sysprep 模式 + Audit 模式 + 多用户应用，使其不止是「个人玩具」，而能融入企业镜像制作与 MSP 批量装机流程。</li>
+        <li><strong>双模交互（菜单 + CLI）</strong>：交互式菜单照顾普通用户，命令行参数照顾自动化/脚本化场景，一套脚本兼顾两类人群。</li>
+        <li><strong>简短官方短链分发</strong>：<code>debloat.raphi.re</code> 一行命令，极大降低了使用门槛。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(236,72,153,.15)">🎯</div>
+      <h2>四、应用场景</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <ul>
+        <li><strong>个人电脑开箱清理</strong>：新买的笔记本/品牌机预装大量第三方软件、广告与遥测，普通用户一键运行即可获得清爽纯净的桌面，这是最典型、受众最广的场景。</li>
+        <li><strong>隐私敏感用户</strong>：重视数据隐私、不希望微软收集诊断数据与使用习惯的用户，可批量关闭遥测、定位追踪、广告 ID。</li>
+        <li><strong>游戏玩家主机优化</strong>：关闭 Xbox Game Bar 弹窗、释放后台资源、关闭动画与透明效果以追求更稳定的帧率与更低输入延迟。</li>
+        <li><strong>企业 IT / MSP 批量装机部署</strong>：利用 Sysprep 与 Audit 模式，将优化后的设置写入默认用户配置，使批量下发的设备开箱即统一、干净，显著降低运维与排障成本（Reddit r/msp 社区即有 MSP 在新机预配流程中使用）。</li>
+        <li><strong>VDI / 虚拟桌面镜像瘦身</strong>：在虚拟桌面基础架构中，去除冗余应用与服务能减小镜像体积、降低资源占用、提升并发密度。</li>
+        <li><strong>老旧硬件提速</strong>：在低配机器上关闭后台服务、动画、透明效果与 P2P 更新，缓解卡顿（需注意社区共识：减负对性能的提升有限，主要价值在「干净」与「隐私」）。</li>
+        <li><strong>内容创作者 / 开发者工作环境</strong>：恢复经典右键菜单、显示文件扩展名、启用 WSL 与 Sandbox，快速搭建高效开发环境。</li>
+      </ul>
+      <div class="quote">需要客观指出：多家媒体（如 PCMag、XDA）实测表明，减负工具对真实性能提升往往有限，其核心价值更多在于「移除干扰、提升隐私、统一体验」而非「显著提速」。理性使用，避免过度激进。</div>
+    </div>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(34,197,94,.15)">⚔️</div>
+      <h2>五、竞品对比</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p>Windows 减负生态中有多个知名工具，下表将 Win11Debloat 与主流竞品进行横向对比：</p>
+      <div class="cmp-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>对比维度</th>
+            <th class="hl">Win11Debloat</th>
+            <th>ChrisTitusTech/winutil</th>
+            <th>Sycnex/Win10Debloater</th>
+            <th>O&O ShutUp10++</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>形态</td>
+            <td class="hl">纯 PowerShell 脚本</td>
+            <td>PowerShell + GUI</td>
+            <td>PowerShell 脚本</td>
+            <td>图形化独立程序</td>
+          </tr>
+          <tr>
+            <td>是否开源</td>
+            <td class="hl"><span class="yes">是 (MIT)</span></td>
+            <td><span class="yes">是</span></td>
+            <td><span class="yes">是</span></td>
+            <td><span class="no">否（免费闭源）</span></td>
+          </tr>
+          <tr>
+            <td>主要定位</td>
+            <td class="hl">减负 + 隐私 + 自定义</td>
+            <td>全能瑞士军刀（减负+装软件+调优）</td>
+            <td>深度减负</td>
+            <td>仅隐私/遥测</td>
+          </tr>
+          <tr>
+            <td>Win11 支持</td>
+            <td class="hl"><span class="yes">优秀（原生）</span></td>
+            <td><span class="yes">优秀</span></td>
+            <td><span class="mid">偏 Win10</span></td>
+            <td><span class="yes">支持</span></td>
+          </tr>
+          <tr>
+            <td>维护活跃度</td>
+            <td class="hl"><span class="yes">非常活跃（2026.06）</span></td>
+            <td><span class="yes">活跃</span></td>
+            <td><span class="no">基本停滞</span></td>
+            <td><span class="yes">持续更新</span></td>
+          </tr>
+          <tr>
+            <td>AI 臃肿拦截</td>
+            <td class="hl"><span class="yes">Copilot/Recall 等</span></td>
+            <td><span class="yes">部分</span></td>
+            <td><span class="no">无</span></td>
+            <td><span class="mid">部分遥测</span></td>
+          </tr>
+          <tr>
+            <td>企业部署（Sysprep）</td>
+            <td class="hl"><span class="yes">支持</span></td>
+            <td><span class="mid">有限</span></td>
+            <td><span class="no">弱</span></td>
+            <td><span class="no">弱</span></td>
+          </tr>
+          <tr>
+            <td>改动可逆性</td>
+            <td class="hl"><span class="yes">完整可回退</span></td>
+            <td><span class="yes">较好</span></td>
+            <td><span class="mid">一般</span></td>
+            <td><span class="yes">可还原</span></td>
+          </tr>
+          <tr>
+            <td>易用性</td>
+            <td class="hl">一行命令 + 菜单</td>
+            <td>GUI 最友好</td>
+            <td>偏进阶</td>
+            <td>GUI 勾选</td>
+          </tr>
+          <tr>
+            <td>社区热度（Star）</td>
+            <td class="hl">约 4.8 万</td>
+            <td>约 3 万+</td>
+            <td>约 1.8 万</td>
+            <td>—（非 GitHub 为主）</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="margin-top:18px"><strong>对比结论：</strong><code>ChrisTitusTech/winutil</code> 是功能最全面的「瑞士军刀」（含 GUI、批量装软件、内嵌 ShutUp10），适合想要一站式管理的新手；<code>O&O ShutUp10++</code> 是专注隐私遥测的精准利器，常与其他工具搭配；<code>Sycnex</code> 是先驱但已逐渐让位。而 <strong>Win11Debloat</strong> 凭借<strong>纯开源、轻量免安装、紧跟最新 Windows/AI 演进、可逆安全、支持企业部署</strong>的综合优势，成为「开源纯粹主义者和 IT 专业人员」的首选，也是当前社区口碑最好的脚本式减负方案。</p>
+    </div>
+  </section>
+
+  <!-- 六、综合评分 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(234,179,8,.15)">🏆</div>
+      <h2>六、综合评分</h2>
+      <div class="line"></div>
+    </div>
+    <div class="score-board">
+      <div class="score-total">
+        <div>
+          <div class="big-score">9.0<small> / 10</small></div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">综合评分（满分 10）</div>
+        </div>
+        <div class="verdict">
+          <span class="tag">强烈推荐 · Tier S</span>
+          <p style="margin:0;font-size:14.5px">GitHub 上最成熟、最活跃的开源 Windows 减负脚本之一。以「轻量、可逆、紧跟 AI 时代」为核心标签，兼顾家庭用户与企业 IT，文档与社区生态完善，适合绝大多数想给 Windows「瘦身」的用户。</p>
+        </div>
+      </div>
+      <div class="score-rows">
+        <div class="score-row"><span class="name">项目活跃度</span><div class="bar"><span style="width:96%"></span></div><span class="val">9.6</span></div>
+        <div class="score-row"><span class="name">社区影响力</span><div class="bar"><span style="width:95%"></span></div><span class="val">9.5</span></div>
+        <div class="score-row"><span class="name">易用性</span><div class="bar"><span style="width:92%"></span></div><span class="val">9.2</span></div>
+        <div class="score-row"><span class="name">文档完整性</span><div class="bar"><span style="width:90%"></span></div><span class="val">9.0</span></div>
+        <div class="score-row"><span class="name">安全 / 可逆性</span><div class="bar"><span style="width:90%"></span></div><span class="val">9.0</span></div>
+        <div class="score-row"><span class="name">实用价值</span><div class="bar"><span style="width:88%"></span></div><span class="val">8.8</span></div>
+        <div class="score-row"><span class="name">技术质量</span><div class="bar"><span style="width:86%"></span></div><span class="val">8.6</span></div>
+        <div class="score-row"><span class="name">功能广度</span><div class="bar"><span style="width:85%"></span></div><span class="val">8.5</span></div>
+      </div>
+    </div>
+
+    <!-- 优缺点 -->
+    <div class="pros-cons" style="margin-top:18px">
+      <div class="pc pro">
+        <h4>✅ 优势</h4>
+        <ul>
+          <li>极简轻量，免安装，一行命令上手</li>
+          <li>覆盖面广，含最新 AI 臃肿清理</li>
+          <li>改动可逆，Wiki 提供完整还原指南</li>
+          <li>支持企业级 Sysprep / Audit / 多用户</li>
+          <li>MIT 开源，社区活跃，更新高频</li>
+          <li>菜单 + CLI 双模式，兼顾两类用户</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠️ 不足 / 注意</h4>
+        <ul>
+          <li>减负对真实性能提升有限（媒体实测）</li>
+          <li>曾出现 Defender / Bitdefender 误报</li>
+          <li>无 GUI，对纯小白不如 winutil 直观</li>
+          <li>激进的遥测/功能关闭可能影响部分云集成体验</li>
+          <li>本质上「用自担风险」，需做好备份与还原点</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 项目时间线 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(6,182,212,.15)">📅</div>
+      <h2>项目演进时间线</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <div class="tl">
+        <div class="tl-item"><div class="yr">2020.10</div><div class="txt">仓库创建，承接 Sycnex/Windows10Debloater 的理念，由 Raphire 开始独立维护与扩展。</div></div>
+        <div class="tl-item"><div class="yr">演进中</div><div class="txt">逐步扩展至同时支持 Windows 10 与 Windows 11，更名 Win11Debloat，功能模块持续细化。</div></div>
+        <div class="tl-item"><div class="yr">社区扩散</div><div class="txt">被 PrivacyGuides、Thurrott、XDA、Reddit r/msp、Spiceworks 等广泛推荐，Star 数突破数万。</div></div>
+        <div class="tl-item"><div class="yr">2026.06</div><div class="txt">最新 Release 2026.06.14 发布：修复 Defender/Bitdefender 误报、增强 AI 遥测拦截，仓库 Star 达约 4.8 万。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 参考资料 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(148,163,184,.15)">🔗</div>
+      <h2>参考资料</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <ul class="ref-list">
+        <li><a href="https://github.com/Raphire/Win11Debloat">GitHub 仓库主页</a></li>
+        <li><a href="https://github.com/Raphire/Win11Debloat/wiki/How-To-Use">Wiki：如何使用</a></li>
+        <li><a href="https://github.com/Raphire/Win11Debloat/wiki/Reverting-Changes">Wiki：还原更改</a></li>
+        <li><a href="https://github.com/Raphire/Win11Debloat/releases">Releases 发布页</a></li>
+        <li><a href="https://www.xda-developers.com/powershell-program-to-debloat-windows-11/">XDA：用 PowerShell 一键减负 Win11</a></li>
+        <li><a href="https://www.thurrott.com/windows/windows-11/307557/hands-on-with-win11debloat">Thurrott：Win11Debloat 上手评测</a></li>
+        <li><a href="https://discuss.privacyguides.net/t/recommending-win11debloat-as-a-tool-for-users-who-are-stuck-with-windows-11-10/34727">PrivacyGuides 社区推荐</a></li>
+        <li><a href="https://www.reddit.com/r/msp/comments/1omauie/raphirewin11debloat_script/">Reddit r/msp：MSP 装机讨论</a></li>
+        <li><a href="https://windowsforum.com/threads/win11debloat-06-11-2026-release-fix-spotlight-expand-ai-telemetry-blocking.425880/">Windows Forum：新版本报道</a></li>
+        <li><a href="https://www.xda-developers.com/one-tool-to-debloat-windows-chris-titus-windows-utility/">XDA：CTT WinUtil 评测（竞品）</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>📊 本报告由 GitHub 项目深度分析师自动生成 · 数据截至 2026-06-16</p>
+    <p style="margin-top:6px">
+      <a href="https://github.com/Raphire/Win11Debloat">仓库</a> ·
+      <a href="https://debloat.raphi.re/">一键脚本</a> ·
+      <a href="https://github.com/Raphire/Win11Debloat/blob/master/LICENSE">MIT License</a>
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
