@@ -1,37 +1,34 @@
 {
-  "date": "2026-06-17",
-  "fetched_at": "2026-06-17",
-  "pending": [],
+  "date": "2026-06-18",
+  "fetched_at": "2026-06-18",
+  "pending": [
+    "DeusData/codebase-memory-mcp",
+    "n0-computer/iroh",
+    "google-research/timesfm",
+    "RocketChat/Rocket.Chat",
+    "continuedev/continue",
+    "penpot/penpot",
+    "Universal-Debloater-Alliance/universal-android-debloater-next-generation",
+    "yairm210/Unciv"
+  ],
   "skipped_already_analyzed": [
-    "iptv-org/iptv",
-    "teslamate-org/teslamate",
     "Panniantong/Agent-Reach",
     "meshery/meshery",
-    "chatwoot/chatwoot",
+    "obra/superpowers",
     "krahets/hello-algo",
+    "mattpocock/skills",
     "freeCodeCamp/freeCodeCamp",
-    "trycua/cua",
-    "jwasham/coding-interview-university",
-    "rohitg00/ai-engineering-from-scratch",
-    "music-assistant/server",
-    "Free-TV/IPTV",
-    "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
-    "Raphire/Win11Debloat",
-    "mikeroyal/Self-Hosting-Guide",
-    "NVIDIA/SkillSpector",
-    "shiyu-coder/Kronos"
+    "bytedance/UI-TARS-desktop"
   ],
-  "done": [
-    "itsfatduck/optimizerDuck"
-  ],
+  "done": [],
   "projects": [
     {
-      "name": "iptv-org/iptv",
-      "status": "skipped"
+      "name": "DeusData/codebase-memory-mcp",
+      "status": "pending"
     },
     {
-      "name": "teslamate-org/teslamate",
-      "status": "skipped"
+      "name": "n0-computer/iroh",
+      "status": "pending"
     },
     {
       "name": "Panniantong/Agent-Reach",
@@ -42,66 +39,54 @@
       "status": "skipped"
     },
     {
-      "name": "chatwoot/chatwoot",
+      "name": "obra/superpowers",
       "status": "skipped"
+    },
+    {
+      "name": "google-research/timesfm",
+      "status": "pending"
+    },
+    {
+      "name": "RocketChat/Rocket.Chat",
+      "status": "pending"
+    },
+    {
+      "name": "continuedev/continue",
+      "status": "pending"
+    },
+    {
+      "name": "penpot/penpot",
+      "status": "pending"
     },
     {
       "name": "krahets/hello-algo",
       "status": "skipped"
     },
     {
+      "name": "Universal-Debloater-Alliance/universal-android-debloater-next-generation",
+      "status": "pending"
+    },
+    {
+      "name": "mattpocock/skills",
+      "status": "skipped"
+    },
+    {
+      "name": "yairm210/Unciv",
+      "status": "pending"
+    },
+    {
       "name": "freeCodeCamp/freeCodeCamp",
       "status": "skipped"
     },
     {
-      "name": "trycua/cua",
-      "status": "skipped"
-    },
-    {
-      "name": "jwasham/coding-interview-university",
-      "status": "skipped"
-    },
-    {
-      "name": "rohitg00/ai-engineering-from-scratch",
-      "status": "skipped"
-    },
-    {
-      "name": "music-assistant/server",
-      "status": "skipped"
-    },
-    {
-      "name": "Free-TV/IPTV",
-      "status": "skipped"
-    },
-    {
-      "name": "Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots",
-      "status": "skipped"
-    },
-    {
-      "name": "Raphire/Win11Debloat",
-      "status": "skipped"
-    },
-    {
-      "name": "mikeroyal/Self-Hosting-Guide",
-      "status": "skipped"
-    },
-    {
-      "name": "itsfatduck/optimizerDuck",
-      "status": "done"
-    },
-    {
-      "name": "NVIDIA/SkillSpector",
-      "status": "skipped"
-    },
-    {
-      "name": "shiyu-coder/Kronos",
+      "name": "bytedance/UI-TARS-desktop",
       "status": "skipped"
     }
   ],
   "counts": {
-    "total_today": 18,
-    "pending": 0,
-    "skipped": 17,
-    "done": 1
+    "total_today": 15,
+    "pending": 8,
+    "skipped": 7,
+    "done": 0
   }
 }
