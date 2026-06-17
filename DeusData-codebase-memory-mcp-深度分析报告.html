@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeusData/codebase-memory-mcp 深度分析报告</title>
+<style>
+  :root{
+    --bg:#070b16;
+    --bg2:#0b1224;
+    --card:#111a31;
+    --card2:#16223f;
+    --border:#233356;
+    --txt:#e8eefc;
+    --muted:#94a3b8;
+    --accent:#3b82f6;
+    --accent2:#60a5fa;
+    --node:#818cf8;
+    --green:#22c55e;
+    --yellow:#eab308;
+    --red:#ef4444;
+    --purple:#a855f7;
+    --pink:#ec4899;
+    --cyan:#06b6d4;
+    --teal:#14b8a6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI','PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+    background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--txt);
+    line-height:1.75;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;
+    background:linear-gradient(135deg,rgba(59,130,246,.16),rgba(168,85,247,.10));
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 40px;
+    overflow:hidden;
+    margin-bottom:32px;
+  }
+  .hero::before{
+    content:"";position:absolute;top:-60px;right:-60px;width:300px;height:300px;
+    background:radial-gradient(circle,rgba(59,130,246,.28),transparent 70%);
+    border-radius:50%;
+  }
+  .hero::after{
+    content:"";position:absolute;bottom:-80px;left:-40px;width:240px;height:240px;
+    background:radial-gradient(circle,rgba(168,85,247,.20),transparent 70%);
+    border-radius:50%;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(59,130,246,.16);border:1px solid rgba(59,130,246,.42);
+    color:#93c5fd;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;
+    margin-bottom:20px;position:relative;z-index:1;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{
+    font-size:40px;line-height:1.2;font-weight:800;margin-bottom:14px;position:relative;z-index:1;
+    background:linear-gradient(90deg,#fff,#93c5fd 60%,#c4b5fd);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero-emoji{font-size:42px;vertical-align:middle;margin-right:8px}
+  .hero .sub{font-size:18px;color:var(--muted);max-width:780px;margin-bottom:28px;position:relative;z-index:1}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;position:relative;z-index:1}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--border);
+    padding:7px 13px;border-radius:10px;font-size:13px;color:var(--muted);
+  }
+  .chip b{color:var(--txt);font-weight:600}
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px}
+  .stat{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 18px;
+    text-align:center;transition:transform .2s,border-color .2s;
+  }
+  .stat:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .stat .num{font-size:28px;font-weight:800;color:#fff;margin-bottom:4px}
+  .stat .lbl{font-size:13px;color:var(--muted)}
+  .stat .num.blue{color:#60a5fa}.stat .num.cyan{color:#22d3ee}.stat .num.green{color:#4ade80}.stat .num.purple{color:#c084fc}.stat .num.amber{color:#fbbf24}
+  /* SECTION */
+  section{margin-bottom:36px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .sec-head .ico{
+    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .sec-head h2{font-size:24px;font-weight:700}
+  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px}
+  .card + .card{margin-top:18px}
+  p{color:#cbd5e1;margin-bottom:14px}
+  p strong{color:#fff}
+  a{color:#60a5fa;text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:rgba(59,130,246,.14);color:#93c5fd;padding:2px 7px;border-radius:6px;font-size:13.5px;font-family:'JetBrains Mono','Consolas',monospace}
+  .blockcode{background:#0a1120;border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-family:'JetBrains Mono','Consolas',monospace;font-size:13px;color:#a5b4fc;overflow-x:auto;margin:12px 0 16px}
+  ul{list-style:none;padding-left:0}
+  ul li{position:relative;padding-left:22px;margin-bottom:10px;color:#cbd5e1}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--accent2)}
+  /* GRID FEATURES */
+  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .feat h4{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#fff}
+  .feat ul{font-size:14px}
+  .feat ul li{margin-bottom:6px;font-size:13.5px;color:#b8c5da}
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  th{color:#93c5fd;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;background:rgba(59,130,246,.06)}
+  td{color:#cbd5e1}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .yes{color:#4ade80;font-weight:700}
+  .no{color:#f87171;font-weight:700}
+  .mid{color:#fbbf24;font-weight:700}
+  /* SCORE */
+  .score-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center}
+  .score-circle{
+    width:200px;height:200px;border-radius:50%;margin:0 auto;
+    background:conic-gradient(var(--accent) 0% 89%, #1e293b 89% 100%);
+    display:grid;place-items:center;position:relative;
+  }
+  .score-circle::before{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--card)}
+  .score-circle .val{position:relative;z-index:1;text-align:center}
+  .score-circle .val b{display:block;font-size:48px;font-weight:800;color:#fff;line-height:1}
+  .score-circle .val span{font-size:13px;color:var(--muted)}
+  .score-bars .bar-item{margin-bottom:14px}
+  .score-bars .bar-item .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .score-bars .bar-item .top b{color:#fff}
+  .score-bars .bar-item .top span{color:var(--muted)}
+  .bar-bg{height:9px;background:#1e293b;border-radius:99px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--purple))}
+  .callout{
+    background:linear-gradient(135deg,rgba(59,130,246,.10),rgba(168,85,247,.08));
+    border-left:3px solid var(--accent);border-radius:12px;padding:18px 22px;margin:14px 0;
+  }
+  .callout strong{color:#93c5fd}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .tag{background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#d8b4fe;padding:5px 12px;border-radius:99px;font-size:12.5px}
+  .tag.cyan{background:rgba(6,182,212,.14);border-color:rgba(6,182,212,.35);color:#67e8f9}
+  .tag.green{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.35);color:#86efac}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding-top:24px;border-top:1px solid var(--border)}
+  @media(max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .feat-grid{grid-template-columns:1fr}
+    .score-wrap{grid-template-columns:1fr}
+    h1{font-size:30px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="badge"><span class="dot"></span> GitHub Trending 深度分析 · AI 编程基础设施</div>
+    <h1><span class="hero-emoji">🧠</span>codebase-memory-mcp</h1>
+    <p class="sub">面向 AI 编程 Agent 的高性能代码智能引擎。将整个代码库索引为持久化<strong>知识图谱</strong>，用纯 C 写成、零依赖的单文件二进制，158 种语言、亚毫秒级查询、节省约 99% 的 Token 消耗。</p>
+    <div class="meta-row">
+      <span class="chip">📦 <b>DeusData/codebase-memory-mcp</b></span>
+      <span class="chip">⭐ <b>5,122</b> Stars</span>
+      <span class="chip">🍴 <b>478</b> Forks</span>
+      <span class="chip">🟧 主语言 <b>C</b></span>
+      <span class="chip">📜 <b>MIT</b></span>
+      <span class="chip">🏷️ <b>v0.8.1</b></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="num blue">158</div><div class="lbl">支持语言数（tree-sitter）</div></div>
+    <div class="stat"><div class="num cyan">14</div><div class="lbl">MCP 工具数量</div></div>
+    <div class="stat"><div class="num green">99.2%</div><div class="lbl">Token 消耗降幅</div></div>
+    <div class="stat"><div class="num purple">&lt;1ms</div><div class="lbl">结构化查询延迟</div></div>
+    <div class="stat"><div class="num amber">5,604</div><div class="lbl">通过测试用例</div></div>
+    <div class="stat"><div class="num blue">11</div><div class="lbl">兼容编程 Agent</div></div>
+    <div class="stat"><div class="num cyan">3 min</div><div class="lbl">索引 Linux 内核（28M 行）</div></div>
+    <div class="stat"><div class="num green">83%</div><div class="lbl">基准回答质量得分</div></div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(59,130,246,.16)">📋</div>
+      <h2>项目概述</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <p><strong>codebase-memory-mcp</strong> 是一个基于 MCP（Model Context Protocol，模型上下文协议）的<strong>代码智能后端服务器</strong>。它的核心理念是：与其让大模型在每次提问时一遍遍地读取文件（grep + read 循环），不如事先把整个代码库解析成一张<strong>持久化的知识图谱</strong>——节点是函数、类、路由、模块，边是调用、导入、继承、数据流等关系。模型只需发起一次图谱查询，就能拿到结构化的答案。</p>
+      <p>项目由 <strong>DeusData</strong> 团队开发，2026 年 2 月创建，仅约 4 个月就累积超过 5100 Star，最新版本 v0.8.1（2026-06-12）。它以<strong>纯 C 语言</strong>实现，编译为<strong>单个静态链接二进制</strong>，macOS / Linux / Windows 全平台覆盖，无需 Docker、无需运行时、无需 API Key——下载、运行 <code>install</code>、重启 Agent 即可使用。</p>
+      <div class="callout">
+        <strong>一句话定位：</strong> 给 AI 编程助手装上一颗"代码记忆大脑"。它不是 LLM，而是把代码库变成可被亚秒级结构化查询的知识图谱，让任何 MCP 兼容 Agent（Claude Code、Codex、Gemini CLI 等 11 种）共享同一份代码理解。
+      </div>
+      <div class="tag-row">
+        <span class="tag">MCP Server</span>
+        <span class="tag cyan">知识图谱</span>
+        <span class="tag green">tree-sitter</span>
+        <span class="tag">代码智能</span>
+        <span class="tag cyan">语义检索</span>
+        <span class="tag green">AI Coding</span>
+        <span class="tag">Pure C</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(168,85,247,.16)">🏗️</div>
+      <h2>技术架构</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="card">
+      <h4 style="color:#fff;font-size:17px;margin-bottom:14px">🔧 分层架构</h4>
+      <p>项目采用"后端不内置 LLM"的清晰分层：codebase-memory-mcp 只负责<strong>构建与查询知识图谱</strong>，自然语言到图谱查询的翻译工作交给用户正在对话的那个 Agent（Claude Code 等）来完成。这样避免了额外 API Key、额外成本和额外模型配置。</p>
+      <div class="blockcode">用户："谁调用了 ProcessOrder？"
+   ↓
+Agent 调用 MCP 工具: trace_path(function_name="ProcessOrder", direction="inbound")
+   ↓
+codebase-memory-mcp: 执行图谱查询，返回结构化调用链
+   ↓
+Agent: 用自然语言向用户解释调用链</div>
+    </div>
+
+    <div class="card">
+      <div class="feat-grid">
+        <div class="feat">
+          <h4>🌳 解析层 · tree-sitter AST</h4>
+          <ul>
+            <li>内置 158 种语言的 tree-sitter 语法（全部编译进二进制）</li>
+            <li>通过 AST 分析提取函数、类、调用链等结构</li>
+            <li>无需安装任何语言插件，永不"破损"</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🔬 Hybrid LSP 语义类型解析</h4>
+          <ul>
+            <li>为 Python/TS/JS/PHP/C#/Go/C++/Java/Kotlin/Rust 等 9 类语言提供轻量 C 实现</li>
+            <li>兼容 tsserver、pyright、gopls、Roslyn、rust-analyzer 的类型解析算法</li>
+            <li>支持参数绑定、返回类型推断、泛型替换、JSX 分发等</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>💾 存储层 · 内存优先 + SQLite</h4>
+          <ul>
+            <li>RAM-first 管线：LZ4 压缩读取、内存 SQLite、结尾单次落盘</li>
+            <li>索引完成后内存即归还操作系统</li>
+            <li>持久化至 <code>~/.cache/codebase-memory-mcp/</code></li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🔎 检索层 · 多信号融合</h4>
+          <ul>
+            <li>语义向量检索：内置 Nomic <code>nomic-embed-code</code>（40K tokens, 768 维 int8）</li>
+            <li>BM25 全文检索：SQLite FTS5 + camelCase/snake_case 感知分词器</li>
+            <li>11 路信号综合打分（TF-IDF、AST 轮廓、数据流、MinHash、图谱扩散等）</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🔗 图谱层 · 丰富的边类型</h4>
+          <ul>
+            <li>CALLS / IMPORTS / DEFINES / IMPLEMENTS / INHERITS</li>
+            <li>HTTP_CALLS / ASYNC_CALLS（跨服务）</li>
+            <li>DATA_FLOWS、SIMILAR_TO（近克隆）、SEMANTICALLY_RELATED</li>
+          </ul>
+        </div>
+        <div class="feat">
+          <h4>🚀 分发层 · 单文件零依赖</h4>
+          <ul>
+            <li>静态链接二进制，无共享库依赖</li>
+            <li>macOS 自动剥离隔离属性并 ad-hoc 签名</li>
+            <li>支持 npm / PyPI / Homebrew / Scoop / Winget / AUR / go install</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4 style="color:#fff;font-size:17px;margin-bottom:14px">⚡ 性能基准（Apple M3 Pro）</h4>
+      <table>
+        <thead><tr><th>操作</th><th>耗时</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td>Linux 内核全量索引</td><td class="yes">3 分钟</td><td>28M 行、75K 文件 → 481 万节点、772 万边</td></tr>
+          <tr><td>Linux 内核快速索引</td><td class="yes">1 分 12 秒</td><td>188 万节点</td></tr>
+          <tr><td>Django 全量索引</td><td class="yes">约 6 秒</td><td>4.9 万节点、19.6 万边</td></tr>
+          <tr><td>Cypher 图查询</td><td class="yes">&lt;1ms</td><td>关系遍历</td></tr>
+          <tr><td>名称正则搜索</td><td class="yes">&lt;10ms</td><td>SQL LIKE 预过滤</td></tr>
+          <tr><td>死代码检测</td><td class="mid">约 150ms</td><td>全图扫描 + 度过滤</td></tr>
+          <tr><td>调用路径追踪（深度 5）</td><td class="yes">&lt;10ms</td><td>BFS 遍历</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>Token 效率：</strong> 5 次结构化查询仅消耗约 <strong>3,400 tokens</strong>，而传统的逐文件 grep 探索需约 <strong>412,000 tokens</strong>——降幅高达 <strong>99.2%</strong>。一次图谱查询能替代几十次 grep/read 循环。
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(34,197,94,.16)">💡</div>
+      <h2>核心创新点</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <ul>
+        <li><strong>纯 C 极致性能</strong>：在 AI 工具普遍用 Python / TypeScript / Rust 实现的时代，选择纯 C + 零依赖静态二进制，换来亚毫秒级查询和分钟级索引超大仓库的能力。这是其相对其它代码图谱工具最锋利的差异化武器。</li>
+        <li><strong>不内置 LLM 的"瘦后端"哲学</strong>：其它代码图谱工具往往内嵌一个 LLM 做自然语言→图谱查询的翻译，带来额外 Key、成本与配置负担。codebase-memory-mcp 借力 MCP 协议，让用户正在对话的 Agent 直接充当翻译层，架构更干净。</li>
+        <li><strong>团队共享图谱产物</strong>：把知识图谱压缩成单个 <code>.codebase-memory/graph.db.zst</code> 文件提交到仓库，队友 clone 后首次运行即可解压导入、只做增量索引，跳过全量重建。配合 <code>merge=ours</code> 的 .gitattributes 规则，二进制产物无合并冲突。</li>
+        <li><strong>无 API Key 的语义检索</strong>：把 Nomic 代码嵌入模型（40K tokens、768 维 int8 量化）<strong>直接编译进二进制</strong>，无需 Ollama、Docker 或外部 API，完全本地化运行，代码绝不离开本机。</li>
+        <li><strong>跨服务与跨仓库智能</strong>：自动识别 HTTP / gRPC / GraphQL / tRPC 路由并匹配调用点（含置信度评分）；通过 <code>CROSS_*</code> 边把多个仓库连成一张图，并提供"多星系"3D 可视化布局。</li>
+        <li><strong>基础设施即代码（IaC）索引</strong>：把 Dockerfile、Kubernetes 清单、Kustomize overlay 也作为图谱节点索引，与业务代码交叉引用——这在同类工具中极为罕见。</li>
+        <li><strong>一键适配 11 种 Agent</strong>：<code>install</code> 命令自动探测 Claude Code、Codex CLI、Gemini CLI、Zed、Aider、VS Code、Kiro 等并配置 MCP 入口、指令文件与钩子（且钩子设计为<strong>结构性非阻塞</strong>，绝不破坏 read-before-edit 不变量）。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(6,182,212,.16)">🎯</div>
+      <h2>应用场景</h2>
+      <div class="line"></div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <h4>🐘 大型遗留代码库理解</h4>
+        <ul><li>新接手百万行级项目时，用图谱快速搞清调用链、入口点与热点模块，而非逐个 grep。</li></ul>
+      </div>
+      <div class="feat">
+        <h4>🔧 AI Agent 辅助重构</h4>
+        <ul><li>通过 <code>detect_changes</code> 把 git diff 映射到受影响符号并给出风险分级，做精准的变更影响分析。</li></ul>
+      </div>
+      <div class="feat">
+        <h4>🧹 死代码清理</h4>
+        <ul><li>一键找出零调用方的函数（自动排除入口点），辅助技术债治理。</li></ul>
+      </div>
+      <div class="feat">
+        <h4>🌐 微服务架构梳理</h4>
+        <ul><li>跨服务 HTTP/gRPC 调用匹配 + 跨仓库 <code>CROSS_*</code> 边，理清分布式系统全貌。</li></ul>
+      </div>
+      <div class="feat">
+        <h4>🔍 语义化代码搜索</h4>
+        <ul><li>"在哪里处理用户认证失败"这类意图查询，靠向量 + 11 路信号融合直接定位。</li></ul>
+      </div>
+      <div class="feat">
+        <h4>📚 架构决策留痕</h4>
+        <ul><li><code>manage_adr</code> 跨会话持久化架构决策记录（ADR），团队知识不流失。</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(245,158,11,.16)">⚖️</div>
+      <h2>竞品对比</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>维度</th><th>codebase-memory-mcp</th><th>Sourcegraph Cody</th><th>Augment Code</th><th>Continue.dev</th></tr></thead>
+        <tbody>
+          <tr><td>核心形态</td><td>本地 MCP 知识图谱服务器</td><td>云端代码智能 + AI</td><td>深度索引 IDE 助手</td><td>开源 IDE 扩展</td></tr>
+          <tr><td>实现语言</td><td class="yes">纯 C（零依赖）</td><td>Go / TS（云端）</td><td>闭源</td><td>TS / Python</td></tr>
+          <tr><td>代码是否离开本机</td><td class="yes">否（100% 本地）</td><td class="no">需上传/索引</td><td class="no">需上传</td><td class="mid">取决于配置</td></tr>
+          <tr><td>知识图谱 / 结构化查询</td><td class="yes">完整图谱 + Cypher</td><td class="mid">代码智能为主</td><td class="mid">检索为主</td><td class="no">较弱</td></tr>
+          <tr><td>语义检索 API Key</td><td class="yes">无需（内置嵌入）</td><td class="no">需 LLM Key</td><td class="no">需订阅</td><td class="no">需 LLM Key</td></tr>
+          <tr><td>跨服务 / 跨仓库链接</td><td class="yes">原生支持</td><td class="mid">部分</td><td class="mid">部分</td><td class="no">无</td></tr>
+          <tr><td>团队共享图谱产物</td><td class="yes">单文件 zstd 提交</td><td class="no">云端</td><td class="no">云端</td><td class="no">无</td></tr>
+          <tr><td>Agent 兼容性</td><td class="yes">11 种 MCP Agent</td><td class="mid">自有生态</td><td class="mid">自有 IDE</td><td class="mid">VS Code/JetBrains</td></tr>
+          <tr><td>开源 / 协议</td><td class="yes">MIT 开源</td><td class="mid">部分开源</td><td class="no">闭源商业</td><td class="yes">Apache-2.0</td></tr>
+          <tr><td>超大仓库索引</td><td class="yes">Linux 内核 3 分钟</td><td class="mid">云端可行</td><td class="mid">云端可行</td><td class="no">较弱</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:16px"><strong>差异化小结：</strong>codebase-memory-mcp 在"<strong>完全本地 + 零依赖 + 极致性能 + 完整知识图谱</strong>"这一组合上几乎无对手。Sourcegraph 与 Augment 强在云端规模与企业功能，但牺牲了数据隐私与离线能力；Continue.dev 更轻但缺乏图谱级结构化推理。对于<strong>重视代码隐私、需要在本地对超大仓库做结构化分析、并希望复用任意 MCP Agent</strong> 的团队，它是目前最具竞争力的开源选择。</p>
+    </div>
+  </section>
+
+  <!-- 综合评分 -->
+  <section>
+    <div class="sec-head">
+      <div class="ico" style="background:rgba(236,72,153,.16)">🏆</div>
+      <h2>综合评分</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card">
+      <div class="score-wrap">
+        <div class="score-circle">
+          <div class="val"><b>8.9</b><span>/ 10.0 综合得分</span></div>
+        </div>
+        <div class="score-bars">
+          <div class="bar-item"><div class="top"><b>技术创新性</b><span>9.5 / 10</span></div><div class="bar-bg"><div class="bar-fill" style="width:95%"></div></div></div>
+          <div class="bar-item"><div class="top"><b>性能与效率</b><span>9.5 / 10</span></div><div class="bar-bg"><div class="bar-fill" style="width:95%"></div></div></div>
+          <div class="bar-item"><div class="top"><b>工程质量</b><span>9.0 / 10</span></div><div class="bar-bg"><div class="bar-fill" style="width:90%"></div></div></div>
+          <div class="bar-item"><div class="top"><b>实用价值</b><span>9.0 / 10</span></div><div class="bar-bg"><div class="bar-fill" style="width:90%"></div></div></div>
+          <div class="bar-item"><div class="top"><b>文档与生态</b><span>8.5 / 10</span></div><div class="bar-bg"><div class="bar-fill" style="width:85%"></div></div></div>
+          <div class="bar-item"><div class="top"><b>社区成熟度</b><span>7.5 / 10</span></div><div class="bar-bg"><div class="bar-fill" style="width:75%"></div></div></div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:22px">
+        <strong>总评：</strong>一款工程极致、定位精准的 AI 编程基础设施。纯 C 单文件的性能表现、零 API Key 的本地化语义检索、团队共享图谱产物等设计，直击 AI Coding Agent 在大型代码库上的核心痛点。配套 arXiv 预印物（arXiv:2603.27277）、SLSA Level 3 供应链安全、5604 项测试与 OpenSSF Scorecard，体现了远超同期同类项目的工程严谨度。主要风险在于项目较新（2026 年 2 月创建）、社区生态尚处早期、纯 C 实现带来的二次开发门槛。综合判定为<strong>强烈推荐关注</strong>的 AI 代码智能基础设施。
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>📅 分析日期：2026-06-18 ｜ 数据来源：GitHub API &amp; 官方 README ｜ 由 Claude 深度分析生成</p>
+    <p style="margin-top:6px">🔗 <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank">github.com/DeusData/codebase-memory-mcp</a> · 📄 <a href="https://arxiv.org/abs/2603.27277" target="_blank">arXiv:2603.27277 研究预印</a></p>
+  </footer>
+
+</div>
+</body>
+</html>
