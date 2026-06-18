@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>continuedev/continue 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f1730; --card:#141d3a; --card2:#1a2547;
+    --border:#26315c; --text:#e8edff; --muted:#9aa6cc;
+    --accent:#6ea8ff; --accent2:#7ee2a8; --warn:#ffce6a; --bad:#ff8a8a;
+    --code:#0a1024;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:42px 24px 80px}
+  header.hero{text-align:center;padding:48px 28px 40px;background:radial-gradient(1200px 300px at 50% -100px,rgba(110,168,255,.18),transparent);
+    border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(6px)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.5px;padding:5px 12px;border-radius:999px;
+    background:rgba(110,168,255,.12);color:var(--accent);border:1px solid rgba(110,168,255,.35);margin:0 4px 8px}
+  .badge.warn{background:rgba(255,206,106,.12);color:var(--warn);border:1px solid rgba(255,206,106,.4)}
+  h1{font-size:34px;margin:14px 0 6px;letter-spacing:.5px}
+  h1 .accent{background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:16px;color:var(--muted);margin:6px 0 0}
+  h2{font-size:23px;margin:46px 0 16px;padding-left:14px;border-left:4px solid var(--accent)}
+  h3{font-size:18px;margin:26px 0 10px;color:#cfe0ff}
+  p{color:#d6def5}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+  .stat .num{font-size:28px;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--card);border-radius:14px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}
+  th{background:var(--card2);color:#cfe0ff;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Consolas,Menlo,monospace}
+  code{background:var(--code);padding:2px 7px;border-radius:6px;color:#a9d3ff;font-size:13px;border:1px solid #1c2850}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:#cdd8f5}
+  pre .kw{color:#c792ea} pre .str{color:#c3e88d} pre .fn{color:#82aaff} pre .cmt{color:#6b7799}
+  ul{padding-left:22px} li{margin:6px 0}
+  .score-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .score-total{font-size:54px;font-weight:800;background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:9px;border-radius:999px;background:#222e57;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6ea8ff,#7ee2a8)}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(126,226,168,.1);color:var(--accent2);border:1px solid rgba(126,226,168,.3)}
+  .quote{border-left:4px solid var(--accent2);padding:8px 18px;color:#cfe0ff;font-style:italic;background:rgba(126,226,168,.05);border-radius:0 10px 10px 0}
+  .quote.warn{border-left-color:var(--warn);background:rgba(255,206,106,.05)}
+  .compare th:first-child{width:16%}
+  .ok{color:var(--accent2)} .mid{color:var(--warn)} .lo{color:var(--bad)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--border)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <span class="badge">🤖 开源 AI 编码 Agent</span>
+      <span class="badge">🧩 VS Code / JetBrains / CLI</span>
+      <span class="badge">🔓 Apache 2.0</span>
+      <span class="badge">🔌 模型无关 (BYO Model)</span>
+      <span class="badge warn">⚠️ 已被 Cursor 收购</span>
+      <span class="badge">🔥 今日 GitHub Trending</span>
+    </div>
+    <h1>continuedev/<span class="accent">continue</span></h1>
+    <p class="tag">"The open-source coding agent" —— 让开发者掌控 AI、而非被 AI 自动化的开源编程 Agent</p>
+    <div class="tag-row" style="justify-content:center;margin-top:14px">
+      <span class="pill">Agent Mode</span>
+      <span class="pill">Chat</span>
+      <span class="pill">Tab Autocomplete</span>
+      <span class="pill">@codebase / @docs</span>
+      <span class="pill">MCP</span>
+      <span class="pill">Ollama 本地模型</span>
+      <span class="pill">config.yaml 声明式配置</span>
+    </div>
+  </header>
+
+  <!-- 概览数据 -->
+  <h2>📊 项目概览</h2>
+  <div class="grid">
+    <div class="stat"><div class="num">~25,000</div><div class="lbl">⭐ Stars</div></div>
+    <div class="stat"><div class="num">~2,800</div><div class="lbl">🍴 Forks</div></div>
+    <div class="stat"><div class="num">Apache-2.0</div><div class="lbl">📜 开源协议</div></div>
+    <div class="stat"><div class="num">3 种形态</div><div class="lbl">🧩 CLI · VS Code · JetBrains</div></div>
+  </div>
+
+  <table>
+    <tr><th>维度</th><th>详情</th></tr>
+    <tr><td><b>仓库</b></td><td><a href="https://github.com/continuedev/continue">github.com/continuedev/continue</a></td></tr>
+    <tr><td><b>官网</b></td><td><a href="https://www.continue.dev/">continue.dev</a>（已标注 "acquired by Cursor"）</td></tr>
+    <tr><td><b>一句话定位</b></td><td>开源、模型无关的 AI 编码 Agent，覆盖 CLI、VS Code 扩展与 JetBrains 插件三种形态</td></tr>
+    <tr><td><b>主语言</b></td><td>TypeScript（扩展/核心）· Python（部分 CLI/后端组件）</td></tr>
+    <tr><td><b>开源协议</b></td><td>Apache-2.0（商用友好，完全自由）</td></tr>
+    <tr><td><b>核心形态</b></td><td>① CLI（命令行）② VS Code 扩展 ③ JetBrains 插件 —— 三端覆盖是最大特色之一</td></tr>
+    <tr><td><b>模型支持</b></td><td>云端：OpenAI / Anthropic / Google 等 · 本地：<b>Ollama</b> · 聚合：<b>OpenRouter</b> —— <b>任意模型任意来源</b></td></tr>
+    <tr><td><b>最新重大事件</b></td><td><b>2025 年被 Cursor 收购</b>，团队并入 Cursor；项目方向处于过渡期</td></tr>
+    <tr><td><b>免费可用性</b></td><td>可通过 OpenRouter 免费额度或本地模型 <b>零成本</b>使用，无需订阅</td></tr>
+    <tr><td><b>维护方</b></td><td>Continue 团队（已被 Cursor 收购）+ 活跃开源社区</td></tr>
+  </table>
+
+  <!-- 项目概述 -->
+  <h2>🧭 项目概述</h2>
+  <div class="card">
+    <p><b>Continue</b> 是 AI 编码助手赛道里最具影响力的<b>开源</b>项目之一。它把"AI 编码 Agent"做成了三种产品形态：一个命令行工具（CLI）、一个 <b>VS Code 扩展</b>、以及一个 <b>JetBrains 插件</b>，让开发者可以在自己习惯的 IDE 里直接用上 AI。核心理念可以一句话概括：</p>
+    <div class="quote">"我们的使命始终是确保开发者被<b>放大（amplified）而非被自动化（automated）</b>，我们将继续秉持这一承诺。" —— Continue 官方</div>
+    <p style="margin-top:14px">与 Cursor、Copilot 这类<b>闭源、绑定单一厂商</b>的产品不同，Continue 的三大差异化是：<b>① 开源透明（Apache 2.0）；② 模型自由（任意云厂商或本地 Ollama 模型）；③ 多 IDE 深度集成（尤其是对 JetBrains 生态的支持，在开源竞品中相当稀缺）</b>。开发者可以"自带模型"（Bring Your Own Model），把 OpenAI、Claude、Mistral 或本地开源模型接到同一个界面里。</p>
+    <p>2025 年，Continue <b>被 Cursor 收购</b>，成为该赛道最受关注的事件之一。团队官方表态将继续坚持"开发者优先、开源"的承诺，但项目重心与路线图正处在过渡期。对关注开源、隐私与自主可控的团队而言，它仍是一个值得理解的重要参照系。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <h2>🏗️ 技术架构</h2>
+
+  <h3>1) 总体范式：声明式配置 + 模型无关 + IDE 原生</h3>
+  <div class="card">
+    <p>Continue 的架构以"<b>把模型与功能解耦</b>"为核心设计哲学。它不绑定任何特定模型或厂商，而是通过一套<b>声明式配置（config.yaml）</b>把"模型来源（providers）"与"功能角色（roles）"分离开来：</p>
+    <ul>
+      <li><b>IDE 集成层</b>：以扩展形式深度嵌入 VS Code / JetBrains，而非外部独立运行；聊天、Agent、自动补全都在 IDE 内完成</li>
+      <li><b>配置层</b>：<code>config.yaml</code> 统一声明模型、上下文提供者、规则、提示词等；放在全局 <code>.continue</code> 目录，可版本化、可团队共享</li>
+      <li><b>Provider 抽象</b>：统一适配 OpenAI、Anthropic、Google、Ollama（本地）、OpenRouter 等多种模型来源</li>
+      <li><b>角色（Roles）机制</b>：同一个模型可被赋予一个或多个"角色"，不同角色可分别用不同模型</li>
+      <li><b>上下文 / 工具层</b>：通过 <code>@codebase</code>、<code>@docs</code> 等上下文提供者注入代码库与文档；原生支持 <b>MCP（Model Context Protocol）</b></li>
+    </ul>
+    <pre><span class="cmt"># config.yaml 示例 —— 用角色（roles）把模型与功能解耦</span>
+<span class="kw">models</span>:
+  - <span class="kw">name</span>: <span class="str">"Claude Sonnet"</span>
+    <span class="kw">provider</span>: <span class="str">"anthropic"</span>
+    <span class="kw">model</span>: <span class="str">"claude-sonnet-4-6"</span>
+    <span class="kw">roles</span>: [<span class="str">chat</span>, <span class="str">edit</span>, <span class="str">apply</span>]   <span class="cmt"># 用于对话 / 编辑 / 应用差异</span>
+
+  - <span class="kw">name</span>: <span class="str">"Qwen Coder (本地)"</span>
+    <span class="kw">provider</span>: <span class="str">"ollama"</span>
+    <span class="kw">model</span>: <span class="str">"qwen2.5-coder:1.5b"</span>
+    <span class="kw">roles</span>: [<span class="str">autocomplete</span>]        <span class="cmt"># 轻量本地模型做 Tab 补全，零延迟、零成本</span>
+
+  - <span class="kw">name</span>: <span class="str">"Embeddings"</span>
+    <span class="kw">provider</span>: <span class="str">"ollama"</span>
+    <span class="kw">model</span>: <span class="str">"nomic-embed-text"</span>
+    <span class="kw">roles</span>: [<span class="str">embed</span>]                <span class="cmt"># 为 @codebase 语义检索生成向量</span></pre>
+  </div>
+
+  <h3>2) 七大模型角色（Roles）—— 架构的灵魂</h3>
+  <div class="card">
+    <p>这是 Continue 最具辨识度的架构设计：把"AI 编码"拆成多个细分功能，每个功能可独立指定最合适的模型：</p>
+    <table>
+      <tr><th>角色</th><th>作用</th></tr>
+      <tr><td><code>chat</code></td><td>对话式问答、代码讲解、澄清疑惑</td></tr>
+      <tr><td><code>autocomplete</code></td><td>Tab 自动补全（通常配轻量/本地模型，追求低延迟）</td></tr>
+      <tr><td><code>edit</code></td><td>内联代码编辑（inline edit）</td></tr>
+      <tr><td><code>apply</code></td><td>把模型生成的代码差异应用到文件</td></tr>
+      <tr><td><code>embed</code></td><td>把文本转为向量，供 <code>@codebase</code> 语义检索使用</td></tr>
+      <tr><td><code>rerank</code></td><td>对检索结果重排序，提升上下文相关性</td></tr>
+      <tr><td><code>summarize</code></td><td>对话/上下文摘要，压缩长上下文</td></tr>
+    </table>
+    <p style="margin-bottom:0">这种"<b>功能—模型解耦</b>"意味着：你可以用最强的 Claude/GPT 做 Agent 推理，用本地小模型做即时补全，用专用 embedding 模型做检索——<b>各司其职、各取所长、成本可控</b>。</p>
+  </div>
+
+  <h3>3) 上下文提供者（Context Providers）与 MCP</h3>
+  <div class="card">
+    <p>Continue 通过上下文提供者把外部信息精准注入模型，构建出基于 RAG（检索增强）的代码理解能力：</p>
+    <ul>
+      <li><b><code>@codebase</code></b>：对整个代码库建立索引，基于 embedding 做<b>语义检索</b>，让 AI 跨文件理解项目结构与依赖关系</li>
+      <li><b><code>@docs</code></b>：索引官方文档，让 AI 在写代码时能"查文档"，减少幻觉与过时 API 误用</li>
+      <li><b>MCP（Model Context Protocol）原生支持</b>：接入 Anthropic 主导的开放协议，连接任意 MCP 服务器——数据库、API、文件系统、自定义工具皆可作为上下文与工具来源</li>
+      <li><b>其他上下文</b>：当前文件、选中代码、终端输出、Git diff、URL 等均可作为上下文提供者</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>🏗️ 架构层次一览</h3>
+    <pre><span class="cmt">┌──────────────────────────────────────────────────────────┐
+│  IDE 层：VS Code 扩展 · JetBrains 插件 · CLI（三端原生集成）             │
+├──────────────────────────────────────────────────────────┤
+│  功能层：Agent Mode · Chat · Tab 自动补全 · Inline Edit · Apply          │
+├──────────────────────────────────────────────────────────┤
+│  角色层（roles）：chat / autocomplete / edit / apply / embed / rerank ...│
+├──────────────────────────────────────────────────────────┤
+│  上下文层：@codebase 索引 · @docs · MCP 工具/数据源 · Git/终端/选区       │
+├──────────────────────────────────────────────────────────┤
+│  Provider 抽象：OpenAI · Anthropic · Google · Ollama(本地) · OpenRouter  │
+├──────────────────────────────────────────────────────────┤
+│  配置层：config.yaml 声明式（模型 + 角色 + 规则 + 提示词，可版本化）       │
+└──────────────────────────────────────────────────────────┘</span></pre>
+  </div>
+
+  <!-- 核心创新点 -->
+  <h2>💡 核心创新点</h2>
+  <div class="card">
+    <h3>① 模型无关 + 本地优先：真正的"自带模型"</h3>
+    <p>Continue 把"<b>模型选择权</b>"还给开发者。你可以接入任意云厂商，也可以完全用 <b>Ollama 跑本地模型</b>——代码与数据<b>寸步不出本机</b>。对隐私敏感、受监管或离线场景的团队（金融、医疗、政企），这是闭源工具结构性无法提供的能力。</p>
+
+    <h3>② 七大角色机制：把 AI 编码拆解为可组合的能力</h3>
+    <p>chat / autocomplete / edit / apply / embed / rerank / summarize 的角色抽象，让"用什么模型做哪件事"完全解耦。可用顶级模型做推理、本地小模型做补全、专用模型做检索，<b>在效果与成本/延迟间精确权衡</b>——这种灵活性在同类工具中独树一帜。</p>
+
+    <h3>③ 三端覆盖，尤其填补 JetBrains 生态空白</h3>
+    <p>同时提供 CLI、VS Code、JetBrains 三种形态。其中<b>对 JetBrains（IntelliJ/PyCharm/WebStorm 等）的原生支持</b>，在开源 AI 编码助手里相当稀缺——大量 Java/Kotlin/企业级后端开发者因此获益，而非被迫迁移到 VS Code 系。</p>
+
+    <h3>④ 声明式 config.yaml：可版本化、可团队共享的配置</h3>
+    <p>所有 Agent 行为通过 <code>config.yaml</code> 声明，可纳入 Git 团队共享——意味着<b>团队的 AI 编码规范、提示词、模型选型可以像代码一样 review 与统一</b>，而不是每个人各自配置。</p>
+
+    <h3>⑤ 原生拥抱 MCP 开放协议</h3>
+    <p>作为较早集成 <b>Model Context Protocol</b> 的编码 Agent，Continue 能接入庞大的 MCP 工具与数据源生态，把"代码库"以外的世界（数据库、API、知识库）安全地接入模型上下文。</p>
+
+    <h3>⑥ Apache 2.0 + 零成本可用</h3>
+    <p>Apache 2.0 协议商用友好；配合 OpenRouter 免费额度或本地模型，<b>无需任何订阅即可体验完整 AI 编码能力</b>，极大降低了上手门槛。</p>
+  </div>
+
+  <!-- 应用场景 -->
+  <h2>🎯 应用场景</h2>
+  <div class="grid">
+    <div class="stat"><div style="font-size:22px">🔒</div><div class="lbl"><b>隐私/受监管团队</b><br>本地模型，数据不出域</div></div>
+    <div class="stat"><div style="font-size:22px">☕</div><div class="lbl"><b>JetBrains 开发者</b><br>Java/Kotlin/企业后端</div></div>
+    <div class="stat"><div style="font-size:22px">🧪</div><div class="lbl"><b>多模型实验</b><br>对比/混搭不同模型</div></div>
+    <div class="stat"><div style="font-size:22px">💰</div><div class="lbl"><b>零成本入门</b><br>OpenRouter 免费额度</div></div>
+    <div class="stat"><div style="font-size:22px">🖥️</div><div class="lbl"><b>终端原生用户</b><br>CLI 集成进工作流</div></div>
+    <div class="stat"><div style="font-size:22px">🏢</div><div class="lbl"><b>团队统一规范</b><br>config.yaml 版本化</div></div>
+    <div class="stat"><div style="font-size:22px">🔌</div><div class="lbl"><b>MCP 工具扩展</b><br>接入数据库/API</div></div>
+    <div class="stat"><div style="font-size:22px">🛡️</div><div class="lbl"><b>信创/自主可控</b><br>完全本地部署</div></div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <h2>⚖️ 竞品对比</h2>
+  <table class="compare">
+    <tr><th>方案</th><th>开源</th><th>定位</th><th>与 Continue 对比</th></tr>
+    <tr>
+      <td><b>Cursor</b></td><td class="lo">❌ 闭源</td><td>VS Code 分支的 AI IDE</td>
+      <td>体验最打磨、All-in-one IDE，但<b>闭源、绑定自家云模型</b>。Continue 以<b>开源 + 模型自由 + 多 IDE</b>形成差异——<b>讽刺的是，Cursor 现已收购 Continue</b>。</td>
+    </tr>
+    <tr>
+      <td><b>GitHub Copilot</b></td><td class="lo">❌ 闭源</td><td>编辑器插件 + 企业版</td>
+      <td>开箱即用、生态最广、PR 自动化与企业集成强，但<b>闭源、模型受限</b>。Continue 在<b>本地模型、JetBrains 支持、可定制性</b>上更胜一筹。</td>
+    </tr>
+    <tr>
+      <td><b>Cline</b></td><td class="ok">✅ 开源</td><td>VS Code 扩展，自主 Agent</td>
+      <td>同为开源 VS Code 扩展，主打<b>可视化审批流、高度自主</b>。Cline 在 VS Code 内的自主 Agent 体验更激进；Continue 则<b>多端覆盖、模型角色解耦更系统</b>，且独有 JetBrains。</td>
+    </tr>
+    <tr>
+      <td><b>Aider</b></td><td class="ok">✅ 开源</td><td>终端原生 CLI</td>
+      <td>为<b>终端重度用户</b>设计，<b>原生 Git 自动提交</b>是其杀手锏。Continue 也提供 CLI，但 Aider 在 Git 工作流自动化上更专注；Continue 在 IDE 内体验更完整。</td>
+    </tr>
+    <tr>
+      <td><b>OpenCode / others</b></td><td class="ok">✅ 开源</td><td>新一代开源编码 Agent</td>
+      <td>后被 Cursor 收购后，部分社区分析认为 Continue <b>已不再是"Cursor 直接替代品"</b>，转而推荐 OpenCode、Cline、Aider 等更独立的开源选项。</td>
+    </tr>
+  </table>
+
+  <div class="quote" style="margin-top:14px">Continue 的差异化壁垒在于"<b>开源 Apache 2.0 + 模型无关(BYO) + 三端覆盖(独有 JetBrains) + 角色化配置 + MCP 生态 + 本地优先隐私</b>"这一组合。它是开源 AI 编码赛道里<b>最系统化、最尊重开发者掌控权</b>的标杆——但被 Cursor 收购后，其独立性与未来路线已成为最大不确定性。</div>
+
+  <div class="quote warn">
+    <b>⚠️ 关键风险提示：被 Cursor 收购后的不确定性。</b>2025 年 Continue 被其最大闭源竞品 Cursor 收购。虽然团队承诺延续"开发者优先、开源"路线，但项目重心正处过渡期：① 开源承诺能否长期兑现存疑；② 部分社区已将其视为<b>"不再独立的 Cursor 替代品"</b>；③ 关注自主可控的团队应密切跟踪其协议与治理变化，并评估 Cline / Aider / OpenCode 等替代方案。
+  </div>
+
+  <!-- 综合评分 -->
+  <h2>🏆 综合评分</h2>
+  <div class="card score-box">
+    <div>
+      <div class="score-total">8.0<span style="font-size:24px;color:var(--muted)"> / 10</span></div>
+      <div class="lbl" style="color:var(--muted)">综合推荐度（含收购不确定性折价）</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <table style="margin:0">
+        <tr><td>功能完整度</td><td style="width:120px"><div class="bar"><i style="width:88%"></i></div></td><td><b>8.8</b></td></tr>
+        <tr><td>架构设计</td><td><div class="bar"><i style="width:92%"></i></div></td><td><b>9.2</b></td></tr>
+        <tr><td>开放性 / 隐私</td><td><div class="bar"><i style="width:90%"></i></div></td><td><b>9.0</b></td></tr>
+        <tr><td>实用价值</td><td><div class="bar"><i style="width:82%"></i></div></td><td><b>8.2</b></td></tr>
+        <tr><td>文档与生态</td><td><div class="bar"><i style="width:80%"></i></div></td><td><b>8.0</b></td></tr>
+        <tr><td>未来确定性</td><td><div class="bar"><i style="width:55%"></i></div></td><td><b class="mid">5.5</b></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">📋 总评</h3>
+    <p><b>Continue 是开源 AI 编码 Agent 赛道里最系统化的标杆项目。</b>它以 Apache 2.0 协议、模型无关设计、CLI/VS Code/JetBrains 三端覆盖、七大角色化配置、MCP 生态与本地优先隐私，构建出一条区别于 Cursor/Copilot 闭源路线的开放路径。其<b>对 JetBrains 生态的原生支持</b>与<b>模型角色解耦</b>在同类开源工具中独树一帜。</p>
+    <p>然而，<b>2025 年被最大竞品 Cursor 收购</b>是改变格局的事件。技术架构依然优秀（架构设计 9.2、开放性 9.0），但<b>"未来确定性"被显著折价至 5.5</b>——开源承诺能否延续、项目是否会被边缘化或转向，都存在真实的不确定性。</p>
+    <p><b>主要权衡：</b>① 收购后的治理与协议走向待观察，自主可控诉求需谨慎评估；② 社区反馈在复杂重构类任务上稳定性偶有不足（被形容为"偶尔切不动的瑞士军刀"）；③ Agent 自主性与可视化审批流相比 Cline 略保守。</p>
+    <p style="margin-bottom:0"><span class="ok"><b>结论：仍是理解"开源 AI 编码"绕不开的参照系，技术架构与多端覆盖值得借鉴；但若以长期自主可控为硬性要求，建议同时跟踪 Cline / Aider / OpenCode 等独立开源方案，谨慎评估收购后的实际走向。</b></span></p>
+  </div>
+
+  <footer>
+    📅 分析日期：2026-06-18 ｜ 数据来源：<a href="https://github.com/continuedev/continue">GitHub</a> · <a href="https://www.continue.dev/">Continue 官网</a> · <a href="https://docs.continue.dev/reference">config.yaml 参考文档</a> · <a href="https://docs.continue.dev/customize/model-roles/embeddings">模型角色文档</a> · <a href="https://modelcontextprotocol.io/">MCP 协议</a><br>
+    GitHub Project Deep Analyzer · continuedev/continue
+  </footer>
+
+</div>
+</body>
+</html>
