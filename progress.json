@@ -2,7 +2,6 @@
   "date": "2026-06-19",
   "fetched_at": "2026-06-19",
   "pending": [
-    "zai-org/GLM-5",
     "yifanfeng97/Hyper-Extract",
     "alibaba/zvec",
     "withastro/flue",
@@ -20,7 +19,9 @@
     "DeusData/codebase-memory-mcp",
     "Universal-Debloater-Alliance/universal-android-debloater-next-generation"
   ],
-  "done": [],
+  "done": [
+    "zai-org/GLM-5"
+  ],
   "projects": [
     {
       "name": "google-research/timesfm",
@@ -40,7 +41,7 @@
     },
     {
       "name": "zai-org/GLM-5",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "DeusData/codebase-memory-mcp",
@@ -85,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 9,
+    "pending": 8,
     "skipped": 6,
-    "done": 0
+    "done": 1
   }
 }

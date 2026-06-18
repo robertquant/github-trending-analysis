@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zai-org/GLM-5 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f1730; --card:#141d3a; --card2:#1a2547;
+    --border:#26315c; --text:#e8edff; --muted:#9aa6cc;
+    --accent:#6ea8ff; --accent2:#7ee2a8; --warn:#ffce6a; --bad:#ff8a8a;
+    --code:#0a1024;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:42px 24px 80px}
+  header.hero{text-align:center;padding:48px 28px 40px;background:radial-gradient(1200px 300px at 50% -100px,rgba(110,168,255,.18),transparent);
+    border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(6px)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.5px;padding:5px 12px;border-radius:999px;
+    background:rgba(110,168,255,.12);color:var(--accent);border:1px solid rgba(110,168,255,.35);margin:0 4px 8px}
+  .badge.warn{background:rgba(255,206,106,.12);color:var(--warn);border:1px solid rgba(255,206,106,.4)}
+  .badge.good{background:rgba(126,226,168,.12);color:var(--accent2);border:1px solid rgba(126,226,168,.4)}
+  h1{font-size:34px;margin:14px 0 6px;letter-spacing:.5px}
+  h1 .accent{background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:16px;color:var(--muted);margin:6px 0 0}
+  h2{font-size:23px;margin:46px 0 16px;padding-left:14px;border-left:4px solid var(--accent)}
+  h3{font-size:18px;margin:26px 0 10px;color:#cfe0ff}
+  p{color:#d6def5}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+  .stat .num{font-size:26px;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--card);border-radius:14px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}
+  th{background:var(--card2);color:#cfe0ff;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Consolas,Menlo,monospace}
+  code{background:var(--code);padding:2px 7px;border-radius:6px;color:#a9d3ff;font-size:13px;border:1px solid #1c2850}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:#cdd8f5}
+  pre .kw{color:#c792ea} pre .str{color:#c3e88d} pre .fn{color:#82aaff} pre .cmt{color:#6b7799}
+  ul{padding-left:22px} li{margin:6px 0}
+  .score-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .score-total{font-size:54px;font-weight:800;background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:9px;border-radius:999px;background:#222e57;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6ea8ff,#7ee2a8)}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(126,226,168,.1);color:var(--accent2);border:1px solid rgba(126,226,168,.3)}
+  .quote{border-left:4px solid var(--accent2);padding:8px 18px;color:#cfe0ff;font-style:italic;background:rgba(126,226,168,.05);border-radius:0 10px 10px 0}
+  .quote.warn{border-left-color:var(--warn);background:rgba(255,206,106,.05)}
+  .compare th:first-child{width:18%}
+  .ok{color:var(--accent2)} .mid{color:var(--warn)} .lo{color:var(--bad)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--border)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <span class="badge">🧠 开源 MoE 旗舰大模型</span>
+      <span class="badge">⚙️ Agentic Engineering</span>
+      <span class="badge">🔓 MIT 协议（5.x）</span>
+      <span class="badge">🇨🇳 智谱 Z.ai / 清华系</span>
+      <span class="badge good">🏆 开源推理 & 编码 SOTA</span>
+      <span class="badge">🔥 今日 GitHub Trending</span>
+    </div>
+    <h1>zai-org/<span class="accent">GLM-5</span></h1>
+    <p class="tag">"From Vibe Coding to Agentic Engineering" —— 面向复杂系统工程与长程 Agent 任务的下一代开源旗舰</p>
+    <div class="tag-row" style="justify-content:center;margin-top:14px">
+      <span class="pill">MoE 744B / 40B 激活</span>
+      <span class="pill">DeepSeek Sparse Attention</span>
+      <span class="pill">1M 长上下文 (5.2)</span>
+      <span class="pill">slime 异步 RL</span>
+      <span class="pill">vLLM / SGLang / 昇腾</span>
+      <span class="pill">推理 · 编码 · 智能体</span>
+    </div>
+  </header>
+
+  <!-- 概览数据 -->
+  <h2>📊 项目概览</h2>
+  <div class="grid">
+    <div class="stat"><div class="num">744B / 40B</div><div class="lbl">🧠 总参数 / 单 Token 激活</div></div>
+    <div class="stat"><div class="num">28.5T</div><div class="lbl">📚 预训练 Token 数</div></div>
+    <div class="stat"><div class="num">1M</div><div class="lbl">📐 上下文长度 (GLM-5.2)</div></div>
+    <div class="stat"><div class="num">~50%</div><div class="lbl">💸 长序列部署成本降幅</div></div>
+  </div>
+
+  <table>
+    <tr><th>维度</th><th>详情</th></tr>
+    <tr><td><b>仓库</b></td><td><a href="https://github.com/zai-org/GLM-5">github.com/zai-org/GLM-5</a></td></tr>
+    <tr><td><b>出品方</b></td><td>智谱 AI / Z.ai（清华系，GLM 大模型团队 THUDM）</td></tr>
+    <tr><td><b>一句话定位</b></td><td>面向<b>复杂系统工程与长程 Agentic 任务</b>的开源旗舰大模型，目标是"开源模型中推理、编码、智能体能力全球顶尖"</td></tr>
+    <tr><td><b>模型家族</b></td><td>GLM-5 → <b>GLM-5.1</b>（2026-04，Agentic 增强）→ <b>GLM-5.2</b>（2026-06-14，1M 可用上下文）</td></tr>
+    <tr><td><b>架构</b></td><td>稀疏混合专家（MoE）+ <b>DeepSeek Sparse Attention (DSA)</b> 动态稀疏注意力</td></tr>
+    <tr><td><b>开源协议</b></td><td>5.x 系列采用 <b>MIT</b>（商用友好）；早期 GLM-4 曾用自定义研究许可，需以具体模型卡为准</td></tr>
+    <tr><td><b>权重分发</b></td><td><a href="https://huggingface.co/zai-org/GLM-5">Hugging Face</a>（BF16 / FP8）· <a href="https://modelscope.cn/models/ZhipuAI/GLM-5">ModelScope</a>（魔搭社区）</td></tr>
+    <tr><td><b>推理框架</b></td><td><b>vLLM</b>（v0.19.0+，含 vLLM-Ascend 昇腾）· <b>SGLang</b>（v0.5.10+）· <b>xLLM</b>（昇腾原生）· <b>KTransformers</b></td></tr>
+    <tr><td><b>API 服务</b></td><td>Z.ai 开放平台（限时免费，GLM-5-Turbo 输入约 ¥5/百万 tokens）· bigmodel.cn</td></tr>
+    <tr><td><b>技术报告</b></td><td><a href="https://arxiv.org/abs/2602.15763">arXiv 2602.15763 — "GLM-5: from Vibe Coding to Agentic Engineering"</a></td></tr>
+  </table>
+
+  <!-- 项目概述 -->
+  <h2>🧭 项目概述</h2>
+  <div class="card">
+    <p><b>GLM-5</b> 是智谱 AI（Z.ai）发布的最新一代旗舰基座大模型，承载着智谱从 <b>"Vibe Coding（凭感觉写码）"升级到 "Agentic Engineering（智能体工程）"</b> 的产品哲学。它不是又一个"通用聊天模型"，而是被明确<b>定向训练（purpose-built）</b>于两件事：<b>复杂的系统工程</b>与<b>长周期（long-horizon）的 Agent 任务</b>。</p>
+    <div class="quote">"Scaling is still one of the most important ways to improve the intelligence efficiency of AGI. ……GLM-5 delivers significant improvement compared to GLM-4.7 …… and achieves best-in-class performance among all open-source models in the world on reasoning, coding, and agentic tasks, closing the gap with frontier models." —— GLM-5 Technical Report</div>
+    <p style="margin-top:14px">相较上一代 GLM-4.5（355B 总参 / 32B 激活），GLM-5 将规模一举放大到 <b>744B 总参 / 40B 激活</b>，预训练数据从 23T 增长到 <b>28.5T tokens</b>，并引入 <b>DeepSeek Sparse Attention</b> 显著压低了部署成本。在后训练阶段，团队自研了 <b>slime 异步强化学习基础设施</b>，让 RL 训练得以大规模、细粒度地迭代——这是 GLM-5 能在"胜任（competence）"之上迈向"卓越（excellence）"的关键。</p>
+    <p>在评测上，GLM-5 系列给出了非常硬核的成绩单：GLM-5.1 在 <b>SWE-Bench Pro</b>（真实工业级代码修复）上以 <b>58.4%</b> 暂列榜首，超越 GPT-5.4（57.7%）与 Claude Opus 4.6（57.3%）；在 <b>NL2Repo（从需求生成完整仓库）</b>上以 42.7% 领先 Claude 的 33.4%；GLM-5 在 <b>Vending Bench 2</b>（模拟经营一年的长程任务）上以 4432 美元余额排名开源第一，逼近 Claude Opus 4.5。一句话：<b>这是目前开源阵营中少数能在 Agent 与编码维度正面挑战顶级闭源模型的产品</b>。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <h2>🏗️ 技术架构</h2>
+
+  <h3>1) 预训练：更大规模 MoE + DeepSeek 稀疏注意力</h3>
+  <div class="card">
+    <p>GLM-5 延续并强化了智谱一贯的 <b>MoE（Mixture-of-Experts，混合专家）</b>路线。核心数字：</p>
+    <ul>
+      <li><b>总参数 744B，单 Token 激活约 40B</b>（约 256 个专家中按需激活一小部分，激活率 ~5.9%）。这意味着它拥有"大模型的容量"，却以"中等模型的算力"运行——单位 Token 的推理 FLOPs 远低于同等总参的 dense 模型。</li>
+      <li><b>预训练数据 28.5T tokens</b>（较 GLM-4.5 的 23T 显著扩充），覆盖更广的代码、数学、多语料与长文本分布。</li>
+      <li><b>DeepSeek Sparse Attention (DSA)</b>：动态稀疏注意力，约 <b>90% 的注意力矩阵为稀疏</b>，在长序列上把注意力计算量<b>砍掉近一半</b>。GLM-5.2 进一步在每 4 层稀疏注意力间<b>复用同一个 indexer</b>，再次降低单 Token FLOPs。</li>
+    </ul>
+    <p>这套组合拳的直接收益是：在不牺牲长上下文能力的前提下，<b>长序列场景部署成本下降约 50%</b>——这是 GLM-5 把"超大模型"做成"可落地大模型"的核心工程突破。</p>
+  </div>
+
+  <h3>2) 后训练：slime 异步 RL 基础设施</h3>
+  <div class="card">
+    <p>RL（强化学习）被认为是把预训练模型的"胜任"打磨成"卓越"的必经之路，但在 LLM 规模上高效跑 RL 长期是个工程难题。智谱为此自研并开源了 <a href="https://github.com/THUDM/slime"><b>slime</b></a>——一套<b>异步强化学习基础设施</b>：</p>
+    <ul>
+      <li><b>大幅提升训练吞吐与效率</b>，使更细粒度、更多次迭代的后训练成为可能。</li>
+      <li>支持<b>长程 Agent 任务</b>的 RL 优化——这是 GLM-5.1 能"跑得越久、效果越好"（数百轮、上千次工具调用持续优化）的底层支撑。</li>
+      <li>把"模型在长任务里是否真能持续保持有效"作为训练信号，而非只看首轮表现。</li>
+    </ul>
+    <div class="quote">"Previous models—including GLM-5—tend to exhaust their repertoire early …… Giving them more time doesn't help. GLM-5.1, by contrast, is built to stay effective on agentic tasks over much longer horizons. …… The longer it runs, the better the result." —— GLM-5.1 发布说明</div>
+  </div>
+
+  <h3>3) 部署：多框架 + 国产芯片原生适配</h3>
+  <div class="card">
+    <p>GLM-5 系列从一开始就把"<b>可落地、可自主可控</b>"作为一等公民，提供完整的多框架、多芯片部署链路：</p>
+    <pre><span class="cmt"># vLLM（FP8，张量并行 8 卡，投机解码 MTP）</span>
+vllm serve zai-org/GLM-5.1-FP8 \
+  --tensor-parallel-size 8 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config.method mtp \
+  --speculative-config.num_speculative_tokens 3 \
+  --tool-call-parser glm47 \
+  --reasoning-parser glm45 \
+  --enable-auto-tool-choice \
+  --served-model-name glm-5.1-fp8
+
+<span class="cmt"># SGLang（EAGLE 投机解码）</span>
+SGLANG_ENABLE_SPEC_V2=1 sglang serve \
+  --model-path zai-org/GLM-5.1-FP8 \
+  --tp-size 8 \
+  --tool-call-parser glm47 \
+  --reasoning-parser glm45 \
+  --speculative-algorithm EAGLE \
+  --speculative-num-steps 3 \
+  --mem-fraction-static 0.85</pre>
+    <ul>
+      <li><b>推理框架</b>：vLLM（v0.19.0+）、SGLang（v0.5.10+）、xLLM、KTransformers 全部官方支持，并提供 Docker 镜像（如 <code>vllm/vllm-openai:glm51</code>）。</li>
+      <li><b>国产芯片 Day-0 适配</b>：通过 <b>vLLM-Ascend</b>、<b>xLLM</b> 原生运行于华为昇腾；借助 <b>FlagOS</b> 跨芯适配层，GLM-5.2 在发布当日即覆盖四款国产芯片（华为昇腾、摩尔线程、寒武纪等七大平台），是国产算力生态的旗舰模型。</li>
+      <li><b>投机解码</b>：原生支持 MTP / EAGLE，进一步提升推理吞吐。</li>
+    </ul>
+  </div>
+
+  <h3>4) 硬件门槛与"轻量化"方案</h3>
+  <div class="card">
+    <p>全精度 / FP8 是企业级配置，但社区已把门槛压到极低：</p>
+    <table>
+      <tr><th>形态</th><th>典型硬件</th><th>说明</th></tr>
+      <tr><td><b>BF16 / FP8 生产参考</b></td><td>8× H200 / H20（~1.1TB 显存）+ ~800GB NVMe</td><td>官方推荐生产配置</td></tr>
+      <tr><td><b>4-bit (GGUF Q4)</b></td><td>4× H100</td><td>社区量化，可用性主流</td></tr>
+      <tr><td><b>1-bit / 2-bit 极致量化</b></td><td>~180GB 内存 / Mac Studio</td><td>Unsloth 等社区方案，大幅降低体验门槛</td></tr>
+      <tr><td><b>API（零部署）</b></td><td>无，按量付费</td><td>Z.ai 开放平台，限时免费；轻度使用最划算</td></tr>
+    </table>
+    <p class="quote warn" style="font-style:normal">选型建议：偶发/中小团队 → <b>API 优先</b>（Z.ai / OpenRouter）；有数据合规、长程 Agent、规模化调用需求 → <b>自托管 FP8 + 国产芯片</b>，兼顾可控与成本。</p>
+  </div>
+
+  <!-- 核心创新点 -->
+  <h2>💡 核心创新点</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>① "跑得越久越好"的 Agent</h3>
+      <p>GLM-5.1 打破了"模型用尽套路后就停滞"的固有瓶颈：通过反复回顾推理、修订策略，能在<b>数百轮迭代、上千次工具调用</b>中持续优化，把"长程有效性"作为模型能力的核心维度。</p>
+    </div>
+    <div class="card">
+      <h3>② MoE + DSA 的"大而省"</h3>
+      <p>744B 容量 / 40B 激活的 MoE，叠加 <b>~90% 稀疏的动态注意力</b>，在保留长上下文能力的同时把长序列部署成本砍掉约一半，让"旗舰级模型"真正具备落地经济性。</p>
+    </div>
+    <div class="card">
+      <h3>③ slime 异步 RL 基础设施</h3>
+      <p>自研并<b>开源</b>的异步 RL 训练栈，大幅提升训练吞吐，支撑长程 Agent 任务的细粒度后训练——把"工程基础设施"也变成了可复用的开源资产。</p>
+    </div>
+    <div class="card">
+      <h3>④ 1M 可用上下文</h3>
+      <p>GLM-5.2 在所有 Coding Plan 层级提供<b>可用的百万级 Token 上下文</b>，可承载"项目级"工程上下文，一次任务覆盖完整代码库。</p>
+    </div>
+    <div class="card">
+      <h3>⑤ 国产算力 Day-0 适配</h3>
+      <p>原生兼容华为昇腾、摩尔线程、寒武纪等七大国产芯片平台，借助 FlagOS 实现"发布即覆盖"，是国内<b>自主可控大模型</b>的标杆。</p>
+    </div>
+    <div class="card">
+      <h3>⑥ 真实工业级编码 SOTA</h3>
+      <p>在 SWE-Bench Pro、NL2Repo、Terminal-Bench 2.0 等<b>真实世界</b>（而非合成）编码基准上登顶开源、甚至超越顶级闭源模型。</p>
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <h2>🎯 应用场景</h2>
+  <div class="card">
+    <table>
+      <tr><th>场景</th><th>说明</th></tr>
+      <tr><td><b>🤖 自主编码 Agent</b></td><td>作为 Claude Code / Cline / Continue 等编码 Agent 的<b>后端模型</b>，进行真实工程级代码生成、调试、重构与仓库级任务（NL2Repo）。</td></tr>
+      <tr><td><b>🛠️ 复杂系统工程</b></td><td>前后端全栈开发、终端操作（Terminal-Bench）、长程跨文件改动；CC-Bench-V2 显示在前端、后端、长程任务上全面进步。</td></tr>
+      <tr><td><b>⏳ 长程自主任务</b></td><td>数小时甚至更长时长的自主运行（GLM-5.1 支持最长约 8 小时自主任务）；如模拟经营一年的 Vending Bench、持续运维、长周期数据分析。</td></tr>
+      <tr><td><b>📐 深度推理 / 数学</b></td><td>推理能力较 GLM-4.7 大幅提升，适合复杂数理推理、规划与多步决策。</td></tr>
+      <tr><td><b>📑 超长文档 / 代码库理解</b></td><td>1M 上下文可一次性吃下大型代码库或海量文档，做整体理解、检索与重构。</td></tr>
+      <tr><td><b>🏢 私有化 / 合规部署</b></td><td>金融、政务、央国企等对数据出域敏感的场景，借助国产芯片 + 自托管实现端到端自主可控。</td></tr>
+      <tr><td><b>🔌 工具调用 / 多智能体</b></td><td>原生 tool-call（<code>--tool-call-parser glm47</code>）与 reasoning 输出，适合编排多 Agent 工作流。</td></tr>
+    </table>
+  </div>
+
+  <!-- 竞品对比 -->
+  <h2>⚔️ 竞品对比</h2>
+  <table class="compare">
+    <tr><th>维度</th><th>GLM-5 / 5.1 / 5.2</th><th>Claude (Fable / Opus)</th><th>OpenAI GPT-5.x</th><th>DeepSeek V4</th></tr>
+    <tr><td><b>开源 / 权重</b></td><td class="ok">✅ MIT，权重公开</td><td class="lo">❌ 闭源</td><td class="lo">❌ 闭源</td><td class="ok">✅ 开源</td></tr>
+    <tr><td><b>架构</b></td><td>MoE 744B/40B + DSA</td><td>闭源（未披露）</td><td>闭源（未披露）</td><td>MoE + 原生 1M 上下文</td></tr>
+    <tr><td><b>上下文</b></td><td class="ok">200K（5.2 可用 1M）</td><td class="ok">长上下文</td><td class="mid">中长</td><td class="ok">原生 1M</td></tr>
+    <tr><td><b>SWE-Bench Verified</b></td><td class="mid">~72.8%（高推理）</td><td class="ok">Fable 5 ~95% / Opus 4.8 ~88.6%</td><td class="mid">前列</td><td class="mid">—</td></tr>
+    <tr><td><b>SWE-Bench Pro（真实工业）</b></td><td class="ok">GLM-5.1 <b>58.4% 榜首</b></td><td>Opus 4.6 57.3%</td><td class="mid">GPT-5.4 57.7%</td><td>—</td></tr>
+    <tr><td><b>NL2Repo</b></td><td class="ok">42.7%（领先）</td><td>33.4%</td><td>—</td><td>—</td></tr>
+    <tr><td><b>国产芯片 / 自主可控</b></td><td class="ok">✅ 七大平台 Day-0</td><td class="lo">❌ 仅云端闭源 API</td><td class="lo">❌ 仅云端闭源 API</td><td class="ok">✅ 国产适配</td></tr>
+    <tr><td><b>部署成本（长序列）</b></td><td class="ok">DSA 降约 50%</td><td class="lo">闭源 API，价格高</td><td class="lo">闭源 API，价格高</td><td class="ok">较低</td></tr>
+    <tr><td><b>长程 Agent</b></td><td class="ok">强（越跑越好）</td><td class="ok">强</td><td class="mid">中</td><td class="mid">中</td></tr>
+    <tr><td><b>商业模式</b></td><td>开源 + 限时免费 API</td><td>订阅 / API</td><td>订阅 / API</td><td>开源 + API</td></tr>
+  </table>
+  <div class="card">
+    <p><b>一句话定位差异</b>：Claude Fable 5 / Opus 4.8 在 SWE-Bench Verified 等综合榜单仍居榜首、闭源体验最稳；<b>GLM-5 系列是开源阵营中唯一在"真实工业级编码（SWE-Bench Pro / NL2Repo）"和"长程 Agent"上正面挑战甚至反超顶级闭源模型的选手，并叠加了 MIT 开源 + 国产芯片自主可控两大稀缺属性</b>。DeepSeek V4 是 GLM-5 在开源赛道最直接的对手（同为 MoE + 1M 上下文 + 国产适配），二者在工程落地与成本上高度竞争。</p>
+  </div>
+
+  <!-- 综合评分 -->
+  <h2>⭐ 综合评分</h2>
+  <div class="card">
+    <div class="score-box">
+      <div>
+        <div class="score-total">9.0<span style="font-size:24px;color:var(--muted)"> / 10</span></div>
+        <div class="lbl" style="color:var(--muted)">综合评级 · 开源旗舰 · 强烈推荐关注</div>
+      </div>
+      <div style="min-width:320px;flex:1">
+        <table style="margin:0">
+          <tr><td>🧠 模型能力（推理/编码/Agent）</td><td style="width:120px"><div class="bar"><i style="width:94%"></i></div></td><td><b>9.4</b></td></tr>
+          <tr><td>💡 技术创新（MoE+DSA+slime RL）</td><td><div class="bar"><i style="width:93%"></i></div></td><td><b>9.3</b></td></tr>
+          <tr><td>🔓 开源与开放性（MIT / 权重）</td><td><div class="bar"><i style="width:95%"></i></div></td><td><b>9.5</b></td></tr>
+          <tr><td>🏗️ 工程落地（多框架 + 国产芯片）</td><td><div class="bar"><i style="width:92%"></i></div></td><td><b>9.2</b></td></tr>
+          <tr><td>📈 社区与生态热度</td><td><div class="bar"><i style="width:82%"></i></div></td><td><b>8.2</b></td></tr>
+          <tr><td>💸 成本与可及性（API 免费 + 量化）</td><td><div class="bar"><i style="width:86%"></i></div></td><td><b>8.6</b></td></tr>
+          <tr><td>🛡️ 自主可控 / 合规</td><td><div class="bar"><i style="width:90%"></i></div></td><td><b>9.0</b></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:18px">
+      <b>总评：</b>GLM-5 系列是 2026 年开源大模型阵营的"旗舰 + 攻坚手"。它用 <b>MoE+DSA 把规模与成本解耦</b>，用 <b>slime 异步 RL 把 Agent 训练做扎实</b>，用 <b>国产芯片 Day-0 适配把自主可控落地</b>，并在<b>真实工业级编码与长程任务</b>上拿出了反超闭源模型的成绩。<b>扣分项</b>主要在：全精度自托管硬件门槛高（需 8× H200 级别）、综合榜单（SWE-Bench Verified）与 Claude Fable 5 仍有差距、社区生态相对国际顶流仍在追赶。综合而言，是<b>国内自主可控与企业 Agent 落地的首选开源基座之一</b>。
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <h2>📌 一句话总结</h2>
+  <div class="card">
+    <p>GLM-5（含 5.1 / 5.2）是智谱 Z.ai 面向 <b>Agentic Engineering</b> 的开源旗舰——<b>744B/40B 的 MoE + DeepSeek 稀疏注意力 + slime 异步 RL</b>，在真实工业级编码（SWE-Bench Pro 榜首）与长程 Agent 任务上达到开源 SOTA 并逼近/反超顶级闭源模型，叠加 <b>MIT 开源、1M 上下文与国产芯片 Day-0 适配</b>，是国内"模型能力 + 自主可控 + 工程落地"三者兼得的标杆。</p>
+  </div>
+
+  <footer>
+    <p>📅 分析日期：2026-06-19　|　🤖 GitHub Trending 深度分析　|　数据来源：官方仓库 / 技术报告 / 公开评测榜单</p>
+    <p>
+      <a href="https://github.com/zai-org/GLM-5">GitHub</a> ·
+      <a href="https://huggingface.co/zai-org/GLM-5">Hugging Face</a> ·
+      <a href="https://arxiv.org/abs/2602.15763">技术报告</a> ·
+      <a href="https://z.ai/blog/glm-5.1">GLM-5.1 Blog</a> ·
+      <a href="https://docs.bigmodel.cn/cn/guide/models/text/glm-5">官方文档</a>
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
