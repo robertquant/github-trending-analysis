@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>yairm210/Unciv 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f1730; --card:#141d3a; --card2:#1a2547;
+    --border:#26315c; --text:#e8edff; --muted:#9aa6cc;
+    --accent:#6ea8ff; --accent2:#7ee2a8; --warn:#ffce6a; --bad:#ff8a8a;
+    --code:#0a1024;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:42px 24px 80px}
+  header.hero{text-align:center;padding:48px 28px 40px;background:radial-gradient(1200px 300px at 50% -100px,rgba(110,168,255,.18),transparent);
+    border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(6px)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.5px;padding:5px 12px;border-radius:999px;
+    background:rgba(110,168,255,.12);color:var(--accent);border:1px solid rgba(110,168,255,.35);margin:0 4px 8px}
+  .badge.warn{background:rgba(255,206,106,.12);color:var(--warn);border:1px solid rgba(255,206,106,.4)}
+  .badge.ok{background:rgba(126,226,168,.12);color:var(--accent2);border:1px solid rgba(126,226,168,.35)}
+  h1{font-size:32px;margin:14px 0 6px;letter-spacing:.5px}
+  h1 .accent{background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:16px;color:var(--muted);margin:6px 0 0}
+  h2{font-size:23px;margin:46px 0 16px;padding-left:14px;border-left:4px solid var(--accent)}
+  h3{font-size:18px;margin:26px 0 10px;color:#cfe0ff}
+  p{color:#d6def5}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+  .stat .num{font-size:28px;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--card);border-radius:14px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}
+  th{background:var(--card2);color:#cfe0ff;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Consolas,Menlo,monospace}
+  code{background:var(--code);padding:2px 7px;border-radius:6px;color:#a9d3ff;font-size:13px;border:1px solid #1c2850}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:#cdd8f5}
+  pre .kw{color:#c792ea} pre .str{color:#c3e88d} pre .fn{color:#82aaff} pre .cmt{color:#6b7799}
+  ul{padding-left:22px} li{margin:6px 0}
+  .score-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .score-total{font-size:54px;font-weight:800;background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:9px;border-radius:999px;background:#222e57;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6ea8ff,#7ee2a8)}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(126,226,168,.1);color:var(--accent2);border:1px solid rgba(126,226,168,.3)}
+  .quote{border-left:4px solid var(--accent2);padding:8px 18px;color:#cfe0ff;font-style:italic;background:rgba(126,226,168,.05);border-radius:0 10px 10px 0}
+  .quote.warn{border-left-color:var(--warn);background:rgba(255,206,106,.05)}
+  .compare th:first-child{width:18%}
+  .ok{color:var(--accent2)} .mid{color:var(--warn)} .lo{color:var(--bad)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--border)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <span class="badge">🎮 开源 4X 回合制策略游戏</span>
+      <span class="badge ok">🔓 MPL-2.0</span>
+      <span class="badge">🟦 Kotlin + LibGDX</span>
+      <span class="badge">📱 跨平台（安卓 / 桌面 / 浏览器）</span>
+      <span class="badge">🛠️ 强 Mod 支持</span>
+      <span class="badge ok">🆓 永久免费 · 无广告</span>
+      <span class="badge warn">🔥 今日 GitHub Trending</span>
+    </div>
+    <h1>yairm210/<span class="accent">Unciv</span></h1>
+    <p class="tag">"An open-source, moddability-focused Android and Desktop remake of Civ V, made with LibGDX." —— 用 Kotlin/LibGDX 打造的开源、可深度 Mod 的《文明 5》重制版，安卓与桌面双端通吃，小巧、飞速、永久免费</p>
+    <div class="tag-row" style="justify-content:center;margin-top:14px">
+      <span class="pill">忠实还原《文明 5》玩法</span>
+      <span class="pill">JSON 化强 Mod 体系</span>
+      <span class="pill">单一代码库多端运行</span>
+      <span class="pill">联机 / 热座多人对战</span>
+      <span class="pill">低配机也能流畅跑</span>
+      <span class="pill">社区多语言翻译</span>
+      <span class="pill">F-Droid / Flathub / Play 分发</span>
+    </div>
+  </header>
+
+  <!-- 概览数据 -->
+  <h2>📊 项目概览</h2>
+  <div class="grid">
+    <div class="stat"><div class="num">~10.5k</div><div class="lbl">⭐ Stars</div></div>
+    <div class="stat"><div class="num">~1.8k</div><div class="lbl">🍴 Forks</div></div>
+    <div class="stat"><div class="num">938</div><div class="lbl">🏷️ Releases（极高活跃度）</div></div>
+    <div class="stat"><div class="num">MPL-2.0</div><div class="lbl">📜 开源协议</div></div>
+    <div class="stat"><div class="num">~4.20.14</div><div class="lbl">🚀 最新版本（持续推进）</div></div>
+    <div class="stat"><div class="num">Kotlin 99%</div><div class="lbl">💻 主语言</div></div>
+  </div>
+
+  <div class="card">
+    <p><b>Unciv</b> 是开发者 <b>Yair Morgenstern（GitHub：yairm210）</b>发起、由庞大社区共同打造的<b>开源 4X 回合制文明策略游戏</b>，目标是<b>忠实复刻 Firaxis 的《席德·梅尔的文明 5》（Civilization V）</b>。它的口号极其鲜明：<b>"fast, small, no ads, free forever"（快、小、无广告、永久免费）</b>。玩家可以建立帝国、研究科技、扩张城市、外交斡旋、发动战争——在手机和电脑上获得原汁原味的 Civ V 体验，却不必掏一分钱。</p>
+    <p>区别于《文明 5》的 3D 写实画风，Unciv 选择了 <b>2D 像素 / 简洁风</b>：这既是出于移动端性能与包体体积的考量，也形成了独特的复古美学。但<b>玩法内核严格对齐 Civ V</b>——单位、奇观、科技树、政策、城邦、宗教等系统一应俱全，被 CivFanatics、r/civ、GamingOnLinux 等社区誉为"<b>免费 Civ 体验的最佳选择</b>"。</p>
+    <p>项目的活跃度堪称开源游戏圈的标杆：<b>938 个 Release</b>、Issue 编号已突破 <b>#15,000</b>，最新版本几乎<b>每隔一两天就迭代一次</b>，近期版本集中在大地图的<b>内存与渲染性能优化</b>。F-Droid、Flathub、Google Play、itch.io、AUR 等主流渠道全线分发，是极少数"既能上 Play 商店、又能进 FOSS 社区"的全平台游戏。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <h2>🏗️ 技术架构</h2>
+
+  <h3>1) 技术栈总览</h3>
+  <div class="card">
+    <table>
+      <tr><th style="width:22%">层级</th><th>技术选型</th></tr>
+      <tr><td><b>核心语言</b></td><td><code>Kotlin</code>（占比约 99%），运行于 JVM 之上，兼顾<b>表达力与 Java 生态兼容</b></td></tr>
+      <tr><td><b>游戏框架</b></td><td><b>LibGDX</b> —— 老牌 Java/Kotlin 跨平台游戏框架，一套代码同时输出安卓与桌面端</td></tr>
+      <tr><td><b>工程结构</b></td><td>Gradle 多模块（<code>android</code> / <code>desktop</code> / <code>core</code> 等后端），共享 <code>core</code> 核心逻辑</td></tr>
+      <tr><td><b>Mod 数据格式</b></td><td>基于 <code>JSON</code> 的数据驱动设计：单位、国家、建筑、奇观、资源、地形、科技树均为<b>可编辑的数据文件</b></td></tr>
+      <tr><td><b>序列化 / 存档</b></td><td>Kotlin 数据类 + JSON 序列化，存档与 Mod 共用同一套可读格式</td></tr>
+      <tr><td><b>联机对局</b></td><td>独立的 <code>UncivServer</code>，支持<b>在线异步多人对战</b>与同设备<b>热座（hotseat）</b></td></tr>
+      <tr><td><b>分发渠道</b></td><td>Google Play · F-Droid · Flathub · itch.io · AUR · GitHub Releases（APK / JAR / 安装包）</td></tr>
+      <tr><td><b>协议</b></td><td>Mozilla Public License 2.0（<b>MPL-2.0</b>，弱 copyleft，允许与闭源代码组合）</td></tr>
+    </table>
+  </div>
+
+  <h3>2) "一套代码，多端运行"是如何做到的？</h3>
+  <div class="card">
+    <p>LibGDX 的核心思想是<b>后端抽象（Backend Abstraction）</b>：把游戏逻辑全部放在平台无关的 <code>core</code> 模块，再由 <code>android</code>、<code>desktop</code> 等后端提供各自的入口与平台绑定（渲染、输入、文件 I/O）。Unciv 借此实现了<b>从单一 Kotlin 代码库</b>同时产出安卓 APK 与桌面可执行文件：</p>
+    <pre><span class="cmt">// LibGDX 多后端结构示意</span>
+<span class="kw">core</span>/      <span class="cmt">// 100% 共享：游戏逻辑、规则、渲染、UI（与平台无关）</span>
+├── <span class="kw">android</span>/  <span class="cmt">// 安卓后端：APK 入口、触屏适配、Android 文件系统</span>
+└── <span class="kw">desktop</span>/  <span class="cmt">// 桌面后端：Windows/macOS/Linux 入口、LWJGL 渲染</span>
+<span class="cmt">// 收益：玩法只写一遍，多端同步演进；甚至已被 Rosebud AI 团队移植到浏览器（仅改约 10 个核心文件）</span></pre>
+    <p>正因为这套架构，Unciv 能做到<b>安卓 / Windows / macOS / Linux 全平台同步发布同一版本</b>，甚至第三方仅做少量适配就把它搬进了浏览器——证明了其代码组织的高度解耦。</p>
+  </div>
+
+  <h3>3) 数据驱动的 Mod 体系（核心设计）</h3>
+  <div class="card">
+    <p>Unciv 把"<b>Mod 友好（moddability-focused）</b>"写进了项目自我定位，其底层是一套<b>数据驱动</b>的设计：游戏内容不是硬编码在逻辑里，而是以 JSON 文件描述。社区可以增、删、改几乎一切基础定义：</p>
+    <table>
+      <tr><th>可 Mod 维度</th><th>说明</th></tr>
+      <tr><td><b>Units / Nations / Buildings</b></td><td>单位、国家（文明）、建筑、奇观的属性与效果</td></tr>
+      <tr><td><b>Resources / Terrains / Improvements</b></td><td>资源、地形、地块改良（农场/矿/道路等）</td></tr>
+      <tr><td><b>Tech Tree / Policies</b></td><td>科技树结构与前置关系、社会政策分支</td></tr>
+      <tr><td><b>Rulesets / Translations</b></td><td>完整规则集（如自带 Civ V 基础包），以及社区维护的多语言翻译</td></tr>
+    </table>
+    <p class="quote">🧩 <b>设计哲学</b>：因为内容即数据，玩家无需懂复杂工程，<b>编辑 JSON + 扔进游戏目录</b>就能自制文明、改科技树、加奇观。这使 Unciv 衍生出了庞大且自驱的 Mod 与翻译社区，是它生命力的重要来源。</p>
+  </div>
+
+  <!-- 核心创新点 -->
+  <h2>💡 核心创新点</h2>
+  <div class="card">
+    <ol>
+      <li><b>把商业 3A 大作《文明 5》做成"永久免费 + 开源 + 多端"</b>：在 Firaxis 官方 Civ V 仍收费、且无官方移动版的空白地带，Unciv 用开源方式补齐了"<b>手机上玩原汁原味 Civ V</b>"的需求，被玩家社区奉为免费 Civ 的首选。</li>
+      <li><b>极致轻量与性能优先</b>：以 2D 像素风换取<b>极小体积、极低资源占用、流畅手感</b>，老旧安卓机、低端笔记本都能跑；近期版本持续攻坚<b>大地图内存与渲染瓶颈</b>，工程上把"快与小"当成第一性目标。</li>
+      <li><b>数据驱动的强 Mod 体系</b>：JSON 化的内容定义让<b>造文明、改规则、加奇观</b>门槛极低，催生了活跃的 Mod 与多语言翻译生态——社区既是用户也是共创者。</li>
+      <li><b>单一 Kotlin/LibGDX 代码库多端发布</b>：一套 <code>core</code> 逻辑同步输出安卓与桌面，甚至被第三方仅改动约 10 个文件就移植进浏览器，体现<b>高内聚低耦合</b>的工程素养。</li>
+      <li><b>开源游戏里罕见的超高频迭代</b>：<b>938 个 Release</b>、Issue 突破 #15,000、几乎一两日一更——在"开源游戏常因维护者流失而停摆"的普遍困境下，Unciv 展示了<b>社区协作的可持续高产出</b>。</li>
+      <li><b>联机 + 热座双模式多人</b>：不仅单机，还通过 <code>UncivServer</code> 提供<b>在线异步多人</b>与<b>同设备热座</b>，把"和好友开一局文明"从桌面拓展到移动场景。</li>
+      <li><b>FOSS 与应用商店双线分发</b>：同时出现在 Google Play（面向大众）与 F-Droid / Flathub / AUR（面向开源社区），既保证触达，又守住自由软件的可审计性。</li>
+    </ol>
+  </div>
+
+  <!-- 应用场景 -->
+  <h2>🎯 应用场景</h2>
+  <div class="grid">
+    <div class="stat"><div class="num" style="font-size:20px">📱 移动端策略</div><div class="lbl">通勤 / 碎片时间在手机上来一局文明</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🕹️ 低配设备游玩</div><div class="lbl">老旧手机 / 笔记本也能流畅运行的大作体验</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">💸 免费替代方案</div><div class="lbl">想玩 Civ V 但不愿付费的玩家首选</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🧩 Mod 创作</div><div class="lbl">自制文明 / 奇观 / 科技树，打造专属规则集</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🤝 多人对战</div><div class="lbl">在线联机或同屏热座，与好友文明对决</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🌍 多语言本地化</div><div class="lbl">社区翻译覆盖众多语言，含中文支持</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🎓 通识 / 启蒙</div><div class="lbl">历史、地理、文明的轻量化教育载体</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🧪 开源工程范本</div><div class="lbl">Kotlin + LibGDX 跨平台游戏开发的参考实现</div></div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <h2>⚔️ 竞品对比</h2>
+  <div class="card">
+    <table class="compare">
+      <tr><th>项目</th><th>还原对象</th><th>形态 / 端</th><th>开源 / 价格</th><th>差异化</th></tr>
+      <tr><td><b>Unciv（本作）</b></td><td><b>Civ V</b></td><td>安卓 / 桌面 / 浏览器</td><td class="ok">MPL-2.0 / 免费</td><td><b>移动优先 + 小巧飞速 + 强 Mod + 超高频迭代</b></td></tr>
+      <tr><td>Freeciv</td><td>Civ II</td><td>桌面为主（C/SDL）</td><td class="ok">GPL / 免费</td><td>老牌开源文明，还原的是更早期的 Civ II，非 Civ V</td></tr>
+      <tr><td>Freeciv-web</td><td>Civ II</td><td>浏览器</td><td class="ok">AGPL / 免费</td><td>Freeciv 的网页版，浏览器内即开即玩</td></tr>
+      <tr><td>Civilization V（Firaxis）</td><td>原作本体</td><td>桌面（3A 商业）</td><td class="lo">闭源 / 付费</td><td>官方原版，3D 写实画面与全套 DLC，无移动端</td></tr>
+      <tr><td>Civilization VI</td><td>Civ VI</td><td>桌面 / iOS（商业）</td><td class="lo">闭源 / 付费</td><td>官方新作，机制更复杂、配置要求更高、价格更贵</td></tr>
+      <tr><td>C-evo / Freeciv 类分支</td><td>Civ II 变体</td><td>桌面</td><td class="ok">开源 / 免费</td><td>小众分支，社区与活跃度远不及 Unciv</td></tr>
+    </table>
+    <p class="quote">📐 <b>定位小结</b>：开源策略游戏赛道里，<b>Freeciv 系</b>锁定的是 Civ II 时代，画面与玩法偏老；<b>Unciv</b>则是少数<b>紧跟 Civ V 玩法、且原生移动优先</b>的选手，叠加"轻量、免费、强 Mod、高频更新"，几乎独占了"<b>手机上玩现代文明</b>"这一生态位。对于追求原汁原味 3A 画质的玩家，官方 Civ V/VI 仍是标杆；但对绝大多数想<b>随时随地、零成本</b>来一局文明的玩家，Unciv 是综合体验最佳的选择。</p>
+  </div>
+
+  <!-- 综合评分 -->
+  <h2>⭐ 综合评分</h2>
+  <div class="card score-box">
+    <div>
+      <div class="score-total">9.1<span style="font-size:24px;color:var(--muted)"> / 10</span></div>
+      <div style="color:var(--muted);font-size:14px">综合推荐分（开源策略游戏类）</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div>功能完整度（Civ V 还原） <b style="float:right">9.2</b><div class="bar"><i style="width:92%"></i></div></div>
+      <div style="margin-top:10px">架构与工程 <b style="float:right">9.0</b><div class="bar"><i style="width:90%"></i></div></div>
+      <div style="margin-top:10px">开放性 / 免费 <b style="float:right">9.6</b><div class="bar"><i style="width:96%"></i></div></div>
+      <div style="margin-top:10px">可玩性 / 体验 <b style="float:right">9.3</b><div class="bar"><i style="width:93%"></i></div></div>
+      <div style="margin-top:10px">Mod / 文档生态 <b style="float:right">9.1</b><div class="bar"><i style="width:91%"></i></div></div>
+      <div style="margin-top:10px">性能 / 轻量化 <b style="float:right">8.5</b><div class="bar"><i style="width:85%"></i></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p><b>总评</b>：Unciv 是<b>开源策略游戏领域的现象级作品</b>。它以"Kotlin + LibGDX 单代码库多端发布 + 数据驱动强 Mod 体系 + 永久免费无广告"为底座，把《文明 5》的核心体验<b>完整、流畅、可定制</b>地搬到了手机与桌面。其最大的护城河不是某一项技术，而是<b>超高频的迭代节奏（938 Release）、活跃到 Issue 破万的社区，以及因此积累的丰富 Mod 与多语言生态</b>——这种持续生命力，恰恰是绝大多数开源游戏最稀缺的东西。</p>
+    <p class="quote warn">⚠️ <b>客观短板</b>：2D 像素画风不及官方 Civ V/VI 的 3A 写实质感；联机为异步对局，非实时同步；依赖 JVM/LibGDX，桌面端包体与启动开销对极低端环境仍有门槛；MPL-2.0 下若想闭源商用需注意文件级 copyleft 约束。</p>
+    <p class="quote">✅ <b>推荐人群</b>：通勤路上想玩策略大作的手游党、低配设备用户、追求免费 Civ 体验的玩家、热爱自制内容与翻译的 Modder、Kotlin/LibGDX 跨平台游戏开发的工程师学习者。<br>🎯 <b>一句话</b>：想随时随地、不花一分钱来一局原汁原味的文明？Unciv 就是答案。</p>
+  </div>
+
+  <footer>
+    📅 分析日期：2026-06-19 ｜ 🔥 今日 GitHub Trending ｜ 🤖 由 Claude 深度分析生成<br>
+    📎 数据来源：
+    <a href="https://github.com/yairm210/Unciv">GitHub 仓库</a> ·
+    <a href="https://github.com/yairm210/Unciv/releases">Releases（938+）</a> ·
+    <a href="https://yairm210.github.io/Unciv/">官方文档</a> ·
+    <a href="https://yairm210.github.io/Unciv/Modders/Mods/">Mod 开发文档</a> ·
+    <a href="https://f-droid.org/en/packages/com.unciv.app/">F-Droid</a> ·
+    <a href="https://flathub.org/apps/io.github.yairm210.unciv">Flathub</a> ·
+    <a href="https://play.google.com/store/apps/details?id=com.unciv.app">Google Play</a> ·
+    <a href="https://civilization.fandom.com/wiki/Unciv">Civilization Wiki</a>
+  </footer>
+
+</div>
+</body>
+</html>
