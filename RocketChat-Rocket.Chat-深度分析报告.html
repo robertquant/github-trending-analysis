@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RocketChat/Rocket.Chat 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f1730; --card:#141d3a; --card2:#1a2547;
+    --border:#26315c; --text:#e8edff; --muted:#9aa6cc;
+    --accent:#6ea8ff; --accent2:#7ee2a8; --warn:#ffce6a; --bad:#ff8a8a;
+    --code:#0a1024;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:42px 24px 80px}
+  header.hero{text-align:center;padding:48px 28px 40px;background:radial-gradient(1200px 300px at 50% -100px,rgba(110,168,255,.18),transparent);
+    border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(6px)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.5px;padding:5px 12px;border-radius:999px;
+    background:rgba(110,168,255,.12);color:var(--accent);border:1px solid rgba(110,168,255,.35);margin:0 4px 8px}
+  h1{font-size:34px;margin:14px 0 6px;letter-spacing:.5px}
+  h1 .accent{background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:16px;color:var(--muted);margin:6px 0 0}
+  h2{font-size:23px;margin:46px 0 16px;padding-left:14px;border-left:4px solid var(--accent)}
+  h3{font-size:18px;margin:26px 0 10px;color:#cfe0ff}
+  p{color:#d6def5}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+  .stat .num{font-size:28px;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--card);border-radius:14px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}
+  th{background:var(--card2);color:#cfe0ff;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Consolas,Menlo,monospace}
+  code{background:var(--code);padding:2px 7px;border-radius:6px;color:#a9d3ff;font-size:13px;border:1px solid #1c2850}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:#cdd8f5}
+  pre .kw{color:#c792ea} pre .str{color:#c3e88d} pre .fn{color:#82aaff} pre .cmt{color:#6b7799}
+  ul{padding-left:22px} li{margin:6px 0}
+  .score-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .score-total{font-size:54px;font-weight:800;background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:9px;border-radius:999px;background:#222e57;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6ea8ff,#7ee2a8)}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(126,226,168,.1);color:var(--accent2);border:1px solid rgba(126,226,168,.3)}
+  .quote{border-left:4px solid var(--accent2);padding:8px 18px;color:#cfe0ff;font-style:italic;background:rgba(126,226,168,.05);border-radius:0 10px 10px 0}
+  .compare th:first-child{width:18%}
+  .ok{color:var(--accent2)} .mid{color:var(--warn)} .lo{color:var(--bad)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--border)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <span class="badge">💬 通讯平台</span>
+      <span class="badge">🔐 Secure CommsOS™</span>
+      <span class="badge">🟦 TypeScript / Node.js</span>
+      <span class="badge">🌍 自托管 / 气隙隔离</span>
+      <span class="badge">🔥 今日 GitHub Trending</span>
+    </div>
+    <h1>RocketChat/<span class="accent">Rocket.Chat</span></h1>
+    <p class="tag">"The communications platform that puts data protection first" —— 面向企业/政府/国防的自主可控开源通讯操作系统</p>
+    <div class="tag-row" style="justify-content:center;margin-top:14px">
+      <span class="pill">omnichannel</span>
+      <span class="pill">E2E encryption</span>
+      <span class="pill">federation (Matrix)</span>
+      <span class="pill">Jitsi voice/video</span>
+      <span class="pill">Apps Engine</span>
+      <span class="pill">AI assistant</span>
+    </div>
+  </header>
+
+  <!-- 概览数据 -->
+  <h2>📊 项目概览</h2>
+  <div class="grid">
+    <div class="stat"><div class="num">~42,000</div><div class="lbl">⭐ Stars</div></div>
+    <div class="stat"><div class="num">~11,500</div><div class="lbl">🍴 Forks</div></div>
+    <div class="stat"><div class="num">MIT</div><div class="lbl">📜 开源协议</div></div>
+    <div class="stat"><div class="num">Node 22</div><div class="lbl">⚙️ 运行时</div></div>
+  </div>
+
+  <table>
+    <tr><th>维度</th><th>详情</th></tr>
+    <tr><td><b>仓库</b></td><td><a href="https://github.com/RocketChat/Rocket.Chat">github.com/RocketChat/Rocket.Chat</a></td></tr>
+    <tr><td><b>官网</b></td><td><a href="https://www.rocket.chat/">rocket.chat</a>（定位为 Secure CommsOS™）</td></tr>
+    <tr><td><b>一句话定位</b></td><td>开源、安全、完全可定制的通讯平台（Open-source secure customizable communications platform）</td></tr>
+    <tr><td><b>主语言</b></td><td>TypeScript（核心，正从历史 Meteor/JS 迁移）· 客户端含 React / React Native</td></tr>
+    <tr><td><b>运行时</b></td><td>Node.js 22.22.3（engine 8.4.4）</td></tr>
+    <tr><td><b>开源协议</b></td><td>MIT（社区版完全自由，商用友好）</td></tr>
+    <tr><td><b>版本节奏</b></td><td>每个主版本支持约 <b>6 个月</b>，频繁发布（见 <a href="https://github.com/RocketChat/Rocket.Chat/releases">Releases</a>）</td></tr>
+    <tr><td><b>部署形态</b></td><td>自托管（self-hosted）· 云托管 · <b>气隙隔离（air-gapped）</b> · 本地部署（on-premise）</td></tr>
+    <tr><td><b>目标行业</b></td><td>商业企业 · 政府 · 国防 · 情报 · 关键基础设施（对数据主权/隐私要求极高）</td></tr>
+    <tr><td><b>维护方</b></td><td>Rocket.Chat 公司 + 活跃开源社区（贡献者数百）</td></tr>
+    <tr><td><b>版本分层</b></td><td>Community（社区免费）· Starter（入门免费）· Team / Enterprise / Government / Defense</td></tr>
+  </table>
+
+  <!-- 项目概述 -->
+  <h2>🧭 项目概述</h2>
+  <div class="card">
+    <p><b>Rocket.Chat</b> 是全球最知名的开源团队通讯与协作平台之一，常被视为 Slack 的自托管替代品。它将<b>消息、语音、视频、文件、关键业务应用与 AI</b> 统一到一个可完全自主掌控的平台中，核心理念可以一句话概括：</p>
+    <div class="quote">"在数据主权与隐私合规至关重要的场景里，给你一个<b>能完全自己部署、自己审计、自己掌控</b>的通讯操作系统。"</div>
+    <p style="margin-top:14px">2025 年起，项目正式将自身重塑为 <b>Secure CommsOS™（安全通讯操作系统）</b>，明确把目标客群聚焦在<b>国防、情报、关键基础设施</b>等"任务关键"领域，以及强监管的商业企业与政府机构。这与 Slack（纯云、不可自托管）形成鲜明差异，也让它在国内"信创/自主可控"语境下极具吸引力。</p>
+    <p>项目诞生于 2015 年的巴西，早期基于 <b>Meteor</b> 全栈框架构建，多年来持续把后端从 JavaScript 向 <b>TypeScript</b> 迁移重构，运行于 <b>Node.js</b>（当前 22.22.3）。凭借 MIT 协议、强大功能与可气隙部署的特性，它在 GitHub 收获约 <b>4.2 万 Stars</b>，是开源通讯赛道里生态最成熟、企业落地最广的项目之一。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <h2>🏗️ 技术架构</h2>
+
+  <h3>1) 总体范式：模块化客户端—服务器架构</h3>
+  <div class="card">
+    <p>官方文档将 Rocket.Chat 描述为<b>模块化、多组件的客户端—服务器架构</b>，以可扩展性（extensibility）为核心设计目标：</p>
+    <ul>
+      <li><b>服务端</b>：Node.js + TypeScript，历史上依托 Meteor，现已大量重写；通过 DDP/WebSocket 与订阅机制实现实时通讯</li>
+      <li><b>多端客户端</b>：Web（React）· 桌面（Electron）· 移动（<b>React Native</b>，支持服务端 0.70.0+ / Android 6.0+）</li>
+      <li><b>数据层</b>：MongoDB 为主存储；通过副本集/分片实现横向扩展</li>
+      <li><b>扩展层</b>：<b>Apps Engine</b> 插件框架 + Apps Marketplace，第三方应用可监听事件、调用宿主 API</li>
+      <li><b>实时协议</b>：WebSocket 长连接 + 发布/订阅，保证消息即时送达与会话同步</li>
+    </ul>
+    <pre><span class="cmt"># 典型自托管部署（Docker，最常见方式）</span>
+docker run --name rocketchat \
+  -p 3000:3000 \
+  --link db:mongo \
+  -e ROOT_URL=http://localhost:3000 \
+  -e MONGO_URL=mongodb://mongo:27017/rocketchat \
+  -d registry.rocket.chat/rocketchat/rocket.chat:latest
+
+<span class="cmt"># 之后访问 http://localhost:3000 完成初始化向导，</span>
+<span class="cmt"># 在 Admin UI 启用 E2E 加密 / Omnichannel / 视频会议等模块</span></pre>
+  </div>
+
+  <h3>2) 五大功能支柱</h3>
+  <div class="card">
+    <table>
+      <tr><th>支柱</th><th>说明</th></tr>
+      <tr>
+        <td><b>统一通讯</b></td>
+        <td>聊天、语音、视频、屏幕共享、文件共享融于单一"主权平台"，跨桌面/Web/移动一致体验。</td>
+      </tr>
+      <tr>
+        <td><b>Omnichannel / Livechat</b></td>
+        <td>多渠道客户沟通中枢：可嵌入网站的<b>实时聊天小部件</b>，集成 Facebook 等社交渠道；按<b>部门</b>分流、<b>坐席/经理</b>角色管理、离线留言、联络中心目录与分析看板。</td>
+      </tr>
+      <tr>
+        <td><b>语音/视频会议（Jitsi）</b></td>
+        <td>原生集成 <b>Jitsi Meet</b>（开源、端到端加密视频会议），可从 DM/频道/团队/讨论直接发起通话，支持屏幕共享、协同编辑、主持人识别；可选 JWT 鉴权，支持<b>气隙离线</b>部署。</td>
+      </tr>
+      <tr>
+        <td><b>Federation（联邦）</b></td>
+        <td><b>v7.11 引入原生 Federation（Alpha）</b>，并与 <b>Matrix 协议官方合作</b>——可用 Synapse homeserver 搭建桥接，在多个 Rocket.Chat 服务器或任意 Matrix 兼容平台间<b>去中心化跨工作区协作</b>，同时保持数据自主。</td>
+      </tr>
+      <tr>
+        <td><b>AI 助手</b></td>
+        <td>官方 <b>Rocket.Chat AI App</b> 与 <b>ChatGPT 应用</b>（基于 OpenAI）：问答、内容创作、编程辅助、长消息摘要、起草回复；另有开源 <b>RocketAssist</b> 等社区方案，均通过 Apps Engine / Marketplace 接入。</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>3) 安全与合规能力</h3>
+  <div class="card">
+    <p>这是 Rocket.Chat 区别于 Slack 的<b>核心护城河</b>，尤其针对政府/国防场景：</p>
+    <ul>
+      <li><b>端到端加密（E2E Encryption）</b>：私聊/群聊可启用 E2EE，服务端也无法解密内容</li>
+      <li><b>基于角色的访问控制（RBAC）</b>：细粒度权限与角色体系</li>
+      <li><b>审计日志（Audit Logging）</b>：满足合规追溯需求</li>
+      <li><b>气隙隔离部署</b>：完全离线、与外部网络物理隔离，适合国防/保密环境</li>
+      <li><b>数据主权</b>：完全自托管，数据不离开自有基础设施</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>🏗️ 架构层次一览</h3>
+    <pre><span class="cmt">┌──────────────────────────────────────────────────────────┐
+│  应用层：团队聊天 · Omnichannel/Livechat · Jitsi 视频会议 · AI 助手        │
+├──────────────────────────────────────────────────────────┤
+│  扩展层：Apps Engine（插件框架）· Apps Marketplace · Webhook · REST API    │
+├──────────────────────────────────────────────────────────┤
+│  实时层：WebSocket + DDP 发布订阅 · Federation(Matrix/Synapse) 联邦       │
+├──────────────────────────────────────────────────────────┤
+│  服务端：Node.js 22 + TypeScript（自 Meteor 迁移重构）· REST · 权限/审计   │
+├──────────────────────────────────────────────────────────┤
+│  数据层：MongoDB（主存储，副本集/分片横向扩展）                           │
+├──────────────────────────────────────────────────────────┤
+│  安全层：E2E 加密 · RBAC · 审计日志 · 气隙/本地/云 多形态部署             │
+└──────────────────────────────────────────────────────────┘</span></pre>
+  </div>
+
+  <!-- 核心创新点 -->
+  <h2>💡 核心创新点</h2>
+  <div class="card">
+    <h3>① 从"聊天工具"升级为"Secure CommsOS™"</h3>
+    <p>2025 年品牌重塑，把自身定位从 Slack 替代品提升为<b>面向任务关键场景的安全通讯操作系统</b>，直指国防/情报/关键基础设施——这是开源通讯赛道里少见的、对极高安全要求场景的明确承诺。</p>
+
+    <h3>② 气隙隔离 + 完全自托管 = 数据主权</h3>
+    <p>支持完全离线、物理隔离的 air-gapped 部署，数据寸步不离自有设施。对信创、政府、军工、金融强监管行业而言，这是 Slack 这类纯云产品<b>结构性无法提供</b>的能力。</p>
+
+    <h3>③ Omnichannel：团队协作与客服一体化</h3>
+    <p>不同于纯内部协作工具，Rocket.Chat 把<b>对内的团队沟通</b>与<b>对外的客户联络中心（Livechat/多渠道）</b>融合在一个平台，部门分流、坐席排班、分析看板一应俱全，省去额外采购客服系统。</p>
+
+    <h3>④ 拥抱 Matrix 联邦标准</h3>
+    <p>与 Matrix 协议官方合作、v7.11 引入原生 Federation，意味着 Rocket.Chat 不再是孤岛——可与其它 Matrix 兼容平台<b>去中心化互联</b>，同时保留各组织的数据自主权，契合跨组织/跨机构协作。</p>
+
+    <h3>⑤ Apps Engine + Marketplace 的可扩展生态</h3>
+    <p>提供完备的插件框架（TypeScript SDK），第三方可在 Marketplace 发布应用、监听宿主事件、调用平台 API，形成从集成到 AI 应用的扩展生态——这是它能从"聊天"长成"平台"的工程基础。</p>
+
+    <h3>⑥ 全栈 TypeScript 现代化重构</h3>
+    <p>持续把历史 Meteor/JavaScript 代码迁移到 <b>TypeScript</b>，运行于最新 Node.js 22，在保留十年代码沉淀的同时提升类型安全与可维护性，体现成熟项目的工程演进能力。</p>
+  </div>
+
+  <!-- 应用场景 -->
+  <h2>🎯 应用场景</h2>
+  <div class="grid">
+    <div class="stat"><div style="font-size:22px">🏢</div><div class="lbl"><b>企业内部协作</b><br>Slack 的自托管替代</div></div>
+    <div class="stat"><div style="font-size:22px">🛡️</div><div class="lbl"><b>国防/情报通讯</b><br>气隙隔离、任务关键</div></div>
+    <div class="stat"><div style="font-size:22px">🏛️</div><div class="lbl"><b>政府/公共部门</b><br>合规、数据主权</div></div>
+    <div class="stat"><div style="font-size:22px">🎧</div><div class="lbl"><b>客服/呼叫中心</b><br>Omnichannel Livechat</div></div>
+    <div class="stat"><div style="font-size:22px">🤝</div><div class="lbl"><b>跨组织协作</b><br>Matrix Federation</div></div>
+    <div class="stat"><div style="font-size:22px">🇨🇳</div><div class="lbl"><b>信创/自主可控</b><br>内网私有化部署</div></div>
+    <div class="stat"><div style="font-size:22px">🤖</div><div class="lbl"><b>AI 增强办公</b><br>摘要、问答、起草</div></div>
+    <div class="stat"><div style="font-size:22px">🔌</div><div class="lbl"><b>开放社区/开源项目</b><br>自建讨论阵地</div></div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <h2>⚖️ 竞品对比</h2>
+  <table class="compare">
+    <tr><th>方案</th><th>定位</th><th>与 Rocket.Chat 对比</th></tr>
+    <tr>
+      <td><b>Slack</b></td><td>云端团队协作（闭源标杆）</td>
+      <td>集成生态最丰富、体验最成熟，但<b>纯云、不可自托管</b>，数据不在自己手里。Rocket.Chat 凭<b>自托管/气隙/数据主权</b>在合规场景完胜，生态体验略逊。</td>
+    </tr>
+    <tr>
+      <td><b>Mattermost</b></td><td>开源自托管协作（最像 Slack）</td>
+      <td>同为开源自托管 Slack 替代，主打"最 Slack-like"体验与安全合规。<b>Rocket.Chat 在 Omnichannel 客服、语音视频（Jitsi）、跨平台与社区规模上更全</b>；Mattermost 在 DevOps/ChatOps 集成与界面纯净度上口碑略好。</td>
+    </tr>
+    <tr>
+      <td><b>Zulip</b></td><td>话题式（topic）开源协作</td>
+      <td>以<b>话题线程模型</b>见长，适合异步、结构化讨论；功能聚焦内部协作，<b>缺乏 Omnichannel 客服与音视频深度集成</b>。Rocket.Chat 功能面更广、更偏"统一通讯"。</td>
+    </tr>
+    <tr>
+      <td><b>Element / Matrix</b></td><td>去中心化联邦协议与客户端</td>
+      <td>主打<b>去中心化、端到端加密、联邦</b>理念。Rocket.Chat 已与 Matrix 合作并支持联邦，相当于"既给开箱即用的产品，又接开放标准"——体验更完整，Element 更"协议原生"。</td>
+    </tr>
+    <tr>
+      <td><b>Microsoft Teams</b></td><td>企业级协作（绑定 M365）</td>
+      <td>深度嵌入 Office 365 生态，企业覆盖广但<b>闭源、绑定微软云</b>，定制与数据自主受限。Rocket.Chat 以开源 + 自托管 + 可定制取胜，适合不愿被锁定的大企业。</td>
+    </tr>
+  </table>
+
+  <div class="quote" style="margin-top:14px">Rocket.Chat 的差异化壁垒在于"<b>开源 MIT + 气隙/自托管的数据主权 + Omnichannel 客服一体化 + Jitsi 音视频 + Matrix 联邦 + Apps Engine 扩展生态</b>"这一组合。它不只是又一个 Slack 替代品，而是<b>面向"任务关键 + 自主可控"场景的开源通讯操作系统标杆</b>。</div>
+
+  <!-- 综合评分 -->
+  <h2>🏆 综合评分</h2>
+  <div class="card score-box">
+    <div>
+      <div class="score-total">8.8<span style="font-size:24px;color:var(--muted)"> / 10</span></div>
+      <div class="lbl" style="color:var(--muted)">综合推荐度</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <table style="margin:0">
+        <tr><td>功能完整度</td><td style="width:120px"><div class="bar"><i style="width:92%"></i></div></td><td><b>9.2</b></td></tr>
+        <tr><td>安全与合规</td><td><div class="bar"><i style="width:95%"></i></div></td><td><b>9.5</b></td></tr>
+        <tr><td>工程质量</td><td><div class="bar"><i style="width:82%"></i></div></td><td><b>8.2</b></td></tr>
+        <tr><td>实用价值</td><td><div class="bar"><i style="width:90%"></i></div></td><td><b>9.0</b></td></tr>
+        <tr><td>文档与生态</td><td><div class="bar"><i style="width:88%"></i></div></td><td><b>8.8</b></td></tr>
+        <tr><td>社区成熟度</td><td><div class="bar"><i style="width:82%"></i></div></td><td><b>8.2</b></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">📋 总评</h3>
+    <p><b>Rocket.Chat 是开源"自主可控通讯"赛道的标杆与全功能选手。</b>它把团队聊天、Omnichannel 客服、Jitsi 音视频、Matrix 联邦、Apps Engine 扩展与 AI 助手整合进一个 MIT 协议、可气隙部署的平台，在 GitHub 拥有约 <b>4.2 万 Stars</b>，是生态最成熟、企业落地最广的开源通讯项目之一。</p>
+    <p>2025 年品牌重塑为 <b>Secure CommsOS™</b>，明确锁定<b>国防、情报、关键基础设施</b>等任务关键场景，并持续以 <b>TypeScript + Node.js 22</b> 现代化重构历史 Meteor 代码。对国内团队而言，它在"信创/私有化/数据主权"语境下几乎是<b>最完整的一站式选择</b>。</p>
+    <p><b>主要权衡：</b>① 历史代码包袱较重，TypeScript 迁移仍在进行，部分社区反馈大版本升级存在适配成本；② 高级功能（高级 Omnichannel 连接器、企业级支持）需要付费档；③ 相比 Slack，第三方集成广度仍有差距。整体功能"大而全"也意味着部署与运维复杂度高于轻量竞品。</p>
+    <p style="margin-bottom:0"><span class="ok"><b>结论：强烈推荐给需要私有化部署、数据主权或全渠道客服的团队；纯云轻量协作可考虑 Mattermost/Zulip，深度绑定 Office 生态则 Teams。</b></span></p>
+  </div>
+
+  <footer>
+    📅 分析日期：2026-06-18 ｜ 数据来源：<a href="https://github.com/RocketChat/Rocket.Chat">GitHub</a> · <a href="https://www.rocket.chat/">Rocket.Chat 官网</a> · <a href="https://docs.rocket.chat/docs/architecture-and-components">架构文档</a> · <a href="https://docs.rocket.chat/docs/decentralized-communication-with-federation-in-rocketchat">Federation 文档</a> · <a href="https://docs.rocket.chat/docs/jitsi-app">Jitsi 集成</a><br>
+    GitHub Project Deep Analyzer · RocketChat/Rocket.Chat
+  </footer>
+
+</div>
+</body>
+</html>
