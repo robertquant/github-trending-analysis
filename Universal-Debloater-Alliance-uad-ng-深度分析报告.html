@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal-Debloater-Alliance/uad-ng 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f1730; --card:#141d3a; --card2:#1a2547;
+    --border:#26315c; --text:#e8edff; --muted:#9aa6cc;
+    --accent:#6ea8ff; --accent2:#7ee2a8; --warn:#ffce6a; --bad:#ff8a8a;
+    --code:#0a1024;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:42px 24px 80px}
+  header.hero{text-align:center;padding:48px 28px 40px;background:radial-gradient(1200px 300px at 50% -100px,rgba(110,168,255,.18),transparent);
+    border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(6px)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.5px;padding:5px 12px;border-radius:999px;
+    background:rgba(110,168,255,.12);color:var(--accent);border:1px solid rgba(110,168,255,.35);margin:0 4px 8px}
+  .badge.warn{background:rgba(255,206,106,.12);color:var(--warn);border:1px solid rgba(255,206,106,.4)}
+  .badge.ok{background:rgba(126,226,168,.12);color:var(--accent2);border:1px solid rgba(126,226,168,.35)}
+  h1{font-size:32px;margin:14px 0 6px;letter-spacing:.5px}
+  h1 .accent{background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:16px;color:var(--muted);margin:6px 0 0}
+  h2{font-size:23px;margin:46px 0 16px;padding-left:14px;border-left:4px solid var(--accent)}
+  h3{font-size:18px;margin:26px 0 10px;color:#cfe0ff}
+  p{color:#d6def5}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+  .stat .num{font-size:28px;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--card);border-radius:14px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}
+  th{background:var(--card2);color:#cfe0ff;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Consolas,Menlo,monospace}
+  code{background:var(--code);padding:2px 7px;border-radius:6px;color:#a9d3ff;font-size:13px;border:1px solid #1c2850}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:#cdd8f5}
+  pre .kw{color:#c792ea} pre .str{color:#c3e88d} pre .fn{color:#82aaff} pre .cmt{color:#6b7799}
+  ul{padding-left:22px} li{margin:6px 0}
+  .score-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .score-total{font-size:54px;font-weight:800;background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:9px;border-radius:999px;background:#222e57;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6ea8ff,#7ee2a8)}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(126,226,168,.1);color:var(--accent2);border:1px solid rgba(126,226,168,.3)}
+  .quote{border-left:4px solid var(--accent2);padding:8px 18px;color:#cfe0ff;font-style:italic;background:rgba(126,226,168,.05);border-radius:0 10px 10px 0}
+  .quote.warn{border-left-color:var(--warn);background:rgba(255,206,106,.05)}
+  .compare th:first-child{width:18%}
+  .ok{color:var(--accent2)} .mid{color:var(--warn)} .lo{color:var(--bad)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--border)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <span class="badge">📱 Android 去臃肿工具</span>
+      <span class="badge ok">🔓 GPL-3.0</span>
+      <span class="badge">🦀 Rust 跨平台桌面 GUI</span>
+      <span class="badge">🚫 无需 Root</span>
+      <span class="badge warn">🔗 依赖 ADB / PC</span>
+      <span class="badge">🔥 今日 GitHub Trending</span>
+    </div>
+    <h1>Universal-Debloater-Alliance/<span class="accent">uad-ng</span></h1>
+    <p class="tag">"Cross-platform GUI written in Rust using ADB to debloat non-rooted Android devices." —— 用 Rust 写的跨平台桌面 GUI，靠 ADB 给非 Root 安卓设备"瘦身"</p>
+    <div class="tag-row" style="justify-content:center;margin-top:14px">
+      <span class="pill">免 Root</span>
+      <span class="pill">通用卸载列表 (UAD-List)</span>
+      <span class="pill">Recommended / Advanced / Expert 分级</span>
+      <span class="pill">多用户卸载</span>
+      <span class="pill">一键还原</span>
+      <span class="pill">零遥测</span>
+      <span class="pill">Win / macOS / Linux</span>
+    </div>
+  </header>
+
+  <!-- 概览数据 -->
+  <h2>📊 项目概览</h2>
+  <div class="grid">
+    <div class="stat"><div class="num">~7,600</div><div class="lbl">⭐ Stars</div></div>
+    <div class="stat"><div class="num">~328</div><div class="lbl">🍴 Forks</div></div>
+    <div class="stat"><div class="num">144</div><div class="lbl">👥 贡献者</div></div>
+    <div class="stat"><div class="num">GPL-3.0</div><div class="lbl">📜 开源协议</div></div>
+    <div class="stat"><div class="num">v1.2.0</div><div class="lbl">🏷️ 最新版本（2026-01-12）</div></div>
+    <div class="stat"><div class="num">Rust 99%</div><div class="lbl">💻 主语言</div></div>
+  </div>
+
+  <div class="card">
+    <p><b>Universal Android Debloater Next Generation（简称 UAD-ng）</b> 是一款<b>跨平台桌面 GUI 工具</b>，通过 <b>ADB（Android Debug Bridge）</b>连接手机，帮助用户在<b>无需 Root</b> 的前提下，安全地卸载运营商与厂商预装的臃肿软件（bloatware）与隐蔽的系统应用。它的三大目标非常清晰：<b>提升隐私、提升安全（收缩攻击面）、延长续航与性能</b>。</p>
+    <p>值得注意的是，它并非从零起步，而是原版 UAD（作者 <code>@0x192</code>）的<b>社区接力分支（detached fork）</b>。在原作者逐渐放缓维护后，<b>Universal-Debloater-Alliance</b> 联盟接过了维护权，让这个被无数用户视为"神器"的项目焕发新生，持续更新包名数据库与设备适配。r/dumbphones 等社区直接称其为"圣杯（HOLY GRAIL）"。</p>
+    <p>它在隐私上极其克制：官方明确声明 <b>UAD-ng 不收集也不上传任何用户数据</b>，唯一的对外网络请求是两个指向 GitHub 的 <code>GET</code>——一个用于拉取最新的包名安全分级列表，一个用于检查版本更新。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <h2>🏗️ 技术架构</h2>
+
+  <h3>1) 技术栈总览</h3>
+  <div class="card">
+    <table>
+      <tr><th style="width:22%">层级</th><th>技术选型</th></tr>
+      <tr><td><b>核心语言</b></td><td><code>Rust</code>（占比 99%），兼顾<b>内存安全、高性能与跨平台单二进制分发</b></td></tr>
+      <tr><td><b>桌面 GUI</b></td><td>原生 Rust <b>Iced</b> GUI 库（README 致谢中明确提及；社区在持续讨论 UI 框架演进）</td></tr>
+      <tr><td><b>工程结构</b></td><td><b>Cargo workspace</b>（<code>crates/</code> 多 crate 模块化）+ <code>.cargo</code> 构建配置 + <code>build.rs</code></td></tr>
+      <tr><td><b>可复现构建</b></td><td>提供 <b>Nix flake</b>（<code>flake.nix</code> / <code>flake.lock</code>），保证构建环境可复现</td></tr>
+      <tr><td><b>设备通信</b></td><td>调用系统 <code>adb</code>（Android Debug Bridge），通过 USB / 无线 ADB 与设备交互</td></tr>
+      <tr><td><b>知识库</b></td><td><b>Universal Debloat List</b>（编译进 <code>src/core/uad_lists.rs</code>，启动时从 GitHub 拉取更新）</td></tr>
+      <tr><td><b>分发</b></td><td>GitHub Releases（Win/macOS/Linux）· WinGet · AUR · Nix</td></tr>
+      <tr><td><b>协议</b></td><td>GNU General Public License v3.0（GPL-3.0）</td></tr>
+    </table>
+  </div>
+
+  <h3>2) 工作原理：免 Root 是如何做到的？</h3>
+  <div class="card">
+    <p>关键在于 ADB 的 <b>多用户卸载（per-user uninstall）</b>能力。Android 系统应用属于 <code>system</code> 分区，普通用户无法真正删除；但 ADB 拥有 shell 级权限，可以针对<b>特定用户</b>（通常是 <code>--user 0</code>，即机主）执行卸载/禁用：</p>
+    <pre><span class="cmt"># UAD-ng 实际等价命令（对当前用户卸载，不改 system 分区）</span>
+adb shell pm uninstall -k <span class="str">--user 0</span> &lt;package_name&gt;
+<span class="cmt"># 优势：免 Root、可一键还原；代价：恢复出厂设置后应用会回来</span></pre>
+    <p>UAD-ng 把这套流程<b>图形化、批量化、安全化</b>：连接 → 枚举设备已装包 → 用内置知识库给每个包打上"安全分级"与"类别"标签 → 用户勾选 → 批量执行，并记录操作日志便于回滚。</p>
+  </div>
+
+  <h3>3) 安全分级机制（核心设计）</h3>
+  <div class="card">
+    <p>UAD-ng 维护的<b>通用卸载列表</b>是其真正的护城河——一套由社区多年沉淀、覆盖各 OEM（三星 / 小米 / OPPO / 索尼等）与运营商的包名知识库，把每个包分为若干推荐操作档位：</p>
+    <table>
+      <tr><th>档位</th><th>含义</th><th>风险</th></tr>
+      <tr><td><b class="ok">Recommended（推荐）</b></td><td>明确可安全移除的臃肿件：运营商应用、Google/OEM 重复应用、遥测类</td><td><span class="ok">低</span></td></tr>
+      <tr><td><b class="mid">Advanced（进阶）</b></td><td>可能有用、需判断的功能性应用，需一定了解</td><td><span class="mid">中</span></td></tr>
+      <tr><td><b class="lo">Expert（专家）</b></td><td>含关键系统组件，误删可能导致相机/电话/设置失效甚至变砖</td><td><span class="lo">高</span></td></tr>
+      <tr><td><b>Uninstall / Restore</b></td><td>所有操作均可一键还原，工具记录完整变更日志</td><td>—</td></tr>
+    </table>
+    <p class="quote warn">⚠️ 工程警示：UI 默认聚焦"Recommended"档；贸然进入 Expert 级并勾选可能<b>导致设备功能缺失或 bootloop</b>。社区里流传着多部"我清干净了安卓……然后学到惨痛一课"的视频与帖子。</p>
+  </div>
+
+  <!-- 核心创新点 -->
+  <h2>💡 核心创新点</h2>
+  <div class="card">
+    <ol>
+      <li><b>免 Root × 跨平台桌面 GUI 的稀缺定位</b>：在"Root 党"（Magisk/KernelSU）与"手机端 Shizuku 党"（Canta）之外，UAD-ng 卡住了"<b>PC + ADB、免 Root、Windows/macOS/Linux 通吃</b>"这一独特生态位，门槛低、风险可控。</li>
+      <li><b>通用卸载列表（UAD List）—— 行业事实标准</b>：它维护的包名安全分级库，已被 <b>Canta、SD Maid SE（AppControl）、AppManager、android-debloat-list</b> 等竞品直接消费。UAD-ng 既是工具，也是整个去臃肿生态的<b>知识底座</b>。</li>
+      <li><b>隐私优先，零遥测</b>：GPL-3.0 + 仅两个 GitHub GET 请求 + 无账号无云端。在"清理类工具常被怀疑偷数据"的背景下，这一点对隐私社区（PrivacyGuides / Techlore / r/fossdroid）至关重要。</li>
+      <li><b>Rust 重写带来工程现代化</b>：相比许多同类（C# / Java / Electron），Rust 带来<b>单文件分发、低内存占用、内存安全</b>，并通过 Nix flake 实现可复现构建，工程水准在桌面小工具中属于上乘。</li>
+      <li><b>社区接力（Fork-to-Alliance）的可持续模式</b>：原项目停滞后，由联盟接管并持续迭代至 v1.2.0（2026-01）、144 位贡献者、2015 次提交——证明开源项目"换手不换魂"的成功路径。</li>
+      <li><b>批量操作 + 多用户 + 一键还原</b>：支持跨多用户（<code>--user</code>）批量卸载/禁用，并完整记录变更日志以便随时还原，把原本需要逐条手敲 ADB 的繁琐流程产品化。</li>
+    </ol>
+  </div>
+
+  <!-- 应用场景 -->
+  <h2>🎯 应用场景</h2>
+  <div class="grid">
+    <div class="stat"><div class="num" style="font-size:20px">🆕 新机净化</div><div class="lbl">新买手机一次性清理预装，夺回干净系统</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🔒 隐私加固</div><div class="lbl">移除遥测/广告/不可关闭的后台采集组件</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🔋 续航/性能</div><div class="lbl">砍掉常驻后台的 OEM 服务，提升续航与流畅度</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">📵 极简/老人机</div><div class="lbl">r/dumbphones 社区核心工具，打造"反智能手机"</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🏢 企业设备分发</div><div class="lbl">IT 批量规整员工安卓设备，统一去臃肿基线</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🧪 测试/开发环境</div><div class="lbl">为测试与开发准备干净、低干扰的 Android 环境</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">🛡️ 攻击面收缩</div><div class="lbl">移除冷门系统服务，降低可被利用的暴露面</div></div>
+    <div class="stat"><div class="num" style="font-size:20px">♻️ 二手设备焕新</div><div class="lbl">二手/翻新机深度清理，恢复可用空间</div></div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <h2>⚔️ 竞品对比</h2>
+  <div class="card">
+    <table class="compare">
+      <tr><th>工具</th><th>形态</th><th>免 Root</th><th>开源</th><th>差异化</th></tr>
+      <tr><td><b>UAD-ng（本作）</b></td><td>PC 桌面 GUI（Rust）</td><td class="ok">✅（ADB）</td><td class="ok">GPL-3.0</td><td>跨平台 + <b>UAD List 知识底座</b> + 零遥测</td></tr>
+      <tr><td>Canta</td><td>手机端 App</td><td class="ok">✅（Shizuku）</td><td class="ok">开源</td><td>免 PC、手机直连，<b>直接消费 UAD List</b></td></tr>
+      <tr><td>SD Maid SE（AppControl）</td><td>手机端系统管家</td><td class="ok">✅（ADB/Shizuku）</td><td class="ok">开源</td><td>清理全家桶（缓存/重复/尸体）+ 卸载</td></tr>
+      <tr><td>AppManager（Muntashir Akon）</td><td>手机端高级管理</td><td class="ok">✅（ADB/Shizuku/Root）</td><td class="ok">开源</td><td>功能最重的全功能应用管理器</td></tr>
+      <tr><td>ADB AppControl</td><td>Windows 桌面（C#）</td><td class="ok">✅（ADB）</td><td class="lo">❌ 闭源/付费</td><td>4 档分级 + fastboot/logcat 控制台，Windows 专属</td></tr>
+      <tr><td>Magisk / KernelSU</td><td>Root 框架</td><td class="lo">需 Root</td><td class="ok">开源</td><td>权限最高，可真正删除 system；但<b>风险/门槛最高</b></td></tr>
+    </table>
+    <p class="quote">📐 <b>定位小结</b>：生态里最有价值的恰恰是 <b>UAD-ng 维护的那份"通用卸载列表"</b>——它既是自家工具的引擎，也是 Canta / SD Maid / AppManager 的公共数据源。换句话说，UAD-ng 在"工具竞争"之上，还扮演着"<b>行业知识基础设施</b>"的角色。Canta 适合"完全不想碰电脑"的用户，ADB AppControl 适合"Windows 重度 + 愿付费"的用户，而 UAD-ng 适合<b>重视开源、跨平台、隐私与社区可信度</b>的桌面用户。</p>
+  </div>
+
+  <!-- 综合评分 -->
+  <h2>⭐ 综合评分</h2>
+  <div class="card score-box">
+    <div>
+      <div class="score-total">8.3<span style="font-size:24px;color:var(--muted)"> / 10</span></div>
+      <div style="color:var(--muted);font-size:14px">综合推荐分（开源隐私工具类）</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div>功能完整度 <b style="float:right">8.0</b><div class="bar"><i style="width:80%"></i></div></div>
+      <div style="margin-top:10px">架构与工程 <b style="float:right">8.5</b><div class="bar"><i style="width:85%"></i></div></div>
+      <div style="margin-top:10px">开放性 / 隐私 <b style="float:right">9.4</b><div class="bar"><i style="width:94%"></i></div></div>
+      <div style="margin-top:10px">实用价值 <b style="float:right">8.8</b><div class="bar"><i style="width:88%"></i></div></div>
+      <div style="margin-top:10px">文档与生态 <b style="float:right">8.2</b><div class="bar"><i style="width:82%"></i></div></div>
+      <div style="margin-top:10px">安全 / 稳健性 <b style="float:right">7.2</b><div class="bar"><i style="width:72%"></i></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p><b>总评</b>：UAD-ng 是<b>免 Root 安卓去臃肿</b>赛道的标杆与隐形基础设施。它以"GPL-3.0 + Rust 跨平台 + 零遥测 + 社区接力"为底座，最大价值不仅在于一个能用的桌面 GUI，更在于它持续维护、被全行业复用的 <b>通用卸载列表</b>。短板同样真实：<b>必须 PC + 数据线</b>、卸载仅限<b>当前用户</b>（恢复出厂会回归）、Expert 级误操作有变砖风险，且 Rust 桌面 GUI 生态尚不成熟（UI 框架仍是社区讨论点）。</p>
+    <p class="quote">✅ <b>推荐人群</b>：重视开源与隐私的桌面用户、新机净化党、r/dumbphones 极简主义者、需要批量规整安卓设备的 IT/测试人员。<br>⚠️ <b>使用铁律</b>：务必先备份、优先停在 Recommended 档、记录已卸载清单、对 Expert 级保持敬畏。</p>
+  </div>
+
+  <footer>
+    📅 分析日期：2026-06-18 ｜ 🔥 今日 GitHub Trending ｜ 🤖 由 Claude 深度分析生成<br>
+    📎 数据来源：
+    <a href="https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation">GitHub 仓库</a> ·
+    <a href="https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/releases">Releases</a> ·
+    <a href="https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/wiki">Wiki</a> ·
+    <a href="https://winstall.app/apps/Universal-Debloater-Alliance.uad-ng">WinGet</a> ·
+    <a href="https://github.com/0x192/universal-android-debloater">原版 UAD(@0x192)</a>
+  </footer>
+
+</div>
+</body>
+</html>
