@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyper-Extract 深度分析报告 | yifanfeng97/Hyper-Extract</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(188,140,255,.18), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(88,166,255,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:32px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    background:rgba(126,231,135,.12); color:var(--accent2);
+    border:1px solid rgba(126,231,135,.3); padding:5px 12px; border-radius:20px; margin-bottom:18px;
+  }
+  .hero h1{
+    font-size:40px; font-weight:800; letter-spacing:-.5px; margin-bottom:10px;
+    background:linear-gradient(90deg,#fff,#bc8cff 60%,#58a6ff);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .hero .sub{font-size:17px;color:var(--muted);max-width:760px}
+  .hero .tagline{
+    margin-top:16px; font-style:italic; font-size:16px; color:var(--purple);
+    border-left:3px solid var(--purple); padding-left:14px;
+  }
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{
+    font-size:13px;background:var(--card2);border:1px solid var(--border);
+    padding:6px 13px;border-radius:8px;color:var(--muted)
+  }
+  .chip b{color:var(--text)}
+  /* SCORE */
+  .score-board{
+    display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center;
+    background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;margin-bottom:32px;
+  }
+  .score-circle{
+    width:180px;height:180px;border-radius:50%;position:relative;margin:0 auto;
+    background:conic-gradient(var(--accent2) 0% 90%, #2d333b 90% 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .score-inner{
+    width:140px;height:140px;border-radius:50%;background:var(--card);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .score-num{font-size:52px;font-weight:800;color:var(--accent2);line-height:1}
+  .score-lab{font-size:13px;color:var(--muted);margin-top:2px}
+  .score-bars{display:flex;flex-direction:column;gap:14px}
+  .bar-item .bar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .bar-item .bar-top span:last-child{color:var(--accent2);font-weight:700}
+  .bar-track{height:9px;background:#21262d;border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  /* SECTIONS */
+  .section{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:30px 32px;margin-bottom:24px;
+  }
+  .section h2{
+    font-size:22px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px;
+  }
+  .section h2 .ico{font-size:24px}
+  .section .h-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+  .section p{margin-bottom:12px;color:#c9d1d9}
+  .section h3{font-size:16px;color:var(--accent);margin:20px 0 10px;font-weight:700}
+  .section strong{color:var(--text)}
+  .section ul{margin:10px 0 14px 4px;list-style:none}
+  .section ul li{margin-bottom:8px;padding-left:22px;position:relative;color:#c9d1d9}
+  .section ul li::before{content:"▸";position:absolute;left:0;color:var(--accent2)}
+  /* cards grid */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:780px){.g2,.g3{grid-template-columns:1fr}.score-board{grid-template-columns:1fr}}
+  .fcard{
+    background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px;
+  }
+  .fcard .fc-title{font-weight:700;margin-bottom:8px;color:var(--purple)}
+  .fcard .fc-desc{font-size:14px;color:var(--muted)}
+  /* arch layers */
+  .layer{
+    border-left:3px solid var(--accent);padding:16px 20px;margin-bottom:14px;
+    background:var(--card2);border-radius:0 12px 12px 0;
+  }
+  .layer.l1{border-color:var(--accent2)}
+  .layer.l2{border-color:var(--purple)}
+  .layer.l3{border-color:var(--orange)}
+  .layer .l-name{font-weight:700;font-size:15px}
+  .layer.l1 .l-name{color:var(--accent2)}
+  .layer.l2 .l-name{color:var(--purple)}
+  .layer.l3 .l-name{color:var(--orange)}
+  .layer .l-desc{font-size:14px;color:var(--muted);margin-top:4px}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+  th,td{padding:11px 12px;text-align:center;border-bottom:1px solid var(--border)}
+  th{background:#21262d;color:var(--accent);font-weight:700}
+  td:first-child,th:first-child{text-align:left;color:var(--text)}
+  .y{color:var(--accent2)} .n{color:var(--muted)}
+  td.hl{background:rgba(126,231,135,.06);font-weight:700;color:var(--accent2)}
+  /* code */
+  pre{
+    background:#010409;border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+    overflow-x:auto;font-size:13px;font-family:"SF Mono",Consolas,monospace;color:#c9d1d9;margin:12px 0;
+  }
+  pre .c{color:var(--muted)}
+  pre .k{color:var(--purple)} pre .s{color:var(--accent2)} pre .a{color:var(--orange)}
+  /* pros/cons */
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:780px){.pc{grid-template-columns:1fr}}
+  .pc-box{border-radius:14px;padding:20px;border:1px solid var(--border)}
+  .pc-box.pro{background:rgba(126,231,135,.06);border-color:rgba(126,231,135,.25)}
+  .pc-box.con{background:rgba(255,123,114,.06);border-color:rgba(255,123,114,.25)}
+  .pc-box h4{font-size:15px;margin-bottom:12px}
+  .pc-box.pro h4{color:var(--accent2)} .pc-box.con h4{color:var(--red)}
+  .pc-box ul li::before{color:inherit}
+  .pc-box.pro ul li::before{content:"✓";color:var(--accent2)}
+  .pc-box.con ul li::before{content:"✗";color:var(--red)}
+  /* verdict */
+  .verdict{
+    background:linear-gradient(135deg,rgba(188,140,255,.1),rgba(88,166,255,.08));
+    border:1px solid rgba(188,140,255,.3);border-radius:18px;padding:28px 32px;
+  }
+  .verdict h2{margin-bottom:12px}
+  .footer{text-align:center;color:var(--muted);font-size:13px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:6px;background:rgba(88,166,255,.12);color:var(--accent);margin:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge">🔥 GitHub Trending · AI / 知识工程</span>
+    <h1>Hyper-Extract</h1>
+    <div class="sub">由大语言模型（LLM）驱动的<strong>智能知识提取与演进框架</strong>——一行命令，将杂乱的非结构化文档转化为持久化、强类型的结构化知识（知识图谱 / 超图 / 时空图谱）。</div>
+    <div class="tagline">"Stop reading. Start understanding." — 告别文档焦虑，让信息一目了然</div>
+    <div class="meta-row">
+      <span class="chip">📦 <b>yifanfeng97/Hyper-Extract</b></span>
+      <span class="chip">⭐ Stars <b>1,400+</b></span>
+      <span class="chip">🪪 License <b>Apache-2.0</b></span>
+      <span class="chip">🐍 Python <b>3.11+</b></span>
+      <span class="chip">🎓 作者 <b>丰一帆（清华大学）</b></span>
+      <span class="chip">🧩 PyPI <b>hyperextract</b></span>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-board">
+    <div class="score-circle">
+      <div class="score-inner">
+        <div class="score-num">9.0</div>
+        <div class="score-lab">综合评分 / 10</div>
+      </div>
+    </div>
+    <div class="score-bars">
+      <div class="bar-item"><div class="bar-top"><span>💡 创新性</span><span>9.5</span></div><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div></div>
+      <div class="bar-item"><div class="bar-top"><span>🧠 学术背书</span><span>9.5</span></div><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div></div>
+      <div class="bar-item"><div class="bar-top"><span>🛠 技术深度</span><span>9.0</span></div><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div></div>
+      <div class="bar-item"><div class="bar-top"><span>🔌 可扩展性</span><span>9.0</span></div><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div></div>
+      <div class="bar-item"><div class="bar-top"><span>🚀 实用性</span><span>8.5</span></div><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div></div>
+      <div class="bar-item"><div class="bar-top"><span>📚 文档完善度</span><span>8.5</span></div><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div></div>
+      <div class="bar-item"><div class="bar-top"><span>👥 社区活跃度</span><span>7.5</span></div><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- 1. 概述 -->
+  <div class="section">
+    <h2><span class="ico">📌</span> 一、项目概述</h2>
+    <div class="h-sub">Overview — 它是什么，解决什么问题</div>
+    <p><strong>Hyper-Extract</strong> 是一个面向"知识编译（Knowledge Compilation）"范式的开源 CLI 与 Python 库。它的核心理念来自 Andrej Karpathy 提出的思想：<strong>文档不应被一股脑塞进向量数据库，而应被"编译"成最匹配其内在结构的知识抽象（Knowledge Abstracts）</strong>——是该用列表就用列表，该用知识图谱就用知识图谱，该用超图就用超图。</p>
+    <p>在实际工程中，开发者拿到一份杂乱的 PDF、Markdown 或长文本后，往往要手写大量样板代码（prompt + 解析 + 落库）才能得到结构化结果。Hyper-Extract 把这一整套流程封装为<strong>一条命令</strong>：选择一个声明式 YAML 模板，即可把文本提取为强类型的知识结构，并支持查询、可视化与增量补充。</p>
+    <h3>项目快照</h3>
+    <ul>
+      <li><strong>定位：</strong>LLM 驱动的非结构化文本 → 结构化知识的一站式提取框架</li>
+      <li><strong>关键能力：</strong>8 种强类型知识结构 + 10+ 提取引擎 + 80+ 领域模板 + 增量演进</li>
+      <li><strong>作者背景：</strong>丰一帆（Yifan Feng），清华大学博士后，长期从事<strong>超图计算（Hypergraph Computation）</strong>研究，其参与的超图检索增强生成（Hyper-RAG）研究发表于 <strong>Nature</strong>，学术与工程兼备</li>
+      <li><strong>默认基座：</strong>GPT-4o-mini（生成）+ text-embedding-3-small（嵌入）</li>
+    </ul>
+  </div>
+
+  <!-- 2. 技术架构 -->
+  <div class="section">
+    <h2><span class="ico">🏗️</span> 二、技术架构</h2>
+    <div class="h-sub">Three-Layer Architecture · 三层解耦设计</div>
+    <p>Hyper-Extract 采用清晰的三层架构，将"知识长什么样、用什么算法提、针对哪个领域提"三个关注点彻底解耦：</p>
+
+    <div class="layer l1">
+      <div class="l-name">① Auto-Types 层 —— 数据结构（知识长什么样）</div>
+      <div class="l-desc">定义 8 种强类型知识结构，作为所有提取的输出格式，对应"知识抽象"的不同拓扑形态。</div>
+    </div>
+    <div class="grid g2" style="margin:6px 0 18px">
+      <div class="fcard"><div class="fc-title">基础结构</div><div class="fc-desc"><span class="pill">AutoModel</span><span class="pill">AutoList</span><span class="pill">AutoSet</span><br>面向记录型、集合型数据</div></div>
+      <div class="fcard"><div class="fc-title">高阶图结构</div><div class="fc-desc"><span class="pill">AutoGraph</span><span class="pill">AutoHypergraph</span><span class="pill">AutoTemporalGraph</span><span class="pill">AutoSpatialGraph</span><span class="pill">AutoSpatioTemporalGraph</span></div></div>
+    </div>
+
+    <div class="layer l2">
+      <div class="l-name">② Methods 层 —— 提取算法（用什么方法提）</div>
+      <div class="l-desc">基于 Auto-Types 提供的提取引擎，整合业界主流的检索增强生成范式，开箱即用。</div>
+    </div>
+    <div class="fcard" style="margin:6px 0 18px">
+      <div class="fc-desc">
+        <span class="pill">KG-Gen</span><span class="pill">iText2KG</span><span class="pill">iText2KG*</span>
+        <span class="pill">GraphRAG</span><span class="pill">LightRAG</span><span class="pill">Hyper-RAG</span><span class="pill">HypergraphRAG</span><span class="pill">Cog-RAG</span>
+      </div>
+    </div>
+
+    <div class="layer l3">
+      <div class="l-name">③ Templates 层 —— 领域配置（针对谁提）</div>
+      <div class="l-desc">声明式 YAML 模板，内置开箱即用的 prompt + 数据结构，覆盖 6 大领域 80+ 预设，用户无需理解底层即可直接使用。</div>
+    </div>
+    <div class="fcard" style="margin-top:8px">
+      <div class="fc-title">覆盖领域</div>
+      <div class="fc-desc">
+        <span class="pill">💰 金融</span><span class="pill">⚖️ 法律</span><span class="pill">🏥 医疗</span><span class="pill">🌿 中医</span><span class="pill">🏭 工业</span><span class="pill">📐 通用</span>
+      </div>
+    </div>
+
+    <h3>双形态接入</h3>
+    <div class="grid g2">
+      <div class="fcard"><div class="fc-title">CLI 命令行（he）</div><div class="fc-desc"><code>he parse</code> / <code>he search</code> / <code>he show</code> / <code>he feed</code>，几行命令完成全流程</div></div>
+      <div class="fcard"><div class="fc-title">Python API</div><div class="fc-desc"><code>Template.create(...)</code> 创建模板，<code>.parse()</code> 提取，<code>.feed()</code> 增量，深度集成</div></div>
+    </div>
+
+    <h3>典型工作流（以苏轼传记为例）</h3>
+<pre><span class="c"># 初始化 OpenAI Key</span>
+he config init -k <span class="s">YOUR_OPENAI_API_KEY</span>
+
+<span class="c"># 用"人物传记图谱"模板提取知识</span>
+he parse examples/zh/sushi.md -t general/biography_graph -o ./output/ -l zh
+
+<span class="c"># 自然语言查询知识摘要</span>
+he search ./output/ <span class="s">"苏轼有哪些重要的作品？"</span>
+
+<span class="c"># 可视化知识图谱</span>
+he show ./output/
+
+<span class="c"># 增量喂入新文档，让图谱自动补全扩展</span>
+he feed ./output/ examples/zh/sushi_question.md</pre>
+
+    <h3>模型兼容性</h3>
+    <p>项目依赖模型的<strong>结构化输出能力（json_schema 或 Function Calling）</strong>。已验证兼容：OpenAI GPT 系列、阿里百炼 <code>qwen-plus / qwen-turbo</code>、本地 vLLM（Qwen3.5-9B GPTQ-Marlin）等，可灵活替换。</p>
+  </div>
+
+  <!-- 3. 核心创新点 -->
+  <div class="section">
+    <h2><span class="ico">💎</span> 三、核心创新点</h2>
+    <div class="h-sub">Core Innovations — 它做对了什么不一样的事</div>
+    <div class="grid g2">
+      <div class="fcard">
+        <div class="fc-title">① 超图（Hypergraph）提取，业界稀缺</div>
+        <div class="fc-desc">传统知识图谱只能表达二元关系（A—关系—B），而超图的一条<strong>超边可同时连接多个节点</strong>，天然刻画多元协同关系（如多方交易、多药交互）。这是作者超图计算研究方向的工程化落地。</div>
+      </div>
+      <div class="fcard">
+        <div class="fc-title">② "知识编译"理念：结构自适应</div>
+        <div class="fc-desc">不强制把所有文档塞进同一种格式。文档先被识别内在结构，再被编译为<strong>最匹配的知识抽象</strong>，避免"用锤子看什么都是钉子"的 RAG 通病。</div>
+      </div>
+      <div class="fcard">
+        <div class="fc-title">③ 时空图谱统一建模</div>
+        <div class="fc-desc">同时支持时序（Temporal）、空间（Spatial）、时空（Spatio-Temporal）三类图结构，对地理/事件/演化类场景尤为关键，多数同类工具缺失。</div>
+      </div>
+      <div class="fcard">
+        <div class="fc-title">④ 声明式 YAML 模板</div>
+        <div class="fc-desc">零代码定义提取策略——字段、类型、prompt 规则、实体去重标识符（identifiers）全部声明式配置，模板可复用、可分享。</div>
+      </div>
+      <div class="fcard">
+        <div class="fc-title">⑤ 知识增量演进（Feed）</div>
+        <div class="fc-desc">支持动态喂入新文档，已有知识图谱<strong>自动补全与扩展</strong>而非重建，契合真实业务中"文档源源不断"的场景。</div>
+      </div>
+      <div class="fcard">
+        <div class="fc-title">⑥ 引擎即插即用</div>
+        <div class="fc-desc">10+ 前沿提取引擎（GraphRAG / LightRAG / Hyper-RAG 等）被统一抽象，用户可在同一套数据结构下切换算法范式。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 应用场景 -->
+  <div class="section">
+    <h2><span class="ico">🎯</span> 四、应用场景</h2>
+    <div class="h-sub">Application Scenarios — 适合谁、用来做什么</div>
+    <div class="grid g2">
+      <div class="fcard"><div class="fc-title">⚖️ 法律 / 合同解析</div><div class="fc-desc">把判决书、合同条款提取为实体-关系图谱，定位当事人、义务、时间节点，辅助合规审查。</div></div>
+      <div class="fcard"><div class="fc-title">🏥 医疗 / 中医文献</div><div class="fc-desc">从病历、方剂、古籍中提取"症状-证候-药物-治法"超图，支撑辅助诊疗与知识检索。</div></div>
+      <div class="fcard"><div class="fc-title">💰 金融风控与关联网络</div><div class="fc-desc">构建股东-担保-交易超边网络，刻画多方资金关联，用于风险传染分析与尽调。</div></div>
+      <div class="fcard"><div class="fc-title">🏭 工业制造 / 供应链</div><div class="fc-desc">设备-故障-工单的时空图谱，结合时间维度做故障溯源与预测性维护。</div></div>
+      <div class="fcard"><div class="fc-title">📚 个人/企业知识库 RAG</div><div class="fc-desc">作为 GraphRAG / LightRAG 的"前置结构化层"，先编译再检索，显著提升问答准确率。</div></div>
+      <div class="fcard"><div class="fc-title">🗺️ 地理 / 时事情报</div><div class="fc-desc">新闻事件的空间分布与时间演化建模，生成可查询的时空知识图谱。</div></div>
+    </div>
+  </div>
+
+  <!-- 5. 竞品对比 -->
+  <div class="section">
+    <h2><span class="ico">⚔️</span> 五、竞品对比</h2>
+    <div class="h-sub">Competitive Landscape — 与主流图/RAG 库的差异</div>
+    <table>
+      <thead>
+        <tr><th>能力维度</th><th>GraphRAG</th><th>LightRAG</th><th>KG-Gen</th><th>ATOM</th><th class="hl">Hyper-Extract</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>知识图谱支持</td><td class="y">✅</td><td class="y">✅</td><td class="y">✅</td><td class="y">✅</td><td class="y">✅</td></tr>
+        <tr><td>时序图谱</td><td class="y">✅</td><td class="n">❌</td><td class="n">❌</td><td class="y">✅</td><td class="y">✅</td></tr>
+        <tr><td>空间图谱</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="y">✅</td></tr>
+        <tr><td>超图提取</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="y">✅</td></tr>
+        <tr><td>领域模板驱动</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="y">✅</td></tr>
+        <tr><td>交互式 CLI</td><td class="y">✅</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="y">✅</td></tr>
+        <tr><td>多语言支持</td><td class="y">✅</td><td class="n">❌</td><td class="n">❌</td><td class="n">❌</td><td class="y">✅</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:16px"><strong>差异化小结：</strong>GraphRAG（微软）偏全局社区摘要、较重；LightRAG（港大）主打双层检索与增量更新、轻量高效；KG-Gen 专注图谱生成。而 Hyper-Extract 是<strong>目前唯一同时覆盖"超图 + 空间 + 时序 + 领域模板 + CLI"的开源工具</strong>，定位为"知识结构化前端"而非检索后端，与上述方案更多是<strong>互补</strong>关系——它把 GraphRAG / LightRAG 作为可调用的 Methods 引擎。</p>
+  </div>
+
+  <!-- 6. 优劣势 -->
+  <div class="section">
+    <h2><span class="ico">⚖️</span> 六、优势与局限</h2>
+    <div class="pc">
+      <div class="pc-box pro">
+        <h4>✅ 核心优势</h4>
+        <ul>
+          <li>学术血统硬核：清华超图计算团队 + Nature 论文背书，理论扎实</li>
+          <li>结构覆盖最全：超图 / 时空 / 知识图谱一站式，业内独此一家</li>
+          <li>工程体验佳：一条命令完成提取→查询→可视化→增量</li>
+          <li>声明式模板：80+ 预设覆盖 6 大领域，零代码上手</li>
+          <li>引擎可插拔：整合 10+ 主流 RAG 范式，避免重复造轮子</li>
+          <li>国产开源、Apache-2.0、中英双语文档，对国内生态友好</li>
+        </ul>
+      </div>
+      <div class="pc-box con">
+        <h4>⚠️ 潜在局限</h4>
+        <ul>
+          <li>强依赖模型结构化输出（json_schema / Function Calling），小模型/老模型体验打折</li>
+          <li>项目较新，社区与生态（第三方模板、插件）尚在成长期</li>
+          <li>超图与时空场景偏向特定领域，通用 CRUD 业务未必用得上</li>
+          <li>默认绑定 OpenAI 基座，纯本地/国产模型需额外配置验证</li>
+          <li>大规模语料的 Token 成本与并发调度，需结合实际评估</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 综合结论 -->
+  <div class="verdict">
+    <h2><span class="ico">🏆</span> 七、综合结论与推荐</h2>
+    <p>Hyper-Extract 是一份"做超图的人，把超图做成了工具"的诚意之作。它没有把 RAG 再造一遍，而是抓住了行业里被忽视的一环——<strong>"在检索之前，文档该被编译成什么形状"</strong>。凭借学术界稀缺的超图 + 时空建模能力、声明式模板的工程美感，以及一条命令的极简体验，它在知识结构化赛道上形成了鲜明的差异化。</p>
+    <p style="margin-top:10px"><strong>推荐人群：</strong>需要把非结构化文档转为知识图谱/超图的<strong>RAG 工程师、数据科学家、垂直领域（法/医/金融/工业）知识工程师</strong>，以及希望体验"结构自适应知识编译"理念的研究者与极客。综合评分 <strong style="color:var(--accent2)">9.0 / 10</strong>，是一只值得关注与上手的潜力项目。</p>
+  </div>
+
+  <div class="footer">
+    <p>📄 本报告由 GitHub Trending 深度分析器自动生成 · 数据截至 2026-06-19</p>
+    <p>资料来源：GitHub 仓库 README / TrendShift / GitCode / CSDN / 知乎 / 掘金 / ngjoo 深度解析 / Google Scholar 等</p>
+  </div>
+
+</div>
+</body>
+</html>
