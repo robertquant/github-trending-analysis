@@ -2,7 +2,6 @@
   "date": "2026-06-18",
   "fetched_at": "2026-06-18",
   "pending": [
-    "google-research/timesfm",
     "RocketChat/Rocket.Chat",
     "continuedev/continue",
     "penpot/penpot",
@@ -20,7 +19,8 @@
   ],
   "done": [
     "DeusData/codebase-memory-mcp",
-    "n0-computer/iroh"
+    "n0-computer/iroh",
+    "google-research/timesfm"
   ],
   "projects": [
     {
@@ -45,7 +45,7 @@
     },
     {
       "name": "google-research/timesfm",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "RocketChat/Rocket.Chat",
@@ -86,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 6,
+    "pending": 5,
     "skipped": 7,
-    "done": 2
+    "done": 3
   }
 }

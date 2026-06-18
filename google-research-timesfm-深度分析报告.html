@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>google-research/timesfm 深度分析报告</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f1730; --card:#141d3a; --card2:#1a2547;
+    --border:#26315c; --text:#e8edff; --muted:#9aa6cc;
+    --accent:#6ea8ff; --accent2:#7ee2a8; --warn:#ffce6a; --bad:#ff8a8a;
+    --code:#0a1024;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:42px 24px 80px}
+  header.hero{text-align:center;padding:48px 28px 40px;background:radial-gradient(1200px 300px at 50% -100px,rgba(110,168,255,.18),transparent);
+    border:1px solid var(--border);border-radius:22px;backdrop-filter:blur(6px)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.5px;padding:5px 12px;border-radius:999px;
+    background:rgba(110,168,255,.12);color:var(--accent);border:1px solid rgba(110,168,255,.35);margin:0 4px 8px}
+  h1{font-size:34px;margin:14px 0 6px;letter-spacing:.5px}
+  h1 .accent{background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:16px;color:var(--muted);margin:6px 0 0}
+  h2{font-size:23px;margin:46px 0 16px;padding-left:14px;border-left:4px solid var(--accent)}
+  h3{font-size:18px;margin:26px 0 10px;color:#cfe0ff}
+  p{color:#d6def5}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+  .stat .num{font-size:28px;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--card);border-radius:14px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14.5px}
+  th{background:var(--card2);color:#cfe0ff;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code,pre{font-family:"JetBrains Mono","SF Mono",Consolas,Menlo,monospace}
+  code{background:var(--code);padding:2px 7px;border-radius:6px;color:#a9d3ff;font-size:13px;border:1px solid #1c2850}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:#cdd8f5}
+  pre .kw{color:#c792ea} pre .str{color:#c3e88d} pre .fn{color:#82aaff} pre .cmt{color:#6b7799}
+  ul{padding-left:22px} li{margin:6px 0}
+  .score-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .score-total{font-size:54px;font-weight:800;background:linear-gradient(90deg,#6ea8ff,#7ee2a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:9px;border-radius:999px;background:#222e57;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6ea8ff,#7ee2a8)}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pill{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(126,226,168,.1);color:var(--accent2);border:1px solid rgba(126,226,168,.3)}
+  .quote{border-left:4px solid var(--accent2);padding:8px 18px;color:#cfe0ff;font-style:italic;background:rgba(126,226,168,.05);border-radius:0 10px 10px 0}
+  .compare th:first-child{width:18%}
+  .ok{color:var(--accent2)} .mid{color:var(--warn)} .lo{color:var(--bad)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px;padding-top:24px;border-top:1px solid var(--border)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <span class="badge">🐍 Python</span>
+      <span class="badge">📈 时序基础模型</span>
+      <span class="badge">🤖 Decoder-only Transformer</span>
+      <span class="badge">⚡ Zero-shot 预测</span>
+      <span class="badge">🔥 今日 +712 ⭐</span>
+    </div>
+    <h1>google-research/<span class="accent">timesfm</span></h1>
+    <p class="tag">"A Decoder-Only Foundation Model for Time-Series Forecasting" —— 把 LLM 范式搬到时间序列的 Google 时序基础模型</p>
+    <div class="tag-row" style="justify-content:center;margin-top:14px">
+      <span class="pill">decoder-only</span>
+      <span class="pill">patching</span>
+      <span class="pill">residual MLP</span>
+      <span class="pill">quantile forecast</span>
+      <span class="pill">16k context</span>
+    </div>
+  </header>
+
+  <!-- 概览数据 -->
+  <h2>📊 项目概览</h2>
+  <div class="grid">
+    <div class="stat"><div class="num">21,878</div><div class="lbl">⭐ Stars</div></div>
+    <div class="stat"><div class="num">2,129</div><div class="lbl">🍴 Forks</div></div>
+    <div class="stat"><div class="num">214</div><div class="lbl">🐛 Open Issues</div></div>
+    <div class="stat"><div class="num">+712</div><div class="lbl">📈 今日新增 ⭐</div></div>
+  </div>
+
+  <table>
+    <tr><th>维度</th><th>详情</th></tr>
+    <tr><td><b>仓库</b></td><td><a href="https://github.com/google-research/timesfm">github.com/google-research/timesfm</a></td></tr>
+    <tr><td><b>研究博客</b></td><td><a href="https://research.google/blog/a-decoder-only-foundation-model-for-time-series-forecasting/">research.google 博客</a></td></tr>
+    <tr><td><b>论文</b></td><td>A Decoder-Only Foundation Model for Time-Series Forecasting（Das et al., <b>ICML 2024</b>）— <a href="https://arxiv.org/abs/2310.10688">arXiv:2310.10688</a></td></tr>
+    <tr><td><b>一句话定位</b></td><td>面向时间序列预测的预训练基础模型（Pretrained Time-Series Foundation Model）</td></tr>
+    <tr><td><b>主语言</b></td><td>Python（主）· 另含 HTML / Jupyter Notebook / Shell</td></tr>
+    <tr><td><b>开源协议</b></td><td>Apache-2.0（商用友好）</td></tr>
+    <tr><td><b>最新版本</b></td><td><b>TimesFM 2.5</b>（2025-09 发布；PyPI <code>timesfm 2.0.0</code>，2026-06-05 更新；Release <code>v2.0.1</code>，2026-06-11）</td></tr>
+    <tr><td><b>创建时间</b></td><td>2024-04-29</td></tr>
+    <tr><td><b>最近推送</b></td><td>2026-06-17（持续高频维护）</td></tr>
+    <tr><td><b>维护方</b></td><td>Google Research（google-research 官方组织，24 位贡献者）</td></tr>
+    <tr><td><b>Google 一方产品</b></td><td>BigQuery ML · Google Sheets（Connected Sheets）· Vertex Model Garden</td></tr>
+  </table>
+
+  <!-- 项目概述 -->
+  <h2>🧭 项目概述</h2>
+  <div class="card">
+    <p><b>TimesFM</b>（Time Series Foundation Model）是 <b>Google Research</b> 开发的<b>预训练时间序列基础模型</b>，其核心思想可以一句话概括：</p>
+    <div class="quote">"像训练大语言模型那样，在海量时序数据上训练一个<b>解码器（decoder-only）</b>基础模型，让它<b>零样本（zero-shot）</b>预测从未见过的序列。"</div>
+    <p style="margin-top:14px">在 TimesFM 出现之前，时间序列预测的主流做法是<b>逐数据集训练专用模型</b>（ARIMA / Prophet / 深度模型等）——换一个数据集就得重训。TimesFM 把 NLP 领域"预训练基础模型 + 零样本泛化"的成功范式搬到了时间序列：先在约 <b>1000 亿个真实 + 合成时间点</b>上预训练，之后面对任意新序列都能直接给出预测，无需任何微调。</p>
+    <p>它的奠基性贡献（ICML 2024）是证明了 <b>"解码器-only + Patch + 自回归"</b> 这一架构在时序上同样有效，并能像 GPT 之于文本那样实现跨域泛化。论文发表后迅速成为时序基础模型领域被引最广、影响最深的工作之一。</p>
+    <p>项目自 2024 年开源后持续演进，当前最新为 <b>TimesFM 2.5</b>：参数从 2.0 的 500M 压缩到 <b>200M</b>，上下文从 2048 拓展到 <b>16k</b>，并新增可选的 <b>30M 连续分位数预测头</b>（输出概率区间）。它已下沉到 Google 多个一方产品（BigQuery ML / Sheets / Vertex），是企业级时间序列预测的事实基础设施之一。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <h2>🏗️ 技术架构</h2>
+
+  <h3>1) 总体范式：解码器-only + Patch 自回归</h3>
+  <div class="card">
+    <p>TimesFM 的架构高度借鉴 GPT 等 LLM，但每一层都为<b>连续型时序数据</b>做了改造：</p>
+    <ul>
+      <li><b>分块（Patching）</b>：把输入序列切成固定长度的连续 patch（类似 LLM 的 token），每个 patch 经一个<b>残差 MLP</b> 投影为 embedding</li>
+      <li><b>解码器堆叠</b>：多个 Transformer 解码块（带掩码自注意力 + 位置编码）处理 patch 序列</li>
+      <li><b>自回归预测下一个 patch</b>：像 GPT 预测下一个 token 一样，逐 patch 向前预测未来</li>
+    </ul>
+    <pre><span class="cmt"># 最小调用示例（TimesFM 2.5，PyTorch）</span>
+<span class="kw">import</span> timesfm, numpy <span class="kw">as</span> np
+
+model = timesfm.TimesFM_2p5_200M_torch.from_pretrained(<span class="str">"google/timesfm-2.5-200m-pytorch"</span>)
+model.compile(timesfm.ForecastConfig(
+    max_context=1024, max_horizon=256, normalize_inputs=<span class="kw">True</span>,
+    use_continuous_quantile_head=<span class="kw">True</span>,   <span class="cmt"># 30M 分位数头</span>
+    force_flip_invariance=<span class="kw">True</span>, infer_is_positive=<span class="kw">True</span>,
+    fix_quantile_crossing=<span class="kw">True</span>))
+
+point_f, quantile_f = model.forecast(
+    horizon=12,
+    inputs=[np.linspace(0,1,100), np.sin(np.linspace(0,20,67))])
+<span class="cmt"># point_f.shape      -> (2, 12)            点预测</span>
+<span class="cmt"># quantile_f.shape   -> (2, 12, 10)        均值 + 10%~90% 分位数</span></pre>
+  </div>
+
+  <h3>2) 三个关键架构创新</h3>
+  <div class="card">
+    <table>
+      <tr><th>创新点</th><th>说明</th></tr>
+      <tr>
+        <td><b>残差 MLP 作为解码器骨干</b></td>
+        <td>用大残差 MLP 替代常规 FFN，在保持表达能力的同时显著降低参数与计算开销——这也是 2.5 能把参数从 500M 压到 200M 的工程基础。</td>
+      </tr>
+      <tr>
+        <td><b>输入/输出 patch 长度不对称</b></td>
+        <td>输入 patch 较短、输出 patch 较长（一次预测多步），<b>用更少的自回归步数覆盖更长的预测视野</b>，兼顾速度与长程精度。</td>
+      </tr>
+      <tr>
+        <td><b>均值缩放（mean scaling）</b></td>
+        <td>对每条序列按均值归一化、让模型预测残差，天然适应<b>量纲/尺度差异极大</b>的真实时序（销售额、温度、流量…）。</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>3) TimesFM 2.5 的能力升级（相对 2.0）</h3>
+  <div class="card">
+    <table>
+      <tr><th>维度</th><th>2.0</th><th>2.5</th></tr>
+      <tr><td>参数量</td><td>500M</td><td class="ok"><b>200M（更轻）</b></td></tr>
+      <tr><td>上下文长度</td><td>2,048</td><td class="ok"><b>16,384（更长历史）</b></td></tr>
+      <tr><td>分位数预测</td><td>部分支持</td><td class="ok"><b>连续分位数头（可选 30M），视野达 1k</b></td></tr>
+      <tr><td>频率指示符</td><td>需要</td><td class="ok"><b>移除（更省心）</b></td></tr>
+      <tr><td>协变量</td><td>—</td><td class="ok"><b>XReg 协变量支持（2025-10）</b></td></tr>
+      <tr><td>推理后端</td><td>PyTorch</td><td class="ok"><b>PyTorch + Flax（更快）</b></td></tr>
+    </table>
+    <p style="margin-top:10px">2.5 发布后又陆续补齐：<b>Flax 高速推理版本</b>、<b>XReg 协变量</b>、<b>文档 + 示例 + Agent Skill</b>、<b>LoRA 微调示例</b>（HuggingFace Transformers + PEFT，2026-04）、<b>核心层单元测试</b>。</p>
+  </div>
+
+  <h3>4) 仓库结构</h3>
+  <div class="card">
+    <table>
+      <tr><th>路径</th><th>职责</th></tr>
+      <tr><td><code>src/</code></td><td>核心库代码（模型、配置、推理）</td></tr>
+      <tr><td><code>timesfm-forecasting/</code></td><td><b>SKILL.md</b>（Agent 技能）· <code>examples/finetuning/</code>（LoRA 微调）· references · scripts</td></tr>
+      <tr><td><code>tests/</code></td><td>核心层、配置、工具的单元测试</td></tr>
+      <tr><td><code>v1/</code></td><td>归档的 1.0 / 2.0 旧版代码（<code>pip install timesfm==1.3.0</code> 可装老版本）</td></tr>
+      <tr><td><code>AGENTS.md</code></td><td>面向 AI Agent 的仓库使用说明（社区贡献）</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>🏗️ 架构层次一览</h3>
+    <pre><span class="cmt">┌──────────────────────────────────────────────┐
+│   应用层：BigQuery ML · Google Sheets · Vertex · 你的 Python 脚本 │
+├──────────────────────────────────────────────┤
+│  预测配置层：max_context / max_horizon / 分位数头 / 翻转不变性 …    │
+├──────────────────────────────────────────────┤
+│  解码器骨干：堆叠 Transformer 解码块（残差 MLP + 掩码自注意力 + 位置编码）│
+├──────────────────────────────────────────────┤
+│  Patch 化：序列 → patch → 残差 MLP embedding（输入/输出 patch 不对称）│
+├──────────────────────────────────────────────┤
+│  预训练数据层：~1000 亿 真实 + 合成时间点（Monash + 合成生成）        │
+└──────────────────────────────────────────────┘</span></pre>
+  </div>
+
+  <!-- 核心创新点 -->
+  <h2>💡 核心创新点</h2>
+  <div class="card">
+    <h3>① 证明"解码器-only + Patch"在时序上可行且泛化</h3>
+    <p>这是 TimesFM 最根本的学术贡献。在它之前，业界不确定 LLM 式 decoder-only 架构能否跨数据集泛化；TimesFM 用大规模预训练 + Patch 化给出肯定答案，直接定义了一个时序基础模型的范式，后续众多工作都沿此路线。</p>
+
+    <h3>② 零样本（zero-shot）预测</h3>
+    <p>预训练后无需在新数据上微调即可直接预测，把 NLP 基础模型最诱人的"通用性"带到时序，省去逐数据集的反复训练与调参。</p>
+
+    <h3>③ 输入/输出 patch 长度不对称</h3>
+    <p>用较长的输出 patch 一步覆盖多步未来，<b>减少自回归迭代次数</b>——在长视野预测上既快又准，是区别于朴素"逐点回归"的工程巧思。</p>
+
+    <h3>④ 2.5 走向"小而强 + 概率化 + 长上下文"</h3>
+    <p>参数从 500M 降到 <b>200M</b>、上下文升到 <b>16k</b>、可选 <b>连续分位数头</b> 输出概率区间——把模型做得更轻、看得更远、还能给不确定性，契合真实业务（库存、容量、风控）的需求。</p>
+
+    <h3>⑤ 深度融入 Google 一方产品</h3>
+    <p>已落地 <b>BigQuery ML</b>（企业级 SQL 预测）、<b>Google Sheets</b>（电子表格内预测）、<b>Vertex Model Garden</b>（Docker 化端点）——这是多数开源时序模型不具备的"开箱即用企业覆盖面"。</p>
+
+    <h3>⑥ 双后端 + 可微调 + Agent 友好</h3>
+    <p>同时提供 PyTorch 与 Flax（更快推理），支持 LoRA 轻量微调，并附带 <code>SKILL.md</code> / <code>AGENTS.md</code> 让 AI Agent 直接调用——工程完整度在时序基础模型里名列前茅。</p>
+  </div>
+
+  <!-- 应用场景 -->
+  <h2>🎯 应用场景</h2>
+  <div class="grid">
+    <div class="stat"><div style="font-size:22px">📦</div><div class="lbl"><b>需求/销量预测</b><br>零售、电商、供应链</div></div>
+    <div class="stat"><div style="font-size:22px">⚙️</div><div class="lbl"><b>容量/资源规划</b><br>云资源、服务器负载</div></div>
+    <div class="stat"><div style="font-size:22px">🏦</div><div class="lbl"><b>金融/经济预测</b><br>市场、宏观指标</div></div>
+    <div class="stat"><div style="font-size:22px">🌡️</div><div class="lbl"><b>气象/环境</b><br>温度、能耗、流量</div></div>
+    <div class="stat"><div style="font-size:22px">🏭</div><div class="lbl"><b>IoT/工业监控</b><br>传感器时序异常预警</div></div>
+    <div class="stat"><div style="font-size:22px">📊</div><div class="lbl"><b>BI 报表</b><br>Sheets / BigQuery 内置</div></div>
+    <div class="stat"><div style="font-size:22px">⚖️</div><div class="lbl"><b>概率/区间预测</b><br>风控、库存安全裕度</div></div>
+    <div class="stat"><div style="font-size:22px">🧪</div><div class="lbl"><b>科研基线</b><br>多域 benchmark 零样本</div></div>
+  </div>
+
+  <!-- 竞品对比 -->
+  <h2>⚖️ 竞品对比</h2>
+  <table class="compare">
+    <tr><th>方案</th><th>定位</th><th>与 TimesFM 对比</th></tr>
+    <tr>
+      <td><b>Amazon Chronos</b></td><td>时序基础模型（编解码器）</td>
+      <td>把时序<b>量化为离散 token</b>后套用语言模型；TimesFM 走<b>连续 patch + 残差 MLP</b>，避免量化误差。Chronos 同样强零样本，二者是最大直接竞品。</td>
+    </tr>
+    <tr>
+      <td><b>Salesforce Moirai</b></td><td>通用时序基础模型</td>
+      <td>采用<b>掩码编码器</b>、<b>原生多变量</b>；TimesFM 主打<b>解码器自回归 + 超大规模预训练</b>。Moirai 多变量更顺，TimesFM 单变量零样本泛化口碑更稳。</td>
+    </tr>
+    <tr>
+      <td><b>Lag-Llama</b></td><td>基于 LLaMA 的时序模型</td>
+      <td>同属 decoder-only，但架构较朴素、规模与预训练数据较小；TimesFM 工程成熟度、企业落地与社区规模（21k+ ⭐）显著领先。</td>
+    </tr>
+    <tr>
+      <td><b>IBM TinyTimeMixer (TTM)</b></td><td>轻量混合架构时序模型</td>
+      <td>主打<b>极小、快速、可微调</b>，参数效率高；TimesFM 体量更大、零样本能力与一方生态更强。</td>
+    </tr>
+    <tr>
+      <td><b>Prophet / ARIMA / Darts / StatsForecast</b></td><td>传统/统计时序方法</td>
+      <td>需逐序列建模、人工调参；TimesFM <b>零样本免调参</b>，在大量 benchmark 上整体超越经典统计基线，且省去特征工程。</td>
+    </tr>
+  </table>
+
+  <div class="quote" style="margin-top:14px">TimesFM 的差异化壁垒在于"<b>解码器-only + Patch + 残差 MLP 的奠基范式 + Google 级预训练数据 + 一方产品深度落地 + 双后端工程完整度</b>"这一组合。它不只是又一个时序模型，而是<b>定义了"时序基础模型"赛道的关键参照系</b>。</div>
+
+  <!-- 综合评分 -->
+  <h2>🏆 综合评分</h2>
+  <div class="card score-box">
+    <div>
+      <div class="score-total">9.1<span style="font-size:24px;color:var(--muted)"> / 10</span></div>
+      <div class="lbl" style="color:var(--muted)">综合推荐度</div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <table style="margin:0">
+        <tr><td>技术创新性</td><td style="width:120px"><div class="bar"><i style="width:95%"></i></div></td><td><b>9.5</b></td></tr>
+        <tr><td>性能与效率</td><td><div class="bar"><i style="width:90%"></i></div></td><td><b>9.0</b></td></tr>
+        <tr><td>工程质量</td><td><div class="bar"><i style="width:85%"></i></div></td><td><b>8.5</b></td></tr>
+        <tr><td>实用价值</td><td><div class="bar"><i style="width:95%"></i></div></td><td><b>9.5</b></td></tr>
+        <tr><td>文档与生态</td><td><div class="bar"><i style="width:85%"></i></div></td><td><b>8.5</b></td></tr>
+        <tr><td>社区成熟度</td><td><div class="bar"><i style="width:90%"></i></div></td><td><b>9.0</b></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">📋 总评</h3>
+    <p><b>TimesFM 是时间序列基础模型赛道的奠基者与标杆。</b>它把大语言模型"预训练 + 零样本泛化"的范式成功移植到时间序列，用 <b>decoder-only + Patch + 残差 MLP + 不对称输入输出 patch</b> 的架构，在约 1000 亿时间点上预训练出可跨域泛化的预测器，并经 ICML 2024 论文确立为该方向的参照系。</p>
+    <p>最新的 <b>TimesFM 2.5</b> 进一步走向"小而强"：参数压到 <b>200M</b>、上下文升至 <b>16k</b>、可选 <b>连续分位数头</b> 输出概率区间，并补齐 Flax 加速推理、XReg 协变量、LoRA 微调与单元测试。更难得的是它已深度下沉到 <b>BigQuery ML / Google Sheets / Vertex Model Garden</b>，企业可以直接用 SQL 或表格做预测——这种"开箱即用的企业覆盖面"几乎没有第二个开源时序模型具备。</p>
+    <p><b>主要权衡：</b>README 明确声明此开源版本<b>并非 Google 官方支持产品</b>；decoder-only 自回归对极短序列/强外生变量场景未必最优；2.x 与归档 1.x 并存带来轻微的认知成本。但凭借 Google 背书、21.8k Stars、活跃维护与一方生态，它仍是当下最值得采用的时序预测基础模型之一。</p>
+    <p style="margin-bottom:0"><span class="ok"><b>结论：强烈推荐。无论是做需求/容量/金融预测，还是评估时序基础模型替代统计方法的团队，TimesFM 都应是首选 baseline。</b></span></p>
+  </div>
+
+  <footer>
+    📅 分析日期：2026-06-18 ｜ 数据来源：<a href="https://github.com/google-research/timesfm">GitHub</a> · <a href="https://research.google/blog/a-decoder-only-foundation-model-for-time-series-forecasting/">Google Research 博客</a> · <a href="https://arxiv.org/abs/2310.10688">arXiv:2310.10688 (ICML 2024)</a> · <a href="https://huggingface.co/collections/google/timesfm-release-66e4be5fdb56e960c1e482a6">HF 模型集合</a><br>
+    GitHub Project Deep Analyzer · google-research/timesfm 2.5
+  </footer>
+
+</div>
+</body>
+</html>
