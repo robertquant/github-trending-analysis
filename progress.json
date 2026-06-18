@@ -1,41 +1,37 @@
 {
-  "date": "2026-06-18",
-  "fetched_at": "2026-06-18",
-  "pending": [],
+  "date": "2026-06-19",
+  "fetched_at": "2026-06-19",
+  "pending": [
+    "zai-org/GLM-5",
+    "yifanfeng97/Hyper-Extract",
+    "alibaba/zvec",
+    "withastro/flue",
+    "Kilo-Org/kilocode",
+    "makeplane/plane",
+    "Kong/insomnia",
+    "dotnet/aspnetcore",
+    "owainlewis/awesome-artificial-intelligence"
+  ],
   "skipped_already_analyzed": [
-    "Panniantong/Agent-Reach",
-    "meshery/meshery",
-    "obra/superpowers",
-    "krahets/hello-algo",
-    "mattpocock/skills",
-    "freeCodeCamp/freeCodeCamp",
-    "bytedance/UI-TARS-desktop"
-  ],
-  "done": [
-    "DeusData/codebase-memory-mcp",
-    "n0-computer/iroh",
     "google-research/timesfm",
-    "RocketChat/Rocket.Chat",
-    "continuedev/continue",
-    "penpot/penpot",
-    "Universal-Debloater-Alliance/universal-android-debloater-next-generation",
-    "yairm210/Unciv"
+    "n0-computer/iroh",
+    "freeCodeCamp/freeCodeCamp",
+    "obra/superpowers",
+    "DeusData/codebase-memory-mcp",
+    "Universal-Debloater-Alliance/universal-android-debloater-next-generation"
   ],
+  "done": [],
   "projects": [
     {
-      "name": "DeusData/codebase-memory-mcp",
-      "status": "done"
-    },
-    {
-      "name": "n0-computer/iroh",
-      "status": "done"
-    },
-    {
-      "name": "Panniantong/Agent-Reach",
+      "name": "google-research/timesfm",
       "status": "skipped"
     },
     {
-      "name": "meshery/meshery",
+      "name": "n0-computer/iroh",
+      "status": "skipped"
+    },
+    {
+      "name": "freeCodeCamp/freeCodeCamp",
       "status": "skipped"
     },
     {
@@ -43,50 +39,54 @@
       "status": "skipped"
     },
     {
-      "name": "google-research/timesfm",
-      "status": "done"
+      "name": "zai-org/GLM-5",
+      "status": "pending"
     },
     {
-      "name": "RocketChat/Rocket.Chat",
-      "status": "done"
-    },
-    {
-      "name": "continuedev/continue",
-      "status": "done"
-    },
-    {
-      "name": "penpot/penpot",
-      "status": "done"
-    },
-    {
-      "name": "krahets/hello-algo",
+      "name": "DeusData/codebase-memory-mcp",
       "status": "skipped"
+    },
+    {
+      "name": "yifanfeng97/Hyper-Extract",
+      "status": "pending"
+    },
+    {
+      "name": "alibaba/zvec",
+      "status": "pending"
+    },
+    {
+      "name": "withastro/flue",
+      "status": "pending"
+    },
+    {
+      "name": "Kilo-Org/kilocode",
+      "status": "pending"
+    },
+    {
+      "name": "makeplane/plane",
+      "status": "pending"
+    },
+    {
+      "name": "Kong/insomnia",
+      "status": "pending"
     },
     {
       "name": "Universal-Debloater-Alliance/universal-android-debloater-next-generation",
-      "status": "done"
-    },
-    {
-      "name": "mattpocock/skills",
       "status": "skipped"
     },
     {
-      "name": "yairm210/Unciv",
-      "status": "done"
+      "name": "dotnet/aspnetcore",
+      "status": "pending"
     },
     {
-      "name": "freeCodeCamp/freeCodeCamp",
-      "status": "skipped"
-    },
-    {
-      "name": "bytedance/UI-TARS-desktop",
-      "status": "skipped"
+      "name": "owainlewis/awesome-artificial-intelligence",
+      "status": "pending"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 0,
-    "skipped": 7,
-    "done": 8
+    "pending": 9,
+    "skipped": 6,
+    "done": 0
   }
 }
