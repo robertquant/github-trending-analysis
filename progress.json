@@ -1,27 +1,43 @@
 {
-  "date": "2026-06-20",
-  "fetched_at": "2026-06-20",
-  "pending": [],
+  "date": "2026-06-21",
+  "fetched_at": "2026-06-21",
+  "pending": [
+    "tursodatabase/turso",
+    "tw93/Pake",
+    "jamiepine/voicebox",
+    "Kilo-Org/kilocode",
+    "owainlewis/awesome-artificial-intelligence"
+  ],
   "skipped_already_analyzed": [
+    "palmier-io/palmier-pro",
+    "penpot/penpot",
+    "calesthio/OpenMontage",
     "DeusData/codebase-memory-mcp",
     "google-research/timesfm",
-    "chopratejas/headroom",
-    "zai-org/GLM-5",
-    "n0-computer/iroh",
-    "obra/superpowers",
-    "penpot/penpot"
-  ],
-  "done": [
-    "withastro/flue",
-    "palmier-io/palmier-pro",
-    "koala73/worldmonitor",
-    "aishwaryanr/awesome-generative-ai-guide",
-    "BuilderIO/agent-native",
-    "calesthio/OpenMontage",
+    "twentyhq/twenty",
     "Kong/insomnia",
-    "Lightricks/LTX-2"
+    "chopratejas/headroom",
+    "mattpocock/skills",
+    "withastro/flue"
   ],
+  "done": [],
   "projects": [
+    {
+      "name": "palmier-io/palmier-pro",
+      "status": "skipped"
+    },
+    {
+      "name": "penpot/penpot",
+      "status": "skipped"
+    },
+    {
+      "name": "calesthio/OpenMontage",
+      "status": "skipped"
+    },
+    {
+      "name": "tursodatabase/turso",
+      "status": "pending"
+    },
     {
       "name": "DeusData/codebase-memory-mcp",
       "status": "skipped"
@@ -31,62 +47,46 @@
       "status": "skipped"
     },
     {
-      "name": "palmier-io/palmier-pro",
-      "status": "done"
+      "name": "twentyhq/twenty",
+      "status": "skipped"
     },
     {
-      "name": "koala73/worldmonitor",
-      "status": "done"
+      "name": "Kong/insomnia",
+      "status": "skipped"
     },
     {
-      "name": "aishwaryanr/awesome-generative-ai-guide",
-      "status": "done"
-    },
-    {
-      "name": "BuilderIO/agent-native",
-      "status": "done"
+      "name": "tw93/Pake",
+      "status": "pending"
     },
     {
       "name": "chopratejas/headroom",
       "status": "skipped"
     },
     {
-      "name": "calesthio/OpenMontage",
-      "status": "done"
+      "name": "jamiepine/voicebox",
+      "status": "pending"
     },
     {
-      "name": "zai-org/GLM-5",
+      "name": "Kilo-Org/kilocode",
+      "status": "pending"
+    },
+    {
+      "name": "mattpocock/skills",
       "status": "skipped"
     },
     {
       "name": "withastro/flue",
-      "status": "done"
-    },
-    {
-      "name": "n0-computer/iroh",
       "status": "skipped"
     },
     {
-      "name": "obra/superpowers",
-      "status": "skipped"
-    },
-    {
-      "name": "penpot/penpot",
-      "status": "skipped"
-    },
-    {
-      "name": "Kong/insomnia",
-      "status": "done"
-    },
-    {
-      "name": "Lightricks/LTX-2",
-      "status": "done"
+      "name": "owainlewis/awesome-artificial-intelligence",
+      "status": "pending"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 0,
-    "skipped": 7,
-    "done": 8
+    "pending": 5,
+    "skipped": 10,
+    "done": 0
   }
 }
