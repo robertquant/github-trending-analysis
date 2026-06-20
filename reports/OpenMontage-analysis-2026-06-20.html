@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenMontage 深度分析报告 · GitHub Trending 深度分析</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-card: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #9da7b3;
+    --accent: #f778ba;
+    --accent2: #7ee787;
+    --accent3: #79c0ff;
+    --warn: #ffa657;
+    --grad: linear-gradient(135deg, #f778ba 0%, #a371f7 50%, #79c0ff 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    padding: 0;
+  }
+  .hero {
+    background: radial-gradient(ellipse at top left, rgba(247,120,186,0.18), transparent 55%),
+                radial-gradient(ellipse at bottom right, rgba(121,192,255,0.16), transparent 55%),
+                var(--bg);
+    padding: 64px 24px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-inner { max-width: 980px; margin: 0 auto; }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(247,120,186,0.4);
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+    background: rgba(247,120,186,0.08);
+  }
+  h1 {
+    font-size: 44px;
+    line-height: 1.2;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+    font-weight: 800;
+  }
+  .hero p.subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 720px;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .meta-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .meta-chip strong { color: var(--accent3); }
+  .container { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+  section { margin-bottom: 56px; }
+  h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2 .num {
+    font-size: 14px;
+    color: var(--bg);
+    background: var(--accent);
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  h3 { font-size: 19px; margin: 24px 0 12px; color: var(--accent2); }
+  p { margin-bottom: 14px; color: #c9d1d9; }
+  .lead { font-size: 17px; color: var(--text); }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 18px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .stat {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    text-align: center;
+  }
+  .stat .num-big {
+    font-size: 34px;
+    font-weight: 800;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat .label { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+  ul { margin: 10px 0 10px 22px; color: #c9d1d9; }
+  li { margin-bottom: 8px; }
+  code {
+    background: var(--bg-soft);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 13px;
+    color: var(--accent2);
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+  pre {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 13.5px;
+    color: var(--accent2);
+    line-height: 1.6;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--accent3); font-weight: 600; background: var(--bg-soft); }
+  td { color: #c9d1d9; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .highlight { border-left: 3px solid var(--accent); padding-left: 16px; margin: 16px 0; color: var(--text); font-style: italic; }
+  .score-wrap { margin-top: 12px; }
+  .score-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .score-row .name { width: 130px; font-size: 14px; color: var(--text-dim); }
+  .bar { flex: 1; height: 12px; background: var(--bg-soft); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .bar > div { height: 100%; background: var(--grad); border-radius: 6px; }
+  .score-row .val { width: 56px; text-align: right; font-weight: 700; color: var(--accent2); }
+  .total {
+    margin-top: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total .label { font-size: 15px; color: var(--text-dim); }
+  .total .grade { font-size: 30px; font-weight: 800; }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 5px;
+    margin: 0 4px 4px 0;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .pros { border-left: 3px solid var(--accent2); }
+  .cons { border-left: 3px solid var(--warn); }
+  .footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 32px 24px;
+    border-top: 1px solid var(--border);
+  }
+  a { color: var(--accent3); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="badge">GitHub Trending · 深度分析</span>
+    <h1>calesthio/OpenMontage</h1>
+    <p class="subtitle">号称"全球首个开源的 Agentic（智能体驱动）视频生产系统"——把你的 AI 编程助手（Claude Code / Cursor / Copilot）变成一整间视频制作工作室。</p>
+    <div class="meta-row">
+      <span class="meta-chip">📅 分析日期：<strong>2026-06-20</strong></span>
+      <span class="meta-chip">🏷️ 许可证：<strong>AGPLv3</strong></span>
+      <span class="meta-chip">🏢 组织：<strong>calesthio</strong></span>
+      <span class="meta-chip">🐍 技术栈：<strong>Python + Node.js + Remotion</strong></span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <section>
+    <h2><span class="num">01</span> 项目概述</h2>
+    <p class="lead">OpenMontage 的核心定位是：<strong>"AI 编程助手即编排器（orchestrator）"</strong>。它本身不包含中央代码调度器，而是把"一整套专业视频生产流水线"以 <code>YAML 流水线清单</code> + <code>Markdown 技能文件</code> + <code>Python 工具</code> 的形式喂给任意 AI 编程 Agent，让 Agent 像真人制作团队一样完成从研究、编剧、配音、素材生成到剪辑、合成的全过程。</p>
+    <p>一句话概括它的差异化：<strong>大多数 AI 视频工具只给你"一段由 prompt 生成的片段"，而 OpenMontage 给你的是一条端到端的生产流水线</strong>——并且这条流水线在没有付费视频生成 API 的情况下，也能用免费/开源的真实素材拼出成片，而不是简单地"给静态图片做 Ken Burns 推拉"。</p>
+
+    <div class="grid">
+      <div class="stat"><div class="num-big">12</div><div class="label">生产流水线 Pipelines</div></div>
+      <div class="stat"><div class="num-big">52</div><div class="label">生产工具 Tools</div></div>
+      <div class="stat"><div class="num-big">400+</div><div class="label">Agent 技能 Skills</div></div>
+      <div class="stat"><div class="num-big">14</div><div class="label">视频生成 Provider</div></div>
+    </div>
+
+    <div class="card">
+      <h3>官方演示案例（成本极具说服力）</h3>
+      <ul>
+        <li><strong>"THE LAST BANANA"</strong>：60 秒 Pixar 风格动画短片，6 段 Kling v3 动态片段 + Chirp3-HD 旁白 + 逐字字幕，总成本仅 <strong>$1.33</strong>。</li>
+        <li><strong>"VOID — Neural Interface"</strong>：仅需一个 OpenAI API key 的产品广告，4 张 AI 图 + TTS + 自动配乐 + WhisperX 字幕，总成本 <strong>$0.69</strong>，零人工素材。</li>
+        <li><strong>"Afternoon in Candyland"</strong>：吉卜力风格动画，12 张 FLUX 图片 + 交叉淡化 + 电影机位运动，总成本 <strong>$0.15</strong>，完全不调用视频生成 API。</li>
+        <li><strong>"SIGNAL FROM TOMORROW"</strong>：电影级科幻预告片，概念→剧本→场景→Veo 动态片段→原声→Remotion 合成。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> 技术架构</h2>
+    <p>OpenMontage 采用 <strong>Agent-First（智能体优先）架构</strong>。这一点非常关键：它没有任何中心化的代码编排器，<strong>AI 编程助手本身就是编排器</strong>。所有创意决策、编排逻辑、评审标准、质量门槛都以人类可读的指令文件（YAML + Markdown）形式存在，可被检视、可被定制，每一个决策都被记录、可审计。</p>
+
+    <h3>核心运行流程</h3>
+    <pre>用户："做一个关于黑洞如何形成的讲解视频"
+   ↓
+Agent 读取流水线清单 (YAML) —— 阶段、工具、评审标准、成功门槛
+   ↓
+Agent 读取阶段导演技能 (Markdown) —— 如何执行每个阶段
+   ↓
+Agent 调用 Python 工具 —— 按 7 维度评分选择最优 Provider
+   ↓
+Agent 用评审技能自我审查 —— schema 校验、流程合规、质量检查
+   ↓
+Agent 检查点存档 (JSON) —— 可恢复，带决策日志与成本快照
+   ↓
+提交用户审批 —— 每个创意决策点都在你掌控中
+   ↓
+合成前校验门槛 —— 交付承诺、幻灯片风险、渲染器治理
+   ↓
+渲染 (Remotion 或 FFmpeg) —— 匹配视觉语法的合成引擎
+   ↓
+合成后自检 —— ffprobe、抽帧、音频分析、交付承诺核验
+   ↓
+最终视频输出 —— 仅当自检通过才交付</pre>
+
+    <h3>三层知识架构</h3>
+    <div class="card">
+      <table>
+        <tr><th>层级</th><th>位置</th><th>作用</th></tr>
+        <tr><td>Layer 1</td><td><code>tools/</code> + <code>pipeline_defs/</code></td><td>"有什么" —— 可执行的能力 + 编排定义</td></tr>
+        <tr><td>Layer 2</td><td><code>skills/</code></td><td>"怎么用" —— OpenMontage 的约定与质量标杆</td></tr>
+        <tr><td>Layer 3</td><td><code>.agents/skills/</code></td><td>"原理是什么" —— 外部技术知识包</td></tr>
+      </table>
+      <p>每个工具都声明它依赖哪些 Layer 3 技能。Agent 先读 Layer 1 知道"有什么"，再读 Layer 2 知道"OpenMontage 希望怎么用"，需要时读 Layer 3 获取深度技术知识。</p>
+    </div>
+
+    <h3>目录结构</h3>
+    <pre>OpenMontage/
+├── tools/              # ~48 个 Python 工具（Agent 的"双手"）
+│   ├── video/          # 13 个视频生成工具 + 合成/拼接/裁剪
+│   ├── audio/          # 4 个 TTS + Suno/ElevenLabs 音乐、混音
+│   ├── graphics/       # 9 个图像/图形工具 + 图表、代码片段、数学
+│   ├── enhancement/    # 超分、抠图、人脸增强、调色
+│   ├── analysis/       # 转写、场景检测、抽帧
+│   ├── avatar/         # 数字人、口型同步
+│   └── subtitle/       # SRT/VTT 生成
+├── pipeline_defs/      # YAML 流水线清单（Agent 的"剧本"）
+├── skills/             # Markdown 技能文件（Agent 的"知识"）
+├── schemas/            # 15 个 JSON Schema（契约校验）
+├── remotion-composer/  # React/Remotion 视频合成引擎
+└── lib/                # 核心基础设施（配置、检查点、流水线加载）</pre>
+
+    <h3>两大合成引擎</h3>
+    <div class="grid">
+      <div class="card">
+        <h3>Remotion</h3>
+        <p>基于 <strong>React</strong> 的程序化视频引擎。弹簧动画图像场景、数据卡片、章节标题、TikTok 风格逐字字幕、场景转场（淡入/滑动/擦除/翻转）。当未配置视频生成 Provider 时，Agent 生成静态图片并由 Remotion 将其动画化为完整视频。</p>
+      </div>
+      <div class="card">
+        <h3>HyperFrames</h3>
+        <p>基于 <strong>HTML/CSS/GSAP</strong> 的程序化视频引擎（Node.js ≥ 22）。动态排版、产品宣传、发布短片、自定义动态图形、网站转视频、骨骼式 SVG 角色动画。通过 <code>npx hyperframes</code> 消费。</p>
+      </div>
+    </div>
+
+    <h3>环境要求与启动</h3>
+    <pre>Python 3.10+ · FFmpeg · Node.js 18+（HyperFrames 需 22+）· 任意 AI 编程助手
+
+git clone https://github.com/calesthio/OpenMontage.git
+cd OpenMontage
+make setup
+# 然后在 AI 编程助手里输入：
+# "Make a 60-second animated explainer about how neural networks learn"</pre>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> 核心创新点</h2>
+
+    <div class="card">
+      <h3>① 真实素材纪录片流水线（免付费视频模型）</h3>
+      <p>这是最硬核的差异化。OpenMontage 不止能做"静态图动画化"，还能从 <strong>Archive.org、NASA、Wikimedia Commons</strong> 及 Pexels/Unsplash 等免费来源构建 <strong>CLIP 语义可检索的素材语料库</strong>，按语义排序检索真实动态素材，剪辑成时间线，渲染成片。官方明确强调："这不是通常那种'给几张静态图加动画就叫视频'的把戏。"</p>
+    </div>
+
+    <div class="card">
+      <h3>② Agent 即编排器，零代码调度器</h3>
+      <p>所有编排逻辑存在于 <strong>可读的指令文件</strong>中（YAML 清单 + Markdown 技能），而非黑盒代码。这意味着 Agent 的每一步决策都可以被检视、追溯、定制。每个决策都记录了"考虑过的备选方案、置信度分数、选择理由"，形成可审计的决策轨迹。</p>
+    </div>
+
+    <div class="card">
+      <h3>③ 7 维度评分式 Provider 选择 + 生产级质量门槛</h3>
+      <ul>
+        <li><strong>评分选择</strong>：每次工具选择在 7 个维度打分——任务契合度(30%)、输出质量(20%)、可控性(15%)、可靠性(15%)、成本效率(10%)、延迟(5%)、连续性(5)，自动选最优匹配并记录决策。</li>
+        <li><strong>合成前校验</strong>：若交付承诺被违反（如"动态为主"的视频却有 80% 静态图）、幻灯片风险分过高、渲染器缺失，则阻断渲染——在浪费 GPU 之前拦截坏计划。</li>
+        <li><strong>合成后自检</strong>：每次渲染后运行 ffprobe 校验、4 点抽帧检查黑帧/损坏叠加层、音频电平分析、交付承诺核验、字幕存在性检查。自检不过，视频不交付。</li>
+        <li><strong>幻灯片风险评分</strong>：6 维分析防止"动画版 PPT"式输出。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>④ 参考视频驱动的创作</h3>
+      <p>可粘贴一个 <strong>YouTube/Short/Reel/TikTok/本地片段</strong>作为参考，Agent 分析其转写、节奏、场景、关键帧、风格，输出 2-3 个差异化概念 + 诚实的工具路径 + 成本预估 + 全量生产前的样本。你拿到的是"保留什么、改变什么、花多少钱、实际长什么样"，而非"瞎猜的 prompt 意大利面"。</p>
+    </div>
+
+    <div class="card">
+      <h3>⑤ 内置实时网络研究（防幻觉）</h3>
+      <p>Web 研究是一等公民阶段。在写一个字的剧本之前，Agent 会跨 YouTube、Reddit、Hacker News、新闻站点、学术来源执行 <strong>15-25+ 次网络搜索</strong>，在结构化研究简报中引用一切——让视频基于真实、最新的信息，而非幻觉事实。</p>
+    </div>
+
+    <div class="card">
+      <h3>⑥ 预算治理（无意外账单）</h3>
+      <p>执行前预估成本 → 预留预算 → 执行后对账；支持 <code>observe/warn/cap</code> 三种模式；默认超过 $0.50 的动作需确认；总预算上限默认 $10，可配置。Agent 在花钱之前告诉你将要花多少。</p>
+    </div>
+
+    <div class="card">
+      <h3>⑦ 零 API key 也能出片 + 本地 GPU 免费视频生成</h3>
+      <p>开箱即用：<strong>Piper TTS</strong>（离线旁白）+ 开放档案素材 + Remotion/HyperFrames 合成 + FFmpeg 后期，零密钥即可成片。有 GPU 时，<code>make install-gpu</code> 解锁 <strong>WAN 2.1、Hunyuan、CogVideo、LTX-Video</strong> 等本地免费视频生成模型。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> 应用场景</h2>
+    <div class="grid">
+      <div class="card"><h3>📚 教育内容</h3><p>动画讲解视频、教程、主题拆解（如"神经网络如何学习"、"CRISPR 基因编辑原理"）。带研究、旁白、视觉、配乐。</p></div>
+      <div class="card"><h3>📣 市场营销</h3><p>产品发布预告片、品牌电影、社交媒体短片、广告素材（如 AquaPulse 智能水瓶概念片）。</p></div>
+      <div class="card"><h3>🎙️ 播客再利用</h3><p>把播客精彩片段转为视频、audiogram 视频，将 2 小时长内容切成十几条社交短片（Clip Factory 流水线）。</p></div>
+      <div class="card"><h3>🌍 本地化与配音</h3><p>为现有视频加字幕、配音、翻译，分发到 10 种语言市场。</p></div>
+      <div class="card"><h3>🎬 纪录片与视频散文</h3><p>用真实档案素材做 Adam Curtis 风格的档案拼贴、情绪短片、检索优先的 B-roll 剪辑。</p></div>
+      <div class="card"><h3>🖥️ 软件演示</h3><p>精致的产品录屏、功能走查、文档演示视频。</p></div>
+      <div class="card"><h3>👤 数字人讲解</h3><p>Avatar 驱动的发言人视频，用于企业沟通、培训、公告。</p></div>
+      <div class="card"><h3>🎨 角色动画</h3><p>SVG 骨骼、姿势库、GSAP 时间线，渲染卡通角色表演。</p></div>
+    </div>
+    <div class="highlight">
+      适配人群：内容创作者、自媒体运营、教育机构、独立开发者、营销团队、希望用 AI Agent 自动化视频生产流程的技术型用户。注意：它需要用户拥有并熟悉一个 AI 编程助手（Claude Code/Cursor 等），技术门槛中等偏上。
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> 竞品对比</h2>
+    <p>市面上的 AI 视频工具大致分两层：<strong>单片段生成器</strong>（Runway、Pika、Sora、Kling）与 <strong>端到端 Agentic 生产系统</strong>（OpenMontage、MoneyPrinterTurbo 等）。OpenMontage 的定位明显属于后者，且是目前<strong>开源阵营中流水线最完整、质量治理最严</strong>的代表。</p>
+
+    <table>
+      <tr>
+        <th>维度</th>
+        <th>OpenMontage</th>
+        <th>Runway / Pika / Sora</th>
+        <th>MoneyPrinterTurbo</th>
+      </tr>
+      <tr><td>定位</td><td>端到端 Agentic 生产流水线</td><td>单片段生成器</td><td>轻量自动化短</td></tr>
+      <tr><td>开源</td><td>✅ AGPLv3</td><td>❌ 闭源商业</td><td>✅ 开源</td></tr>
+      <tr><td>编排方式</td><td>AI 编程助手即编排器（YAML+MD）</td><td>Web/App 黑盒</td><td>Python 代码编排</td></tr>
+      <tr><td>流水线数</td><td>12 条专业流水线</td><td>无流水线概念</td><td>单一短流程</td></tr>
+      <tr><td>真实素材</td><td>✅ 免费档案素材可剪成片</td><td>❌ 仅生成</td><td>⭕ 仅图生视频</td></tr>
+      <tr><td>质量治理</td><td>7维评分+合成前后校验+幻灯片风险</td><td>用户自检</td><td>基础</td></tr>
+      <tr><td>成本控制</td><td>预算治理、动作审批、审计轨迹</td><td>按 credit 计费</td><td>依赖付费 API</td></tr>
+      <tr><td>零密钥出片</td><td>✅ Piper+档案+Remotion</td><td>❌</td><td>❌ 需付费 API</td></tr>
+      <tr><td>本地视频生成</td><td>✅ WAN/Hunyuan/CogVideo/LTX</td><td>❌</td><td>有限</td></tr>
+      <tr><td>Provider 灵活度</td><td>14 视频+10 图像+4 TTS，可自由替换</td><td>单一厂商锁定</td><td>少量固定 Provider</td></tr>
+      <tr><td>参考视频驱动</td><td>✅ 深度分析与概念派生</td><td>⭕ 部分</td><td>❌</td></tr>
+    </table>
+
+    <div class="card">
+      <h3>关键差异总结</h3>
+      <ul>
+        <li><strong>vs Runway/Pika/Sora</strong>：后者专注"把一个 prompt 变成一段高质量片段"，电影级动态（Runway）或创意灵活性（Pika）很强，但<strong>不负责整条生产链</strong>——剧本、配音、配乐、剪辑、字幕、本地化都要你自己另找工具拼。OpenMontage 把这条链端到端打通。</li>
+        <li><strong>vs MoneyPrinterTurbo</strong>：MoneyPrinterTurbo 是同类开源先驱乐于生成"自动化短"，但 OpenMontage 在<strong>流水线广度（12 条 vs 单流程）、质量门槛（合成前后校验）、真实素材能力、预算治理、Provider 生态</strong>上明显更重、更专业。</li>
+        <li><strong>唯一性</strong>：把"AI 编程助手当作视频制作团队编排器"这一架构范式，在开源世界里目前几乎没有同量级竞品。</li>
+      </ul>
+    </div>
+
+    <div class="grid">
+      <div class="card pros">
+        <h3 style="color:var(--accent2)">✅ 核心优势</h3>
+        <ul>
+          <li>真正端到端的开源 Agentic 生产流水线</li>
+          <li>免付费模型也能用真实素材出片</li>
+          <li>生产级质量治理与可审计决策</li>
+          <li>预算治理，无意外账单</li>
+          <li>Provider 无锁定，自由替换</li>
+          <li>参考视频驱动 + 内置防幻觉网络研究</li>
+        </ul>
+      </div>
+      <div class="card cons">
+        <h3 style="color:var(--warn)">⚠️ 潜在短板</h3>
+        <ul>
+          <li>需熟悉 AI 编程助手，技术门槛中等偏上</li>
+          <li>渲染依赖本地 Node.js/FFmpeg/GPU，硬件要求不低</li>
+          <li>Agentic 流程相对单片段生成器更慢、更重</li>
+          <li>AGPLv3 许可证对商业集成有传染性约束</li>
+          <li>依赖众多外部 Provider API，稳定性受第三方影响</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> 综合评分</h2>
+    <p>基于项目技术深度、创新性、实用性、生态、文档质量、社区热度等维度的综合评估：</p>
+
+    <div class="score-wrap">
+      <div class="score-row"><div class="name">技术创新性</div><div class="bar"><div style="width:95%"></div></div><div class="val">9.5</div></div>
+      <div class="score-row"><div class="name">架构设计</div><div class="bar"><div style="width:93%"></div></div><div class="val">9.3</div></div>
+      <div class="score-row"><div class="name">功能完整度</div><div class="bar"><div style="width:92%"></div></div><div class="val">9.2</div></div>
+      <div class="score-row"><div class="name">实用价值</div><div class="bar"><div style="width:88%"></div></div><div class="val">8.8</div></div>
+      <div class="score-row"><div class="name">质量治理</div><div class="bar"><div style="width:94%"></div></div><div class="val">9.4</div></div>
+      <div class="score-row"><div class="name">文档与生态</div><div class="bar"><div style="width:86%"></div></div><div class="val">8.6</div></div>
+      <div class="score-row"><div class="name">易用性</div><div class="bar"><div style="width:72%"></div></div><div class="val">7.2</div></div>
+      <div class="score-row"><div class="name">社区热度</div><div class="bar"><div style="width:80%"></div></div><div class="val">8.0</div></div>
+    </div>
+
+    <div class="total">
+      <div>
+        <div class="label">综合评分（满分 10）</div>
+        <div style="font-size:14px;color:var(--text-dim);margin-top:4px">加权平均 · 强烈推荐关注</div>
+      </div>
+      <div class="grade" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">8.9 / A</div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <h3>分析师评语</h3>
+      <p>OpenMontage 是一个<strong>范式级</strong>的开源项目：它没有重新发明视频模型，而是把"专业视频生产团队的协作流程"封装成可被 AI Agent 执行的指令体系，从而把任意 AI 编程助手升级为完整视频工作室。其"<strong>真实素材免付费出片</strong>""<strong>生产级质量门槛</strong>""<strong>可审计的 Agent 决策轨迹</strong>""<strong>预算治理</strong>"四项设计，在当前 AI 视频工具中相当少见且极具工程含金量。</p>
+      <p>它更适合<strong>技术型内容创作者、独立开发者、小团队</strong>，而非追求"一键出片"的纯小白。对于关注 AI Agent 工程化（agentic engineering）、MCP 工具生态、程序化视频生成（Remotion/GSAP）的开发者，这个仓库的架构与 skills/pipeline 设计本身就是一本极佳的参考教材。作为 GitHub Trending 上的新星，值得长期跟踪。</p>
+      <div style="margin-top:14px">
+        <span class="tag">#AI-Agent</span>
+        <span class="tag">#Agentic-Video</span>
+        <span class="tag">#Remotion</span>
+        <span class="tag">#AIGC</span>
+        <span class="tag">#开源视频</span>
+        <span class="tag">#Claude-Code</span>
+        <span class="tag">#MCP-Tools</span>
+        <span class="tag">#自动化生产</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>本报告由 AI 深度分析生成 · 数据来源：GitHub 官方仓库及公开网络资料 · 生成日期 2026-06-20</p>
+    <p>项目地址：<a href="https://github.com/calesthio/OpenMontage">github.com/calesthio/OpenMontage</a> · 仅供研究参考，不构成任何投资或使用建议</p>
+  </div>
+
+</div>
+</body>
+</html>
