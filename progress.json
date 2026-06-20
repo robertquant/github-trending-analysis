@@ -1,38 +1,69 @@
 {
-  "date": "2026-06-19",
-  "fetched_at": "2026-06-19",
+  "date": "2026-06-20",
+  "fetched_at": "2026-06-20",
   "pending": [
+    "palmier-io/palmier-pro",
+    "koala73/worldmonitor",
+    "aishwaryanr/awesome-generative-ai-guide",
+    "BuilderIO/agent-native",
+    "calesthio/OpenMontage",
     "withastro/flue",
-    "Kilo-Org/kilocode",
-    "makeplane/plane",
     "Kong/insomnia",
-    "dotnet/aspnetcore",
-    "owainlewis/awesome-artificial-intelligence"
+    "Lightricks/LTX-2"
   ],
   "skipped_already_analyzed": [
-    "google-research/timesfm",
-    "n0-computer/iroh",
-    "freeCodeCamp/freeCodeCamp",
-    "obra/superpowers",
     "DeusData/codebase-memory-mcp",
-    "Universal-Debloater-Alliance/universal-android-debloater-next-generation"
-  ],
-  "done": [
+    "google-research/timesfm",
+    "chopratejas/headroom",
     "zai-org/GLM-5",
-    "yifanfeng97/Hyper-Extract",
-    "alibaba/zvec"
+    "n0-computer/iroh",
+    "obra/superpowers",
+    "penpot/penpot"
   ],
+  "done": [],
   "projects": [
+    {
+      "name": "DeusData/codebase-memory-mcp",
+      "status": "skipped"
+    },
     {
       "name": "google-research/timesfm",
       "status": "skipped"
     },
     {
-      "name": "n0-computer/iroh",
+      "name": "palmier-io/palmier-pro",
+      "status": "pending"
+    },
+    {
+      "name": "koala73/worldmonitor",
+      "status": "pending"
+    },
+    {
+      "name": "aishwaryanr/awesome-generative-ai-guide",
+      "status": "pending"
+    },
+    {
+      "name": "BuilderIO/agent-native",
+      "status": "pending"
+    },
+    {
+      "name": "chopratejas/headroom",
       "status": "skipped"
     },
     {
-      "name": "freeCodeCamp/freeCodeCamp",
+      "name": "calesthio/OpenMontage",
+      "status": "pending"
+    },
+    {
+      "name": "zai-org/GLM-5",
+      "status": "skipped"
+    },
+    {
+      "name": "withastro/flue",
+      "status": "pending"
+    },
+    {
+      "name": "n0-computer/iroh",
       "status": "skipped"
     },
     {
@@ -40,54 +71,22 @@
       "status": "skipped"
     },
     {
-      "name": "zai-org/GLM-5",
-      "status": "done"
-    },
-    {
-      "name": "DeusData/codebase-memory-mcp",
+      "name": "penpot/penpot",
       "status": "skipped"
-    },
-    {
-      "name": "yifanfeng97/Hyper-Extract",
-      "status": "done"
-    },
-    {
-      "name": "alibaba/zvec",
-      "status": "done"
-    },
-    {
-      "name": "withastro/flue",
-      "status": "pending"
-    },
-    {
-      "name": "Kilo-Org/kilocode",
-      "status": "pending"
-    },
-    {
-      "name": "makeplane/plane",
-      "status": "pending"
     },
     {
       "name": "Kong/insomnia",
       "status": "pending"
     },
     {
-      "name": "Universal-Debloater-Alliance/universal-android-debloater-next-generation",
-      "status": "skipped"
-    },
-    {
-      "name": "dotnet/aspnetcore",
-      "status": "pending"
-    },
-    {
-      "name": "owainlewis/awesome-artificial-intelligence",
+      "name": "Lightricks/LTX-2",
       "status": "pending"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 6,
-    "skipped": 6,
-    "done": 3
+    "pending": 8,
+    "skipped": 7,
+    "done": 0
   }
 }
