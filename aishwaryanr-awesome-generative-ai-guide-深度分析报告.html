@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Awesome Generative AI Guide 深度分析报告 | aishwaryanr/awesome-generative-ai-guide</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(188,140,255,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(126,231,135,.16), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.viral{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#c9a6ff 55%,#7ee787);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent2);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:780px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(188,140,255,.10),rgba(126,231,135,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:84px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--accent2))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--gold)}
+  /* pros/cons */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pc{border-radius:12px;padding:18px 20px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(126,231,135,.05);border-color:rgba(126,231,135,.25)}
+  .pc.con{background:rgba(255,123,114,.05);border-color:rgba(255,123,114,.25)}
+  .pc h4{font-size:14.5px;margin-bottom:10px}
+  .pc.pro h4{color:var(--accent2)} .pc.con h4{color:var(--red)}
+  .pc ul li::before{color:inherit}
+  .pc.pro ul li::before{content:"✓";color:var(--accent2)} .pc.con ul li::before{content:"⚠";color:var(--red)}
+  /* timeline */
+  .tl{position:relative;padding-left:28px;border-left:2px solid var(--border);margin:10px 0}
+  .tl .ev{position:relative;margin-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-34px;top:5px;width:12px;height:12px;border-radius:50%;
+     background:var(--purple);box-shadow:0 0 0 4px var(--card)}
+  .tl .yr{font-size:12px;color:var(--orange);font-weight:700}
+  .tl .ds{font-size:14px;color:#c9d1d9;margin-top:2px}
+  .quote{border-left:3px solid var(--purple);padding:4px 0 4px 16px;margin:14px 0;color:var(--muted);font-style:italic;font-size:14px}
+  .footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}.bars{grid-template-columns:1fr}h1{font-size:30px}section{padding:22px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge viral">🔥 GitHub Trending</span>
+    <span class="badge os">🔓 开源 MIT</span>
+    <span class="badge ai">🤖 生成式 AI 学习枢纽</span>
+    <span class="badge">⭐ 27.7k Stars · 5.7k Forks</span>
+    <span class="badge">🎓 被 UChicago / Kaggle 推荐</span>
+    <h1>Awesome Generative AI Guide</h1>
+    <div class="tagline">生成式 AI 一站式学习与资源枢纽 · 从研究前沿到面试准备的全景地图</div>
+    <p class="lead">由前 <b>AWS 生成式 AI 创新中心（GenAIIC）应用科学负责人</b> Aishwarya Naresh Reganti 维护的精选资源库。聚合 <b>每月最佳 GenAI 论文</b>、<b>60+ 道面试题</b>、<b>60+ 实战项目</b>、<b>RAG / AI Agent 学习路线</b>、<b>多门免费课程</b>与可运行 <b>Notebook</b>，是 GitHub 上生成式 AI 领域最权威的 "awesome list" 之一。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">aishwaryanr/awesome-generative-ai-guide</div></div>
+      <div class="meta"><div class="k">作者</div><div class="v">Aishwarya Naresh Reganti</div></div>
+      <div class="meta"><div class="k">主语言</div><div class="v">HTML / Markdown</div></div>
+      <div class="meta"><div class="k">类型</div><div class="v">精选资源 / 学习指南</div></div>
+      <div class="meta"><div class="k">Stars</div><div class="v">~27.7k ⭐</div></div>
+      <div class="meta"><div class="k">贡献者</div><div class="v">27 人</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">8.8<small>/10</small></div>
+      <div class="score-label">综合评分 · 顶级 GenAI 学习资源库</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">内容广度</span><div class="bar-track"><div class="bar-fill" style="width:96%"></div></div><span class="num">9.6</span></div>
+      <div class="bar-row"><span class="name">策展质量</span><div class="bar-track"><div class="bar-fill" style="width:93%"></div></div><span class="num">9.3</span></div>
+      <div class="bar-row"><span class="name">实用价值</span><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div><span class="num">9.2</span></div>
+      <div class="bar-row"><span class="name">更新频率</span><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div><span class="num">8.5</span></div>
+      <div class="bar-row"><span class="name">作者权威</span><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div><span class="num">9.5</span></div>
+      <div class="bar-row"><span class="name">社区影响</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="num">8.8</span></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <h2><span class="ico">📚</span>项目概述</h2>
+    <p><strong>Awesome Generative AI Guide</strong> 是一个<strong>生成式 AI 一站式资源枢纽</strong>，核心定位是 "A one stop repository for generative AI research updates, interview resources, notebooks and much more!"。它把生成式 AI 领域分散在论文预印本、博客、教程、课程、招聘题库里的信息，<strong>系统化地策展、分类、串联</strong>成一张可导航的知识地图。</p>
+    <p>它本质上不是一个软件工具，而是一个<strong>高质量的知识策展项目（Curated Knowledge Hub）</strong>——在 GitHub "awesome list" 文化中，它是生成式 AI 方向最具影响力的代表之一，与 <code>steven2358/awesome-generative-ai</code>、<code>rasbt/LLMs-from-scratch</code> 等并列为学习者首选入口。</p>
+    <div class="quote">"This Awesome Generative AI Guide is a treasure trove of information. The curated papers, interview prep, free courses, and hands-on notebooks are invaluable." —— Kaggle 社区评价</div>
+    <h3>关键数据一览</h3>
+    <ul>
+      <li><b>~27.7k Stars</b>、<b>~5.7k Forks</b>，27 位贡献者长期维护</li>
+      <li>每月精选 <b>Best GenAI Papers</b>，持续追踪研究前沿</li>
+      <li><b>60+</b> 道 GenAI 面试题（含 SelfCheckGPT、LLM 幻觉检测等热点）</li>
+      <li><b>60+</b> 个实战项目，附教程、代码与所需技能拆解</li>
+      <li>多门免费课程：<b>Agentic AI Crash Course</b>、<b>Generative AI Genius（20 天入门）</b>、<b>Applied LLMs Mastery 2024</b></li>
+      <li>专题路线图：<b>RAG Roadmap</b>、<b>LLM Agents 101 Guide</b></li>
+      <li>可运行的 <b>Hands-on Notebooks</b>，边学边练</li>
+      <li>被 <b>芝加哥大学（UChicago）</b>、<b>Kaggle</b>、<b>BrightCoding</b> 等机构推荐</li>
+    </ul>
+  </section>
+
+  <!-- 内容架构 -->
+  <section>
+    <h2><span class="ico">🗂️</span>内容架构</h2>
+    <p>作为一个知识策展项目，它的"架构"是<strong>信息组织架构</strong>。仓库按学习目标与受众分模块组织，覆盖从零基础入门到资深工程师面试的完整链路。</p>
+
+    <h3>核心模块总览</h3>
+    <table>
+      <tr><th>模块</th><th>面向人群</th><th>内容形态</th></tr>
+      <tr><td>每月最佳论文（Best Papers）</td><td>研究者 / 跟进前沿者</td><td>论文清单 + 解读，按月归档</td></tr>
+      <tr><td>面试资源（Interview Prep）</td><td>求职者 / 工程师</td><td>60+ 道题目与要点解析</td></tr>
+      <tr><td>实战项目（Projects）</td><td>动手实践者</td><td>60+ 项目 + 教程 + 代码 + 技能拆解</td></tr>
+      <tr><td>免费课程（Free Courses）</td><td>初学者 / 进阶者</td><td>视频课/图文课，含 20 天入门营</td></tr>
+      <tr><td>RAG Roadmap</td><td>应用开发者</td><td>从基础到评估的检索增强生成路线</td></tr>
+      <tr><td>Agents 101 Guide</td><td>Agent 开发者</td><td>从零搭建 LLM Agent 的步骤指南</td></tr>
+      <tr><td>Notebooks</td><td>动手实验者</td><td>可运行的实战 Notebook</td></tr>
+      <tr><td>研究动态（Research Updates）</td><td>持续学习者</td><td>GenAI 领域动态与里程碑追踪</td></tr>
+    </table>
+
+    <h3>三大免费课程亮点</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">🤖 Agentic AI Crash Course</div><div class="fd">从"什么是 AI Agent"讲起的智能体速成课，Part 1 即入门 AI Agent 概念，紧跟 Agent 浪潮。</div></div>
+      <div class="feat"><div class="ft">✨ Generative AI Genius</div><div class="fd">20 天 GenAI 入门课，主打"碎片化短视频/Reels 形式"，号称首个基于短视频的 AI 课程，适合忙碌人群。</div></div>
+      <div class="feat"><div class="ft">🚀 Applied LLMs Mastery 2024</div><div class="fd">面向应用的 LLM 精通课，覆盖落地 LLM 应用所需的核心技术与工程实践。</div></div>
+    </div>
+
+    <h3>专题资源标签</h3>
+    <p style="margin-bottom:8px">
+      <span class="pill p">研究论文追踪</span><span class="pill g">面试备考</span><span class="pill o">实战项目</span>
+      <span class="pill c">RAG 路线</span><span class="pill">AI Agents</span><span class="pill g">入门课程</span>
+      <span class="pill p">Prompt 工程</span><span class="pill o">LLM 应用</span><span class="pill c">Notebook 实验</span>
+      <span class="pill">微调 Fine-tuning</span><span class="pill g">系统设计</span><span class="pill p">幻觉检测</span>
+    </p>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>核心创新点</h2>
+
+    <h3>1. 研究者 × 工程师 × 教育者的三重视角策展</h3>
+    <p>不同于纯论文清单或纯教程合集，本项目由一位同时具备<strong>学术发表（35+ 篇顶会论文）</strong>、<strong>工业落地（AWS GenAIIC 技术负责人）</strong>和<strong>教学经验（Maven / O'Reilly 讲师）</strong>背景的作者维护。这种三重身份使内容既能把握研究深度，又懂工程落地痛点，还能用学习者听得懂的方式表达——这是普通 awesome list 难以复制的护城河。</p>
+
+    <h3>2. "学习—实践—求职"全链路闭环</h3>
+    <p>大多数资源库只覆盖某一环（要么全是论文，要么全是项目）。本项目把 <b>入门课程 → 专题路线图（RAG/Agents）→ 实战项目 → 面试题</b> 串成一条完整的学习—实践—求职闭环，学习者可以"一条龙"走完从入门到拿 offer 的全过程。</p>
+
+    <h3>3. 持续滚动的研究前沿追踪</h3>
+    <p>每月精选 <b>Best GenAI Papers</b>，让仓库不只是静态存档，而是<strong>活的、持续呼吸的知识库</strong>。在 GenAI 这个周新月异的领域，这种"持续更新"本身就是核心价值。</p>
+
+    <h3>4. 碎片化 × 系统化的课程设计</h3>
+    <p>Generative AI Genius 20 天课以短视频/Reels 形式呈现，号称"首个基于短视频的 AI 课程"，把碎片化学习与系统化路线结合，降低了 GenAI 入门的心理门槛。</p>
+
+    <h3>5. 面向真实就业市场的题库</h3>
+    <p>面试题模块紧扣工业热点（如 SelfCheckGPT、LLM 幻觉检测、RAG 评估），不是泛泛的理论题，而是<strong>对接真实 GenAI 岗位 JD</strong> 的实战题库。</p>
+
+    <h3>6. Notebook 即学即练</h3>
+    <p>提供可运行 Notebook，把"读论文/看教程"转化为"动手跑代码"，弥补了纯文字资源在"上手实践"环节的缺口。</p>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <h2><span class="ico">🎯</span>应用场景</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">🌱 GenAI 零基础入门</div><div class="fd">用 20 天入门课和 Agentic AI 速成课，从零建立 GenAI 全景认知。</div></div>
+      <div class="feat"><div class="ft">🎓 高校学生 / 自学者</div><div class="fd">把分散资料聚成系统路线图，避免在海量信息中迷失方向。</div></div>
+      <div class="feat"><div class="ft">💼 求职面试冲刺</div><div class="fd">用 60+ 面试题 + 系统设计资料备战 GenAI 岗位面试。</div></div>
+      <div class="feat"><div class="ft">🔧 RAG / Agent 开发者</div><div class="fd">按 RAG Roadmap、Agents 101 Guide 从零搭建生产级应用。</div></div>
+      <div class="feat"><div class="ft">🔬 研究者跟进前沿</div><div class="fd">用每月精选论文清单高效跟进 GenAI 研究进展。</div></div>
+      <div class="feat"><div class="ft">🛠️ 企业培训 / 内训素材</div><div class="fd">作为团队 GenAI 转型培训的现成课程与项目库。</div></div>
+      <div class="feat"><div class="ft">👨‍🏫 讲师 / 内容创作者</div><div class="fd">作为备课、设计课程大纲、选题的权威参考来源。</div></div>
+      <div class="feat"><div class="ft">🧭 技术 Leader 选型参考</div><div class="fd">快速了解 GenAI 技术栈全景，辅助团队技术选型与规划。</div></div>
+    </div>
+  </section>
+
+  <!-- 作者背景 -->
+  <section>
+    <h2><span class="ico">👤</span>作者背景</h2>
+    <p>作者是本项目的核心资产与信任背书来源。<strong>Aishwarya Naresh Reganti</strong> 是一位兼具学术深度与工业落地经验的资深 ML/AI 专家：</p>
+    <table>
+      <tr><th>维度</th><th>详情</th></tr>
+      <tr><td>当前职位</td><td>LevelUp Labs 创始人兼 CEO</td></tr>
+      <tr><td>前任职</td><td>AWS 生成式 AI 创新中心（GenAIIC）应用科学技术负责人（Applied Science Tech Lead）</td></tr>
+      <tr><td>行业经验</td><td>9+ 年机器学习实战经验</td></tr>
+      <tr><td>学术成果</td><td>35+ 篇顶会论文（NeurIPS、AAAI、CVPR 等），Google Scholar 可查</td></tr>
+      <tr><td>教学履历</td><td>Maven 平台《Master Generative AI System Design》讲师；O'Reilly《Generative AI in the Real World》受访嘉宾</td></tr>
+      <tr><td>荣誉</td><td>获 ACM Women "From Scholar to Teacher" 专题报道</td></tr>
+    </table>
+    <p class="quote">"她在 AWS GenAIIC 帮助企业客户落地生成式 AI 的第一线经验，直接塑造了这个资源库的'工程落地'视角。" —— 综合公开资料</p>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>竞品对比</h2>
+    <table>
+      <tr>
+        <th>资源库</th><th class="center">研究追踪</th><th class="center">面试/项目</th><th class="center">免费课程</th><th class="center">作者权威</th><th>核心定位</th>
+      </tr>
+      <tr>
+        <td><b>awesome-generative-ai-guide</b></td><td class="center yes">月度精选</td><td class="center yes">60+ / 60+</td><td class="center yes">多门</td><td class="center yes">AWS 负责人</td><td>研究+面试+课程+项目全链路</td>
+      </tr>
+      <tr>
+        <td>steven2358/awesome-generative-ai</td><td class="center mid">部分</td><td class="center no">偏少</td><td class="center mid">含课程</td><td class="center mid">社区维护</td><td>偏工具/API/动态示例清单</td>
+      </tr>
+      <tr>
+        <td>luban-agi/Awesome-AIGC-Tutorials</td><td class="center mid">部分</td><td class="center no">较少</td><td class="center yes">有</td><td class="center mid">社区</td><td>中文向，LLM+AI 绘画教程聚合</td>
+      </tr>
+      <tr>
+        <td>rasbt/LLMs-from-scratch</td><td class="center no">否</td><td class="center mid">代码为主</td><td class="center yes">配套书</td><td class="center yes">Sebastian Raschka</td><td>从零实现 LLM 的代码教学</td>
+      </tr>
+      <tr>
+        <td>microsoft/ai-agents-for-beginners</td><td class="center no">否</td><td class="center mid">项目</td><td class="center yes">12 课</td><td class="center yes">微软官方</td><td>专注 AI Agent 入门教学</td>
+      </tr>
+      <tr>
+        <td>Lordog/dive-into-llms 等</td><td class="center mid">部分</td><td class="center no">较少</td><td class="center mid">少量</td><td class="center mid">个人</td><td>中文 LLM 入门资料</td>
+      </tr>
+    </table>
+    <p><strong>差异化优势：</strong>本项目是少数能同时覆盖 <b>研究前沿追踪 + 系统面试题库 + 多门免费课程 + 实战项目 + 学习路线图</b> 的"全链路"资源库，且由工业一线（AWS）+ 学术（顶会发表）双重背景的作者背书。竞品大多只专精其中一两个维度。</p>
+  </section>
+
+  <!-- 优劣势 -->
+  <section>
+    <h2><span class="ico">⚖️</span>优势与挑战</h2>
+    <div class="two-col">
+      <div class="pc pro">
+        <h4>✓ 核心优势</h4>
+        <ul>
+          <li>内容广度顶级：研究/面试/课程/项目/路线图一应俱全</li>
+          <li>作者权威性强：AWS GenAIIC 负责人 + 35+ 篇顶会论文</li>
+          <li>策展质量高：经过工业落地视角筛选，非堆砌链接</li>
+          <li>持续更新：每月精选论文让知识库保持"活着"</li>
+          <li>全链路闭环：从入门到求职一条龙，学习路径清晰</li>
+          <li>免费开放，MIT 精神，社区 27k+ star 验证</li>
+          <li>被 UChicago、Kaggle 等权威机构背书推荐</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠️ 潜在挑战</h4>
+        <ul>
+          <li>本质是策展资源，非可运行软件，"动手"需自行配套环境</li>
+          <li>部分外部链接随时间失效（链接腐烂）需维护</li>
+          <li>GenAI 进化极快，单作者维护的更新压力大、可持续性存疑</li>
+          <li>以英文为主，对中文学习者有一定门槛（有第三方中文解读）</li>
+          <li>部分课程深度有限，资深研究者可能需另寻进阶资料</li>
+          <li>内容横向铺开广，但单一主题垂直深度参差</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展时间线 -->
+  <section>
+    <h2><span class="ico">📅</span>发展脉络</h2>
+    <div class="tl">
+      <div class="ev"><div class="yr">起源</div><div class="ds">作者基于 AWS GenAIIC 工业落地经验，开始系统性整理 GenAI 资源，作为个人 + 团队知识沉淀。</div></div>
+      <div class="ev"><div class="yr">2024</div><div class="ds">仓库快速积累人气，先后上线 Applied LLMs Mastery 2024 课程、60+ 面试题与项目模块，Star 数突破 5k。</div></div>
+      <div class="ev"><div class="yr">2024–2025</div><div class="ds">新增 Generative AI Genius 20 天入门课、Agentic AI Crash Course，紧随 Agent 浪潮；被 Kaggle、UChicago、BrightCoding 等推荐。</div></div>
+      <div class="ev"><div class="yr">2026</div><div class="ds">Star 数攀升至约 27.7k，成为生成式 AI 方向 GitHub 上最具影响力的 awesome list 之一，登上 Trending。</div></div>
+    </div>
+  </section>
+
+  <!-- 综合评价 -->
+  <section>
+    <h2><span class="ico">🏆</span>综合评价</h2>
+    <p><strong>Awesome Generative AI Guide</strong> 是 2026 年生成式 AI 学习生态中<strong>最具参考价值的一站式资源库之一</strong>。它的价值不在于"代码"，而在于"策展"——在信息爆炸的 GenAI 时代，一位同时具备学术、工业、教学三重背景的作者，把最值得看的内容筛选、分类、串联成一张可执行的学习地图。</p>
+    <p>对于<strong>学习者</strong>，它是入门到求职的全链路指南；对于<strong>开发者</strong>，它是 RAG/Agent 实战的路线参考；对于<strong>研究者</strong>，它是高效跟进前沿的月度清单；对于<strong>技术 Leader</strong>，它是团队 GenAI 转型的现成教材库。综合评分 <b>8.8 / 10</b>——在"知识策展"这一品类里属于顶级水准，唯一的局限是它终究是资源索引而非可运行系统，需要使用者自行补齐动手环境。</p>
+    <div class="quote">推荐人群：所有想系统学习生成式 AI、准备 GenAI 面试、或需要团队培训素材的人。建议收藏并定期回访每月论文更新。</div>
+  </section>
+
+  <div class="footer">
+    仓库：github.com/aishwaryanr/awesome-generative-ai-guide · 作者：Aishwarya Naresh Reganti（LevelUp Labs / 前 AWS GenAIIC）<br>
+    报告生成日期：2026-06-20 · 数据来源：GitHub、Trendshift、Kaggle、UChicago、LinkedIn、Google Scholar
+  </div>
+
+</div>
+</body>
+</html>
