@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insomnia 深度分析报告 | Kong/insomnia</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(88,166,255,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(126,231,135,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.viral{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  .badge.tool{color:var(--cyan);border-color:rgba(57,208,216,.4);background:rgba(57,208,216,.08)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#7ec8ff 55%,#7ee787);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent2);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:780px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(126,231,135,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:84px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--gold);font-weight:700}
+  /* pros/cons */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pc{border-radius:12px;padding:18px 20px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(126,231,135,.05);border-color:rgba(126,231,135,.25)}
+  .pc.con{background:rgba(255,123,114,.05);border-color:rgba(255,123,114,.25)}
+  .pc h4{font-size:14.5px;margin-bottom:10px}
+  .pc.pro h4{color:var(--accent2)} .pc.con h4{color:var(--red)}
+  .pc ul li::before{color:inherit}
+  .pc.pro ul li::before{content:"✓";color:var(--accent2)} .pc.con ul li::before{content:"⚠";color:var(--red)}
+  /* timeline */
+  .tl{position:relative;padding-left:28px;border-left:2px solid var(--border);margin:10px 0}
+  .tl .ev{position:relative;margin-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-34px;top:5px;width:12px;height:12px;border-radius:50%;
+     background:var(--cyan);box-shadow:0 0 0 4px var(--card)}
+  .tl .yr{font-size:12px;color:var(--orange);font-weight:700}
+  .tl .ds{font-size:14px;color:#c9d1d9;margin-top:2px}
+  .quote{border-left:3px solid var(--purple);padding:4px 0 4px 16px;margin:14px 0;color:var(--muted);font-style:italic;font-size:14px}
+  .footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}.bars{grid-template-columns:1fr}h1{font-size:30px}section{padding:22px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge viral">🔥 GitHub Trending</span>
+    <span class="badge os">🔓 Apache-2.0 开源</span>
+    <span class="badge tool">⚡ 跨平台桌面端</span>
+    <span class="badge ai">🤖 AI 原生 / MCP</span>
+    <h1>Kong Insomnia</h1>
+    <div class="tagline">开源、跨平台的 AI 原生 API 协作平台 —— 设计、Mock、调试、测试一体化</div>
+    <p class="lead">Insomnia 由 Gregory Schier 于 2016 年创建，2019 年被 API 网关巨头 Kong Inc. 收购，是开发者社区中与 Postman 齐名的开源 API 客户端。它支持 REST、GraphQL、gRPC、WebSockets、SSE 等几乎所有主流协议，并提供云端、本地与 Git 三种存储模式。近年来，Insomnia 加速向「AI 原生」演进，原生集成 MCP（Model Context Protocol）与 Kong Konnect，成为连接传统 API 与 AI Agent 时代的桥梁。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">Kong/insomnia</div></div>
+      <div class="meta"><div class="k">⭐ Stars</div><div class="v">39,201</div></div>
+      <div class="meta"><div class="k">⑂ Forks</div><div class="v">2,321</div></div>
+      <div class="meta"><div class="k">🎫 Open Issues</div><div class="v">855</div></div>
+      <div class="meta"><div class="k">📜 License</div><div class="v">Apache-2.0</div></div>
+      <div class="meta"><div class="k">💻 主语言</div><div class="v">TypeScript</div></div>
+      <div class="meta"><div class="k">🎂 创建于</div><div class="v">2016-04</div></div>
+      <div class="meta"><div class="k">🔄 最近更新</div><div class="v">2026-06</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">8.6<small>/10</small></div>
+      <div class="score-label">综合评分</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">功能完整度</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">9.2</span></div>
+      <div class="bar-row"><span class="name">技术架构</span><span class="bar-track"><span class="bar-fill" style="width:85%"></span></span><span class="num">8.5</span></div>
+      <div class="bar-row"><span class="name">社区活跃度</span><span class="bar-track"><span class="bar-fill" style="width:90%"></span></span><span class="num">9.0</span></div>
+      <div class="bar-row"><span class="name">创新能力</span><span class="bar-track"><span class="bar-fill" style="width:83%"></span></span><span class="num">8.3</span></div>
+      <div class="bar-row"><span class="name">文档生态</span><span class="bar-track"><span class="bar-fill" style="width:88%"></span></span><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">学习曲线</span><span class="bar-track"><span class="bar-fill" style="width:80%"></span></span><span class="num">8.0</span></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <h2><span class="ico">📋</span>项目概述</h2>
+    <p>Insomnia 是一款<strong>开源、跨平台</strong>的 API 客户端与协作平台，定位为「让 API 设计、调试、测试、Mock 一站式完成」的开发者工具。它诞生于 2016 年，最初是独立开发者 Gregory Schier 的个人项目，凭借清爽的 UI、对多协议的原生支持以及「无需登录即可使用」的友好策略，迅速在 Postman 主导的市场中杀出一条血路。</p>
+    <p>2019 年，API 网关领域独角兽 <strong>Kong Inc.</strong> 收购 Insomnia，将其纳入「设计 → 测试 → 网关 → 管理」的全生命周期 API 平台战略。此后 Insomnia 陆续补齐了 <code>Insomnia Designer</code>（基于 OpenAPI 的规范驱动设计）、<code>Inso CLI</code>（命令行 / CI/CD 自动化）等能力，并在 2023 年顶着社区争议推出账号/云端同步体系。</p>
+    <p>进入 AI 时代，Insomnia 进一步向<strong>「AI 原生 API 协作平台」</strong>转型：原生支持 <strong>MCP（Model Context Protocol）</strong>客户端，可对 MCP Server 进行测试与调试，并与 Kong Konnect 深度集成，致力于让「每个 endpoint 都保持最新」，使团队能更快交付高质量、AI-Ready 的 API。</p>
+    <h3>核心定位标签</h3>
+    <span class="pill c">API Client</span>
+    <span class="pill">REST</span>
+    <span class="pill">GraphQL</span>
+    <span class="pill">gRPC</span>
+    <span class="pill">WebSockets</span>
+    <span class="pill">SSE</span>
+    <span class="pill p">MCP / AI-Ready</span>
+    <span class="pill g">Kong Konnect</span>
+    <span class="pill o">CI/CD 自动化</span>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>技术架构</h2>
+    <p>Insomnia 是一个典型的<strong> Electron 桌面应用</strong>，用 Web 技术栈构建一份代码，即可覆盖 Windows、macOS、Linux 三大平台。其技术架构历经多年演进，从早期「React + Elm」混合架构收敛为如今的<strong>纯 TypeScript + React</strong>单一代码库，主语言在 GitHub 上被标记为 TypeScript。</p>
+
+    <h3>🔧 技术栈分层</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">应用外壳 / Application Shell</div><div class="fd">Electron + Node.js，主进程负责本地文件读写、网络代理、Git 同步等系统能力，渲染进程承载 UI。</div></div>
+      <div class="feat"><div class="ft">UI 层 / Rendering</div><div class="fd">TypeScript + React（早期版本曾引入 Elm 管理部分状态，后逐步统一）。组件化、可主题化的现代前端。</div></div>
+      <div class="feat"><div class="ft">协议引擎 / Protocol Engines</div><div class="fd">内置多套独立协议客户端：REST/HTTP、GraphQL、gRPC、WebSockets、SSE、SOAP，统一抽象为「请求/响应」模型。</div></div>
+      <div class="feat"><div class="ft">存储层 / Storage</div><div class="fd">三选一：<code>Cloud</code>（Kong 云端团队同步）、<code>Local Vault</code>（纯本地，8.3 重新引入）、<code>Git</code>（基于 Git 仓库的版本化协作）。</div></div>
+      <div class="feat"><div class="ft">自动化层 / Automation</div><div class="fd"><code>Inso CLI</code>：npm 分发的命令行工具，支持 lint、contract/功能测试，提供退出码，专为无交互的 CI/CD 管道设计；官方提供 <code>kong/inso</code> Docker 镜像。</div></div>
+      <div class="feat"><div class="ft">AI 集成层 / AI Layer</div><div class="fd">原生 MCP 客户端，可像调试 HTTP 接口一样调试 MCP Server；与 Kong AI Gateway / Konnect 打通，衔接 AI Agent 工作流。</div></div>
+    </div>
+
+    <h3>📐 架构亮点</h3>
+    <ul>
+      <li><strong>多协议统一抽象：</strong>不同协议被抽象成一致的 Workspace / Collection / Request / Environment 模型，开发者切换协议无需切换思维模型。</li>
+      <li><strong>环境与变量系统：</strong>强大的环境变量（Base URL、Token、动态变量）与子环境继承，是跨多环境（dev/staging/prod）测试的核心利器。</li>
+      <li><strong>规范驱动设计（Design-First）：</strong>Insomnia Designer 支持导入/编辑 OpenAPI 规范，规范与请求双向联动，lint 规则可在本地与 CI 中保持一致。</li>
+      <li><strong>Git-native 协作可选：</strong>不必依赖云端账号，团队可直接将 Insomnia 数据存入 Git 仓库，实现评审、回滚与分支化 API 设计。</li>
+      <li><strong>Electron 的取舍：</strong>选择 Electron 让独立开发者一次开发覆盖全平台，但代价是内存占用与启动体积偏大——这也是 Bruno 等「更轻量」竞品切入的痛点。</li>
+    </ul>
+
+    <div class="quote">"Insomnia is an Electron app built with a mix of React and Elm… Electron was chosen to reach all platforms as an independent developer." —— 早期开发者访谈 / Hacker News</div>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>核心创新点</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">1. AI 原生 + MCP 客户端</div><div class="fd">业内较早把 MCP（Model Context Protocol）作为一等公民纳入测试目标的 API 客户端。开发者可在 Insomnia 内直接调试 MCP Server，验证 AI Agent 的工具调用契约，打通「API → AI Agent」的最后一公里。</div></div>
+      <div class="feat"><div class="ft">2. 三态存储自由切换</div><div class="fd">Cloud / Local / Git 三种存储模式共存，兼顾「团队实时协作」「隐私优先的纯本地」「代码评审化的 Git 流」，满足从个人开发者到合规企业的不同诉求。</div></div>
+      <div class="feat"><div class="ft">3. Inso CLI 贯穿 CI/CD</div><div class="fd">把 API 测试从「手动点点」变成「流水线门禁」。Inso 无交互、带退出码、可容器化，能嵌入 GitHub Actions / GitLab CI / Jenkins，让 API 契约与功能测试成为发布质量卡点。</div></div>
+      <div class="feat"><div class="ft">4. Kong 全生命周期闭环</div><div class="fd">背靠 Kong，Insomnia 可与 Kong Gateway / Konnect 形成从「设计-测试」到「网关-治理」的闭环：在 Insomnia 设计好的规范可直接驱动网关策略，减少设计与运行时割裂。</div></div>
+      <div class="feat"><div class="ft">5. 全协议覆盖</div><div class="fd">REST、GraphQL、gRPC、WebSockets、SSE、SOAP 在同一工作区内统一管理，对同时维护多种接口风格的微服务团队尤其友好。</div></div>
+      <div class="feat"><div class="ft">6. Design-First 规范联动</div><div class="fd">OpenAPI 规范不再是文档，而是可执行契约；lint 规则本地与 CI 同源，强制保障 API 规范一致性。</div></div>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <h2><span class="ico">🎯</span>应用场景</h2>
+    <ul>
+      <li><strong>后端 API 开发与联调：</strong>开发者日常构造、发送、调试 HTTP/GraphQL 请求，配合环境变量快速切换多套后端，是替代 curl/Postman 的主力工具。</li>
+      <li><strong>API 契约测试与 CI 门禁：</strong>用 Inso CLI 把 Insomnia 中编写的测试集挂在 CI 流水线，每次提交自动校验契约与功能，防止接口回归。</li>
+      <li><strong>AI Agent / MCP Server 开发：</strong>在 AI 应用中，开发者可用 Insomnia 调试自建的 MCP Server，验证工具（tools）的输入输出 schema，确保 AI Agent 调用可靠。</li>
+      <li><strong>团队 API 协作与评审：</strong>通过 Git 存储或 Cloud 工作区，团队成员共享集合、环境、Mock，对 API 设计进行评审与版本管理。</li>
+      <li><strong>API 规范治理（Governance）：</strong>结合 Kong Konnect 与 Insomnia Designer，对全组织 API 进行 OpenAPI 规范统一、lint 治理与文档托管。</li>
+      <li><strong>QA / 测试工程师的功能测试：</strong>把接口用例组织成测试套件，配合断言与脚本，执行接口级回归测试。</li>
+    </ul>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>竞品对比</h2>
+    <p>API 客户端赛道竞争激烈，Insomnia 处于「Postman 重型企业协作」与「Bruno 轻量本地优先」之间，各有侧重。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th class="center">Insomnia (Kong)</th>
+          <th class="center">Postman</th>
+          <th class="center">Bruno</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>开源协议</td><td class="center yes">Apache-2.0 开源</td><td class="center no">闭源</td><td class="center yes">MIT 开源</td></tr>
+        <tr><td>是否强制登录</td><td class="center mid">部分功能需账号</td><td class="center no">强制登录</td><td class="center yes">无需登录</td></tr>
+        <tr><td>Git 原生协作</td><td class="center mid">支持 Git 存储</td><td class="center mid">云端同步为主</td><td class="center yes">文件即仓库，Git 友好</td></tr>
+        <tr><td>离线使用</td><td class="center yes">支持</td><td class="center mid">受限</td><td class="center yes">完全离线优先</td></tr>
+        <tr><td>多协议覆盖</td><td class="center yes">REST/GQL/gRPC/WS/SSE/MCP</td><td class="center yes">丰富</td><td class="center mid">以 HTTP/GQL 为主</td></tr>
+        <tr><td>CI/CD 自动化</td><td class="center yes">Inso CLI（成熟）</td><td class="center yes">Newman CLI</td><td class="center mid">CLI 较新</td></tr>
+        <tr><td>AI / MCP 支持</td><td class="center yes">原生 MCP 客户端</td><td class="center mid">逐步跟进</td><td class="center no">较弱</td></tr>
+        <tr><td>企业级治理</td><td class="center yes">Kong Konnect 联动</td><td class="center yes">生态最全</td><td class="center no">偏个人/小团队</td></tr>
+        <tr><td>性能 / 轻量度</td><td class="center mid">Electron 偏重</td><td class="center mid">Electron 偏重</td><td class="center yes">较轻快</td></tr>
+        <tr><td>适用人群</td><td class="center">多协议团队 / AI 工作流</td><td class="center">大型企业协作</td><td class="center">本地优先开发者</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px">此外，<strong>HTTPie</strong>（命令行友好）、<strong>Restfox</strong>（浏览器端、离线优先）、<strong>Thunder Client</strong>（VS Code 内嵌）等也各占细分场景；社区一度出现 <strong>Insomnium</strong> 等去除账号体系的分叉，反映了用户对「工具回归纯粹」的诉求。</p>
+  </section>
+
+  <!-- 优劣势 -->
+  <section>
+    <h2><span class="ico">⚖️</span>优势与挑战</h2>
+    <div class="two-col">
+      <div class="pc pro">
+        <h4>✓ 核心优势</h4>
+        <ul>
+          <li>开源（Apache-2.0）+ 39k+ Stars，社区基础雄厚，生态可信</li>
+          <li>全协议覆盖，一套工具应对 REST/GraphQL/gRPC/WebSockets/SSE/MCP</li>
+          <li>Inso CLI 成熟，CI/CD 自动化开箱即用，含官方 Docker 镜像</li>
+          <li>AI 时代先发：原生 MCP 客户端 + Kong Konnect，抢占 AI-Ready API 工作流</li>
+          <li>三态存储（Cloud/Local/Git）灵活，兼顾协作、隐私与版本化</li>
+          <li>背靠 Kong，可与网关/治理形成全生命周期闭环</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠ 主要挑战</h4>
+        <ul>
+          <li>Electron 架构带来较高内存占用与启动体积，轻量体验不及 Bruno</li>
+          <li>账号/云端同步体系曾引发社区争议，部分用户转投分叉或竞品</li>
+          <li>与 Postman 相比，超大团队的实时协作与监控能力仍有差距</li>
+          <li>核心功能持续向付费/Cloud 倾斜的路线，需警惕开源承诺的边界</li>
+          <li>Open Issues 数量（800+）偏高，社区 issue 响应压力较大</li>
+          <li>MCP 等 AI 新特性仍处快速迭代期，稳定性与文档成熟度待沉淀</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展时间线 -->
+  <section>
+    <h2><span class="ico">🕒</span>发展时间线</h2>
+    <div class="tl">
+      <div class="ev"><div class="yr">2016</div><div class="ds">Gregory Schier 创建 Insomnia，定位为清爽、跨平台的个人 API 客户端，React + Elm + Electron。</div></div>
+      <div class="ev"><div class="yr">2018-2019</div><div class="ds">快速积累社区口碑，凭借多协议支持与良好体验跻身主流 API 客户端之列。</div></div>
+      <div class="ev"><div class="yr">2019</div><div class="ds">Kong Inc. 收购 Insomnia，纳入「设计-测试-网关-管理」全生命周期 API 平台战略。</div></div>
+      <div class="ev"><div class="yr">2020-2021</div><div class="ds">开源 Insomnia Designer（OpenAPI 规范驱动设计）；Inso CLI 逐步成熟，进入 CI/CD 自动化赛道。</div></div>
+      <div class="ev"><div class="yr">2023</div><div class="ds">引入账号体系与云端同步，社区出现争议，催生 Insomnium 等去账号分叉；8.3 重新引入 Local Vault 纯本地存储。</div></div>
+      <div class="ev"><div class="yr">2025</div><div class="ds">全面拥抱 AI：原生 MCP 客户端上线，可调试 MCP Server；与 Kong AI Gateway / Konnect 深度集成。</div></div>
+      <div class="ev"><div class="yr">2026</div><div class="ds">持续向「AI 原生 API 协作平台」演进，登上 GitHub Trending，主语言 TypeScript，活跃维护中。</div></div>
+    </div>
+  </section>
+
+  <!-- 综合评价 -->
+  <section>
+    <h2><span class="ico">🏁</span>综合评价</h2>
+    <p>Insomnia 是一款<strong>「老牌但持续焕新」</strong>的开发者基础工具。它的基本盘稳固——开源、多协议、跨平台、UI 友好、CI/CD 自动化成熟，使其在长达十年的迭代中始终保有强大的开发者心智份额（39k+ Stars 即是证明）。</p>
+    <p>它真正的差异化价值在于<strong>「AI 原生转型 + Kong 生态闭环」</strong>：当大多数 API 客户端还在补 AI 功能时，Insomnia 已把 MCP 作为一等调试对象，并与 Kong 的网关/治理能力打通，为「API → AI Agent」时代提供了完整的工具链。这使其不仅是一个「发请求的工具」，更可能成为 AI 应用开发时代 API 层的协作中枢。</p>
+    <p>挑战同样清晰：Electron 的重量、商业化路线与开源纯粹性之间的张力、以及与 Bruno 等轻量竞品的体验竞争，都需要持续平衡。综合来看，<strong>Insomnia 是当前最适合「多协议团队 + AI 工作流 + 企业治理」诉求的 API 客户端之一</strong>，值得后端、测试与 AI 应用开发者纳入主力工具箱。</p>
+    <div class="quote">推荐指数：★★★★☆ —— 功能全面、生态成熟、AI 转型领先；若你重视极致轻量或纯本地无账号体验，可同时关注 Bruno。</div>
+  </section>
+
+  <div class="footer">
+    🔗 仓库：<a href="https://github.com/Kong/insomnia" style="color:var(--accent)">github.com/Kong/insomnia</a> &nbsp;|&nbsp;
+    官网：<a href="https://insomnia.rest" style="color:var(--accent)">insomnia.rest</a><br>
+    报告生成日期：2026-06-21 &nbsp;|&nbsp; 数据来源：GitHub API、Kong 官方、社区评测 &nbsp;|&nbsp; GitHub Trending 深度分析
+  </div>
+
+</div>
+</body>
+</html>
