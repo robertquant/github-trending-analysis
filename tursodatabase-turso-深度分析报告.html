@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turso 深度分析报告 | tursodatabase/turso</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(88,166,255,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(126,231,135,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.viral{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  .badge.tool{color:var(--cyan);border-color:rgba(57,208,216,.4);background:rgba(57,208,216,.08)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#7ec8ff 55%,#7ee787);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent2);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:780px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(126,231,135,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:84px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--gold);font-weight:700}
+  /* pros/cons */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pc{border-radius:12px;padding:18px 20px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(126,231,135,.05);border-color:rgba(126,231,135,.25)}
+  .pc.con{background:rgba(255,123,114,.05);border-color:rgba(255,123,114,.25)}
+  .pc h4{font-size:14.5px;margin-bottom:10px}
+  .pc.pro h4{color:var(--accent2)} .pc.con h4{color:var(--red)}
+  .pc ul li::before{color:inherit}
+  .pc.pro ul li::before{content:"✓";color:var(--accent2)} .pc.con ul li::before{content:"⚠";color:var(--red)}
+  /* timeline */
+  .tl{position:relative;padding-left:28px;border-left:2px solid var(--border);margin:10px 0}
+  .tl .ev{position:relative;margin-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-34px;top:5px;width:12px;height:12px;border-radius:50%;
+     background:var(--cyan);box-shadow:0 0 0 4px var(--card)}
+  .tl .yr{font-size:12px;color:var(--orange);font-weight:700}
+  .tl .ds{font-size:14px;color:#c9d1d9;margin-top:2px}
+  .quote{border-left:3px solid var(--purple);padding:4px 0 4px 16px;margin:14px 0;color:var(--muted);font-style:italic;font-size:14px}
+  .footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}.bars{grid-template-columns:1fr}h1{font-size:30px}section{padding:22px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge viral">🔥 GitHub Trending</span>
+    <span class="badge os">🔓 MIT 开源（libSQL）</span>
+    <span class="badge tool">⚡ 边缘 / 嵌入式数据库</span>
+    <span class="badge ai">🤖 Agent 时代数据层</span>
+    <h1>Turso</h1>
+    <div class="tagline">Databases Everywhere —— 基于 SQLite/libSQL 的边缘分布式数据库，为每个用户、租户、Agent 分配独立数据库</div>
+    <p class="lead">Turso 由 ChiselStrike 团队（CTO Glauber Costa）打造，是构建在 <strong>libSQL</strong>（SQLite 的开源开放贡献分支）之上的<strong>边缘托管分布式数据库</strong>。它把 SQLite 的轻量、可靠与全球复制能力结合，让开发者能在全球 300+ 节点为每个用户/租户/AI Agent 独立"开"一个数据库。最新版本更以 Rust 从零重写 SQLite（前身 Limbo/sqld），带来原生异步、原生复制与向量检索，成为 Agent 时代数据层的有力竞争者。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">tursodatabase/turso</div></div>
+      <div class="meta"><div class="k">⭐ Stars</div><div class="v">高速增长中</div></div>
+      <div class="meta"><div class="k">👥 贡献者</div><div class="v">128+ 人</div></div>
+      <div class="meta"><div class="k">📜 License</div><div class="v">MIT</div></div>
+      <div class="meta"><div class="k">💻 主语言</div><div class="v">Rust</div></div>
+      <div class="meta"><div class="k">🏭 母公司</div><div class="v">Turso（原 ChiselStrike）</div></div>
+      <div class="meta"><div class="k">🎂 libSQL 起源</div><div class="v">2021-09 开源</div></div>
+      <div class="meta"><div class="k">🔄 最近活跃</div><div class="v">2026-06</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">8.7<small>/10</small></div>
+      <div class="score-label">综合评分</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">功能完整度</span><span class="bar-track"><span class="bar-fill" style="width:88%"></span></span><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">技术架构</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">9.2</span></div>
+      <div class="bar-row"><span class="name">社区活跃度</span><span class="bar-track"><span class="bar-fill" style="width:86%"></span></span><span class="num">8.6</span></div>
+      <div class="bar-row"><span class="name">创新能力</span><span class="bar-track"><span class="bar-fill" style="width:94%"></span></span><span class="num">9.4</span></div>
+      <div class="bar-row"><span class="name">文档生态</span><span class="bar-track"><span class="bar-fill" style="width:87%"></span></span><span class="num">8.7</span></div>
+      <div class="bar-row"><span class="name">学习曲线</span><span class="bar-track"><span class="bar-fill" style="width:80%"></span></span><span class="num">8.0</span></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <h2><span class="ico">📋</span>项目概述</h2>
+    <p>Turso 是一款<strong>SQLite 兼容的边缘分布式数据库</strong>，核心理念只有一句话：<em>"Databases Everywhere（数据库无处不在）"</em>。它的杀手锏是用 SQLite 这类极轻量引擎的可复制性，把传统"一个集群服务所有用户"的范式，改写成"为每个用户、租户、AI Agent 独立分配一个数据库"——在 Starter/Scaler 计划上甚至支持最高 <strong>10,000 个数据库</strong>。</p>
+    <p>项目经历了清晰的三段演进：<strong>libSQL</strong>（SQLite 的开源开放贡献 fork，2021 年开源）作为底层引擎 → <strong>Limbo / sqld</strong>（用 Rust 从零重写 SQLite 的实验性项目）→ 如今统一在 <strong>tursodatabase/turso</strong> 仓库下，成为"既能在云端分布式运行，又能嵌入进程内本地运行"的一体化数据层。</p>
+    <p>在 AI 大爆发的背景下，Turso 把自己定位为<strong>"Agent 时代的数据基础设施"</strong>：每个 AI Agent 拥有独立、隔离、可随需创建与销毁的状态存储，恰好契合多 Agent 系统对"海量独立状态"的需求。官方明确以 <em>"SQLite-compatible database for the agentic era"</em> 作为口号。</p>
+    <h3>核心定位标签</h3>
+    <span class="pill c">SQLite 兼容</span>
+    <span class="pill">libSQL</span>
+    <span class="pill">边缘 / Edge</span>
+    <span class="pill g">分布式复制</span>
+    <span class="pill o">嵌入式副本 Embedded Replicas</span>
+    <span class="pill p">向量检索 (beta)</span>
+    <span class="pill p">Agent 数据层</span>
+    <span class="pill">每租户一库</span>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>技术架构</h2>
+    <p>Turso 的技术架构可以用"<strong>一种架构，三种部署形态</strong>"概括：完全托管云、自托管 server、以及进程内嵌入式副本。三者共享同一套基于 libSQL 的存储与复制语义，开发者无需为不同部署重写代码。</p>
+
+    <h3>🔧 技术栈分层</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">存储引擎 / Storage</div><div class="fd">基于 <strong>libSQL</strong>（SQLite 开源 fork）。最新主线用 <strong>Rust 从零重写</strong>（前身 Limbo），保持 SQLite 文件格式与 SQL 方言兼容。</div></div>
+      <div class="feat"><div class="ft">复制层 / Replication</div><div class="fd"><strong>原生内建复制</strong>（非外挂）。主库（Primary）写入后，变更帧（frame）以日志方式同步到全球读副本，支撑毫秒级就近读。</div></div>
+      <div class="feat"><div class="ft">嵌入式副本 / Embedded Replicas</div><div class="fd">在应用进程内嵌入一份本地 SQLite 文件，从 Turso Cloud 拉取副本：<strong>读本地、写远端主库</strong>，兼顾离线与低延迟。</div></div>
+      <div class="feat"><div class="ft">接入层 / Access</div><div class="fd">支持 HTTP / WebSocket / 原生协议接入；提供 <strong>多语言 SDK</strong>（TypeScript、Python、Go、Rust、C 等），原生 <code>async</code> 支持。</div></div>
+      <div class="feat"><div class="ft">边缘分布 / Edge</div><div class="fd">全球 300+ 节点部署读副本，把数据"搬到离用户最近的机房"，降低跨大区读延迟；写入仍收敛到主库。</div></div>
+      <div class="feat"><div class="ft">扩展能力 / Extensions</div><div class="fd"><strong>向量检索（Vector Search，beta）</strong>原生集成，无需额外向量数据库即可支撑 RAG/语义检索；原生异步 I/O。</div></div>
+    </div>
+
+    <h3>📐 架构亮点</h3>
+    <ul>
+      <li><strong>单主多读 + 边缘副本：</strong>写入收敛于单一 Primary 保证强一致，读副本全球分布实现就近毫秒级读取，读写分离天然内建。</li>
+      <li><strong>Embedded Replicas（嵌入式副本）：</strong>Turso 最具辨识度的能力——把云数据库"复制"进应用进程，读走本地内存级延迟，写异步回传主库，非常适合本地优先（local-first）与边缘场景。</li>
+      <li><strong>确定性仿真测试（DST）：</strong>Rust 重写版从第一天起就用确定性模拟（Deterministic Simulation Testing）来复现并发与故障下的边界缺陷，工程严谨度对标 TigerBeetle 等明星系统。</li>
+      <li><strong>"每 X 一库"的乘法能力：</strong>因为单库极轻量，平台鼓励"每租户/每用户/每 Agent 一个数据库"的多租户模式，从架构上天然隔离数据，避免共享库的噪音与安全耦合。</li>
+      <li><strong>SQLite 生态零迁移：</strong>文件格式与 SQL 方言与 SQLite 兼容，既有 SQLite 工具链、查询习惯、ORM 可直接复用，迁移成本极低。</li>
+    </ul>
+
+    <div class="quote">"Turso is an in-process SQL database, compatible with SQLite … the next evolution of SQLite, a fully-compatible complete rewrite in Rust." —— Turso 官方 / 128 位贡献者公告</div>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>核心创新点</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">1. 用 Rust 从零重写 SQLite</div><div class="fd">在 SQLite 几乎"冻结"的成熟生态里，Turso 大胆用 Rust 重写（Limbo 路线），换来了原生异步、原生复制、内存安全与 DST 验证能力，这是面向未来十年的一次底层投资。</div></div>
+      <div class="feat"><div class="ft">2. Embedded Replicas 嵌入式副本</div><div class="fd">把"云数据库"与"本地嵌入式数据库"合二为一：读在本地、写在云。开发者同时获得嵌入式数据库的零延迟和分布式数据库的一致性，是同类产品少见的统一模型。</div></div>
+      <div class="feat"><div class="ft">3. Agent 原生 / 每 Agent 一库</div><div class="fd">直接把"多租户隔离"产品化到 Agent 场景：每个 AI Agent 拥有独立数据库与独立状态，按需创建销毁，天然契合"无限 Agent、无限数据库"的下一代架构。</div></div>
+      <div class="feat"><div class="ft">4. 原生向量检索</div><div class="fd">在关系型库里直接内建向量搜索（beta），让 RAG/语义检索与结构化查询同库完成，省去单独维护 Pinecone/Weaviate 的运维与同步成本。</div></div>
+      <div class="feat"><div class="ft">5. 极致的多库经济性</div><div class="fd">单库轻量到可以"乘以万"。Scaler 计划支持 10,000 个数据库，使"每租户一库"这种过去在成本上不可行的架构，变成生产可负担的标准实践。</div></div>
+      <div class="feat"><div class="ft">6. 开放贡献的 libSQL</div><div class="fd">区别于"只读开源"的 SQLite，libSQL 采用 Open Source + Open Contributions 模式，128+ 贡献者共建，社区驱动演进。</div></div>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <h2><span class="ico">🎯</span>应用场景</h2>
+    <ul>
+      <li><strong>多租户 SaaS（每租户一库）：</strong>B2B SaaS 为每个客户分配独立数据库，实现强隔离、独立备份、按租户水平扩展，避免共享库的"吵闹邻居"与合规风险。</li>
+      <li><strong>AI Agent 状态存储：</strong>为每个 Agent 提供独立、可创建可销毁的数据库，承载 Agent 的记忆、上下文与工具调用状态，支撑大规模多 Agent 系统。</li>
+      <li><strong>边缘 / Serverless 应用：</strong>部署在 Cloudflare Workers、Vercel Edge、Deno Deploy 等无状态运行时，就近从边缘副本读取，实现全球毫秒级读延迟。</li>
+      <li><strong>本地优先（Local-First）/ 离线优先应用：</strong>借助 Embedded Replicas，桌面/移动端在本地读写，联网时与云端双向同步，断网可用、联网即合并。</li>
+      <li><strong>RAG 与语义检索：</strong>利用原生向量检索，在同一数据库内完成结构化查询 + 向量相似度检索，构建轻量级 RAG 管线。</li>
+      <li><strong>从 SQLite 平滑上云：</strong>已有大量 SQLite 本地数据的应用，可零改动迁移到 Turso，立即获得复制、备份与远程访问能力。</li>
+    </ul>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>竞品对比</h2>
+    <p>边缘/Serverless SQL 数据库赛道群雄并起，Turso 与 Cloudflare D1 同为"分布式 SQLite"路线，而 Supabase / PlanetScale / Neon 则代表 PostgreSQL / MySQL 阵营的边缘化探索。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th class="center">Turso</th>
+          <th class="center">Cloudflare D1</th>
+          <th class="center">Supabase</th>
+          <th class="center">Neon</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>底层引擎</td><td class="center yes">libSQL / Rust 重写 SQLite</td><td class="center yes">分布式 SQLite</td><td class="center">PostgreSQL</td><td class="center">PostgreSQL</td></tr>
+        <tr><td>边缘读副本</td><td class="center yes">300+ 全球节点</td><td class="center yes">CF Workers 网络</td><td class="center mid">按区域副本</td><td class="center mid">按区域副本</td></tr>
+        <tr><td>嵌入式副本（本地优先）</td><td class="center yes">原生支持</td><td class="center no">较弱</td><td class="center no">需自建</td><td class="center no">需自建</td></tr>
+        <tr><td>每租户/每 Agent 一库</td><td class="center yes">原生产品化（至 1 万库）</td><td class="center mid">支持但非主打</td><td class="center no">通常共享库 + RLS</td><td class="center mid">支持多库</td></tr>
+        <tr><td>向量检索</td><td class="center yes">原生（beta）</td><td class="center mid">需配合 Vectorize</td><td class="center yes">pgvector</td><td class="center yes">pgvector</td></tr>
+        <tr><td>SQL 兼容性</td><td class="center yes">SQLite 语法</td><td class="center yes">SQLite 语法</td><td class="center yes">完整 PostgreSQL</td><td class="center yes">完整 PostgreSQL</td></tr>
+        <tr><td>复杂查询 / 事务</td><td class="center mid">SQLite 级别</td><td class="center mid">SQLite 级别</td><td class="center yes">PG 全功能</td><td class="center yes">PG 全功能</td></tr>
+        <tr><td>生态绑定</td><td class="center yes">运行时无关，便携</td><td class="center mid">强绑定 Cloudflare</td><td class="center yes">全栈平台（Auth/Storage）</td><td class="center yes">PG 生态</td></tr>
+        <tr><td>免费额度（库数）</td><td class="center yes">100 库 / 5GB</td><td class="center mid">有限</td><td class="center mid">2 个项目</td><td class="center mid">有限</td></tr>
+        <tr><td>最适合</td><td class="center">边缘读、本地优先、Agent</td><td class="center">已用 CF 全家桶</td><td class="center">需完整后端平台</td><td class="center">Serverless PG</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px">一句话定位：<strong>Turso</strong> 胜在便携性、本地优先同步与"每 Agent 一库"的经济性；<strong>D1</strong> 胜在与 Cloudflare 生态的深度耦合；<strong>Supabase</strong> 胜在 Auth/Storage/Realtime 的全栈后端；<strong>Neon / PlanetScale</strong> 则把传统 PostgreSQL / MySQL 的能力 serverless 化。若你需要"运行时无关 + 全球低延迟读 + Agent 原生"，Turso 是当前最具差异化的一档。</p>
+  </section>
+
+  <!-- 优劣势 -->
+  <section>
+    <h2><span class="ico">⚖️</span>优势与挑战</h2>
+    <div class="two-col">
+      <div class="pc pro">
+        <h4>✓ 核心优势</h4>
+        <ul>
+          <li>SQLite 兼容，迁移成本极低，海量既有工具链/ORM 直接复用</li>
+          <li>Embedded Replicas 把"嵌入式 + 分布式"统一，独此一家的本地优先能力</li>
+          <li>全球 300+ 边缘读副本，读延迟可压到全球毫秒级</li>
+          <li>"每租户/每 Agent 一库"产品化，最多 10,000 库，多租户隔离开箱即用</li>
+          <li>Rust 重写 + DST 验证，工程严谨，原生异步与内存安全</li>
+          <li>原生向量检索，RAG/语义检索与结构化查询同库完成</li>
+          <li>libSQL 开源开放贡献，128+ 贡献者共建，社区驱动</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠ 主要挑战</h4>
+        <ul>
+          <li>SQLite 单写者模型：高并发写入吞吐受限，不适合重 OLTP 写场景</li>
+          <li>Rust 重写版仍在演进/迭代期，部分高级 SQL 与边界兼容性待补齐</li>
+          <li>复杂查询、存储过程、丰富类型系统不及 PostgreSQL 生态成熟</li>
+          <li>写入需收敛到单一 Primary，跨大区写延迟客观存在</li>
+          <li>向量检索仍为 beta，与专业向量库在规模/性能上有差距</li>
+          <li>相比 Supabase 全栈后端，Turso 专注数据层，Auth/存储需另配</li>
+          <li>概念新颖（嵌入式副本、每 Agent 一库），团队上手需观念转变</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展时间线 -->
+  <section>
+    <h2><span class="ico">🕒</span>发展时间线</h2>
+    <div class="tl">
+      <div class="ev"><div class="yr">2021</div><div class="ds">ChiselStrike 开源 <strong>libSQL</strong>——SQLite 的 Open Source + Open Contributions 分支，奠定 Turso 的底层基础。</div></div>
+      <div class="ev"><div class="yr">2022-2023</div><div class="ds">Turso 作为边缘分布式数据库正式推出，主打全球复制 + SQLite 兼容，公司由 ChiselStrike 品牌演进而来。</div></div>
+      <div class="ev"><div class="yr">2024</div><div class="ds"><strong>Embedded Replicas（嵌入式副本）</strong>成熟，把云端库复制进进程内本地文件，确立"本地优先"差异化定位。</div></div>
+      <div class="ev"><div class="yr">2024-2025</div><div class="ds">启动 <strong>Limbo</strong>——用 Rust 从零重写 SQLite，引入原生异步、原生复制与 <strong>确定性仿真测试（DST）</strong>。</div></div>
+      <div class="ev"><div class="yr">2025</div><div class="ds">向量检索（beta）、原生 async 多语言 SDK 持续完善；明确"为每个 Agent 分配独立数据库"的 Agent 时代定位；贡献者突破 128 人。</div></div>
+      <div class="ev"><div class="yr">2026</div><div class="ds">Rust 重写版与 libSQL 路线在 <strong>tursodatabase/turso</strong> 仓库下统一演进，登上 GitHub Trending，活跃维护中。</div></div>
+    </div>
+  </section>
+
+  <!-- 综合评价 -->
+  <section>
+    <h2><span class="ico">🏁</span>综合评价</h2>
+    <p>Turso 是当前<strong>边缘 / 本地优先数据库赛道里最具原创性</strong>的选手之一。它没有去复刻一个"云上的 PostgreSQL/MySQL"，而是选择了一条更难的路径：把 SQLite 这个"装机量最大的数据库"现代化——用 libSQL 开源共建、用 Rust 重写、用嵌入式副本打通云与端、用"每 Agent 一库"拥抱 AI 时代。</p>
+    <p>它真正的护城河是<strong>"一种架构、三种形态"的统一模型</strong>：同一个数据库，既能全球边缘分布式跑、又能自托管、还能嵌入进程内本地读写。这让它在"运行时无关 + 全球低延迟读 + Agent 原生"这个交叉点上几乎没有直接对手——Cloudflare D1 强绑定 CF 生态，Supabase/Neon/PlanetScale 则止步于"serverless 关系库"。</p>
+    <p>当然，挑战同样现实：SQLite 单写者模型决定了它<strong>不是重写 OLTP 的首选</strong>，Rust 重写仍在快速迭代，复杂查询与生态成熟度不及 PostgreSQL。综合来看，<strong>Turso 是边缘应用、本地优先产品、多租户 SaaS 与 AI Agent 系统当前最值得认真评估的数据层</strong>——尤其当你需要"为每个用户/Agent 开一个独立、隔离、可全球低延迟访问的数据库"时，它几乎是唯一的优雅答案。</p>
+    <div class="quote">推荐指数：★★★★½ —— 架构原创性高、Agent 时代定位精准、本地优先能力稀缺；若你的写入是重 OLTP 或强依赖 PostgreSQL 高级特性，则可对比 Neon/Supabase。</div>
+  </section>
+
+  <div class="footer">
+    🔗 仓库：<a href="https://github.com/tursodatabase/turso" style="color:var(--accent)">github.com/tursodatabase/turso</a> &nbsp;|&nbsp;
+    官网：<a href="https://turso.tech" style="color:var(--accent)">turso.tech</a> &nbsp;|&nbsp;
+    文档：<a href="https://docs.turso.tech" style="color:var(--accent)">docs.turso.tech</a><br>
+    报告生成日期：2026-06-21 &nbsp;|&nbsp; 数据来源：Turso 官方、libSQL/GitHub、社区评测 &nbsp;|&nbsp; GitHub Trending 深度分析
+  </div>
+
+</div>
+</body>
+</html>

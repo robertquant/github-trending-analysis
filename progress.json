@@ -2,7 +2,6 @@
   "date": "2026-06-21",
   "fetched_at": "2026-06-21",
   "pending": [
-    "tursodatabase/turso",
     "tw93/Pake",
     "jamiepine/voicebox",
     "Kilo-Org/kilocode",
@@ -20,7 +19,9 @@
     "mattpocock/skills",
     "withastro/flue"
   ],
-  "done": [],
+  "done": [
+    "tursodatabase/turso"
+  ],
   "projects": [
     {
       "name": "palmier-io/palmier-pro",
@@ -36,7 +37,7 @@
     },
     {
       "name": "tursodatabase/turso",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "DeusData/codebase-memory-mcp",
@@ -85,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 5,
+    "pending": 4,
     "skipped": 10,
-    "done": 0
+    "done": 1
   }
 }
