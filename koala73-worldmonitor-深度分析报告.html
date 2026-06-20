@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Monitor 深度分析报告 | koala73/worldmonitor</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(88,166,255,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(57,208,216,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.viral{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#7ec8ff 55%,#39d0d8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent2);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:780px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(57,208,216,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:84px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--cyan))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--gold)}
+  /* pros/cons */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pc{border-radius:12px;padding:18px 20px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(126,231,135,.05);border-color:rgba(126,231,135,.25)}
+  .pc.con{background:rgba(255,123,114,.05);border-color:rgba(255,123,114,.25)}
+  .pc h4{font-size:14.5px;margin-bottom:10px}
+  .pc.pro h4{color:var(--accent2)} .pc.con h4{color:var(--red)}
+  .pc ul li::before{color:inherit}
+  .pc.pro ul li::before{content:"✓";color:var(--accent2)} .pc.con ul li::before{content:"⚠";color:var(--red)}
+  /* timeline */
+  .tl{position:relative;padding-left:28px;border-left:2px solid var(--border);margin:10px 0}
+  .tl .ev{position:relative;margin-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-34px;top:5px;width:12px;height:12px;border-radius:50%;
+     background:var(--cyan);box-shadow:0 0 0 4px var(--card)}
+  .tl .yr{font-size:12px;color:var(--orange);font-weight:700}
+  .tl .ds{font-size:14px;color:#c9d1d9;margin-top:2px}
+  .quote{border-left:3px solid var(--purple);padding:4px 0 4px 16px;margin:14px 0;color:var(--muted);font-style:italic;font-size:14px}
+  .footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}.bars{grid-template-columns:1fr}h1{font-size:30px}section{padding:22px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge viral">🔥 GitHub Trending</span>
+    <span class="badge os">🔓 开源 AGPL-3.0</span>
+    <span class="badge ai">🤖 本地 AI（Ollama）</span>
+    <span class="badge">🌐 2M+ 用户 · 190+ 国家</span>
+    <span class="badge">📰 被 WIRED 报道</span>
+    <h1>World Monitor</h1>
+    <div class="tagline">实时全球情报仪表盘 · 把全世界的脉动汇聚到一张地图上</div>
+    <p class="lead">由 Anghami 联合创始人 Elie Habib（GitHub: koala73）打造的开源实时全球态势感知平台。聚合 <b>500+ 新闻源</b>、<b>65+ 外部数据供应商</b>，覆盖地缘政治、军事、金融、能源、气候、航空、海运、网络威胁等 <b>34 个服务域</b>，用 AI 把原始信号合成简报，并首创 <b>国家不稳定指数（CII）</b> 对 31 个核心国家进行 0–100 压力打分。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">koala73/worldmonitor</div></div>
+      <div class="meta"><div class="k">作者</div><div class="v">Elie Habib</div></div>
+      <div class="meta"><div class="k">主语言</div><div class="v">TypeScript · Rust</div></div>
+      <div class="meta"><div class="k">许可证</div><div class="v">AGPL-3.0-only</div></div>
+      <div class="meta"><div class="k">桌面端</div><div class="v">Tauri 2（macOS/Win/Linux）</div></div>
+      <div class="meta"><div class="k">官网</div><div class="v">worldmonitor.app</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">9.1<small>/10</small></div>
+      <div class="score-label">综合评分 · 顶级开源情报平台</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">技术创新</span><div class="bar-track"><div class="bar-fill" style="width:93%"></div></div><span class="num">9.3</span></div>
+      <div class="bar-row"><span class="name">工程质量</span><div class="bar-track"><div class="bar-fill" style="width:91%"></div></div><span class="num">9.1</span></div>
+      <div class="bar-row"><span class="name">实用价值</span><div class="bar-track"><div class="bar-fill" style="width:94%"></div></div><span class="num">9.4</span></div>
+      <div class="bar-row"><span class="name">架构设计</span><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div><span class="num">9.2</span></div>
+      <div class="bar-row"><span class="name">文档完整</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">可扩展性</span><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><span class="num">9.0</span></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <h2><span class="ico">🛰️</span>项目概述</h2>
+    <p>World Monitor 是一个<strong>实时全球情报仪表盘</strong>，核心理念是"把全世界的原始信号——船只、战机、警报、海底光缆、市场行情——汇聚到一个实时界面"。它被社区形容为"全球情报界的 Bloomberg 终端"，但完全免费、开源、可自托管，让原本只有政府和企业花数百万美元才能获得的态势感知能力走向大众。</p>
+    <p>项目的slogan是 <em>"OSINT for everyone"</em>（开源情报，人人可用）。它不只是一个漂亮的可视化前端，而是一套完整的<strong>情报聚合 + AI 合成 + 评分建模 + 多端交付</strong>平台，从一个代码库衍生出 <b>6 个站点变体</b>（world / tech / finance / commodity / happy / energy），既可作 Web 应用，也可打包成原生桌面应用。</p>
+    <div class="quote">"Most intelligence platforms are walled gardens. You pay for access, you use their interface… The data is locked behind a UI. World Monitor is designed differently." —— 官方开发者文档</div>
+    <h3>关键数据一览</h3>
+    <ul>
+      <li><b>500+</b> 精选新闻源，横跨 15 个类别，由 AI 合成为简报</li>
+      <li><b>65+</b> 外部数据供应商与 API；新鲜度监控覆盖 35 个源组</li>
+      <li><b>34 个</b>强类型服务域（Conflict / Military / Market / Cyber / Infrastructure 等）</li>
+      <li><b>276 个</b> Protocol Buffers 定义文件，34 个服务，自动生成 TypeScript 客户端</li>
+      <li><b>60+</b> Vercel Edge Functions 边缘函数</li>
+      <li><b>56 种</b> 地图图层类型，双引擎渲染（globe.gl + deck.gl）</li>
+      <li><b>24 种</b> 语言，含原生语言源和 RTL（从右到左）支持</li>
+      <li><b>2M+</b> 用户遍布 190+ 国家，曾被 WIRED 报道</li>
+    </ul>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>技术架构</h2>
+    <p>World Monitor 最值得称道的是其<strong>工程严谨度</strong>——它把企业级的契约化设计（contract-first）应用到了一个"开源情报仪表盘"上，远超同类项目的工程水平。</p>
+
+    <h3>技术栈总览</h3>
+    <table>
+      <tr><th>层级</th><th>技术选型</th></tr>
+      <tr><td>前端框架</td><td>原生 TypeScript + Vite（无重型框架），React 组件</td></tr>
+      <tr><td>3D 地球</td><td>globe.gl + Three.js</td></tr>
+      <tr><td>2D 地图</td><td>deck.gl + MapLibre GL（WebGL 加速）</td></tr>
+      <tr><td>桌面端</td><td>Tauri 2（Rust）+ Node.js sidecar</td></tr>
+      <tr><td>AI / ML</td><td>Ollama / Groq / OpenRouter；Transformers.js + ONNX（浏览器侧推理）</td></tr>
+      <tr><td>API 契约</td><td>Protocol Buffers（276 proto 文件，34 服务，sebuf HTTP 注解）</td></tr>
+      <tr><td>部署</td><td>Vercel Edge Functions（60+）、Railway relay、Tauri、PWA</td></tr>
+      <tr><td>缓存</td><td>Redis（Upstash）三层缓存 + CDN + Service Worker</td></tr>
+      <tr><td>国际化</td><td>i18next（24 locale）</td></tr>
+      <tr><td>测试</td><td>Vitest（单元）+ Playwright（E2E）</td></tr>
+    </table>
+
+    <h3>核心架构亮点</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">① Proto-First 契约优先</div><div class="fd">所有 API 契约以 Protocol Buffers 为唯一真相源，自动生成 TypeScript 客户端与 OpenAPI 规范，运行时校验拒绝畸形请求，前后端永不漂移。</div></div>
+      <div class="feat"><div class="ft">② 边缘函数 + 熔断器</div><div class="fd">每个服务域对应独立 edge function，按域瘦入口使冷启动降低约 85%；每个数据源配熔断器，上游故障不会拖垮整个 API。</div></div>
+      <div class="feat"><div class="ft">③ 判别联合标记系统</div><div class="fd">所有地图标记（双引擎通用）携带 <code>_kind</code> 判别字段，统一标识类型，跨 globe.gl 与 deck.gl 引擎一致渲染。</div></div>
+      <div class="feat"><div class="ft">④ 三层缓存 + ETag</div><div class="fd">Redis 三层缓存、CDN 缓存、Service Worker，配合 Cache-Control 与 ETag 实现高效边缘缓存与限流（Cloudflare 感知 IP）。</div></div>
+      <div class="feat"><div class="ft">⑤ 浏览器侧本地 AI</div><div class="fd">通过 Transformers.js + ONNX 在浏览器内做模型推理，结合 Ollama 实现零 API Key 的完全本地化情报分析。</div></div>
+      <div class="feat"><div class="ft">⑥ 单库多变体</div><div class="fd">一个代码库编译出 6 个站点变体（world/tech/finance/commodity/happy/energy）+ 一个可在应用内切换变体的 Tauri 桌面端。</div></div>
+    </div>
+
+    <h3>34 个服务域（部分）</h3>
+    <p style="margin-bottom:8px">
+      <span class="pill c">Conflict 冲突</span><span class="pill p">Military 军事</span><span class="pill">Market 市场</span>
+      <span class="pill g">Crypto 加密</span><span class="pill o">Aviation 航空</span><span class="pill c">Maritime 海运</span>
+      <span class="pill p">Climate 气候</span><span class="pill">Imagery 卫星影像</span><span class="pill g">News 新闻</span>
+      <span class="pill o">Intelligence 情报/CII</span><span class="pill c">Infrastructure 基础设施</span>
+      <span class="pill p">Prediction 预测市场</span><span class="pill">Cyber 网络威胁</span><span class="pill g">Disaster 灾害</span>
+      <span class="pill o">Displacement 流离失所</span><span class="pill">Travel 旅行风险</span>
+      <span class="pill c">Central Bank 央行</span><span class="pill p">Tech 科技</span>
+      <span class="pill g">Commodity 大宗商品</span><span class="pill">Regulation 监管</span><span class="pill o">Health 健康/系统状态</span>
+    </p>
+    <p class="quote">API 路由模式：<code>api.worldmonitor.app/api/{domain}/v1/{rpc}</code> —— 例如 <code>/api/intelligence/v1/cii</code> 取国家不稳定指数。</p>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>核心创新点</h2>
+
+    <h3>1. 国家不稳定指数 CII（Country Instability Index）v8</h3>
+    <p>项目的"招牌算法"。服务端权威计算的 CII v8 对 <b>31 个一级国家</b>进行 <b>0–100</b> 的压力评分，综合 12 类信号（军事活动、抗议、新闻速度、结构性风险等）。它不仅给数字，还与网络威胁情报联动——例如当某国 CII 上升且 C2 服务器聚集，可能暗示国家级容忍或支持。</p>
+
+    <h3>2. 跨流信号关联（Cross-stream Correlation）</h3>
+    <p>不止"看新闻"，而是把军事、经济、灾害、局势升级四类信号在时间与空间维度上做<strong>收敛关联</strong>，让用户看到事件如何同时影响多个维度——这是普通新闻聚合器做不到的。</p>
+
+    <h3>3. 双地图引擎 + 56 图层</h3>
+    <p>同时支持 3D 地球（globe.gl）与 WebGL 平面地图（deck.gl），通过判别联合标记统一 56 种图层类型，性能与表现力兼顾，可叠加显示航线、地震、军事基地、光缆、核设施等。</p>
+
+    <h3>4. 金融雷达（Finance Radar）</h3>
+    <p>覆盖 <b>29 个证券交易所</b>、大宗商品、加密货币，并自创 <b>7 信号市场合成指标</b>，把地缘事件与市场反应直接挂钩。</p>
+
+    <h3>5. 完全本地化 AI（Local AI）</h3>
+    <p>支持 Ollama / Groq / OpenRouter，<b>无需任何 API Key</b> 即可跑完全部情报分析；敏感环境可完全离线自托管，数据不出网。</p>
+
+    <h3>6. 开发者平台（Open Typed API）</h3>
+    <p>不同于"墙花园"式情报平台，World Monitor 把全部数据流、评分算法、聚合管道暴露为强类型 API，开发者可自建仪表盘、数据管道、Slack/Teams 告警机器人。</p>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <h2><span class="ico">🎯</span>应用场景</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft"> analyst OSINT 分析师</div><div class="fd">实时态势感知、事件追踪、跨源关联，替代昂贵的商业情报订阅。</div></div>
+      <div class="feat"><div class="ft">🛡️ 安全与风控团队</div><div class="fd">网络威胁情报结合地缘背景（CII），评估区域风险与供应链安全。</div></div>
+      <div class="feat"><div class="ft">📈 金融与投资</div><div class="fd">用地缘事件 + CII 变化驱动交易决策，监控 29 个交易所与预测市场。</div></div>
+      <div class="feat"><div class="ft">✈️ 供应链与物流</div><div class="fd">追踪航空、海运、港口、光缆状态，规避冲突与中断区域。</div></div>
+      <div class="feat"><div class="ft">🎓 学术研究</div><div class="fd">研究新闻速度与冲突升级关系、预测市场准确性，构建自定义评分模型。</div></div>
+      <div class="feat"><div class="ft">📰 新闻与媒体</div><div class="fd">突发事件第一时间可视化定位，提升报道速度与准确性。</div></div>
+      <div class="feat"><div class="ft">🏛️ 政府与 NGO</div><div class="fd">灾害响应、流离失所（UNHCR 数据）、旅行风险评估的低成本方案。</div></div>
+      <div class="feat"><div class="ft">🧑‍💻 开发者与自托管</div><div class="fd">基于强类型 API 二次开发，自建私有情报中心，零厂商锁定。</div></div>
+    </div>
+  </section>
+
+  <!-- 数据源 -->
+  <section>
+    <h2><span class="ico">🔌</span>数据来源</h2>
+    <p>World Monitor 聚合 <b>65+ 外部供应商与 API</b>，覆盖地缘、金融、能源、气候、航空、网络、军事、基础设施与新闻情报，经 500+ 精选源采集，并由新鲜度监控覆盖 35 个源组。代表性数据源包括：</p>
+    <table>
+      <tr><th>领域</th><th>数据来源</th></tr>
+      <tr><td>冲突</td><td>ACLED 事件、UCDP 数据、热点评分</td></tr>
+      <tr><td>军事</td><td>军事基地、USNI 报告</td></tr>
+      <tr><td>航空 / 海运</td><td>ADS-B 航班（Wingbits 优雅提供）、AIS 船只、暗船检测</td></tr>
+      <tr><td>卫星影像</td><td>STAC API</td></tr>
+      <tr><td>预测市场</td><td>Polymarket 概率数据</td></tr>
+      <tr><td>流离失所</td><td>UNHCR 难民与 IDP 数据</td></tr>
+      <tr><td>央行</td><td>BIS 数据、REER、政策利率</td></tr>
+      <tr><td>基础设施</td><td>海底光缆、管道、核设施、数据中心</td></tr>
+      <tr><td>网络</td><td>威胁源、C2 服务器、恶意软件 URL</td></tr>
+    </table>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>竞品对比</h2>
+    <table>
+      <tr>
+        <th>平台</th><th class="center">免费/开源</th><th class="center">自托管</th><th class="center">本地AI</th><th class="center">强类型API</th><th>核心定位</th>
+      </tr>
+      <tr>
+        <td><b>World Monitor</b></td><td class="center yes">是</td><td class="center yes">是</td><td class="center yes">是</td><td class="center yes">是</td><td>全领域实时情报 + CII 评分 + 开发者平台</td>
+      </tr>
+      <tr>
+        <td>GDELT Project</td><td class="center yes">是</td><td class="center mid">数据集</td><td class="center no">否</td><td class="center mid">部分</td><td>全球新闻/事件海量数据集与冲突地图</td>
+      </tr>
+      <tr>
+        <td>LiveUAMap</td><td class="center mid">部分</td><td class="center no">否</td><td class="center no">否</td><td class="center no">否</td><td>实时冲突地图（乌克兰/中东聚焦）</td>
+      </tr>
+      <tr>
+        <td>GlobalPulse（ntamero）</td><td class="center yes">是</td><td class="center yes">是</td><td class="center mid">部分</td><td class="center no">否</td><td>同类开源情报聚合，功能较精简</td>
+      </tr>
+      <tr>
+        <td>Blink / Recorded Future</td><td class="center no">付费</td><td class="center no">否</td><td class="center no">否</td><td class="center mid">企业</td><td>企业级商业威胁情报</td>
+      </tr>
+      <tr>
+        <td>Palantir / Bloomberg</td><td class="center no">昂贵</td><td class="center no">否</td><td class="center no">否</td><td class="center mid">企业</td><td>政府/金融级商业情报终端</td>
+      </tr>
+    </table>
+    <p><strong>差异化优势：</strong>World Monitor 是少数同时满足 <b>免费 + 开源 + 自托管 + 本地 AI + 强类型开放 API + 多领域统一</b> 的情报平台。它在"能力广度"上接近商业终端，在"开放性"上碾压所有付费对手，开源同行（GDELT/GlobalPulse）则在工程化、可视化与 API 层面明显落后。</p>
+  </section>
+
+  <!-- 优劣势 -->
+  <section>
+    <h2><span class="ico">⚖️</span>优势与挑战</h2>
+    <div class="two-col">
+      <div class="pc pro">
+        <h4>✓ 核心优势</h4>
+        <ul>
+          <li>工程水准极高：Proto-first 契约、熔断器、边缘函数，远超典型"side project"</li>
+          <li>真正的开源免费，AGPL 允许自托管与商用（附商业许可选项）</li>
+          <li>本地 AI 零密钥，敏感环境可完全离线</li>
+          <li>CII v8 与跨流关联构成独有"评分大脑"</li>
+          <li>多端交付：Web + PWA + Tauri 原生桌面（三平台）</li>
+          <li>作者背景强（Anghami 联合创始人），社区反响热烈</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠️ 潜在挑战</h4>
+        <ul>
+          <li>高度依赖外部数据源，上游中断/限流会影响覆盖</li>
+          <li>部分功能需凭据（如机票查询需 TRAVELPAYOUTS token）</li>
+          <li>AGPL-3.0 强 copyleft 对闭源商用构成限制</li>
+          <li>主要维护者集中，长期可持续性需观察</li>
+          <li>已披露过 3 项安全发现（IPC 暴露、信任边界、凭据注入），桌面端需持续加固</li>
+          <li>功能庞杂，普通用户上手与自托管运维门槛偏高</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展时间线 -->
+  <section>
+    <h2><span class="ico">📅</span>发展脉络</h2>
+    <div class="tl">
+      <div class="ev"><div class="yr">起源</div><div class="ds">Elie Habib（Anghami 联合创始人）据称在一个周末内搭出原型雏形，定位"人人可用的全球情报"。</div></div>
+      <div class="ev"><div class="yr">2024–2025</div><div class="ds">逐步扩展为多域情报平台，引入 globe.gl/deck.gl 双引擎与 AI 合成简报，社区快速扩散。</div></div>
+      <div class="ev"><div class="yr">2026-03</div><div class="ds">发布"Build on World Monitor"开发者平台文章，确立 22 服务域 / 92 proto 的开放 API（后扩展至 34 服务 / 276 proto）。</div></div>
+      <div class="ev"><div class="yr">2026 上半年</div><div class="ds">登上 GitHub Trending，被 WIRED 报道，累计 2M+ 用户、190+ 国家；Tauri 2 桌面端稳定发布。</div></div>
+      <div class="ev"><div class="yr">现状（2026-06）</div><div class="ds">6 个站点变体 + 三平台桌面端同源构建，CII 迭代至 v8，覆盖 31 个核心国家，安全研究持续进行。</div></div>
+    </div>
+  </section>
+
+  <!-- 综合评价 -->
+  <section>
+    <h2><span class="ico">🏁</span>综合评价</h2>
+    <p>World Monitor 是 <strong>2026 年开源情报（OSINT）领域最具代表性的项目之一</strong>。它把"高门槛、高价格、高封闭"的专业态势感知能力，以工程化、契约化、可扩展的方式彻底开源化。无论你是分析师、安全研究者、金融从业者，还是单纯想"在一个界面看懂世界"的普通人，它都提供了远超预期的价值。</p>
+    <p>从技术角度看，它的 <strong>Proto-first 架构、边缘函数 + 熔断器、双地图引擎、浏览器侧本地 AI</strong> 堪称开源项目工程质量的标杆；从产品角度看，<strong>CII 指数与跨流关联</strong>让它从"信息聚合器"升级为"决策辅助大脑"。它不是没有挑战（数据源依赖、安全加固、维护集中、AGPL 限制），但作为一个由个人发起、迅速成长为全球级平台的项目，其完成度与野心都令人印象深刻。</p>
+    <div class="score-card" style="margin-top:18px">
+      <div>
+        <div class="score-big">9.1<small>/10</small></div>
+        <div class="score-label">综合评分 · 强烈推荐关注与自托管</div>
+      </div>
+      <div style="flex:1;min-width:260px;font-size:14px;color:#c9d1d9">
+        <b style="color:var(--accent2)">一句话总结：</b>把"价值数百万美元的情报终端"开源给全世界——工程扎实、视野宏大、生态开放，是开发者与情报从业者都值得深入研究的标杆项目。
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    本报告由 AI 深度分析自动生成 · 数据来源：GitHub README、worldmonitor.app 官方博客与文档、Mintlify 文档、社区与媒体报道<br>
+    仓库：github.com/koala73/worldmonitor · 官网：worldmonitor.app · 许可证：AGPL-3.0-only · 作者：Elie Habib<br>
+    生成日期：2026-06-20
+  </div>
+
+</div>
+</body>
+</html>
