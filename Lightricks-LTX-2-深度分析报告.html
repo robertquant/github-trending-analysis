@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTX-2 深度分析报告 | Lightricks/LTX-2</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(188,140,255,.22), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(255,93,143,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.viral{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  .badge.tool{color:var(--cyan);border-color:rgba(57,208,216,.4);background:rgba(57,208,216,.08)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#bc8cff 55%,#ff5d8f);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--purple);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:820px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(188,140,255,.10),rgba(255,93,143,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:96px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--pink))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  .pill.k{background:rgba(255,93,143,.10);border-color:rgba(255,93,143,.3);color:var(--pink)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  /* arch diagram */
+  .arch{
+    background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:22px;margin:14px 0;
+    font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:13px;color:#c9d1d9;overflow-x:auto;line-height:1.9;
+  }
+  .arch .hl{color:var(--purple)}
+  .arch .hl2{color:var(--accent2)}
+  .arch .hl3{color:var(--cyan)}
+  /* highlight box */
+  .hl-box{background:linear-gradient(135deg,rgba(188,140,255,.08),rgba(57,208,216,.06));
+          border:1px solid rgba(188,140,255,.25);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .hl-box h4{color:var(--purple);font-size:15px;margin-bottom:8px}
+  .quote{border-left:3px solid var(--purple);padding:6px 0 6px 16px;color:var(--muted);
+         font-style:italic;margin:14px 0;background:rgba(188,140,255,.04);border-radius:0 8px 8px 0}
+  .src{font-size:12.5px;color:var(--muted)}
+  .src a{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--accent)}
+  .src a:hover{opacity:.8}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;border-top:1px solid var(--border);padding-top:24px}
+  @media(max-width:640px){h1{font-size:28px}.bars{grid-template-columns:1fr}.score-big{font-size:52px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <span class="badge ai">🤖 AI 视频生成</span>
+      <span class="badge os">🔓 完全开源权重+训练</span>
+      <span class="badge viral">⚡ 业界最快</span>
+      <span class="badge tool">🎬 音视频同步</span>
+    </div>
+    <h1>LTX-2 · 音视频基础模型</h1>
+    <div class="tagline">首个将现代视频生成全部核心能力融入单一模型的 DiT 开源音视频基础模型</div>
+    <p class="lead">由以色列创意软件公司 Lightricks 推出，LTX-2 是一款基于<strong>非对称双流扩散变换器（Asymmetric Dual-Stream DiT）</strong>的音视频生成基础模型。它能在单次前向传播中生成<strong>同步的视频与音频</strong>，原生支持 <strong>4K 分辨率、约 50fps 高帧率</strong>、长达 10–20 秒的片段，并可在<strong>消费级 NVIDIA GPU 上本地运行</strong>。官方仓库提供完整的推理代码、LoRA/全参微调训练器，以及十余条生产级生成流水线。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">Lightricks/LTX-2</div></div>
+      <div class="meta"><div class="k">模型类别</div><div class="v">DiT 音视频基础模型</div></div>
+      <div class="meta"><div class="k">总参数</div><div class="v">19B（视频14B+音频5B）</div></div>
+      <div class="meta"><div class="k">开源时间</div><div class="v">2026年1月（真正开放）</div></div>
+      <div class="meta"><div class="k">许可</div><div class="v">开放权重 + 训练代码</div></div>
+      <div class="meta"><div class="k">运行环境</div><div class="v">消费级 NVIDIA GPU</div></div>
+      <div class="meta"><div class="k">原生分辨率</div><div class="v">最高 4K / ~50fps</div></div>
+      <div class="meta"><div class="k">生态集成</div><div class="v">ComfyUI 核心内置</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">9.1<small>/10</small></div>
+      <div class="score-label">综合深度评分</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">技术创新</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">9.2</span></div>
+      <div class="bar-row"><span class="name">性能速度</span><span class="bar-track"><span class="bar-fill" style="width:95%"></span></span><span class="num">9.5</span></div>
+      <div class="bar-row"><span class="name">开放程度</span><span class="bar-track"><span class="bar-fill" style="width:95%"></span></span><span class="num">9.5</span></div>
+      <div class="bar-row"><span class="name">易用性</span><span class="bar-track"><span class="bar-fill" style="width:85%"></span></span><span class="num">8.5</span></div>
+      <div class="bar-row"><span class="name">应用广度</span><span class="bar-track"><span class="bar-fill" style="width:88%"></span></span><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">文档生态</span><span class="bar-track"><span class="bar-fill" style="width:87%"></span></span><span class="num">8.7</span></div>
+      <div class="bar-row"><span class="name">社区影响</span><span class="bar-track"><span class="bar-fill" style="width:90%"></span></span><span class="num">9.0</span></div>
+      <div class="bar-row"><span class="name">画质上限</span><span class="bar-track"><span class="bar-fill" style="width:86%"></span></span><span class="num">8.6</span></div>
+    </div>
+  </div>
+
+  <!-- 1. 项目概述 -->
+  <section>
+    <h2><span class="ico">📌</span>一、项目概述</h2>
+    <p><strong>LTX-2</strong> 是 Lightricks 团队推出的开源音视频生成基础模型，被视为 LTX-Video 的下一代继任者。其核心定位是："首个将<strong>现代视频生成全部核心能力</strong>——同步音视频、高保真、多性能档位、生产级输出、API 访问与开放访问——集中到<strong>单一 DiT 模型</strong>之中"。</p>
+    <p>不同于传统方案将音频与视频割裂生成再后期合成，LTX-2 采用<strong>单一统一模型</strong>同时产出画面与声音，从根本上解决了"会动的画面却是哑的"这一行业痛点。它面向内容创作者、独立电影人与开发者，提供从免费本地推理到云端 API 的完整光谱。</p>
+
+    <div class="hl-box">
+      <h4>🔑 一句话定位</h4>
+      <p style="margin:0">一个真正开放的、可在消费级 GPU 本地运行的"AI 拍片引擎"——一次推理，同步得到带声画的成片。</p>
+    </div>
+
+    <h3>官方仓库与生态矩阵</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">Lightricks/LTX-2</div><div class="fd">官方 Python 推理 + LoRA 训练包（本仓库）。monorepo 含 ltx-core / ltx-pipelines / ltx-trainer 三大模块。</div></div>
+      <div class="feat"><div class="ft">Lightricks/LTX-Video</div><div class="fd">前代仓库，现已演进并指向 LTX-2，承载蒸馏模型与历史版本。</div></div>
+      <div class="feat"><div class="ft">ComfyUI-LTXVideo</div><div class="fd">ComfyUI 自定义节点；LTX-2 已被 <strong>内置进 ComfyUI 核心</strong>，本地零成本上手。</div></div>
+      <div class="feat"><div class="ft">LTX-Desktop</div><div class="fd">面向 Windows/Linux NVIDIA GPU 的开源桌面应用，一键本地生成。</div></div>
+      <div class="feat"><div class="ft">LTX Studio</div><div class="fd">面向创意团队、营销与电影人的全流程 AI 视频工作台（商业产品）。</div></div>
+      <div class="feat"><div class="ft">HuggingFace 权重</div><div class="fd">LTX-2.3 22B 系列（dev / distilled）+ 空间/时间上采样器 + 一整套控制 LoRA。</div></div>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>二、技术架构</h2>
+    <p>LTX-2 的技术细节详载于论文 <em>"LTX-2: Efficient Joint Audio-Visual Foundation Model"</em>（arXiv:2601.03233）。其核心是<strong>非对称双流扩散变换器（Asymmetric Dual-Stream DiT）</strong>架构。</p>
+
+    <h3>核心架构示意</h3>
+    <div class="arch">
+<span class="hl">输入</span>：文本提示 / 首帧图像 / 尾帧 / 参考视频 / 音频
+   │
+   ├──▶ <span class="hl2">视频流（Video Stream · 14B 参数）</span> ──┐
+   │         处理高信息密度的时空像素特征            │
+   │                                                │  <span class="hl3">双向交叉注意力</span>
+   ├──▶ <span class="hl2">音频流（Audio Stream · 5B 参数）</span> ──┤  （Bidirectional Cross-Attention）
+   │         处理低信息密度的频谱声学特征            │  实现"声画对齐/同步"
+   │                                                │
+   └──▶ <span class="hl">模态感知无分类器引导（Modality-aware CFG）</span>
+                          │
+                          ▼
+        <span class="hl">单一模型 · 单次前向传播 → 同步的 视频 + 音频</span>
+        （原生最高 4K / ~50fps / 10–20s 片段）
+    </div>
+
+    <h3>关键架构要点</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">为何"非对称"？</div><div class="fd">视频与音频的信息密度差异巨大。架构按各自需求<strong>差异化分配参数</strong>——视频 14B、音频 5B，避免单一巨型多模态 DiT 的臃肿开销，同时保持同步质量。</div></div>
+      <div class="feat"><div class="ft">双向交叉注意力</div><div class="fd">两路流之间双向耦合，使声画在生成时即可对齐（如脚步声踩在画面落地瞬间），而非后期拼接。</div></div>
+      <div class="feat"><div class="ft">模态感知 CFG</div><div class="fd">针对不同模态采用差异化的无分类器引导，提升可控性与生成稳定性。</div></div>
+      <div class="feat"><div class="ft">文本编码器</div><div class="fd">采用 <strong>Gemma 3</strong> 作为文本编码器，理解细粒度的镜头描述。</div></div>
+    </div>
+
+    <h3>Monorepo 三大模块</h3>
+    <table>
+      <tr><th>模块</th><th>职责</th><th>说明</th></tr>
+      <tr><td><code>ltx-core</code></td><td>核心模型实现</td><td>DiT 主体、推理栈与底层工具，是整个系统的引擎。</td></tr>
+      <tr><td><code>ltx-pipelines</code></td><td>高级流水线</td><td>封装文生视频、图生视频、音频生视频等十余条开箱即用的生成流水线。</td></tr>
+      <tr><td><code>ltx-trainer</code></td><td>训练 / 微调</td><td>提供 LoRA、全参微调（FFT）、IC-LoRA 的训练与精调工具链。</td></tr>
+    </table>
+
+    <h3>十余条生产级生成流水线</h3>
+    <ul>
+      <li><strong>TI2VidTwoStagesPipeline</strong> — 生产级文/图生视频，2× 上采样（推荐）</li>
+      <li><strong>TI2VidTwoStagesHQPipeline</strong> — 采用 <code>res_2s</code> 二阶采样器，步数更少画质更佳</li>
+      <li><strong>TI2VidOneStagePipeline</strong> — 单阶段生成，适合快速原型</li>
+      <li><strong>DistilledPipeline</strong> — 最快推理，仅 8 个预定义 sigma（阶段1 8步 / 阶段2 4步）</li>
+      <li><strong>ICLoraPipeline</strong> — 视频生视频、图生视频变换（基于蒸馏模型）</li>
+      <li><strong>KeyframeInterpolationPipeline</strong> — 关键帧图像间插值</li>
+      <li><strong>A2VidPipelineTwoStage</strong> — 由输入音频驱动生成视频</li>
+      <li><strong>RetakePipeline</strong> — 仅重新生成已有视频中的某个时间区域</li>
+      <li><strong>HDRICLoraPipeline</strong> — HDR 输出，经 LogC3 逆解码输出线性浮点帧，可导出 EXR 并做色调映射</li>
+      <li><strong>LipDubPipeline</strong> — 唇形同步配音、改词重述、匹配说话人身份</li>
+    </ul>
+
+    <h3>性能与优化手段</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">极速推理</div><div class="fd">优化配置下约 <strong>1.22 秒/段</strong>；相较同类开源模型快 2–3 倍，部分场景达 <strong>~7 倍</strong>。</div></div>
+      <div class="feat"><div class="ft">FP8 量化</div><div class="fd"><code>--quantization fp8-cast</code>（配 bf16）或 <code>fp8-scaled-mm</code>（Hopper + TensorRT-LLM），显著降低显存占用。</div></div>
+      <div class="feat"><div class="ft">注意力优化</div><div class="fd">Blackwell B200 用 FlashAttention 4；其余 CUDA 用 xFormers。</div></div>
+      <div class="feat"><div class="ft">梯度估计</div><div class="fd">可将推理步数从 40 降至 20–30 而画质不降。</div></div>
+      <div class="feat"><div class="ft">蒸馏模型</div><div class="fd">LTX-2.3-22b-distilled 系列，8 步即出片，提速最高 60%。</div></div>
+      <div class="feat"><div class="ft">显存友好</div><div class="fd">大显存可关闭阶段间自动显存清理以进一步提速。</div></div>
+    </div>
+
+    <div class="quote">"LTX is unbelievable fast. It might often not be as good as WAN, but when you can generate 10x more attempts in the same time, the speed advantage completely changes the creative workflow." — r/StableDiffusion 社区评测</div>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>三、核心创新点</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">① 首个单模型音视频基础模型</div><div class="fd">在<strong>一个 DiT</strong> 内集成 T2V / I2V / V2V / 首尾帧 / 音频生视频 / 同步音频 / 可变帧率等全部现代视频生成能力，告别"多模型拼接"。</div></div>
+      <div class="feat"><div class="ft">② 非对称双流架构</div><div class="fd">按模态信息密度差异分配算力（视频14B / 音频5B），在效率与同步质量间取得平衡，是高效联合建模的范式创新。</div></div>
+      <div class="feat"><div class="ft">③ 真正的"全开放"</div><div class="fd">不仅开放<strong>权重</strong>，更开放<strong>训练代码</strong>，可本地复现与二创——业界少见的"truly open weights"。</div></div>
+      <div class="feat"><div class="ft">④ 消费级 GPU 本地运行</div><div class="fd">配合 FP8 量化与蒸馏策略，单张消费级 NVIDIA 显卡即可本地生成 4K 声画，无需昂贵的 A100/H100 集群。</div></div>
+      <div class="feat"><div class="ft">⑤ 丰富的可控生成 LoRA 家族</div><div class="fd">配套镜头运动（Dolly、Jib、Static）、姿态控制、细节增强、HDR、唇形配音等 IC-LoRA，实现电影级镜头语言控制。</div></div>
+      <div class="feat"><div class="ft">⑥ 电影级 HDR 管线</div><div class="fd">原生支持 LogC3 逆解码 → 线性浮点帧 → EXR 导出 → 色调映射，可直连专业后期/调色流程。</div></div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="ico">🎬</span>四、应用场景</h2>
+    <p>LTX-2 面向<strong>从个人创作者到专业制作团队</strong>的完整光谱，尤其突出"本地、可控、声画一体"三大特征。</p>
+
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">独立短片与电影制作</div><div class="fd">电影人无需昂贵设备即可原型化镜头、生成 B-roll，甚至产出完整短片；首尾帧与镜头控制 LoRA 实现精准运镜。</div></div>
+      <div class="feat"><div class="ft">商业广告与营销内容</div><div class="fd">快速产出带音效/配乐的成片级广告，配合 LTX Studio 做团队协作；HDR 管线满足交付级质量。</div></div>
+      <div class="feat"><div class="ft">音乐 MV 与短视频</div><div class="fd">音频生视频（A2V）让画面随音乐节拍起舞；社区已用于 Instagram/Reels 的变速、转场、胶片损伤等电影感效果。</div></div>
+      <div class="feat"><div class="ft">YouTube / 长视频内容</div><div class="fd">配合 LTX Director Multi 等社区工作流，可生成 AI 短片、动画故事、实验视频，单条可达数十秒。</div></div>
+      <div class="feat"><div class="ft">配音 / 唇形重制（LipDub）</div><div class="fd">为已有视频重配音、改词、匹配说话人音色与口型，适用于本地化与二次创作。</div></div>
+      <div class="feat"><div class="ft">关键帧插值与镜头接续</div><div class="fd">在多张关键帧间平滑插值，构建连续镜头叙事。</div></div>
+      <div class="feat"><div class="ft">局部重做（Retake）</div><div class="fd">只重生成不满意的时间片段，节省整片重跑成本，迭代效率高。</div></div>
+      <div class="feat"><div class="ft">研究与二创</div><div class="fd">开放的训练代码允许学术与工程团队微调专属风格/角色 LoRA，构建私有视频生成底座。</div></div>
+    </div>
+
+    <div class="hl-box">
+      <h4>🎯 最佳适配人群</h4>
+      <p style="margin:0">追求<strong>本地隐私与可控性</strong>的创作者、需要<strong>声画一体</strong>成片的内容团队、希望<strong>研究/微调</strong>视频基础模型的研究者，以及预算有限但需要<strong>海量快速试错</strong>的短视频生产者。</p>
+    </div>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>五、竞品对比</h2>
+    <p>当前开源视频模型呈"三足鼎立"：LTX（速度与本地化）、Wan（综合画质）、Hunyuan（摄影真实感）。Sora 2 等闭源模型因访问受限、所有权缺失而逐步被市场边缘化。</p>
+
+    <table>
+      <tr>
+        <th>模型</th><th class="center">开源</th><th>核心优势</th><th>主要短板</th><th class="center">音视频同步</th>
+      </tr>
+      <tr>
+        <td><strong>LTX-2</strong>（Lightricks）</td>
+        <td class="center yes">✅ 权重+训练</td>
+        <td>极速（2–3× 快，最高 7×）、消费级 GPU 本地运行、声画一体单模型、ComfyUI 核心内置</td>
+        <td>复杂提示的画质上限略逊 Wan；生态尚在成熟中</td>
+        <td class="center yes">✅ 原生</td>
+      </tr>
+      <tr>
+        <td>Wan 2.2 / 2.5（阿里）</td>
+        <td class="center yes">✅ 开放权重</td>
+        <td>开源阵营综合画质/运动/语义最佳；训练数据更庞大</td>
+        <td>更慢、显存需求更高；音频能力非单一模型原生</td>
+        <td class="center no">✗ 需外挂</td>
+      </tr>
+      <tr>
+        <td>HunyuanVideo（腾讯）</td>
+        <td class="center yes">✅ 开放权重</td>
+        <td>摄影真实感强、支持数字人/avatar</td>
+        <td>资源占用重、速度较慢</td>
+        <td class="center no">✗ 需外挂</td>
+      </tr>
+      <tr>
+        <td>Sora 2（OpenAI）</td>
+        <td class="center no">✗ 闭源</td>
+        <td>高质量、品牌力强</td>
+        <td>闭源、无所有权、访问受限，正被逐步淘汰</td>
+        <td class="center yes">✅</td>
+      </tr>
+      <tr>
+        <td>Veo 3（Google）</td>
+        <td class="center no">✗ 闭源</td>
+        <td>顶尖质量与音频</td>
+        <td>闭源 API、无法本地化</td>
+        <td class="center yes">✅</td>
+      </tr>
+      <tr>
+        <td>Kling / Hailuo / Runway</td>
+        <td class="center no">✗ 部分闭源</td>
+        <td>各有擅长的运动/风格化能力</td>
+        <td>以云服务为主，所有权与本地化受限</td>
+        <td class="center">部分</td>
+      </tr>
+    </table>
+
+    <div class="hl-box">
+      <h4>🏆 LTX-2 的差异化护城河</h4>
+      <p style="margin:0">在"开放 + 本地 + 声画一体"三者的<strong>交集</strong>上，LTX-2 几乎没有对手：它是少数能让创作者在<strong>一张消费级显卡上、零 API 成本、一次推理拿到带声画的 4K 成片</strong>的开源模型。Wan 在画质上略胜，但代价是更高的硬件门槛与无原生音频。</p>
+    </div>
+
+    <div class="quote">"WAN 2.5 and LTX-2 win on ownership. Sora 2 is sunsetting." — WaveSpeed《Best AI Video Generator 2026》</div>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section>
+    <h2><span class="ico">📊</span>六、综合评分与结论</h2>
+    <p>综合技术创新、性能、开放性、生态与应用广度，LTX-2 获得 <strong>9.1 / 10</strong> 的深度评分。它代表了开源视频生成从"能出片"迈向"能成片（带声、可控、本地化）"的关键跃迁。</p>
+
+    <table>
+      <tr><th>维度</th><th class="center">得分</th><th>评述</th></tr>
+      <tr><td>技术创新</td><td class="center">9.2</td><td>非对称双流 DiT + 单模型音视频联合建模，是真正的方法论创新。</td></tr>
+      <tr><td>性能速度</td><td class="center">9.5</td><td>业内领先的推理速度，蒸馏 + FP8 使消费级本地 4K 成为现实。</td></tr>
+      <tr><td>开放程度</td><td class="center">9.5</td><td>权重 + 训练代码全开放，"truly open" 在视频基础模型中极为稀缺。</td></tr>
+      <tr><td>易用性</td><td class="center">8.5</td><td>ComfyUI 核心内置、十余条流水线；但模型配置/LoRA 组合对新手仍有学习曲线。</td></tr>
+      <tr><td>应用广度</td><td class="center">8.8</td><td>覆盖短片、广告、MV、配音、HDR、插值等广泛场景。</td></tr>
+      <tr><td>文档生态</td><td class="center">8.7</td><td>monorepo 文档完善、社区工作流活跃，但迭代快、版本间偶有变动。</td></tr>
+      <tr><td>社区影响</td><td class="center">9.0</td><td>首个开源音视频基础模型，r/StableDiffusion 等社区高度关注与讨论。</td></tr>
+      <tr><td>画质上限</td><td class="center">8.6</td><td>优秀但复杂提示下仍略逊于 Wan；以"量（快速试错）"补"质"。</td></tr>
+    </table>
+
+    <div class="hl-box">
+      <h4>✅ 总结论</h4>
+      <p style="margin:0">LTX-2 是 2026 年开源 AI 视频生成的<strong>标杆之作</strong>：它把"速度、本地化、声画一体、真正开放"四者第一次焊在了一起。对于追求<strong>所有权与隐私</strong>的创作者、需要<strong>海量快速迭代</strong>的内容团队，以及希望<strong>研究/微调视频基座</strong>的开发者，它是当前最优选之一；若你的首要目标是单条画质上限且不在意硬件成本，可将其与 Wan 2.5 组合使用。</p>
+    </div>
+
+    <h3>适合 / 不太适合</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft" style="color:var(--accent2)">✅ 适合</div><div class="fd">本地隐私优先、需要同步音频成片、追求快速试错、希望微调专属风格的创作者与研究者。</div></div>
+      <div class="feat"><div class="ft" style="color:var(--orange)">⚠️ 需权衡</div><div class="fd">追求单一提示极致画质、且拥有高端 GPU 集群的用户（Wan 2.5 在画质维度可能更优）。</div></div>
+    </div>
+  </section>
+
+  <!-- SOURCES -->
+  <section>
+    <h2><span class="ico">🔗</span>参考资料</h2>
+    <div class="src">
+      <ul>
+        <li>GitHub 官方仓库：<a href="https://github.com/Lightricks/LTX-2" target="_blank">Lightricks/LTX-2</a> · <a href="https://github.com/Lightricks/LTX-Video" target="_blank">Lightricks/LTX-Video</a></li>
+        <li>技术论文：<a href="https://arxiv.org/abs/2601.03233" target="_blank">LTX-2: Efficient Joint Audio-Visual Foundation Model (arXiv:2601.03233)</a></li>
+        <li>模型权重：<a href="https://huggingface.co/Lightricks/LTX-2" target="_blank">HuggingFace Lightricks/LTX-2</a> · 官网 <a href="https://ltx.io/model/ltx-2" target="_blank">ltx.io/model/ltx-2</a></li>
+        <li>发布新闻：<a href="https://www.prnewswire.com/news-releases/lightricks-releases-ltx-2-the-first-complete-open-source-ai-video-foundation-model-302593012.html" target="_blank">PR Newswire</a> · <a href="https://www.globenewswire.com/news-release/2026/01/06/3213304/0/en/lightricks-open-sources-ltx-2-the-first-production-ready-audio-and-video-generation-model-with-truly-open-weights.html" target="_blank">GlobeNewswire (2026-01-06)</a></li>
+        <li>竞品对比：<a href="https://vast.ai/article/wan-2-2-vs-ltx-2-which-ai-video-model-should-you-use" target="_blank">Vast.ai (Wan 2.2 vs LTX-2)</a> · <a href="https://www.aimagicx.com/blog/open-source-ai-video-models-comparison-2026" target="_blank">AIMagicX 2026 对比</a> · <a href="https://wavespeed.ai/blog/posts/best-ai-video-generator-2026/" target="_blank">WaveSpeed Best 2026</a></li>
+        <li>ComfyUI 集成：<a href="https://github.com/Lightricks/ComfyUI-LTXVideo/" target="_blank">ComfyUI-LTXVideo</a> · <a href="https://docs.comfy.org/tutorials/video/ltx/ltx-2-3" target="_blank">Comfy Docs 教程</a></li>
+        <li>社区评测：<a href="https://www.reddit.com/r/StableDiffusion/comments/1j5k9k5/ltxv_vs_wan21_vs_hunyuan_insane_speed_differences/" target="_blank">r/StableDiffusion 速度对比</a> · <a href="https://curiousrefuge.com/blog/ltx2-ai-video-generator-review" target="_blank">Curious Refuge 评测</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>📅 报告生成日期：2026-06-21 ｜ 📂 数据来源：GitHub / arXiv / HuggingFace / 社区评测 ｜ 由 Claude 深度分析生成</p>
+    <p style="margin-top:6px">Lightricks/LTX-2 — 首个 DiT 开源音视频基础模型 · 深度分析报告</p>
+  </footer>
+
+</div>
+</body>
+</html>
