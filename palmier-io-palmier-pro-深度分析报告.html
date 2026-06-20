@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palmier Pro 深度分析报告 | palmier-io/palmier-pro</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(255,93,143,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(188,140,255,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin-bottom:18px;
+  }
+  .badge.yc{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#ffb3c9 60%,#bc8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent2);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:760px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(255,93,143,.10),rgba(188,140,255,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:96px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--purple))}
+  .bar-row .num{width:30px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--magenta)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--gold)}
+  /* pros/cons */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pc{border-radius:12px;padding:18px 20px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(126,231,135,.05);border-color:rgba(126,231,135,.25)}
+  .pc.con{background:rgba(255,123,114,.05);border-color:rgba(255,123,114,.25)}
+  .pc h4{font-size:14.5px;margin-bottom:10px}
+  .pc.pro h4{color:var(--accent2)} .pc.con h4{color:var(--red)}
+  .pc ul li::before{color:inherit}
+  .pc.pro ul li::before{content:"✓";color:var(--accent2)} .pc.con ul li::before{content:"⚠";color:var(--red)}
+  /* timeline */
+  .tl{position:relative;padding-left:28px;border-left:2px solid var(--border);margin:10px 0}
+  .tl .ev{position:relative;margin-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-34px;top:5px;width:12px;height:12px;border-radius:50%;
+     background:var(--magenta);box-shadow:0 0 0 4px var(--card)}
+  .tl .yr{font-size:12px;color:var(--orange);font-weight:700}
+  .tl .ds{font-size:14px;color:#c9d1d9;margin-top:2px}
+  .quote{border-left:3px solid var(--purple);padding:4px 0 4px 16px;margin:14px 0;color:var(--muted);font-style:italic;font-size:14px}
+  .footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}.bars{grid-template-columns:1fr}.h1{font-size:30px}section{padding:22px 18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge yc">🎓 Y Combinator S24</span>
+    <span class="badge os">🔓 开源 GPLv3</span>
+    <span class="badge">🍎 macOS 26 · Apple Silicon</span>
+    <h1>Palmier Pro</h1>
+    <div class="tagline">"The video editor built for AI." — 为 AI 而生的视频编辑器</div>
+    <p class="lead">一款用 Swift 从零构建的 macOS 原生开源视频编辑器。它把<strong>生成式 AI</strong> 与<strong>智能体（Agent）</strong>直接嵌入时间线：你可以在剪辑轨道里调用 Seedance / Kling / Nano Banana Pro 生成素材，也可以让 Claude / Codex / Cursor 通过 MCP 协议直接操作你的时间线——裁剪、重排、生成镜头。被誉为"第一款从第一天起就为 AI 打造的编辑器"。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">palmier-io/palmier-pro</div></div>
+      <div class="meta"><div class="k">出品</div><div class="v">Palmier, Inc.（YC S24）</div></div>
+      <div class="meta"><div class="k">核心语言</div><div class="v">Swift</div></div>
+      <div class="meta"><div class="k">协议</div><div class="v">GPLv3（闭源：生成式 AI）</div></div>
+      <div class="meta"><div class="k">定位北极星</div><div class="v">Adobe Premiere Pro</div></div>
+      <div class="meta"><div class="k">阶段</div><div class="v">早期产品（活跃迭代）</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">8.4<small>/10</small></div>
+      <div class="score-label">综合评分</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">🎯 定位创新</span><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div><span class="num">9.5</span></div>
+      <div class="bar-row"><span class="name">🛠 技术实现</span><div class="bar-track"><div class="bar-fill" style="width:84%"></div></div><span class="num">8.4</span></div>
+      <div class="bar-row"><span class="name">🎨 产品体验</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><span class="num">8.2</span></div>
+      <div class="bar-row"><span class="name">🔌 生态/集成</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">🚀 商业潜力</span><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div><span class="num">8.5</span></div>
+      <div class="bar-row"><span class="name">👥 社区/成熟度</span><div class="bar-track"><div class="bar-fill" style="width:68%"></div></div><span class="num">6.8</span></div>
+    </div>
+  </div>
+
+  <!-- 一、项目概述 -->
+  <section>
+    <h2><span class="ico">📌</span>一、项目概述</h2>
+    <p>Palmier Pro 的核心理念可以用一句话概括：<strong>把"生成式 AI"从独立的网页工具里解放出来，搬进真正的非线性编辑（NLE）时间线</strong>。</p>
+    <p>过去用 AI 生成视频，流程是割裂的：你在某个生成网站出片 → 下载 → 导入 Premiere/CapCut → 再剪辑。Palmier Pro 把这一切打通——生成、剪辑、导出全部发生在同一条时间线上，而且这条时间线还<strong>对 AI 智能体开放</strong>：通过 MCP（Model Context Protocol），Claude Code、Codex、Cursor 可以像操作代码仓库一样操作你的视频工程。</p>
+    <div class="quote">"The video editor built for AI. Generate, edit, and export production-ready AI videos without leaving your timeline."</div>
+    <h3>团队与转型故事</h3>
+    <div class="tl">
+      <div class="ev"><div class="yr">2024 · YC S24（最初定位）</div><div class="ds">Palmier 以"理解任何代码库的 AI"起家——为每个代码库单独训练模型，自动做 PR 审查、Bug 检测、代码优化、自然语言代码搜索。</div></div>
+      <div class="ev"><div class="yr">2024–2025 · 转向营销视频</div><div class="ds">公司方向调整为"Cinematic AI Marketing Videos"，用 AI 为客户快速产出高质量广告/营销/发布视频（紧凑交付周期）。</div></div>
+      <div class="ev"><div class="yr">2026 · Palmier Pro 开源</div><div class="ds">把"为 AI 而生"的视频编辑能力产品化并开源，让任何人都能在自己 Mac 上拥有一个 agent 可驱动的时间线编辑器。</div></div>
+    </div>
+    <p><strong>创始人</strong>：Marcos Rico Peng（CEO，UC Berkeley EECS 三年毕业，前 LinkedIn 基础设施工程师，兼职业游泳运动员/YouTuber 15.5 万粉）与 Harrison Tin（CTO，UC Berkeley EECS，前微软软件工程师）。两人都曾在大厂亲历"代码评审周期长、大型代码库上手难"的痛点，这也是早期产品的出发点。</p>
+  </section>
+
+  <!-- 二、技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>二、技术架构</h2>
+    <p>Palmier Pro 的架构可以拆为<strong>编辑内核</strong> + <strong>生成式 AI 层</strong> + <strong>智能体/MCP 层</strong>三大部分。</p>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">① Swift 原生编辑内核</div><div class="fd">用 Swift 从零构建（非 Electron / 非 Web 套壳），充分利用 Apple Silicon 性能；目标对标 Premiere Pro，提供专业级时间线编辑能力。</div></div>
+      <div class="feat"><div class="ft">② 内置生成式 AI</div><div class="fd">直接在时间线内调用 SOTA 模型生成视频/图像：<code>Seedance</code>、<code>Kling</code>、<code>Nano Banana Pro</code>。生成素材落在轨道上，与实拍/传统素材混合编辑。</div></div>
+      <div class="feat"><div class="ft">③ MCP Server（HTTP）</div><div class="fd">应用打开时在本地暴露 MCP 服务 <code>http://127.0.0.1:19789/mcp</code>，让外部 agent 以结构化方式读写时间线工程。</div></div>
+      <div class="feat"><div class="ft">④ In-app Agent</div><div class="fd">除外部 MCP 外，内置应用内智能体，可与用户在同一工程上协同工作（边聊边剪）。</div></div>
+    </div>
+    <h3>Agent 接入方式（一行命令）</h3>
+    <p>对各类主流编码 agent / 客户端都做了开箱即用的接入：</p>
+    <ul>
+      <li><strong>Claude Code</strong>：<code>claude mcp add --transport http palmier-pro http://127.0.0.1:19789/mcp</code></li>
+      <li><strong>Codex</strong>：<code>codex mcp add palmier-pro --url http://127.0.0.1:19789/mcp</code></li>
+      <li><strong>Cursor</strong>：应用内 <code>Help → MCP Instructions → Install in Cursor</code>，或手写 <code>~/.cursor/mcp.json</code></li>
+      <li><strong>Claude Desktop</strong>：内置 <a href="#">mcpb</a> 包，一键安装 Desktop Extension</li>
+    </ul>
+    <p>这意味着 <strong>agent 能"看见并操作"视频工程</strong>：裁剪片段、重新排序、整理素材、生成新镜头、替换画面——而不仅仅是生成一段视频就结束。</p>
+    <h3>开源与商业化边界</h3>
+    <p>项目采用清晰的"开源核心 + 闭源增值"策略：</p>
+    <ul>
+      <li><span class="pill g">开源 GPLv3</span> 视频编辑器本体（不含生成式 AI）、MCP server、应用内 agent 聊天</li>
+      <li><span class="pill o">闭源</span> 生成式 AI 处理（模型调用/后端推理）</li>
+      <li><span class="pill">免费</span> 编辑器本体（无需登录，可作为 CapCut/Premiere 用）；MCP server 免费</li>
+      <li><span class="pill p">付费</span> 生成式 AI 功能需登录 + 订阅（按 credit 计费）</li>
+    </ul>
+    <h3>平台与系统要求</h3>
+    <p>仅支持 <strong>macOS 26（Tahoe）</strong> 且为 <strong>Apple Silicon</strong>。这是有意为之：Swift 原生 + Apple 芯片的能效/媒体引擎，是它性能与体验的根基，但也直接把 Windows/Linux 用户挡在门外。</p>
+  </section>
+
+  <!-- 三、核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>三、核心创新点</h2>
+    <ul>
+      <li><strong>Agent 可直接操作时间线（最大差异化）</strong>：通过 MCP 把 NLE 时间线变成 agent 可编程的"数据结构"。Claude/Codex 不只是"帮你生成一段视频"，而是能像改代码一样改你的剪辑工程——这在视频编辑领域几乎没有同类。</li>
+      <li><strong>生成式 AI 内嵌时间线，而非外挂</strong>：生成、剪辑、导出在同一轨道闭环，告别"生成网站 → 下载 → 导入"的割裂流程。</li>
+      <li><strong>Swift 原生 + Apple Silicon 优先</strong>：从零构建的原生 Mac 应用，性能/能效/系统集成度远超 Electron 方案。</li>
+      <li><strong>生成式素材与传统剪辑混合</strong>：不强制"纯生成"，实拍素材与 AI 生成素材可在同一时间线混编。</li>
+      <li><strong>开源核心 + 订阅增值的健康模式</strong>：编辑器与 MCP 完全开源免费，生成式 AI 闭源收费——既建立了开源社区信任，又保留商业化抓手。</li>
+      <li><strong>主流编码 agent 全家桶适配</strong>：Claude Code / Codex / Cursor / Claude Desktop 一键接入，踩在 MCP 生态爆发的时间窗口上。</li>
+    </ul>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <h2><span class="ico">🎬</span>四、应用场景</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">📺 内容创作者 / 自媒体</div><div class="fd">用 agent 批量整理素材、生成 B-roll、自动裁剪口播，几分钟产出可发布短片。</div></div>
+      <div class="feat"><div class="ft">📣 营销 / 广告团队</div><div class="fd">快速产出 AI 广告与发布视频（团队本就有"电影级 AI 营销视频"服务基因）。</div></div>
+      <div class="feat"><div class="ft">🤖 AI Native 开发者</div><div class="fd">把视频剪辑变成 agent 工作流的一部分，集成进自动化 pipeline / 多模态 agent。</div></div>
+      <div class="feat"><div class="ft">🎓 教学 / 演示视频</div><div class="fd">用自然语言驱动时间线生成教学/产品演示片段。</div></div>
+      <div class="feat"><div class="ft">🎨 独立影视 / 实验创作</div><div class="fd">混合实拍与 AI 生成镜头做实验性短片、概念片。</div></div>
+      <div class="feat"><div class="ft">🧩 MCP 生态实验场</div><div class="fd">作为"agent 操作富媒体创作工具"的范例，验证 MCP 在非代码领域的潜力。</div></div>
+    </div>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>五、竞品对比</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th class="center">Palmier Pro</th>
+          <th class="center">CapCut</th>
+          <th class="center">Premiere Pro</th>
+          <th class="center">DaVinci Resolve</th>
+          <th class="center">Final Cut Pro</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>定位</td><td class="center">AI-native 编辑器</td><td class="center">大众/创作者</td><td class="center">行业标杆</td><td class="center">专业调色/全流程</td><td class="center">Mac 专业</td></tr>
+        <tr><td>Agent 直驱时间线 (MCP)</td><td class="center yes">✅ 独有</td><td class="center no">❌</td><td class="center no">❌</td><td class="center no">❌</td><td class="center no">❌</td></tr>
+        <tr><td>生成式 AI 内嵌时间线</td><td class="center yes">✅ SOTA 模型</td><td class="center mid">部分 AI</td><td class="center mid">部分 AI</td><td class="center mid">部分 AI</td><td class="center mid">有限</td></tr>
+        <tr><td>开源</td><td class="center yes">✅ GPLv3</td><td class="center no">❌</td><td class="center no">❌</td><td class="center mid">非核心</td><td class="center no">❌</td></tr>
+        <tr><td>平台</td><td class="center">macOS 26 / ASi</td><td class="center">全平台</td><td class="center">Win/Mac</td><td class="center">Win/Mac/Linux</td><td class="center">Mac</td></tr>
+        <tr><td>价格</td><td class="center">编辑器免费 / AI 订阅</td><td class="center">免费 / Pro $19.99·月</td><td class="center">订阅 ~$22–55·月</td><td class="center">免费 / Studio $295 买断</td><td class="center">$299 买断</td></tr>
+        <tr><td>成熟度 / 生态</td><td class="center mid">早期</td><td class="center yes">成熟</td><td class="center yes">极成熟</td><td class="center yes">极成熟</td><td class="center yes">成熟</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px"><strong>差异化小结</strong>：Palmier Pro 不与成熟 NLE 比"功能全面性"或"专业调色"，而是开辟一个全新细分——<strong>"让 AI agent 直接驱动视频时间线"</strong>。它的真正对手不是 Premiere，而是"AI 视频生成工具 + 手动剪辑"的割裂现状。最大护城河：① MCP 直驱时间线的产品形态先发、② Swift 原生 Mac 体验、③ 开源核心带来的社区与信任。最大短板：平台单一（仅 macOS 26/Apple Silicon）、功能成熟度远不及老牌 NLE、强依赖订阅付费的生成式 AI。</p>
+  </section>
+
+  <!-- 六、优势与局限 -->
+  <section>
+    <h2><span class="ico">⚖️</span>六、优势与局限</h2>
+    <div class="two-col">
+      <div class="pc pro">
+        <h4>✅ 优势</h4>
+        <ul>
+          <li><strong>独一无二的产品形态</strong>：Agent 经 MCP 直驱时间线，视频编辑领域暂无同类。</li>
+          <li><strong>Swift 原生 + Apple Silicon</strong>：性能/能效/集成度优于 Electron 类方案。</li>
+          <li><strong>生成式 AI 内嵌</strong>：生成—剪辑—导出同一轨道闭环，告别割裂流程。</li>
+          <li><strong>开源核心（GPLv3）+ 健康商业化</strong>：编辑器/MCP 免费，社区信任 + 订阅抓手并存。</li>
+          <li><strong>踩准 MCP 生态爆发窗口</strong>：Claude Code/Codex/Cursor/Desktop 一键接入。</li>
+          <li><strong>YC S24 背书 + 聚焦团队</strong>：创始人大厂背景，方向清晰。</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠️ 局限</h4>
+        <ul>
+          <li><strong>平台极度受限</strong>：仅 macOS 26（Tahoe）+ Apple Silicon，排除 Win/Linux/Intel Mac 全部用户。</li>
+          <li><strong>成熟度尚早</strong>：对标 Premiere 为"北极星"，当前功能深度/插件生态远不及老牌 NLE。</li>
+          <li><strong>核心体验依赖订阅</strong>：生成式 AI（最大卖点）需登录 + 付费，免费版只是"普通编辑器 + MCP"。</li>
+          <li><strong>方向经历过转型</strong>：代码理解 → 营销视频 → 编辑器，需观察产品定力。</li>
+          <li><strong>闭源后端</strong>：生成式 AI 处理闭源，难以自托管/离线，对隐私敏感场景不友好。</li>
+          <li><strong>macOS 26 门槛</strong>：系统版本要求新，潜在用户装机量受限。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 七、综合评分与推荐 -->
+  <section>
+    <h2><span class="ico">🏆</span>七、综合评分与推荐</h2>
+    <p><strong>综合评分：8.4 / 10</strong> —— 一个<strong>定位锐利、形态创新、踩准 MCP 浪潮的早期产品</strong>。它抓住了"AI 视频创作割裂"的真实痛点，用"agent 直驱时间线 + 生成式 AI 内嵌 + Swift 原生"的组合打出清晰差异化。短板同样明确：平台单一、成熟度尚浅、核心卖点依赖订阅。</p>
+    <h3>🎯 推荐人群</h3>
+    <ul>
+      <li>🤖 <strong>AI Native 创作者 / 开发者</strong>：想把视频剪辑纳入 agent 工作流的人</li>
+      <li>📣 <strong>营销 / 内容团队</strong>：需要快速量产 AI 广告、发布视频</li>
+      <li>🍎 <strong>Mac + Apple Silicon 用户</strong>：追求原生体验的创作者</li>
+      <li>🧪 <strong>MCP 生态尝鲜者</strong>：想验证"agent 操作富媒体工具"可能性的极客</li>
+      <li>🎬 <strong>独立创作者</strong>：愿意用生成式素材混合实拍做实验性内容的人</li>
+    </ul>
+    <h3>🚫 暂不建议</h3>
+    <ul>
+      <li>Windows / Linux 用户、Intel Mac 用户</li>
+      <li>需要顶级调色 / 复杂特效 / 广播级工作流的专业影视团队（现阶段选 DaVinci/Premiere 更稳）</li>
+      <li>对生成式 AI 付费敏感、只想完全免费离线的用户</li>
+    </ul>
+  </section>
+
+  <div class="footer">
+    📅 生成日期：2026-06-20 ｜ 资料来源：GitHub README（palmier-io/palmier-pro）、palmier.io 官网、Y Combinator 公司/ Launch 页、eesel.ai 评测、Digital Trends、WebSearch 综述与社区评论<br>
+    ⚠️ 项目处于早期阶段且经历过方向转型，细节可能随版本演进；评分基于公开信息，仅供参考。
+  </div>
+
+</div>
+</body>
+</html>
