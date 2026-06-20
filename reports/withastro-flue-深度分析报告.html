@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flue 深度分析报告 — withastro/flue</title>
+<style>
+  :root{
+    --bg:#0b0d12; --panel:#121622; --panel2:#171c2b; --border:#222a3d;
+    --ink:#e6e9f2; --muted:#9aa3bd; --dim:#6b7490;
+    --accent:#7c5cff; --accent2:#38d9c8; --warn:#ffb454; --bad:#ff6b6b; --good:#4ade80;
+    --code-bg:#0f1320;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:linear-gradient(180deg,#0b0d12 0%,#0e1119 100%); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.75; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:48px 28px 80px;}
+  /* Hero */
+  .hero{
+    position:relative; overflow:hidden; border:1px solid var(--border); border-radius:20px;
+    padding:44px 40px; background:
+      radial-gradient(900px 400px at -10% -20%, rgba(124,92,255,.22), transparent 60%),
+      radial-gradient(700px 360px at 110% 10%, rgba(56,217,200,.16), transparent 55%),
+      var(--panel);
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent2); border:1px solid rgba(56,217,200,.4); padding:6px 12px; border-radius:999px; margin-bottom:18px;
+    background:rgba(56,217,200,.07);
+  }
+  .hero h1{font-size:42px; line-height:1.15; margin:0 0 10px; letter-spacing:-.02em; font-weight:800;}
+  .hero .sub{font-size:18px; color:var(--muted); margin:0 0 22px;}
+  .hero .tagline{font-size:15px; color:var(--ink); opacity:.85; max-width:760px;}
+  .stats{display:flex; flex-wrap:wrap; gap:14px; margin-top:28px;}
+  .stat{flex:1; min-width:130px; background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:16px 18px;}
+  .stat .k{font-size:26px; font-weight:800; color:var(--accent2);}
+  .stat .l{font-size:12px; color:var(--muted); margin-top:4px; letter-spacing:.04em;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:22px; font-size:13px; color:var(--muted);}
+  .meta-row span b{color:var(--ink); font-weight:600;}
+  /* Section */
+  section{margin-top:42px;}
+  h2{
+    font-size:24px; margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:12px; letter-spacing:-.01em;
+  }
+  h2 .num{
+    display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px;
+    border-radius:9px; background:linear-gradient(135deg,var(--accent),#5b3df0); color:#fff; font-size:15px; font-weight:700;
+  }
+  h3{font-size:17px; margin:22px 0 10px; color:var(--ink);}
+  p{color:#cfd5e6;}
+  a{color:var(--accent2); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:24px 26px;}
+  ul{margin:10px 0; padding-left:22px;} li{margin:7px 0;}
+  code,pre{font-family:"SF Mono","Fira Code",Menlo,Consolas,monospace;}
+  :not(pre)>code{background:var(--code-bg); border:1px solid var(--border); padding:2px 7px; border-radius:6px; font-size:.88em; color:var(--accent2);}
+  pre{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:18px 20px;
+    overflow-x:auto; font-size:13px; line-height:1.65; color:#d6deea;
+  }
+  pre .kw{color:#c792ea;} pre .str{color:#c3e88d;} pre .com{color:#6b7490; font-style:italic;}
+  pre .fn{color:#82aaff;} pre .ty{color:#ffcb6b;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr;} .hero h1{font-size:30px;} .wrap{padding:32px 16px 60px;}}
+  /* Innovation cards */
+  .innov{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  @media(max-width:720px){.innov{grid-template-columns:1fr;}}
+  .innov .it{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:18px 20px;}
+  .innov .it h4{margin:0 0 6px; font-size:15px; color:var(--accent2);}
+  .innov .it p{margin:0; font-size:13.5px; color:var(--muted);}
+  /* Score */
+  .score-board{display:grid; grid-template-columns:1.1fr 1fr; gap:22px; align-items:center;}
+  @media(max-width:720px){.score-board{grid-template-columns:1fr;}}
+  .ring{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;}
+  .ring .circle{
+    width:200px; height:200px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:conic-gradient(var(--accent) 0% 86%, var(--border) 86% 100%); position:relative;
+  }
+  .ring .circle::before{content:""; position:absolute; inset:14px; border-radius:50%; background:var(--panel);}
+  .ring .circle .val{position:relative; font-size:54px; font-weight:800; color:var(--ink); line-height:1;}
+  .ring .circle .lab{position:relative; font-size:13px; color:var(--muted); margin-top:4px;}
+  .ring .verdict{font-size:15px; color:var(--accent2); font-weight:600;}
+  .bars{display:flex; flex-direction:column; gap:14px;}
+  .bar .bl{display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;}
+  .bar .bl .n{color:var(--muted);} .bar .bl .v{color:var(--ink); font-weight:700;}
+  .bar .track{height:9px; background:var(--panel2); border:1px solid var(--border); border-radius:999px; overflow:hidden;}
+  .bar .fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:999px;}
+  /* Table */
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:6px;}
+  th,td{padding:11px 13px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top;}
+  th{color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.06em;}
+  td.first{color:var(--ink); font-weight:600;}
+  .check{color:var(--good);} .cross{color:var(--bad);} .mid{color:var(--warn);}
+  .pill{display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--border); color:var(--muted);}
+  .foot{margin-top:46px; padding-top:22px; border-top:1px solid var(--border); font-size:12.5px; color:var(--dim);}
+  .tl{display:flex; gap:14px; align-items:flex-start;}
+  .tl .dot{width:11px; height:11px; border-radius:50%; background:var(--accent); margin-top:7px; flex-shrink:0;}
+  .tl .td h4{margin:0 0 4px; font-size:15px;} .tl .td p{margin:0; font-size:13.5px; color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge">◆ GitHub Trending 深度分析</span>
+    <h1>Flue — The Agent Harness Framework</h1>
+    <p class="sub"><code>withastro/flue</code> · 沙箱代理框架（不是又一个 SDK）</p>
+    <p class="tagline">
+      Flue 是由 <b>Astro 团队（withastro）</b>推出的全新开源项目，定位为「可编程的 TypeScript 代理运行框架（harness）」。
+      它并非封装 LLM 调用的高级 SDK，而是为构建「真正自主的 Agent」提供完整底座——会话、工具、技能（skills）、指令、
+      文件系统访问，以及一个可运行任意代码的安全沙箱。让任何模型都能像 Claude Code / Codex 那样自主完成端到端任务。
+    </p>
+    <div class="stats">
+      <div class="stat"><div class="k">5.8k+</div><div class="l">Stars</div></div>
+      <div class="stat"><div class="k">323</div><div class="l">Forks</div></div>
+      <div class="stat"><div class="k">TypeScript</div><div class="l">主语言</div></div>
+      <div class="stat"><div class="k">Apache-2.0</div><div class="l">许可证</div></div>
+      <div class="stat"><div class="k">βeta.2</div><div class="l">当前版本</div></div>
+    </div>
+    <div class="meta-row">
+      <span>🔗 <a href="https://github.com/withastro/flue">github.com/withastro/flue</a></span>
+      <span>🌐 <a href="https://www.flueframework.com">flueframework.com</a></span>
+      <span>📅 创建 <b>2026-02-07</b></span>
+      <span>🔄 更新 <b>2026-06-19</b></span>
+    </div>
+  </div>
+
+  <!-- 1. 概述 -->
+  <section>
+    <h2><span class="num">1</span>项目概述</h2>
+    <div class="card">
+      <p>
+        过去两年，第一批「真正的 Agent」（如 Anthropic 的 Claude Code、OpenAI 的 Codex）证明了一个新范式：
+        <b>给模型任务而非步骤</b>，让它在所提供的上下文与工具环境中自主完成。然而，要复制这种能力，
+        开发者通常需要从零搭建一整套底层基础设施——会话管理、工具调用、文件系统、安全隔离、持久化、可观测性……
+      </p>
+      <p>
+        <b>Flue 的使命，就是把这套架构「平台化」。</b>它提供一套内置的 TypeScript harness，
+        让任何模型（如 <code>anthropic/claude-sonnet-4-6</code>）都能获得真正自主工作所需的全部上下文与环境：
+      </p>
+      <ul>
+        <li><b>统一抽象</b>：用 <code>createAgent()</code> 声明式地组合 model + tools + skills + sandbox + instructions，即可获得一个能自主工作的 Agent。</li>
+        <li><b>本地或托管</b>：通过 CLI 在本地运行 Agent，或部署到 Cloudflare Workers、GitHub Actions、GitLab CI、Render、Daytona 等运行时。</li>
+        <li><b>安全沙箱</b>：支持本地、虚拟容器、远程容器三种沙箱模式，让 Agent 可以安全地修改文件、运行代码。</li>
+        <li><b>可观测</b>：原生支持 OpenTelemetry、Braintrust、Sentry 导出遥测数据。</li>
+      </ul>
+      <p style="color:var(--accent2);"><b>一句话定位：</b>不是「又一个 Agent SDK」，而是「构建下一代自主 Agent 的工程框架 / 运行底座」。</p>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="num">2</span>技术架构</h2>
+
+    <div class="card">
+    <h3>🏗️ 整体架构：Monorepo + 运行时核心</h3>
+    <p>项目采用 <b>pnpm workspace + Turborepo</b> 的 Monorepo 组织，核心是一个名为 <code>@flue/runtime</code> 的运行时，外围环绕 30+ 个生态包：</p>
+<pre><span class="com">// 典型 Agent 定义（来自官方 README）</span>
+<span class="kw">import</span> { createAgent, <span class="ty">type</span> AgentRouteHandler } <span class="kw">from</span> <span class="str">'@flue/runtime'</span>;
+<span class="kw">import</span> { local } <span class="kw">from</span> <span class="str">'@flue/runtime/node'</span>;
+<span class="kw">import</span> triage <span class="kw">from</span> <span class="str">'../skills/triage/SKILL.md'</span> <span class="kw">with</span> { type: <span class="str">'skill'</span> };
+
+<span class="kw">export default</span> <span class="fn">createAgent</span>(() => ({
+  model: <span class="str">'anthropic/claude-sonnet-4-6'</span>,
+  tools: [...githubTools],   <span class="com">// 强类型工具</span>
+  skills: [triage, verify],  <span class="com">// 可复用「技能」</span>
+  sandbox: <span class="fn">local</span>(),       <span class="com">// 安全沙箱</span>
+  instructions,              <span class="com">// 自主行为指令</span>
+}));</pre>
+    </div>
+
+    <h3>📦 核心包生态（packages/）</h3>
+    <div class="grid2">
+      <div class="card" style="padding:18px 20px;">
+        <h4 style="margin:0 0 8px;">运行时与工具链</h4>
+        <ul style="margin:0;">
+          <li><code>@flue/runtime</code> — 核心：harness、会话、工具、沙箱</li>
+          <li><code>@flue/cli</code> — <code>flue</code> 命令行 + 构建/开发工具</li>
+          <li><code>@flue/sdk</code> — 消费已部署 Agent/Workflow 的客户端 SDK</li>
+          <li><code>@flue/opentelemetry</code> — OTel 追踪适配器</li>
+          <li><code>@flue/postgres</code> / <code>libsql</code> / <code>mongodb</code> / <code>redis</code> / <code>mysql</code> — 持久化适配器</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:18px 20px;">
+        <h4 style="margin:0 0 8px;">渠道（Channels）集成</h4>
+        <p style="margin:0; font-size:13.5px; color:var(--muted);">
+          原生封装 Slack、Discord、Teams、Telegram、WhatsApp、Messenger、GitHub、Google Chat、Twilio、Intercom、Zendesk、Notion、Linear、Shopify、Stripe、Resend、Salesforce Marketing Cloud 等
+          <b>20+ 第三方系统</b>，让 Agent 直接接入「工作发生的那些地方」。
+        </p>
+      </div>
+    </div>
+
+    <h3>⚙️ 运行时内部模块（runtime/src/）</h3>
+    <div class="card">
+    <div class="grid2">
+      <ul>
+        <li><code>agent.ts</code> / <code>agent-definition.ts</code> — Agent 定义与生命周期</li>
+        <li><code>harness.ts</code> — 驱动模型自主循环的核心 harness</li>
+        <li><code>session.ts</code> / <code>session-history.ts</code> — 会话与上下文持久化</li>
+        <li><code>compaction.ts</code> — 上下文压缩（长任务记忆管理）</li>
+        <li><code>sandbox.ts</code> — 沙箱抽象层</li>
+        <li><code>tool.ts</code> / <code>tool-schema.ts</code> — 类型化工具系统</li>
+      </ul>
+      <ul>
+        <li><code>mcp.ts</code> — Model Context Protocol 客户端</li>
+        <li><code>routing.ts</code> — HTTP 路由暴露 Agent</li>
+        <li><code>shell.ts</code> — 沙箱内 shell 执行</li>
+        <li><code>sql-*-store.ts</code> — 持久化执行存储（durable）</li>
+        <li><code>event-redaction.ts</code> — 事件脱敏（安全）</li>
+        <li><code>cloudflare/</code> · <code>node/</code> — 平台适配</li>
+      </ul>
+    </div>
+    <h3>🧱 关键技术依赖</h3>
+    <ul>
+      <li><b>Hono</b>（<code>hono</code> + <code>hono-openapi</code>）— 轻量 Web 框架，让 Agent 可通过 HTTP/路由暴露，并自动生成 OpenAPI。</li>
+      <li><b>Model Context Protocol SDK</b>（<code>@modelcontextprotocol/sdk</code>）— 接入开放 MCP 工具生态。</li>
+      <li><b>Valibot</b> + <code>@valibot/to-json-schema</code> — 类型化工具入参校验。</li>
+      <li><b>ulidx</b> — 可排序的唯一 ID（用于会话/执行追踪）。</li>
+      <li><b>quansync</b> — 同步/异步统一抽象。</li>
+      <li>底层 Agent 内核：<code>@earendil-works/pi-agent-core</code> / <code>pi-ai</code>。</li>
+    </ul>
+    </div>
+
+    <h3>🔁 六大核心能力</h3>
+    <div class="innov">
+      <div class="it"><h4>① Agents</h4><p>跨对话与事件保持上下文，朝目标自主推进。</p></div>
+      <div class="it"><h4>② Workflows</h4><p>结构化自动化，代码引导推理从输入到产出。</p></div>
+      <div class="it"><h4>③ Sandboxes</h4><p>安全环境：工具调用、文件修改、自主完成真实工作。</p></div>
+      <div class="it"><h4>④ Durable Execution</h4><p>故障/重启后仍能保留已接受工作的进展（持久恢复）。</p></div>
+      <div class="it"><h4>⑤ Subagents</h4><p>定义专职角色，主 Agent 委派任务给合适专家。</p></div>
+      <div class="it"><h4>⑥ Skills + MCP</h4><p>可复用「技能包」+ 接入 MCP 认证工具与服务。</p></div>
+    </div>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="num">3</span>核心创新点</h2>
+    <div class="card">
+      <ul>
+        <li><b>🎯 「Harness 而非 SDK」的范式定位。</b>不与 LangChain/Mastra 这类「编排库」正面竞争，而是补齐「让 Agent 像 Claude Code 一样真正自主」所缺的运行底座（会话、文件、沙箱、持久化）。这是市场空白。</li>
+        <li><b>🛡️ 一等公民的沙箱（Sandbox）抽象。</b>本地 / 虚拟容器 / 远程容器（Daytona 等）三态可切换。把「Agent 安全执行任意代码」从工程难题变成一行配置：<code>sandbox: local()</code>。</li>
+        <li><b>⏳ Durable Execution（持久执行）。</b>借鉴 Inngest/Temporal 的思想，让长周期、可能失败的 Agent 任务在崩溃后可恢复，已完成的「接受工作」不丢失。多数 Agent 框架尚不具备。</li>
+        <li><b>🧠 Skills（技能）作为一等概念。</b>借鉴 Claude Code 的 <code>SKILL.md</code> 模式，将「可复用领域专长/工作流」打包成模块，Agent 按需加载——比纯 prompt 注入更工程化。</li>
+        <li><b>🌐 Channels 原生集成 20+ 系统。</b>Slack/Teams/Discord/GitHub/Zendesk/Shopify/Stripe……Agent 直接接入「业务发生地」，省去大量胶水代码。</li>
+        <li><b>🚀 部署无关。</b>同一 Agent 定义可跑在 Node、Cloudflare Workers、GitHub Actions、GitLab CI、Render——契合「Agent 即基础设施」趋势。</li>
+        <li><b>📦 由 Astro 团队背书。</b>withastro 拥有百万级开发者基础与优秀的 DX 口碑，工程规范（Biome + Turborepo + Knip）与文档质量有保障。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="num">4</span>应用场景</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>🤖 DevOps / 代码型 Agent</h3>
+        <p>自动 <b>分流 bug 报告</b>（如 README 示例）：复现 → 诊断根因 → 判断是否预期 → 尝试修复，全程在沙箱内安全执行。</p>
+      </div>
+      <div class="card">
+        <h3>💬 客服与对话自动化</h3>
+        <p>接入 Slack/Discord/Zendesk/Intercom，构建能查询数据库（Postgres/Mongo/Redis）、调用 Stripe/Shopify 工具的自主客服 Agent。</p>
+      </div>
+      <div class="card">
+        <h3>🔁 持久化工作流</h3>
+        <p>需要多步骤、可能失败重试的业务流（审批、数据处理、报告生成），用 Durable Execution 保证可靠完成。</p>
+      </div>
+      <div class="card">
+        <h3>🏗️ 企业内部「Agent 平台」</h3>
+        <p>作为企业自建 Agent 基础设施底座，统一会话、权限、可观测性（OTel/Sentry），而非每团队各写一套。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="num">5</span>竞品对比</h2>
+    <div class="card" style="padding:0; overflow:hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>Flue (withastro)</th>
+          <th>Mastra</th>
+          <th>VoltAgent</th>
+          <th>LangChain/LangGraph</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="first">核心定位</td><td>Agent 运行 harness / 底座</td><td>TypeScript Agent 编排框架</td><td>TypeScript Agent 框架</td><td>通用 LLM/Agent 编排</td></tr>
+        <tr><td class="first">安全沙箱</td><td class="check">✓ 原生三态</td><td class="cross">✗ 弱/需自建</td><td class="cross">✗ 弱</td><td class="cross">✗ 需自建</td></tr>
+        <tr><td class="first">持久执行(Durable)</td><td class="check">✓ 内置</td><td class="mid">△ 部分</td><td class="mid">△ 部分</td><td class="cross">✗ 需配 LangGraph+checkpointer</td></tr>
+        <tr><td class="first">Skills 概念</td><td class="check">✓ 一等公民</td><td class="cross">✗ 无</td><td class="cross">✗ 无</td><td class="cross">✗ 无</td></tr>
+        <tr><td class="first">渠道集成</td><td class="check">✓ 20+</td><td class="mid">△ 部分</td><td class="mid">△ 部分</td><td class="cross">✗ 需自建</td></tr>
+        <tr><td class="first">MCP 支持</td><td class="check">✓ 原生</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td class="first">部署多平台</td><td class="check">✓ Node/CF/GH/CI</td><td class="mid">△</td><td class="mid">△</td><td class="mid">△</td></tr>
+        <tr><td class="first">语言生态</td><td>TypeScript-first</td><td>TypeScript-first</td><td>TypeScript-first</td><td>Python + JS</td></tr>
+        <tr><td class="first">成熟度</td><td class="warn">⚠ 新项目(beta)</td><td class="check">✓ 较成熟(19k★)</td><td class="check">✓ 成熟</td><td class="check">✓ 成熟</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:13px; color:var(--muted); margin-top:12px;">
+      <b>差异化总结：</b>Flue 不与 Mastra/VoltAgent 抢「编排」地盘，而是抢占「<b>沙箱 + 持久执行 + 渠道</b>」这块多数同类缺失的运行底座，更接近「<b>Agent 版的 Temporal + Daytona</b>」。
+    </p>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section>
+    <h2><span class="num">6</span>综合评分</h2>
+    <div class="card">
+    <div class="score-board">
+      <div class="ring">
+        <div class="circle"><div class="val">8.6</div><div class="lab">/ 10 综合分</div></div>
+        <div class="verdict">⭐ 强烈关注 · 潜力黑马</div>
+      </div>
+      <div class="bars">
+        <div class="bar"><div class="bl"><span class="n">技术创新性</span><span class="v">9.2</span></div><div class="track"><div class="fill" style="width:92%"></div></div></div>
+        <div class="bar"><div class="bl"><span class="n">架构与工程质量</span><span class="v">9.0</span></div><div class="track"><div class="fill" style="width:90%"></div></div></div>
+        <div class="bar"><div class="bl"><span class="n">生态与集成度</span><span class="v">8.8</span></div><div class="track"><div class="fill" style="width:88%"></div></div></div>
+        <div class="bar"><div class="bl"><span class="n">应用前景</span><span class="v">8.7</span></div><div class="track"><div class="fill" style="width:87%"></div></div></div>
+        <div class="bar"><div class="bl"><span class="n">社区热度</span><span class="v">8.0</span></div><div class="track"><div class="fill" style="width:80%"></div></div></div>
+        <div class="bar"><div class="bl"><span class="n">成熟度/稳定性</span><span class="v">7.5</span></div><div class="track"><div class="fill" style="width:75%"></div></div></div>
+      </div>
+    </div>
+    <h3 style="margin-top:24px;">📊 评分解读</h3>
+    <ul>
+      <li><b>创新性突出（9.2）：</b>「harness 而非 SDK」+ 原生沙箱 + 持久执行，准确切入当前 Agent 工具链的最大空白。</li>
+      <li><b>工程水准高（9.0）：</b>由 Astro 团队打造，Monorepo 规范、类型严谨、文档完善、多平台部署。</li>
+      <li><b>主要风险（成熟度 7.5）：</b>仍处 <b>beta</b>，API 可能变动；依赖较新的底层内核 <code>pi-agent-core</code>。生产采用需谨慎评估。</li>
+      <li><b>社区潜力（8.0）：</b>上线约 4 个月即获 5.8k★，且背靠 Astro 百万开发者生态，增长曲线值得期待。</li>
+    </ul>
+    </div>
+  </section>
+
+  <!-- 结论 -->
+  <section>
+    <h2><span class="num">★</span>结论</h2>
+    <div class="card" style="border-color:var(--accent);">
+      <p>
+        <b>Flue 是 2026 年 Agent 工具链中值得关注的一匹「架构黑马」。</b>它没有卷「再写一个编排库」，
+        而是补齐了让 Agent 真正自主工作所必需的<b>沙箱、持久执行、渠道、技能</b>四大基础设施。
+        对于希望构建生产级自主 Agent（尤其涉及代码执行、多系统接入、长任务可靠性）的团队，
+        Flue 提供了一个工程化、类型安全、可观测的起点。<b>建议持续跟踪其在 beta 后的 API 稳定性与社区采用情况。</b>
+      </p>
+    </div>
+    <p style="text-align:center; margin-top:28px;">
+      <span class="pill">报告生成日期：2026-06-20</span>
+      <span class="pill">分析对象：withastro/flue</span>
+      <span class="pill">数据来源：GitHub API / 官方文档 / Web 检索</span>
+    </p>
+  </section>
+
+  <div class="foot">
+    本报告由 GitHub 项目深度分析流程自动生成。技术细节基于仓库 README、package.json、目录结构及公开文档整理；
+    竞品与趋势部分参考 LangChain、VoltAgent、Mastra 等公开资料。数据截至 2026-06-19，仅供参考。
+  </div>
+
+</div>
+</body>
+</html>

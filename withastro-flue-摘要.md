@@ -1,7 +1,7 @@
 # Flue 深度分析摘要
 
-> **仓库**：`withastro/flue` ｜ **⭐ Stars**：约 3,800+（持续上升） ｜ **协议**：Apache-2.0 ｜ **核心语言**：TypeScript
-> **出品**：Astro 团队（withastro，59.7k★ Astro 框架背后的组织）｜ **官网**：flueframework.com ｜ **阶段**：v0.x，Experimental（活跃开发中）
+> **仓库**：`withastro/flue` ｜ **⭐ Stars**：5,828（+309/天） ｜ **协议**：MIT ｜ **核心语言**：TypeScript
+> **出品**：Astro 团队（withastro，现已被 Cloudflare 收购）｜ **官网**：flueframework.com ｜ **阶段**：v0.x，Experimental（活跃开发中）｜ **平台背书**：Cloudflare 官方 Agents Platform 首个 agent harness
 > **一句话**：Astro 团队开源的「沙箱化智能体框架」——不是又一个 SDK，而是把 Claude Code 那种"真正自主智能体"的产品化为一个可编程、无头、运行时无关的 TypeScript 编排框架，被誉为「Agent 界的 Next.js」。
 
 **Slogan**：*"Not another SDK. Build autonomous agents and powerful AI workflows with Flue's programmable TypeScript harness."*
@@ -65,7 +65,7 @@
 **差异**：Flue 不与 LangChain 争"可组合链/检索"，而是开辟"**把 Claude Code 这类生产级 Agent Harness 产品化为可编程框架**"的细分市场。最大护城河：**① 默认无容器虚拟沙箱（成本/规模优势）、② 真运行时无关一次部署、③ Markdown/Skills 极简开发心智**。社区称其为「Next.js of AI」「LangChain 替代」。
 
 ## 六、优势 / 局限
-- ✅ Astro 团队背书（Web 框架级工程品味）；默认虚拟沙箱（just-bash，快/省/大规模）；真运行时无关（6 平台）；Agent Harness 一等公民（session/tool/skill/fs/sandbox 内置）；Durable Execution + 多租户会话持久化（Durable Objects）；Markdown 驱动逻辑低代码；模型无关 + MCP 原生 + 连接器生态；Apache-2.0 可商用；完整可观测性。
+- ✅ Astro 团队背书（Web 框架级工程品味）；默认虚拟沙箱（just-bash，快/省/大规模）；真运行时无关（6 平台）；Agent Harness 一等公民（session/tool/skill/fs/sandbox 内置）；Durable Execution + 多租户会话持久化（Durable Objects）；Markdown 驱动逻辑低代码；模型无关 + MCP 原生 + 连接器生态；**MIT 可商用**；完整可观测性；**强平台背书**（Astro 已被 Cloudflare 收购，Flue 为其 Agents Platform 首个 harness，5.8k 星强劲开局）。
 - ⚠️ **实验阶段**（Experimental，API 可能变更，不建议直接上核心生产）；生态尚幼（connectors/教程不及 LangChain）；虚拟沙箱边界（复杂环境仍需容器）；部署门槛（Cloudflare dev 需 wrangler）；MCP 第一版限制（不自动探测传输/不 spawn stdio/不处理 OAuth）；强 TS + valibot 对非 TS 团队有学习曲线；文档站完善中。
 
 ## 七、综合评分：**8.7 / 10**
