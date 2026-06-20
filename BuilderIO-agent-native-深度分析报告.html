@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent-Native 深度分析报告 | BuilderIO/agent-native</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --builder:#bd4cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 8% -20%, rgba(189,76,255,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(126,231,135,.16), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:32px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    background:rgba(189,76,255,.12); color:var(--builder);
+    border:1px solid rgba(189,76,255,.3); padding:5px 12px; border-radius:20px; margin-bottom:18px;
+  }
+  .badge.beta{background:rgba(247,120,186,.12);color:var(--pink);border-color:rgba(247,120,186,.3)}
+  .hero h1{
+    font-size:42px; font-weight:800; letter-spacing:-.5px; margin-bottom:10px;
+    background:linear-gradient(90deg,#fff,#bd4cff 42%,#7ee787);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .hero .sub{font-size:17px;color:var(--muted);max-width:820px}
+  .hero .tagline{
+    margin-top:16px; font-style:italic; font-size:16px; color:var(--accent2);
+    border-left:3px solid var(--accent2); padding-left:14px;
+  }
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{
+    font-size:13px;background:var(--card2);border:1px solid var(--border);
+    padding:6px 13px;border-radius:8px;color:var(--muted)
+  }
+  .chip b{color:var(--text)}
+  /* SCORE */
+  .score-board{
+    display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:center;
+    background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;margin-bottom:32px;
+  }
+  .score-circle{
+    width:180px;height:180px;border-radius:50%;position:relative;margin:0 auto;
+    background:conic-gradient(var(--builder) 0% 84%, #2d333b 84% 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .score-inner{
+    width:138px;height:138px;border-radius:50%;background:var(--card);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .score-inner .num{font-size:46px;font-weight:800;color:var(--builder)}
+  .score-inner .lbl{font-size:12px;color:var(--muted);letter-spacing:1px}
+  .score-bars{display:flex;flex-direction:column;gap:14px}
+  .bar-row{display:grid;grid-template-columns:120px 1fr 46px;align-items:center;gap:12px;font-size:13px}
+  .bar-row .name{color:var(--muted)}
+  .bar-track{height:9px;background:#21262d;border-radius:5px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--builder))}
+  .bar-row .val{text-align:right;font-weight:700;color:var(--text)}
+  /* SECTIONS */
+  .section{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:30px 32px;margin-bottom:26px;
+  }
+  .section h2{
+    font-size:23px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+    padding-bottom:14px;border-bottom:1px solid var(--border);
+  }
+  .section h2 .ic{font-size:24px}
+  .section h3{font-size:17px;margin:18px 0 10px;color:var(--accent)}
+  .section p{margin-bottom:12px;color:#c9d1d9}
+  .section ul,.section ol{margin:0 0 12px 22px}
+  .section li{margin-bottom:7px}
+  .lead{font-size:15.5px;color:#c9d1d9}
+  .kw{color:var(--accent2);font-weight:600}
+  .kw2{color:var(--purple);font-weight:600}
+  .kw3{color:var(--orange);font-weight:600}
+  code{
+    background:#0d1117;border:1px solid var(--border);padding:2px 7px;border-radius:6px;
+    font-family:"JetBrains Mono","Fira Code",monospace;font-size:12.5px;color:var(--accent2);
+  }
+  pre{
+    background:#010409;border:1px solid var(--border);border-radius:12px;padding:18px 20px;
+    overflow-x:auto;margin:14px 0;font-size:12.5px;line-height:1.65;
+  }
+  pre code{background:none;border:none;padding:0;color:#c9d1d9;font-size:12.5px}
+  .tk{color:var(--purple)}
+  .tc{color:var(--muted)}
+  .ts{color:var(--accent2)}
+  .tf{color:var(--gold)}
+  /* feature grid */
+  .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:8px}
+  .feat-card{
+    background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;
+  }
+  .feat-card .ft{font-weight:700;color:var(--accent);margin-bottom:5px;font-size:14.5px}
+  .feat-card .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border)}
+  th{color:var(--accent);font-weight:700;background:#1c2230}
+  td:first-child{color:var(--text);font-weight:600}
+  tr:hover td{background:rgba(88,166,255,.04)}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red)}
+  .mid{color:var(--gold)}
+  /* highlight box */
+  .hl{
+    background:linear-gradient(135deg,rgba(189,76,255,.08),rgba(126,231,135,.06));
+    border:1px solid rgba(189,76,255,.25);border-radius:14px;padding:18px 22px;margin:16px 0;
+  }
+  .hl .ht{font-weight:700;color:var(--builder);margin-bottom:6px;font-size:15px}
+  .principle{display:grid;grid-template-columns:42px 1fr;gap:14px;margin:14px 0;align-items:start}
+  .pnum{
+    width:38px;height:38px;border-radius:10px;flex-shrink:0;
+    background:rgba(189,76,255,.14);color:var(--builder);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;
+    border:1px solid rgba(189,76,255,.3);
+  }
+  .pt{font-weight:700;color:var(--accent);margin-bottom:3px;font-size:15px}
+  .pd{font-size:13.5px;color:#c9d1d9}
+  .shape-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
+  .shape-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:18px}
+  .shape-card .sh{font-weight:800;color:var(--accent2);font-size:15px;margin-bottom:6px}
+  .shape-card .ss{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .ladder{display:flex;align-items:stretch;gap:0;margin:18px 0}
+  .rung{flex:1;padding:16px;border-radius:0;position:relative}
+  .rung1{background:rgba(139,148,158,.12);border:1px solid var(--border)}
+  .rung2{background:rgba(255,166,87,.10);border:1px solid var(--border)}
+  .rung3{background:rgba(189,76,255,.14);border:1px solid rgba(189,76,255,.35)}
+  .rung .rl{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+  .rung .rn{font-weight:800;font-size:15px;margin-bottom:4px}
+  .rung .rd{font-size:12px;color:#c9d1d9}
+  .arrow{display:flex;align-items:center;color:var(--muted);padding:0 6px;font-size:20px}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  footer a{color:var(--accent);text-decoration:none}
+  @media(max-width:680px){
+    .score-board{grid-template-columns:1fr;text-align:center}
+    .feat-grid,.shape-row{grid-template-columns:1fr}
+    .ladder{flex-direction:column}
+    .arrow{transform:rotate(90deg);justify-content:center;padding:4px 0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge">⚡ GitHub Trending · AI Agent 框架</span>
+    <h1>Agent-Native</h1>
+    <div class="sub">由 Builder.io 开源的「代理原生」应用框架 —— 让 AI Agent 不再只是「挂在聊天框旁边」，而是真正<b style="color:var(--text)">在应用内部行动</b>。</div>
+    <div class="tagline">"Don't choose between a rich UI and an autonomous Agent. Every Agent-Native app is both."<br>—— 在丰富的可视化界面与自主 Agent 之间，不必再做选择题。</div>
+    <div class="meta-row">
+      <span class="chip">🏢 <b>BuilderIO/agent-native</b></span>
+      <span class="chip">💻 TypeScript</span>
+      <span class="chip">📜 MIT License</span>
+      <span class="chip">⭐ ~1.1k Stars / 119 Forks</span>
+      <span class="chip">📦 <b>@agent-native/core</b></span>
+      <span class="chip">🌐 agent-native.com</span>
+      <span class="badge beta">🆕 2026 新架构概念</span>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-board">
+    <div class="score-circle">
+      <div class="score-inner">
+        <div class="num">8.4</div>
+        <div class="lbl">综合评分 / 10</div>
+      </div>
+    </div>
+    <div class="score-bars">
+      <div class="bar-row"><div class="name">概念创新性</div><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><div class="val">9.0</div></div>
+      <div class="bar-row"><div class="name">技术架构</div><div class="bar-track"><div class="bar-fill" style="width:86%"></div></div><div class="val">8.6</div></div>
+      <div class="bar-row"><div class="name">工程成熟度</div><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><div class="val">7.8</div></div>
+      <div class="bar-row"><div class="name">文档与生态</div><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div><div class="val">8.5</div></div>
+      <div class="bar-row"><div class="name">社区活跃度</div><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div><div class="val">7.5</div></div>
+      <div class="bar-row"><div class="name">商业潜力</div><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div><div class="val">8.5</div></div>
+    </div>
+  </div>
+
+  <!-- 1. 项目概述 -->
+  <div class="section">
+    <h2><span class="ic">📋</span> 项目概述</h2>
+    <p class="lead"><b>Agent-Native</b> 是 Builder.io 推出的开源框架，用于构建所谓的<span class="kw">「代理原生（Agent-Native）应用」</span>——这是一类从架构底层就让<b>人类用户与 AI Agent 能够操作同一个产品</b>的应用。它不把 AI 当做事后「贴上去」的功能，而是让 UI 与 Agent 成为同一套系统中的「平等公民」。</p>
+    <p>项目背后的核心理念用一句话概括：<span class="kw2">"Click it or ask for it"</span>（点击它，或者用自然语言请求它）。同一个产品能力，既能在可视化界面里点击触发，也能被 Agent 通过工具调用执行，二者背后共享同一份动作定义、同一份数据状态、同一套权限与上下文。</p>
+
+    <div class="hl">
+      <div class="ht">💡 一句话定位</div>
+      <div>它不是又一个 LLM 编排框架，而是<b>一种新的软件架构范式 + 一套脚手架</b>。它解决的是「精美但僵化的 SaaS」与「强大但空白的裸 Agent」之间的长期割裂——把 SaaS 的产品形态与 Agent 的灵活性合二为一。</div>
+    </div>
+
+    <h3>核心一句话价值主张</h3>
+    <ul>
+      <li><span class="kw">Agents and UIs — Fully Connected</span>：Agent 与 UI 完全互通，同一个动作双向可用。</li>
+      <li><span class="kw">Backend Agnostic</span>：后端无关，自带数据库、托管、模型栈皆可替换。</li>
+      <li><span class="kw">One agent, three shapes</span>：同一个 Agent 可发布为无头 API、富聊天、完整应用三种形态。</li>
+      <li><span class="kw">Apps that improve themselves</span>：应用能自我演进——Agent 可自行加功能、修 bug、优化 UI。</li>
+    </ul>
+  </div>
+
+  <!-- 2. 背景与动机 -->
+  <div class="section">
+    <h2><span class="ic">🧭</span> 背景与动机：为什么需要「Agent-Native」</h2>
+    <p>Builder.io CEO <b>Steve Sewell</b> 在系列博客中提出，今天的软件普遍给开发者一个<b>两难妥协</b>：</p>
+    <table>
+      <tr><th>选项</th><th>做得好的</th><th>破绽</th><th>真正想要的</th></tr>
+      <tr><td>传统 SaaS</td><td>精美 UI、清晰流程、团队易上手</td><td>Agent 接入是局部的、被「贴」上去的</td><td>一个 Agent 能完整操作的真正 UI</td></tr>
+      <tr><td>裸 Agent（Claude Projects 等）</td><td>灵活、强大、自然语言可控</td><td>空白画布、缺乏产品形态、无流程引导</td><td>带产品结构的 Agent 能力</td></tr>
+      <tr><td>内部工具</td><td>定制逻辑与数据访问</td><td>维护负担重，AI 是事后加的</td><td>Agent 作为核心的定制软件</td></tr>
+      <tr><td>Agent-Native 应用</td><td>UI 与 Agent 共享同一套应用模型</td><td>需要不同的架构</td><td><span class="yes">人机协作、无需妥协</span></td></tr>
+    </table>
+    <p>因此「贴在角落的聊天机器人」迟早会撞到天花板：它能总结文档、起草回复，却无法可靠地看到相同的状态、走相同的工作流、用相同的底层原语去改变产品。</p>
+
+    <h3>软件演化的三阶「梯子」</h3>
+    <div class="ladder">
+      <div class="rung rung1">
+        <div class="rl">STAGE 1</div>
+        <div class="rn" style="color:var(--muted)">AI-Enabled（AI 辅助）</div>
+        <div class="rd">产品有 AI 功能，但去掉 AI 产品仍基本可用。<br>例：带 AI 摘要按钮的项目管理工具。</div>
+      </div>
+      <div class="arrow">➜</div>
+      <div class="rung rung2">
+        <div class="rl">STAGE 2</div>
+        <div class="rn" style="color:var(--orange)">AI-Native（AI 原生）</div>
+        <div class="rd">AI 是产品价值的核心，去掉 AI 产品就垮。<br>例：编码助手、图像生成器、聊天优先的研究工具。</div>
+      </div>
+      <div class="arrow">➜</div>
+      <div class="rung rung3">
+        <div class="rl">STAGE 3</div>
+        <div class="rn" style="color:var(--builder)">Agent-Native（代理原生）</div>
+        <div class="rd">AI 是核心，<b>且</b>产品仍拥有完整的、与 Agent 共享动作/数据/权限的人机界面。<br>例：邮件客户端——人手动分类，Agent 通过相同动作归档/起草/打标/路由。</div>
+      </div>
+    </div>
+    <p class="kw3">关键洞察：Agent-Native 比 AI-Native 更具体——它不仅要求 AI 居中，还要求产品拥有一个真实的人机界面，且二者共享对应用能力的完整访问。</p>
+  </div>
+
+  <!-- 3. 技术架构 -->
+  <div class="section">
+    <h2><span class="ic">🏗️</span> 技术架构</h2>
+    <p class="lead">框架提供一组面向「产品级 Agentic 软件」的原语：<span class="kw">共享动作（actions）、SQL 驱动的状态、身份（identity）、工具（tools）、技能（skills）、任务（jobs）、可观测性（observability）</span>，以及与之协同的 UI 表面。后端完全可替换——自带任何 Drizzle 支持的 SQL 数据库、任何 Nitro 兼容的托管目标。</p>
+
+    <h3>① 核心原语：统一动作模型（One Action Model）</h3>
+    <p>这是整个框架的「灵魂」。一次定义，多面暴露——同一个 Action 自动成为 UI 变更、Agent 工具、HTTP 端点、CLI 命令、MCP 工具和 A2A 工具。</p>
+<pre><code><span class="tc">// actions/reply-to-email.ts —— 一次定义，六处复用</span>
+<span class="tk">import</span> { defineAction } <span class="tk">from</span> <span class="ts">"@agent-native/core"</span>;
+<span class="tk">import</span> { z } <span class="tk">from</span> <span class="ts">"zod"</span>;
+
+<span class="tk">export default</span> defineAction({
+  description: <span class="ts">"Reply to an email thread"</span>,
+  schema: z.object({
+    emailId: z.string(),
+    body: z.string(),
+  }),
+  run: <span class="tk">async</span> ({ emailId, body }) =&gt; {
+    <span class="tk">await</span> db.replies.insert({ emailId, body });
+  },
+});</code></pre>
+    <p>传统做法里，团队要分别实现 UI 动作、API 端点、自动化钩子、LLM 工具定义、CLI 命令，再加文档解释它们的关系——每一份拷贝都会产生<span class="no">漂移（drift）</span>。Agent-Native 用「单一动作定义」从源头消灭这种漂移。</p>
+
+    <h3>② 五大架构原则</h3>
+    <div class="principle">
+      <div class="pnum">1</div>
+      <div><div class="pt">Agent UI Parity（代理-界面对等）</div><div class="pd">UI 能做的，Agent 也能做；Agent 做的事也应可通过界面/日志/权限/状态被看见、检查或控制。Agent 不应去「屏幕抓取」UI，而应调用驱动产品的同一底层能力。</div></div>
+    </div>
+    <div class="principle">
+      <div class="pnum">2</div>
+      <div><div class="pt">One Shared Action Model（统一动作模型）</div><div class="pd">能力只定义一次（归档邮件、创建仪表盘、渲染视频、安排会议…），随后暴露给每一个需要的表面。</div></div>
+    </div>
+    <div class="principle">
+      <div class="pnum">3</div>
+      <div><div class="pt">Shared State, Data &amp; Context（共享状态与上下文）</div><div class="pd">Agent 知道你在看什么、选中了什么、哪些筛选生效。UI 把导航状态写下来，<code>view-screen</code> 动作给 Agent 当前视图快照，<code>navigate</code> 动作让 Agent 移动 UI。<b>数据库是人与 Agent 之间的协调层</b>——动作写 SQL，版本变化，UI 轮询并失效对应数据。</div></div>
+    </div>
+    <div class="principle">
+      <div class="pnum">4</div>
+      <div><div class="pt">Protocol-Ready by Design（协议就绪）</div><div class="pd">应用是软件节点，可被其他 Agent 与 App 使用。协议支持（MCP、A2A）是架构属性而非一次性集成项目——既然 actions 已是共享的行为单元，把它们暴露给 MCP/A2A/CLI 只是「路由问题」。</div></div>
+    </div>
+    <div class="principle">
+      <div class="pnum">5</div>
+      <div><div class="pt">Governed Execution（受治理的执行）</div><div class="pd">Agent 能在你无权访问的客户记录上动手吗？不能。发邮件/删文件/发布页面需要确认的，Agent 同样遵守边界。产品应暴露日志、审计轨迹、状态变更供人检查——Agent 强大，因为能行动；产品可信，因为这些行动可被限定、可回溯、必要时可撤销。</div></div>
+    </div>
+
+    <h3>③ 实时多人协作 &amp; 工作区</h3>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="ft">🔀 Real-time Multiplayer</div><div class="fd">人与 Agent 在同一文档实时协作：<b>CRDT 合并</b>、实时存在感（光标、选区高亮、谁在哪一页），Agent 是一等「对等编辑者」。可在任何 SQL 数据库与任何主机（含 Serverless）上运行。</div></div>
+      <div class="feat-card"><div class="ft">🗄️ SQL-backed Workspace</div><div class="fd">技能、记忆、指令、子 Agent、MCP 服务器——全部 SQL 化、按用户/组织定制。把 Claude Code 级别的灵活性带进产品本身，且具备 SaaS 级的经济性。</div></div>
+      <div class="feat-card"><div class="ft">🤝 Agents Call Agents</div><div class="fd">从任一 App 标记另一个 Agent，它们通过 <b>A2A 协议</b>互相发现，跨越你的整个技术栈采取行动。</div></div>
+      <div class="feat-card"><div class="ft">🔐 Reusable Integrations</div><div class="fd">在 Dispatch 里连接一次供应商，密钥存入 vault，再把账户元数据与凭证引用授权给 Brain/Analytics/Mail 等多个 App 共享。</div></div>
+    </div>
+
+    <h3>④ 技术栈与协议支持</h3>
+    <ul>
+      <li><b>语言/运行时</b>：TypeScript；数据库经由 <span class="kw">Drizzle ORM</span>（任意 SQL）；托管经由 <span class="kw">Nitro</span>（Vercel/Cloudflare/Node 等）。</li>
+      <li><b>内建协议</b>：A2A、MCP、MCP Apps、标准远程 MCP OAuth、MCP 客户端、HTTP/CLI 动作调用、原生聊天组件、<code>AgentChatRuntime</code> 适配器。</li>
+      <li><b>兼容运行时</b>：标准 OpenAI、AG-UI、Claude Agent SDK、Vercel AI SDK 的聊天运行时连接器。</li>
+      <li><b>编码 Agent 接入</b>：Claude Code、Codex、Cursor、Pi、OpenCode、GitHub Copilot / VS Code 等 MCP 兼容宿主可直接操作你托管的应用。</li>
+    </ul>
+  </div>
+
+  <!-- 4. 三种形态 -->
+  <div class="section">
+    <h2><span class="ic">🧩</span> 一个 Agent，三种产品形态</h2>
+    <p>Agent-Native 原语让你无需重建 Agent 契约，就能选择给 Agent「裹」多少 UI：</p>
+    <div class="shape-row">
+      <div class="shape-card">
+        <div class="sh">🟣 Headless（无头）</div>
+        <div class="ss">从代码/CLI/HTTP/MCP/A2A 调用 Agent 与动作。底层共享 <code>defineAction</code>、auth、skills、memory、jobs、observability。</div>
+      </div>
+      <div class="shape-card">
+        <div class="sh">🟢 Rich Chat（富聊天）</div>
+        <div class="ss">独立或嵌入式聊天，原生支持表格、图表、审批、设置流与工具结果。共享聊天运行时 + BYO 运行时适配器 + 动作声明的原生渲染器。</div>
+      </div>
+      <div class="shape-card">
+        <div class="sh">🔵 Whole App（完整应用）</div>
+        <div class="ss">完整 SaaS/产品 UI——聊天可居中、可移到侧栏，始终与应用状态同步。SQL 状态、动作、上下文感知、深链、实时同步全开。</div>
+      </div>
+    </div>
+    <div class="hl">
+      <div class="ht">🎯 设计哲学</div>
+      <div>协议随框架「附赠」，而不是每个功能都要做一次单独集成。今天这意味着 A2A、MCP、AG-UI、Claude Agent SDK、Vercel AI SDK 等都挂在「同一个动作表面」上。</div>
+    </div>
+  </div>
+
+  <!-- 5. 核心创新点 -->
+  <div class="section">
+    <h2><span class="ic">✨</span> 核心创新点</h2>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="ft">① Action 即「单一事实来源」</div>
+        <div class="fd">用 <code>defineAction</code> 把产品能力收敛为一个定义，消灭 UI/API/工具/CLI 之间的漂移。这是对传统「每个表面各写一份」的根本性重构。</div>
+      </div>
+      <div class="feat-card">
+        <div class="ft">② 数据库作为协调层</div>
+        <div class="fd">人与 Agent 不靠脆弱的浏览器自动化或长连接基础设施同步，而是都读写同一份 SQL 状态——版本变化即触发 UI 失效更新。简洁、可移植、可审计。</div>
+      </div>
+      <div class="feat-card">
+        <div class="ft">③ 可克隆的 SaaS（Cloneable Apps）</div>
+        <div class="fd">每个模板都是可 fork 的完整开源 SaaS——拥有代码、拥有数据库、当默认形态不合身时直接改造。<b>打破「一刀切」SaaS 的所有权困局</b>。</div>
+      </div>
+      <div class="feat-card">
+        <div class="ft">④ 零配置跨应用 A2A</div>
+        <div class="fd">同源部署带来共享登录会话与零配置跨应用 A2A——在日历的 Agent 聊天里 @mail 就能直接调起邮件 Agent，无需 JWT 签名、无需 CORS。</div>
+      </div>
+      <div class="feat-card">
+        <div class="ft">⑤ 应用自我演进</div>
+        <div class="fd">Agent 可在不发版的情况下给 App 加功能、修 bug、优化 UI——「运行时工具」让 Agent 在 App 内创建临时仪表盘/计算器/监控，成熟后再「毕业」为模板特性。</div>
+      </div>
+      <div class="feat-card">
+        <div class="ft">⑥ SQL 化的工作区经济</div>
+        <div class="fd">AGENTS.md 指令、LEARNINGS.md 记忆、技能、子 Agent、定时任务都存在 SQL 而非本地文件系统——把 Claude Code 的开发级体验带进 SaaS 经济模型。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 应用场景 -->
+  <div class="section">
+    <h2><span class="ic">🚀</span> 应用场景</h2>
+    <p>框架已提供多个可克隆的完整模板，覆盖常见 SaaS 品类：</p>
+    <table>
+      <tr><th>模板</th><th>对标产品</th><th>Agent 在其中的角色</th></tr>
+      <tr><td>📅 Calendar</td><td>Google Calendar / Calendly</td><td>管理日程、同步、AI 排程、公开预约页</td></tr>
+      <tr><td>📝 Content</td><td>开源版 Obsidian（MDX）</td><td>编辑本地 MD/MDX、生成富交互块、起草/改写/发布</td></tr>
+      <tr><td>🗂️ Plans</td><td>编码 Agent 的可视化计划模式</td><td>/visual-plan 与 /visual-recap 技能</td></tr>
+      <tr><td>🎤 Slides</td><td>Google Slides / Pitch</td><td>提示词或点击生成、编辑基于 React 的演示文稿</td></tr>
+      <tr><td>📊 Analytics</td><td>Amplitude / Mixpanel</td><td>连接数据源、提示生成图表、构建可复用仪表盘</td></tr>
+      <tr><td>🎬 Clips</td><td>Loom</td><td>录屏+自动转录+分享链接，Agent 摘要/字幕/编辑</td></tr>
+      <tr><td>✉️ Mail / 📋 Forms</td><td>邮件 / 表单 SaaS</td><td>三步邮件分诊、跨系统拉取上下文、自动路由</td></tr>
+    </table>
+
+    <h3>典型落地路径</h3>
+    <ul>
+      <li><b>个人开发者（周末克隆）</b>：用自带 LLM Key 克隆模板，跑真实个人工作流；当 SaaS 不再能回答「晚上8点后吃什么和我的糟糕睡眠相关吗」这类原始开发者没想到的问题时，自有数据库 + Agent 让你直接发问。</li>
+      <li><b>团队规模化</b>：当模板值得共享，问题从「我能用吗」转向「团队能信任吗」——需要托管、数据库管理、鉴权、权限、分支、治理与共享密钥。Builder.io 即承担这层「团队层」。</li>
+      <li><b>Agent 生态互联</b>：分析 App 可请幻灯片 App 把仪表盘变成演示文稿；日历 App 可与邮件 App 协调提议会议时间；Dispatch Agent 可跨 App 生态路由工作，无需各自写胶水代码。</li>
+    </ul>
+  </div>
+
+  <!-- 7. 快速开始 -->
+  <div class="section">
+    <h2><span class="ic">⚡</span> 快速开始</h2>
+<pre><code><span class="tc"># 一条命令 fork 模板并本地构建（多选 picker 可在一个 workspace 装多个 app）</span>
+npx @agent-native/core@latest create my-platform
+<span class="tk">cd</span> my-platform &amp;&amp; pnpm install &amp;&amp; pnpm dev
+
+<span class="tc"># 单 App、不要 monorepo：</span>
+npx @agent-native/core@latest create my-app --standalone --template mail
+
+<span class="tc"># 还没准备好建整个 App？给编码 Agent 加一个技能：</span>
+npx @agent-native/core@latest skills add visual-plan
+
+<span class="tc"># 同源部署多个 App，共享登录 + 零配置跨应用 A2A</span>
+npx @agent-native/core@latest deploy</code></pre>
+    <div class="hl">
+      <div class="ht">🧠 两个开箱即用的 Slash 命令</div>
+      <div><code>/visual-plan</code>：写代码前先打开结构化、可评审的计划文档（内联图表、UI 线框、文件级实现地图、可评论可批准）。<br><code>/visual-recap</code>：把 PR/git diff 变成高视角的可视化回顾（schema、API、文件变更的前后对比块 + 可分享评审链接）。</div>
+    </div>
+  </div>
+
+  <!-- 8. 竞品对比 -->
+  <div class="section">
+    <h2><span class="ic">⚔️</span> 竞品对比</h2>
+    <p>「代理原生」横跨了 Agent 编排框架、AI 应用构建器、应用内 AI 等多个赛道，但定位独特。</p>
+    <table>
+      <tr><th>方案</th><th>UI 质量</th><th>AI/Agent</th><th>可定制</th><th>所有权</th><th>核心差异</th></tr>
+      <tr><td>传统 SaaS（Notion/Linear…）</td><td class="yes">精美但僵化</td><td class="mid">外挂式</td><td class="no">几乎不能</td><td class="no">租用</td><td>Agent 只能「旁白」</td></tr>
+      <tr><td>裸 Agent（Claude Projects）</td><td class="no">无</td><td class="yes">强大</td><td class="mid">指令/技能</td><td class="mid">半自有</td><td>空白画布、无产品形态</td></tr>
+      <tr><td>AI 应用构建器（Bolt/Lovable/v0）</td><td class="yes">生成 UI</td><td class="yes">生成式</td><td class="mid">代码可改</td><td class="yes">自有</td><td>偏「一次生成」，缺运行时 Agent-UI 同步</td></tr>
+      <tr><td>CopilotKit / 应用内 AI SDK</td><td class="mid">嵌入组件</td><td class="yes">聊天优先</td><td class="mid">组件级</td><td class="yes">自有</td><td>把 AI 嵌进现有 App，非 Agent-Native 架构</td></tr>
+      <tr><td>LangGraph / Mastra / VoltAgent</td><td class="no">无内置</td><td class="yes">编排强大</td><td class="yes">高</td><td class="yes">自有</td><td>专注 Agent 编排，UI/产品形态需自建</td></tr>
+      <tr><td><b>Agent-Native</b></td><td class="yes">完整 UI、fork 即用</td><td class="yes">Agent 优先、深度集成</td><td class="yes">Agent 直接改 App</td><td class="yes">自有代码+数据</td><td><span class="kw">UI 与 Agent 共享同一动作表面</span></td></tr>
+    </table>
+    <div class="hl">
+      <div class="ht">🔎 真正的护城河</div>
+      <div>竞品多在「单点」上很强——要么生成 UI、要么编排 Agent、要么把 AI 嵌进现有 App。Agent-Native 的稀缺之处在于<b>架构层面就强制 Agent 与 UI 对等</b>，并以「可克隆 SaaS + 统一动作模型」给出了从个人到团队的可落地路径，而非停留在 SDK 层。</div>
+    </div>
+  </div>
+
+  <!-- 9. 综合评估 -->
+  <div class="section">
+    <h2><span class="ic">⚖️</span> 综合评估</h2>
+    <h3>✅ 优势</h3>
+    <ul>
+      <li><b>概念前瞻</b>：「Agent-Native」准确命名了一个正在发生的需求——Agent 不能只做「旁白」，要能真正操作产品。</li>
+      <li><b>架构优雅</b>：<code>defineAction</code> + 数据库协调层，从源头消灭多表面漂移，简洁且可移植。</li>
+      <li><b>开箱即用</b>：Calendar/Slides/Analytics/Clips 等多个可克隆完整 SaaS，显著降低上手门槛。</li>
+      <li><b>生态站位好</b>：原生拥抱 MCP/A2A/AG-UI，与 Claude Code/Cursor 等主流编码 Agent 打通。</li>
+      <li><b>商业闭环清晰</b>：开源框架 + Builder.io 团队层托管/治理，有可持续变现路径。</li>
+    </ul>
+    <h3>⚠️ 风险与挑战</h3>
+    <ul>
+      <li><b>较新、尚处早期</b>：约 1.1k Stars，API 与模板仍在快速演进，生产采用需评估稳定性。</li>
+      <li><b>概念推广成本</b>：「Agent-Native vs AI-Native」的区分需要教育市场，可能被泛化为营销词。</li>
+      <li><b>框架锁定倾向</b>：深度依赖 <code>@agent-native/core</code> 的动作/运行时抽象，迁移成本存在。</li>
+      <li><b>安全面扩大</b>：Agent 拥有与用户等同的操作能力，「受治理执行」一旦配置疏漏，风险被放大。</li>
+    </ul>
+    <h3>🎯 适合谁</h3>
+    <ul>
+      <li>想构建「人机协作型 SaaS」、且希望拥有代码与数据的<b>独立开发者 / 初创团队</b>。</li>
+      <li>需要把内部工具「Agent 化」、又不想从零搭 UI 的<b>工程团队</b>。</li>
+      <li>希望在自家产品中嵌入<b>真正能操作产品的 Agent</b>（而非聊天旁白）的产品团队。</li>
+    </ul>
+  </div>
+
+  <!-- 10. 结论 -->
+  <div class="section">
+    <h2><span class="ic">🏁</span> 结论</h2>
+    <p class="lead">Agent-Native 不只是一个框架，更是 Builder.io 对「下一代软件架构」的一次押注：未来的应用，人能做的 Agent 也能做，且共享同一套动作、数据与权限。它用<span class="kw">统一动作模型</span>、<span class="kw">数据库协调层</span>和<span class="kw">可克隆 SaaS</span>，把抽象理念落成了可 fork、可改造、可托管的工程现实。</p>
+    <div class="hl">
+      <div class="ht">📊 综合评分：8.4 / 10 — 强烈关注</div>
+      <div>在概念创新（9.0）与技术架构（8.6）上表现突出，工程成熟度（7.8）与社区规模（7.5）随时间提升空间大。对于关注 Agent 与产品融合趋势的开发者，这是一个值得现在就 fork、用真实工作流去验证的方向——「Clone a template this weekend. Use your own API key. The agent is already there.」</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>报告生成</b>：2026-06-20 · GitHub Trending 深度分析<br>
+    <b>项目地址</b>：<a href="https://github.com/BuilderIO/agent-native">github.com/BuilderIO/agent-native</a> ·
+    <b>官网</b>：<a href="https://agent-native.com">agent-native.com</a> ·
+    <b>架构博客</b>：<a href="https://www.builder.io/blog/agent-native-architecture">builder.io/blog/agent-native-architecture</a><br>
+    数据来源：GitHub 仓库 README、Builder.io 官方博客（Steve Sewell）、TrendShift。仅供技术研究参考。
+  </footer>
+
+</div>
+</body>
+</html>
