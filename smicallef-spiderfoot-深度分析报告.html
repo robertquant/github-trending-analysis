@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpiderFoot 深度分析报告 | smicallef/spiderfoot</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#2f81f7; --accent2:#3fb950;
+    --warn:#d29922; --danger:#f85149; --purple:#a371f7; --cyan:#39d2c0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; padding:0;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  header.hero{
+    background:radial-gradient(circle at 20% 20%,rgba(47,129,247,.18),transparent 55%),
+               radial-gradient(circle at 85% 0%,rgba(163,113,247,.15),transparent 50%);
+    border:1px solid var(--border); border-radius:18px;
+    padding:42px 40px; margin-bottom:32px; position:relative; overflow:hidden;
+  }
+  .hero .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(248,81,73,.14);
+    color:#ffb3ae;border:1px solid rgba(248,81,73,.35);padding:5px 12px;border-radius:999px;
+    font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:18px}
+  h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin-bottom:10px;
+     background:linear-gradient(90deg,#fff,#9ecbff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{color:var(--muted);font-size:16px;max-width:720px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{background:var(--panel2);border:1px solid var(--border);padding:7px 13px;
+        border-radius:8px;font-size:13px;color:#c9d1d9}
+  .chip b{color:var(--accent);font-weight:600}
+  section{margin-bottom:30px}
+  h2{font-size:23px;font-weight:700;margin-bottom:16px;padding-left:14px;
+     border-left:4px solid var(--accent);line-height:1.3}
+  h3{font-size:17px;font-weight:700;margin:20px 0 10px;color:#d2a8ff}
+  p{margin-bottom:12px;color:#c9d1d9}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+  .stat .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+  .stat .v{font-size:24px;font-weight:800;color:#fff}
+  .stat .v.green{color:var(--accent2)} .stat .v.blue{color:var(--accent)} .stat .v.purple{color:var(--purple)}
+  ul{padding-left:22px;margin-bottom:12px} li{margin-bottom:7px;color:#c9d1d9}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:5px;font-size:13px;color:#79c0ff;font-family:"SFMono-Regular",Consolas,monospace}
+  .arch{background:#010409;border:1px solid var(--border);border-radius:12px;padding:22px;font-family:monospace;font-size:13.5px;color:#7ee787;overflow-x:auto;line-height:1.9}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:11px 13px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#fff;font-weight:700}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+  .score-box{display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+  .ring{position:relative;width:150px;height:150px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .pct .num{font-size:38px;font-weight:800;color:#fff}
+  .ring .pct .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .scorebars{flex:1;min-width:260px}
+  .bar-row{margin-bottom:11px}
+  .bar-row .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+  .bar-row .top .name{color:#c9d1d9}
+  .bar-row .top .val{color:#fff;font-weight:700}
+  .bar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .tag{display:inline-block;background:rgba(47,129,247,.12);color:#79c0ff;border:1px solid rgba(47,129,247,.3);
+       padding:3px 10px;border-radius:6px;font-size:12px;margin:2px}
+  .innov{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .innov-item{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:10px;padding:18px}
+  .innov-item .t{font-weight:700;color:#fff;margin-bottom:6px;font-size:15px}
+  .innov-item .d{font-size:13.5px;color:var(--muted)}
+  .quote{border-left:3px solid var(--warn);background:rgba(210,153,34,.06);padding:14px 18px;border-radius:0 8px 8px 0;color:#e3b341;font-size:14px;margin:14px 0}
+  .footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+  .footer a{color:var(--accent);text-decoration:none}
+  .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pros,.cons{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .pros{border-top:3px solid var(--accent2)} .cons{border-top:3px solid var(--danger)}
+  .pros h4,.cons h4{margin-bottom:12px;font-size:15px}
+  .pros h4{color:var(--accent2)} .cons h4{color:var(--danger)}
+  @media(max-width:680px){.pros-cons{grid-template-columns:1fr}.hero{padding:28px 20px}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge">🕷️ OSINT · 安全侦察 · 开源工具</span>
+    <h1>SpiderFoot 深度分析报告</h1>
+    <p class="subtitle">smicallef/spiderfoot —— 风靡安全社区十余年的开源情报（OSINT）自动化侦察框架，集成 200+ 数据源，一键绘制目标攻击面。</p>
+    <div class="meta-row">
+      <span class="chip">📦 仓库：<b>smicallef/spiderfoot</b></span>
+      <span class="chip">⭐ Stars：<b>~18.3k</b></span>
+      <span class="chip">🌿 Forks：<b>~3k</b></span>
+      <span class="chip">🐍 语言：<b>Python 3</b></span>
+      <span class="chip">🏷️ 协议：<b>MIT</b></span>
+      <span class="chip">👤 作者：<b>Steve Micallef</b></span>
+    </div>
+  </header>
+
+  <section>
+    <h2>📊 关键数据一览</h2>
+    <div class="grid">
+      <div class="stat"><div class="k">GitHub Stars</div><div class="v blue">~18,300</div></div>
+      <div class="stat"><div class="k">集成数据源</div><div class="v green">200+</div></div>
+      <div class="stat"><div class="k">项目年龄</div><div class="v">14 年+</div></div>
+      <div class="stat"><div class="k">首发时间</div><div class="v">2012-03</div></div>
+      <div class="stat"><div class="k">主要语言</div><div class="v purple">Python</div></div>
+      <div class="stat"><div class="k">分发渠道</div><div class="v">Kali / 源码</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>一、项目概述</h2>
+    <div class="card">
+      <p><b>SpiderFoot</b> 是由澳大利亚安全专家 <b>Steve Micallef</b>（<code>@smicallef</code>）个人主导开发的开源情报（Open Source Intelligence, OSINT）自动化工具。它能针对 IP 地址、域名、邮箱、用户名、子网段、比特币地址、哈希等多种目标类型，自动从互联网公开渠道采集、关联并可视化情报。</p>
+      <p>项目最早可追溯到约 20 年前用 C# 写的原型版本，现行的 Python 版本诞生于 <b>2012 年 3 月 4 日</b>。到 2022 年 1 月，SpiderFoot 迎来 10 周年，作者撰写了《Lessons learned from my 10 year open source project》回顾这一漫长维护历程。它长期被收录进 <b>Kali Linux</b> 渗透测试发行版，并通过 SourceForge 分发，是安全社区公认的"瑞士军刀"级 OSINT 工具。</p>
+      <h3>定位</h3>
+      <p>一句话概括：<b>给一个目标，自动跑遍全网公开数据源，把碎片化情报串成一张关系网。</b></p>
+      <div class="quote">"SpiderFoot automates OSINT for threat intelligence and mapping your attack surface." —— 官方仓库简介</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>二、技术架构</h2>
+    <div class="card">
+      <p>SpiderFoot 采用经典的 <b>目标输入 → 模块分发 → 数据源查询 → 关联引擎 → 结果聚合</b> 流水线架构，核心由扫描引擎（Scan Engine）、模块系统（Modules）和数据库（SQLite/SQL）三部分构成。Web UI 与 CLI 共用同一套扫描引擎。</p>
+      <div class="arch">
+[ 目标输入 Target ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp; (IP / 域名 / 邮箱 / 用户名 / 哈希 / 比特币地址 ...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+[ 扫描引擎 Scan Engine ] ──► 决定扫描类型与模块调度<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp; ◆ Passive 被动（不接触目标）<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp; ◆ Active 主动（直接探测目标）<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp; ◆ Footprint 全量<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+[ 模块分发 Module Dispatcher ] ──► 200+ 插件并行查询<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp; Shodan · Censys · VirusTotal · HaveIBeenPwned<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp; WHOIS · DNS · crt.sh · Nmap · Nuclei ...<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+[ 关联引擎 Correlation Engine ] ──► 触发级联（发现邮箱→查泄露库）<br>
+&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+[ 结果聚合 Result Store (SQLite) ] ──► Web UI / CLI / JSON 报告
+      </div>
+      <h3>核心组件</h3>
+      <ul>
+        <li><b>扫描引擎（Scan Engine）</b>：负责任务调度、模块生命周期管理与并发控制，将目标分发到选中的模块。</li>
+        <li><b>模块系统（Modules）</b>：200+ 个独立插件，每个对应一个数据源或本地工具，可按需勾选，按 <code>Free / Tiered / Commercial / Internal / Tool</code> 分类。</li>
+        <li><b>关联引擎（Correlation Engine）</b>：核心创新点。一个模块产出的数据可触发其他模块——例如扫到一个邮箱，会自动去 HaveIBeenPwned 查泄露、去 Gravatar 查头像、去 PGP 服务器查公钥，形成关系图谱。</li>
+        <li><b>数据存储</b>：默认 SQLite，结果结构化入库，支持导出与可视化。</li>
+        <li><b>接口层</b>：Web GUI（浏览器操作，适合非技术用户）与 CLI（脚本化、CI 集成）双模式。</li>
+      </ul>
+      <h3>扫描类型</h3>
+      <table>
+        <tr><th>类型</th><th>行为</th><th>典型场景</th></tr>
+        <tr><td><b>Passive 被动</b></td><td>仅查询第三方数据源，不与目标直接交互，"不留痕迹"</td><td>隐蔽侦察、合规严格的场景</td></tr>
+        <tr><td><b>Active 主动</b></td><td>直接探测目标系统（端口扫描、抓取网页等）</td><td>授权渗透测试、红队</td></tr>
+        <tr><td><b>Footprint 全量</b></td><td>尽可能多地收集一切可获取信息</td><td>攻击面测绘、深度尽调</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>三、核心创新点</h2>
+    <div class="innov">
+      <div class="innov-item">
+        <div class="t">🔄 模块级联与数据关联</div>
+        <div class="d">不是简单堆砌数据源，而是让模块之间互相触发。一处发现（如一个邮箱）可自动展开成一张覆盖泄露、社交、PGP、地理位置的关系网——这是与"单点查询工具"的本质区别。</div>
+      </div>
+      <div class="innov-item">
+        <div class="t">🧩 200+ 数据源的统一抽象</div>
+        <div class="d">把 Shodan、Censys、VirusTotal、HaveIBeenPwned、WHOIS、crt.sh 等上百个异构 API、黑名单、本地工具，统一封装成可插拔模块，用户只需勾选，无需逐一对接。</div>
+      </div>
+      <div class="innov-item">
+        <div class="t">🎯 被动 / 主动 / 全量三模式</div>
+        <div class="d">同一目标、同一工具，可按合规与隐蔽性需求切换"接触目标"的程度，灵活适配从合规监控到授权红队的全光谱场景。</div>
+      </div>
+      <div class="innov-item">
+        <div class="t">🖥️ 双接口：Web UI + CLI</div>
+        <div class="d">Web UI 降低门槛（点选即用），CLI 适配自动化与脚本编排，同一引擎覆盖"人"和"流程"两类使用者。</div>
+      </div>
+      <div class="innov-item">
+        <div class="t">🛠️ 内嵌主流安全工具</div>
+        <div class="d">原生集成 Nmap、Nuclei、DNSTwist、testssl.sh、Wappalyzer、TruffleHog、WAFW00F 等作为"Tool 类模块"，无需在多个工具间切换。</div>
+      </div>
+      <div class="innov-item">
+        <div class="t">📡 全目标类型覆盖</div>
+        <div class="d">不仅限于域名/IP，还支持邮箱、用户名、电话、比特币/以太坊地址、哈希、ASN、网段等，是少数"以人为中心"也能"以资产为中心"的 OSINT 平台。</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>四、应用场景</h2>
+    <div class="card">
+      <table>
+        <tr><th>场景</th><th>说明</th></tr>
+        <tr><td><b>🔍 渗透测试前置侦察</b></td><td>黑盒/灰盒评估前的资产发现、子域名枚举、技术栈识别，为后续漏洞挖掘铺路。</td></tr>
+        <tr><td><b>🛡️ 威胁情报（CTI）</b></td><td>批量富化 IOC（IP/域名/哈希），关联恶意基础设施，绘制攻击者画像。</td></tr>
+        <tr><td><b>🗺️ 攻击面管理（ASM/EASM）</b></td><td>持续发现并监控暴露资产、影子 IT、开放端口、子域名接管风险。</td></tr>
+        <tr><td><b>🚨 应急响应（IR）</b></td><td>事件调查中快速富化指标，定位关联基础设施与受影响资产。</td></tr>
+        <tr><td><b>🐛 数据泄露检测</b></td><td>检测暴露凭据、被脱库邮箱、敏感文件、错误配置的云存储桶（S3/Azure/GCS）。</td></tr>
+        <tr><td><b>👤 人员/背景调查</b></td><td>对高管、威胁行为者等个体进行开源情报画像（社交账号、泄露记录等）。</td></tr>
+        <tr><td><b>🐛 漏洞赏金（Bug Bounty）</b></td><td>快速发现可报告的暴露面与子域名接管机会。</td></tr>
+      </table>
+      <p>项目官方还按行业给出用例，覆盖 <b>医疗、金融服务、政府、零售</b> 等领域的合规监控与第三方风险评估。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>五、竞品对比</h2>
+    <div class="card">
+      <table>
+        <tr>
+          <th>维度</th><th>SpiderFoot</th><th>Maltego</th><th>Recon-ng</th>
+        </tr>
+        <tr>
+          <td><b>定位</b></td>
+          <td>自动化 OSINT 扫描器</td>
+          <td>可视化关系图谱分析</td>
+          <td>轻量 CLI 侦察框架</td>
+        </tr>
+        <tr>
+          <td><b>界面</b></td>
+          <td>Web UI + CLI</td>
+          <td>Java GUI（图形化）</td>
+          <td>纯命令行</td>
+        </tr>
+        <tr>
+          <td><b>数据源</b></td>
+          <td>200+ 模块，覆盖最广</td>
+          <td>Transforms，偏关系挖掘</td>
+          <td>模块化，数量较少</td>
+        </tr>
+        <tr>
+          <td><b>自动化程度</b></td>
+          <td>极高（一键全跑+级联）</td>
+          <td>中（手动拖拽分析为主）</td>
+          <td>高（可脚本化）</td>
+        </tr>
+        <tr>
+          <td><b>关系可视化</b></td>
+          <td>基础（结果列表+关联）</td>
+          <td>★ 极强（图论式图谱）</td>
+          <td>弱</td>
+        </tr>
+        <tr>
+          <td><b>轻量/远程友好</b></td>
+          <td>中（需环境+API Key）</td>
+          <td>低（重 Java 桌面端）</td>
+          <td>★ 极高（树莓派可跑）</td>
+        </tr>
+        <tr>
+          <td><b>价格</b></td>
+          <td>开源免费 + 商业 Cloud/Gold</td>
+          <td>社区版免费 + XL/企业版</td>
+          <td>完全免费</td>
+        </tr>
+        <tr>
+          <td><b>最佳搭档</b></td>
+          <td>广覆盖、快速全量采集</td>
+          <td>深度关系分析与展示</td>
+          <td>远程/资源受限环境</td>
+        </tr>
+      </table>
+      <p><b>选型建议：</b>SpiderFoot 胜在"广度+自动化"，适合需要快速从零拼出目标全貌的场景；Maltego 胜在"可视化关系挖掘"，适合需要向人展示和深挖关联的分析；Recon-ng 胜在"轻量可脚本化"，适合资源受限或深度定制流水线。三者常被组合使用——SpiderFoot 采集 → Maltego 可视化。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>六、优势与不足</h2>
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>✅ 优势</h4>
+        <ul>
+          <li>数据源覆盖业界领先（200+），一站式</li>
+          <li>模块级联自动关联，省去手工串联</li>
+          <li>开源免费，社区活跃，Kali 内置</li>
+          <li>被动/主动/全量三模式灵活</li>
+          <li>Web UI 降低使用门槛</li>
+          <li>十余年沉淀，稳定成熟</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>⚠️ 不足</h4>
+        <ul>
+          <li>核心模块高度依赖第三方商业 API Key（Shodan/Censys/HIBP 等），无 Key 则能力大打折扣</li>
+          <li>全量扫描耗时较长，可能触发限流</li>
+          <li>可视化关系图谱弱于 Maltego</li>
+          <li>主仓库以 4.0 为主要发布节点，版本迭代节奏偏慢</li>
+          <li>主动扫描存在被目标感知/触发 WAF 的风险，需谨慎授权</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>七、综合评分</h2>
+    <div class="card score-box">
+      <div class="ring">
+        <svg width="150" height="150">
+          <circle cx="75" cy="75" r="65" stroke="#30363d" stroke-width="12" fill="none"/>
+          <circle cx="75" cy="75" r="65" stroke="url(#g)" stroke-width="12" fill="none"
+                  stroke-dasharray="408" stroke-dashoffset="73" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2f81f7"/>
+              <stop offset="100%" stop-color="#3fb950"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="pct"><div class="num">8.6</div><div class="lbl">/ 10.0</div></div>
+      </div>
+      <div class="scorebars">
+        <div class="bar-row"><div class="top"><span class="name">数据源广度</span><span class="val">9.5</span></div><div class="bar"><i style="width:95%"></i></div></div>
+        <div class="bar-row"><div class="top"><span class="name">自动化与关联能力</span><span class="val">9.2</span></div><div class="bar"><i style="width:92%"></i></div></div>
+        <div class="bar-row"><div class="top"><span class="name">社区活跃与成熟度</span><span class="val">9.0</span></div><div class="bar"><i style="width:90%"></i></div></div>
+        <div class="bar-row"><div class="top"><span class="name">易用性（双接口）</span><span class="val">8.5</span></div><div class="bar"><i style="width:85%"></i></div></div>
+        <div class="bar-row"><div class="top"><span class="name">可视化与报告</span><span class="val">7.5</span></div><div class="bar"><i style="width:75%"></i></div></div>
+        <div class="bar-row"><div class="top"><span class="name">开箱即用度（API 依赖）</span><span class="val">7.0</span></div><div class="bar"><i style="width:70%"></i></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <p><b>评语：</b>SpiderFoot 是 OSINT 领域的标杆级开源项目。它以 200+ 数据源的压倒性广度、模块级联的自动关联能力，以及十余年的稳定维护，稳居渗透测试与威胁情报工具链的"侦察首站"位置。短板在于对第三方商业 API 的高度依赖和相对薄弱的可视化。对于任何需要"从目标反推全貌"的安全从业者，它都是值得常备的基础设施级工具。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>📎 参考来源</h2>
+    <div class="card">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="tag">github.com/smicallef/spiderfoot</span>
+        <span class="tag">作者 Medium：Lessons from 10-year OSS</span>
+        <span class="tag">Intel471 攻击面博客</span>
+        <span class="tag">OSINT Team Blog：SpiderFoot vs Maltego</span>
+        <span class="tag">InfosecTrain 实战教程</span>
+        <span class="tag">Heunify：Top 7 OSINT Tools</span>
+        <span class="tag">IJRPR 学术论文</span>
+        <span class="tag">spiderfoot.net 官方站点</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>Generated on 2026-06-22 · GitHub Trending 深度分析 · <a href="https://github.com/smicallef/spiderfoot">smicallef/spiderfoot</a></p>
+  </div>
+
+</div>
+</body>
+</html>
