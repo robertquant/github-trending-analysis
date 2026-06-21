@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mikumifa/biliTickerBuy 深度分析报告 · B站会员购购票辅助工具</title>
+<style>
+  :root {
+    --bili-pink: #fb7299;
+    --bili-blue: #00a1d6;
+    --bili-dark: #212121;
+    --bg: #0f1117;
+    --card: #181b24;
+    --card-2: #1f2330;
+    --border: #2a2f3d;
+    --text: #e6e8ee;
+    --text-dim: #9aa0b0;
+    --accent: #fb7299;
+    --accent-2: #00a1d6;
+    --good: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    padding: 70px 24px 60px;
+    text-align: center;
+    background:
+      radial-gradient(900px 400px at 20% -10%, rgba(251,114,153,.18), transparent 60%),
+      radial-gradient(900px 400px at 85% 0%, rgba(0,161,214,.18), transparent 60%),
+      linear-gradient(180deg, #14171f 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero .badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(251,114,153,.12);
+    border: 1px solid rgba(251,114,153,.4);
+    color: var(--accent);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 22px;
+    letter-spacing: .5px;
+  }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 14px;
+  }
+  .hero .tagline {
+    font-size: 19px;
+    color: var(--text-dim);
+    max-width: 760px;
+    margin: 0 auto 8px;
+  }
+  .hero .meta-row {
+    margin-top: 26px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 8px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .chip strong { color: var(--text); }
+
+  /* Section */
+  section { padding: 56px 0 0; }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .lead { color: var(--text-dim); font-size: 16px; margin-bottom: 20px; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Cards */
+  .grid { display: grid; gap: 18px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 760px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    transition: transform .15s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--accent);
+  }
+  .card p { color: var(--text-dim); font-size: 14px; margin: 0; }
+
+  /* Profile table */
+  table.profile {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  table.profile td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: top;
+  }
+  table.profile tr:last-child td { border-bottom: none; }
+  table.profile td:first-child {
+    width: 30%;
+    color: var(--text-dim);
+    font-weight: 600;
+    background: var(--card-2);
+  }
+
+  /* Code */
+  pre {
+    background: #0a0c12;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cdd3e1;
+  }
+  pre .kw { color: #c792ea; }
+  pre .fn { color: #82aaff; }
+  pre .str { color: #c3e88d; }
+  pre .cm { color: #6b7394; font-style: italic; }
+
+  /* List */
+  ul, ol { padding-left: 22px; margin-bottom: 16px; }
+  li { margin-bottom: 8px; color: var(--text-dim); }
+  li strong, li b { color: var(--text); }
+
+  /* Comparison table */
+  .compare {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .compare th, .compare td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .compare th {
+    background: var(--card-2);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .compare tr:last-child td { border-bottom: none; }
+  .compare td:first-child { font-weight: 600; color: var(--text); white-space: nowrap; }
+  .compare .hl { color: var(--accent); font-weight: 700; }
+
+  /* Score */
+  .score-wrap {
+    background: linear-gradient(135deg, rgba(251,114,153,.08), rgba(0,161,214,.08));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+  }
+  .score-total {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .score-total .num-big {
+    font-size: 56px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .score-total .out { color: var(--text-dim); font-size: 22px; }
+  .score-total .stars { color: var(--warn); font-size: 22px; margin-top: 8px; letter-spacing: 3px; }
+  .score-bars { display: grid; gap: 16px; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 50px; align-items: center; gap: 14px; }
+  .bar-row .label { color: var(--text-dim); font-size: 14px; }
+  .bar-row .val { text-align: right; font-weight: 700; color: var(--text); }
+  .bar {
+    height: 10px;
+    background: var(--card-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 999px;
+  }
+
+  .callout {
+    background: rgba(251,114,153,.06);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 22px 0;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .callout.warn { background: rgba(248,113,113,.06); border-left-color: var(--bad); }
+  .callout strong { color: var(--text); }
+
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .pros-cons { grid-template-columns: 1fr; } }
+  .pc-box { border-radius: 14px; padding: 22px; border: 1px solid var(--border); }
+  .pc-box.pro { background: rgba(74,222,128,.05); }
+  .pc-box.con { background: rgba(248,113,113,.05); }
+  .pc-box h3 { margin-bottom: 14px; font-size: 17px; }
+  .pc-box.pro h3 { color: var(--good); }
+  .pc-box.con h3 { color: var(--bad); }
+  .pc-box ul { padding-left: 20px; }
+  .pc-box li { font-size: 14px; margin-bottom: 8px; }
+
+  .footer {
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+  .toc {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(15,17,23,.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    margin: 0 -24px 0;
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    padding-left: 24px; padding-right: 24px;
+  }
+  .toc a {
+    color: var(--text-dim); font-size: 13px; padding: 4px 10px;
+    border-radius: 6px; transition: all .15s;
+  }
+  .toc a:hover { background: var(--card); color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="badge">🔍 GitHub Trending 深度分析 · 2026-06-22</span>
+  <h1>mikumifa / biliTickerBuy</h1>
+  <p class="tagline">B 站会员购购票辅助工具 —— 开源免费、图形界面、毫秒级响应的漫展/演出抢票脚本</p>
+  <div class="meta-row">
+    <span class="chip">🐍 <strong>Python</strong></span>
+    <span class="chip">⭐ <strong>3.7k Stars</strong></span>
+    <span class="chip">📜 <strong>MIT License</strong></span>
+    <span class="chip">🖥️ <strong>PySide6 GUI</strong></span>
+    <span class="chip">📈 <strong> Trendshift 上榜</strong></span>
+  </div>
+</header>
+
+<div class="toc">
+  <a href="#overview">概述</a>
+  <a href="#profile">档案</a>
+  <a href="#arch">技术架构</a>
+  <a href="#innovation">创新点</a>
+  <a href="#scenarios">应用场景</a>
+  <a href="#competitors">竞品对比</a>
+  <a href="#proscons">优劣</a>
+  <a href="#score">综合评分</a>
+</div>
+
+<div class="container">
+
+  <!-- 1. 项目概述 -->
+  <section id="overview">
+    <h2 class="section-title"><span class="num">1</span>项目概述</h2>
+    <p class="lead">
+      <strong>biliTickerBuy</strong> 是由开发者 <strong>mikumifa</strong> 创建的一款面向 <strong>Bilibili（B 站）会员购</strong>平台的开源购票辅助工具。
+      它通过直接调用 B 站会员购的公开/内部接口，在门票开售瞬间自动完成「登录态校验 → 项目识别 → 票种选择 → 创建订单 → 提交下单」的全流程，
+      以毫秒级的响应速度帮助用户抢到热门漫展（如 BiliBili World / BW、CP 同人展）、演唱会、演出、赛事等活动门票。
+    </p>
+    <p>
+      项目核心理念是<strong>「开源免费、简单易用、图形界面、速度极快」</strong>。不同于许多需要命令行操作、配置复杂的抢票脚本，
+      biliTickerBuy 提供了基于 <strong>PySide6</strong> 的可视化图形界面（GUI），用户提前配置好收货地址、购买人实名信息与目标票种后，
+      只需一键启动，程序便会在指定开售时刻自动发起高频下单请求。Windows 用户甚至可以直接下载 release 的可执行文件，<strong>免安装开箱即用</strong>。
+    </p>
+    <p>
+      需要特别强调的是，该项目以<strong>「非侵入式」</strong>为设计原则，明确声明已控制请求频率、避免对 B 站服务器造成明显负载，
+      并通过 MIT License 严格限定<strong>「仅供个人学习与研究使用」</strong>，严禁用于商业代抢、牟利或任何违法/违反平台规则的用途。
+      这种克制的设计取向，也是它能在 GitHub 长期存活并获得社区认可的重要原因。
+    </p>
+    <div class="callout">
+      💡 <strong>一句话定位：</strong>面向 B 站会员购的、图形化、毫秒级、非侵入式的个人抢票学习工具，是同类项目中关注度与易用度最高的开源实现之一。
+    </div>
+  </section>
+
+  <!-- 2. 项目档案 -->
+  <section id="profile">
+    <h2 class="section-title"><span class="num">2</span>核心档案</h2>
+    <table class="profile">
+      <tr><td>项目名称</td><td>mikumifa/biliTickerBuy</td></tr>
+      <tr><td>项目定位</td><td>B 站会员购购票辅助工具（漫展 / 演出 / 赛事抢票）</td></tr>
+      <tr><td>主要语言</td><td>Python</td></tr>
+      <tr><td>GUI 框架</td><td>PySide6（Qt for Python）</td></tr>
+      <tr><td>开源协议</td><td>MIT License（仅供个人学习研究）</td></tr>
+      <tr><td>Stars / 今日增长</td><td>约 3,700 ⭐ / 当日 +56（仍在活跃上升）</td></tr>
+      <tr><td>跨平台</td><td>Windows / macOS / Linux</td></tr>
+      <tr><td>分发方式</td><td>源码运行 + Windows 可执行文件 release（免安装）</td></tr>
+      <tr><td>核心模块</td><td><code>app_cmd/</code> 目录，<code>buy.py</code> 为抢票逻辑核心</td></tr>
+      <tr><td>榜单</td><td>GitHub Trending 上榜 · Trendshift 收录（repo #11145）</td></tr>
+      <tr><td>文档站</td><td>飞书文档（完整使用说明书）</td></tr>
+      <tr><td>衍生生态</td><td>biliTickerSkill（Skill 版）· biliTickerStorm（分布式版）</td></tr>
+      <tr><td>设计原则</td><td>非侵入式 · 控制请求频率 · 避免对目标服务器造成干扰</td></tr>
+      <tr><td>作者状态</td><td>原作者 mikumifa 据社区信息已注销账号，原仓库存在备份/镜像（如 mmcx-zsy/BiliTicket、Gitee 镜像）</td></tr>
+    </table>
+  </section>
+
+  <!-- 3. 技术架构 -->
+  <section id="arch">
+    <h2 class="section-title"><span class="num">3</span>技术架构</h2>
+    <p class="lead">项目采用 <strong>Python 单体应用 + GUI 表现层 + 接口调用核心</strong> 的经典三层结构，核心抢票逻辑与界面解耦，便于维护与扩展。</p>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>① 表现层 · GUI</h3>
+        <p>基于 <strong>PySide6（Qt for Python）</strong>构建可视化界面，支持票种配置、购买人/地址预填、开售时间设置、抢票启动与状态实时回显，降低普通用户使用门槛。</p>
+      </div>
+      <div class="card">
+        <h3>② 核心逻辑层</h3>
+        <p>抢票主流程集中于 <code>app_cmd/</code> 目录，<strong><code>buy.py</code></strong> 为下单核心：定时触发 → 轮询/直接下单 → 失败快速重试 → 订单创建与锁定。</p>
+      </div>
+      <div class="card">
+        <h3>③ 接口调用层</h3>
+        <p>直接对接 B 站会员购接口，提前注入登录态（Cookie / 凭证）与必要的请求签名参数，省去浏览器渲染开销，实现<strong>纯接口级毫秒响应</strong>。</p>
+      </div>
+    </div>
+
+    <h3 style="margin: 30px 0 14px; font-size:18px;">抢票核心流程</h3>
+    <pre><span class="cm"># 简化的抢票主循环（基于公开资料还原）</span>
+<span class="kw">def</span> <span class="fn">run_buy</span>(project_id, ticket_sku, buyer_info, target_time):
+    <span class="cm"># 1. 提前加载登录态与购买前置数据</span>
+    token = <span class="fn">load_credentials</span>()
+    <span class="fn">prefill_order</span>(buyer_info, address)
+
+    <span class="cm"># 2. 精准等待开售时刻</span>
+    <span class="fn">wait_until</span>(target_time)
+
+    <span class="cm"># 3. 开售后高频尝试创建订单（失败快速重试）</span>
+    <span class="kw">while</span> <span class="kw">not</span> success:
+        order = <span class="fn">create_order</span>(project_id, ticket_sku, token)
+        <span class="kw">if</span> order.success:
+            <span class="kw">return</span> <span class="fn">confirm_pay</span>(order)
+        <span class="fn">retry_fast</span>()   <span class="cm"># 控制频率，非侵入式</span></pre>
+
+    <h3 style="margin: 30px 0 14px; font-size:18px;">关键技术与设计要点</h3>
+    <ul>
+      <li><strong>纯接口调用，绕过浏览器：</strong>不依赖 Selenium/Playwright 等浏览器自动化，直接构造 HTTP 请求，省去页面加载、渲染、JS 执行的时间，把延迟压到最低。</li>
+      <li><strong>登录态预注入：</strong>用户提前完成扫码登录并保存 Cookie/凭证，开售瞬间无需再次鉴权，直接进入下单环节。</li>
+      <li><strong>信息预填与预热：</strong>购买人实名信息、收货地址、票种 SKU 在开售前全部就绪，避免开售时再交互填表。</li>
+      <li><strong>精准定时与快速重试：</strong>基于系统时间精准等待开售点，订单创建失败时采用受控的快速重试策略（频率受限，非侵入式）。</li>
+      <li><strong>验证码预演：</strong>针对会员购下单可能触发的验证码，提供「验证码预演练习」功能，提前演练以降低实战延误（见社区演示视频）。</li>
+      <li><strong>核心/界面解耦：</strong>抢票核心位于 <code>app_cmd/</code>，可独立于 GUI 以命令行方式运行，便于进阶用户与自动化场景调用。</li>
+    </ul>
+
+    <div class="callout">
+      🛡️ <strong>非侵入式设计：</strong>项目在设计时严格遵循「非侵入式」原则，主动控制请求频率，避免对 Bilibili 服务器造成干扰，这也是它区别于灰产代抢工具、能够以开源形态长期存在的伦理与技术底线。
+    </div>
+  </section>
+
+  <!-- 4. 核心创新点 -->
+  <section id="innovation">
+    <h2 class="section-title"><span class="num">4</span>核心创新点</h2>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>① 图形化 + 免安装，极致易用</h3>
+        <p>多数抢票脚本停留在命令行 / 配置文件驱动，门槛高。biliTickerBuy 用 PySide6 做出完整 GUI，并提供 Windows 可执行版，普通用户也能开箱即用，大幅拓宽了受众面。</p>
+      </div>
+      <div class="card">
+        <h3>② 纯接口毫秒级响应</h3>
+        <p>跳过浏览器渲染层，直接对接会员购接口 + 登录态预注入 + 信息预热，把从「开售」到「下单」的关键路径压缩到毫秒级，是性能层面的核心优势。</p>
+      </div>
+      <div class="card">
+        <h3>③ 非侵入式的伦理克制</h3>
+        <p>主动控制请求频率、声明禁止代抢牟利、设置平台尊重与下架声明。这种「自我设限」让它在合规与存活上领先同类，形成了独特的项目人格。</p>
+      </div>
+      <div class="card">
+        <h3>④ 完整生态矩阵</h3>
+        <p>从单机版 biliTickerBuy，到 Skill 版 biliTickerSkill，再到分布式版 biliTickerStorm，覆盖「个人单机 → 技能化 → 分布式」全形态，构成可演进的工具家族。</p>
+      </div>
+      <div class="card">
+        <h3>⑤ 验证码预演机制</h3>
+        <p>针对下单关键卡点「验证码」，提供预演练习功能，让用户在实战前熟悉交互、减少失误，是少有的、面向「人机协同」细节的抢票工具设计。</p>
+      </div>
+      <div class="card">
+        <h3>⑥ 开源透明 · 社区共建</h3>
+        <p>MIT 协议、源码完全公开、飞书文档 + Discussions 反馈通道，社区可直接审阅安全性、提交 PR，形成「可审计、可信任」的开源抢票工具样本。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 应用场景 -->
+  <section id="scenarios">
+    <h2 class="section-title"><span class="num">5</span>应用场景</h2>
+    <p class="lead">围绕 B 站会员购平台的高热度、低库存抢购场景展开。</p>
+    <div class="grid grid-3">
+      <div class="card"><h3>🎫 漫展门票</h3><p>BiliBili World（BW）、CP 同人展等热门漫展，库存远低于市场需求，开售即售罄，是最典型的刚需场景。</p></div>
+      <div class="card"><h3>🎤 演唱会 / 演出</h3><p>Live、音乐节、舞台剧等通过会员购发售的演出票，热门场次秒空，抢票工具可显著提升成功率。</p></div>
+      <div class="card"><h3>🏆 赛事 / 电竞</h3><p>电竞决赛、体育赛事等限量门票抢购。</p></div>
+      <div class="card"><h3>🔬 接口逆向学习</h3><p>作为学习 B 站会员购接口、请求签名、登录态机制的<strong>开源教学样本</strong>（项目明确定位为学习研究）。</p></div>
+      <div class="card"><h3>🤖 自动化开发参考</h3><p>PySide6 GUI + 精准定时 + 接口轮询的工程实现，可被借鉴到其他限时抢购/定时任务类工具开发。</p></div>
+      <div class="card"><h3>🧪 验证码对抗研究</h3><p>验证码预演功能为人机验证流程研究、个人购票体验优化提供实验环境。</p></div>
+    </div>
+  </section>
+
+  <!-- 6. 竞品对比 -->
+  <section id="competitors">
+    <h2 class="section-title"><span class="num">6</span>竞品对比</h2>
+    <p class="lead">同属「B 站会员购抢票工具」赛道的开源 / 半开源项目横向对比。</p>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>项目</th>
+          <th>形态 / 语言</th>
+          <th>核心特色</th>
+          <th>定位差异</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="hl">mikumifa/<br>biliTickerBuy</td>
+          <td>GUI · Python</td>
+          <td>PySide6 图形界面 + 纯接口毫秒响应 + 免安装，生态最完整</td>
+          <td>易用度与社区度最高，<strong>非侵入式</strong>伦理克制</td>
+        </tr>
+        <tr>
+          <td>mikumifa/<br>biliTickerStorm</td>
+          <td>分布式 · Python</td>
+          <td>同一作者的<strong>分布式版本</strong>，多节点协同</td>
+          <td>面向进阶/多设备场景，主版本的高级形态</td>
+        </tr>
+        <tr>
+          <td>konaxia548/<br>bili-ticket-go</td>
+          <td>CLI · Go</td>
+          <td>Go 实现，终端交互（登录→识别→选票→下单→推送）</td>
+          <td>偏好 CLI 与 Go 生态、追求单二进制部署的用户</td>
+        </tr>
+        <tr>
+          <td>NekoNekoNya/<br>bilibili-ticket-python</td>
+          <td>CLI/脚本 · Python</td>
+          <td>轻量 Python 抢票脚本</td>
+          <td>更极简、偏开发者自用，无图形界面</td>
+        </tr>
+        <tr>
+          <td>Violiate/<br>bili_ticket_rush</td>
+          <td>脚本 · Python</td>
+          <td>支持 CP31、演唱会等，定时抢票 + 捡漏</td>
+          <td>强调<strong>捡漏（蹲余票）</strong>场景</td>
+        </tr>
+        <tr>
+          <td>mmcx-zsy/BiliTicket<br>（备份镜像）</td>
+          <td>GUI · Python</td>
+          <td>biliTickerBuy 原作者注销后的<strong>备份并持续更新版</strong></td>
+          <td>原仓库不可用时的获取渠道</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      📌 <strong>对比结论：</strong>biliTickerBuy 在<strong>「图形化易用 + 纯接口性能 + 开源透明 + 非侵入式合规」</strong>四者平衡上做得最好，是同类项目中受众最广、生态最完整的代表；CLI 党可选 bili-ticket-go，分布式需求可选 biliTickerStorm，捡漏场景可选 bili_ticket_rush。
+    </div>
+  </section>
+
+  <!-- 7. 优势与挑战 -->
+  <section id="proscons">
+    <h2 class="section-title"><span class="num">7</span>优势与挑战</h2>
+    <div class="pros-cons">
+      <div class="pc-box pro">
+        <h3>✅ 优势</h3>
+        <ul>
+          <li>图形界面 + Windows 免安装版，<strong>易用度领先</strong></li>
+          <li>纯接口调用 + 登录态预热，<strong>毫秒级响应</strong></li>
+          <li>MIT 开源、源码透明、<strong>可审计可信任</strong></li>
+          <li>主动控制频率、禁止代抢，<strong>非侵入式合规</strong></li>
+          <li>验证码预演等<strong>人机协同细节</strong>周到</li>
+          <li>单机 / Skill / 分布式<strong>完整生态矩阵</strong></li>
+          <li>飞书文档 + Discussions，<strong>文档与反馈完善</strong></li>
+          <li>Trending 上榜、社区关注度与活跃度高</li>
+        </ul>
+      </div>
+      <div class="pc-box con">
+        <h3>⚠️ 挑战 / 风险</h3>
+        <ul>
+          <li><strong>平台合规风险：</strong>抢票工具可能违反 B 站用户协议，存在账号风控/封禁可能</li>
+          <li><strong>法律与道德边界：</strong>严禁代抢牟利，使用者须自律，否则易踩红线</li>
+          <li><strong>作者维护不确定性：</strong>原作者据称已注销，主线更新依赖备份/社区</li>
+          <li><strong>接口耦合脆弱：</strong>B 站会员购接口/风控一变，工具即可能失效</li>
+          <li><strong>选座能力待完善：</strong>不选座场次表现优异，复杂选座场景仍在演进</li>
+          <li><strong>灰色属性：</strong>赛道整体处于平台与用户博弈的灰色地带，难以"正名"</li>
+          <li><strong>成功仍受库存制约：</strong>工具提升概率，但无法突破"票少人多"的物理上限</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout warn">
+      ⚠️ <strong>使用提示：</strong>本项目仅供<strong>个人学习与研究</strong>。使用抢票工具可能违反 Bilibili 平台规则，存在账号受限风险；严禁用于任何商业代抢、牟利或违法用途，后果由使用者自负。
+    </div>
+  </section>
+
+  <!-- 8. 综合评分 -->
+  <section id="score">
+    <h2 class="section-title"><span class="num">8</span>综合评分</h2>
+    <div class="score-wrap">
+      <div class="score-total">
+        <div><span class="num-big">8.4</span><span class="out"> / 10</span></div>
+        <div class="stars">★ ★ ★ ★ ☆</div>
+        <div style="color:var(--text-dim); margin-top:8px;">综合推荐指数</div>
+      </div>
+      <div class="score-bars">
+        <div class="bar-row"><span class="label">功能完整度</span><div class="bar"><span style="width:86%"></span></div><span class="val">8.6</span></div>
+        <div class="bar-row"><span class="label">技术架构</span><div class="bar"><span style="width:82%"></span></div><span class="val">8.2</span></div>
+        <div class="bar-row"><span class="label">易用性</span><div class="bar"><span style="width:92%"></span></div><span class="val">9.2</span></div>
+        <div class="bar-row"><span class="label">社区活跃度</span><div class="bar"><span style="width:88%"></span></div><span class="val">8.8</span></div>
+        <div class="bar-row"><span class="label">创新能力</span><div class="bar"><span style="width:80%"></span></div><span class="val">8.0</span></div>
+        <div class="bar-row"><span class="label">合规与可持续</span><div class="bar"><span style="width:76%"></span></div><span class="val">7.6</span></div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:28px;">
+      🎯 <strong>评价总结：</strong>biliTickerBuy 是 B 站会员购抢票工具赛道的<strong>标杆级开源项目</strong>——在易用性（图形化+免安装）、性能（纯接口毫秒响应）、透明度（MIT 开源可审计）三个维度上做到了同类最佳，并以「非侵入式 + 禁止代抢」的伦理克制构筑了独特的项目人格与存活能力。其客观局限在于赛道的<strong>平台合规风险</strong>与<strong>接口耦合脆弱性</strong>。对于「学习接口逆向、研究定时抢购工程实现、个人非商业抢票」的用户，它是最值得研读与使用的开源样本；使用时务必严守个人学习用途边界。
+    </div>
+  </section>
+
+  <div class="footer">
+    <p>📄 本报告由 GitHub 项目深度分析流程自动生成 · 数据截至 <strong>2026-06-22</strong></p>
+    <p style="margin-top:8px;">
+      🔗 源仓库：<a href="https://github.com/mikumifa/biliTickerBuy" target="_blank">github.com/mikumifa/biliTickerBuy</a> ｜
+      📚 使用文档：<a href="https://n1x87b5cqay.feishu.cn/wiki/Eg4xwt3Dbiah02k1WqOcVk2YnMd" target="_blank">飞书使用说明书</a> ｜
+      🌐 官方平台：<a href="https://show.bilibili.com/" target="_blank">B 站会员购</a>
+    </p>
+    <p style="margin-top:8px; font-size:12px; opacity:.7;">免责声明：本报告仅作技术与信息分析，不构成使用建议；相关工具仅供个人学习研究，请遵守法律法规与平台规则。</p>
+  </div>
+
+</div>
+</body>
+</html>
