@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kilo Code 深度分析报告 | Kilo-Org/kilocode</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(188,140,255,.20), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(126,231,135,.16), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.viral{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  .badge.tool{color:var(--cyan);border-color:rgba(57,208,216,.4);background:rgba(57,208,216,.08)}
+  h1{font-size:40px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#c9a6ff 55%,#7ee787);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent2);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:820px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(188,140,255,.10),rgba(126,231,135,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:96px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--accent2))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  .mid{color:var(--gold);font-weight:700}
+  /* pros/cons */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pc{border-radius:12px;padding:18px 20px;border:1px solid var(--border)}
+  .pc.pro{background:rgba(126,231,135,.05);border-color:rgba(126,231,135,.25)}
+  .pc.con{background:rgba(255,123,114,.05);border-color:rgba(255,123,114,.25)}
+  .pc h4{font-size:14.5px;margin-bottom:10px}
+  .pc.pro h4{color:var(--accent2)} .pc.con h4{color:var(--red)}
+  .pc ul li::before{color:inherit}
+  .pc.pro ul li::before{content:"✓";color:var(--accent2)} .pc.con ul li::before{content:"⚠";color:var(--red)}
+  /* lineage */
+  .lineage{display:flex;align-items:stretch;gap:0;margin:14px 0;flex-wrap:wrap}
+  .node{flex:1;min-width:150px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative}
+  .node .nn{font-weight:700;font-size:15px;color:var(--accent)}
+  .node .nd{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:22px;padding:0 8px;font-weight:700}
+  /* timeline */
+  .tl{position:relative;padding-left:28px;border-left:2px solid var(--border);margin:10px 0}
+  .tl .ev{position:relative;margin-bottom:18px}
+  .tl .ev::before{content:"";position:absolute;left:-34px;top:5px;width:12px;height:12px;border-radius:50%;
+     background:var(--purple);box-shadow:0 0 0 4px var(--card)}
+  .tl .yr{font-size:12px;color:var(--orange);font-weight:700}
+  .tl .ds{font-size:14px;color:#c9d1d9;margin-top:2px}
+  .quote{border-left:3px solid var(--purple);padding:4px 0 4px 16px;margin:14px 0;color:var(--muted);font-style:italic;font-size:14px}
+  .footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;line-height:1.9}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}.bars{grid-template-columns:1fr}h1{font-size:30px}section{padding:22px 18px}.lineage{flex-direction:column}.arrow{transform:rotate(90deg);padding:4px 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge viral">🔥 GitHub Trending</span>
+    <span class="badge os">🔓 开源 · 开放定价</span>
+    <span class="badge ai">🤖 Agentic 编程助手</span>
+    <span class="badge tool">⚡ VS Code / JetBrains / CLI / Cloud</span>
+    <h1>Kilo Code</h1>
+    <div class="tagline">The All-in-One Agentic Engineering —— 融合 Cline + Roo Code + Continue 的全能开源 AI 编程 Agent，支持 500+ 模型、零加价 BYOK</div>
+    <p class="lead">Kilo Code（<strong>Kilo-Org/kilocode</strong>）是当下增长最快的<strong>开源 AI 编程 Agent</strong>之一，由前 GitLab CEO <strong>Sid Sijbrandij</strong> 联合创立。它把 Cline、Roo Code、Continue 三大开源分支的精华整合为一套<strong>"全平台、全模型、全形态"</strong>的工程化 Agent：既能在 VS Code / JetBrains / CLI / Cloud 四端运行，又原生支持<strong>MCP 工具协议、并行多 Agent、行内补全</strong>。2025 年 12 月完成 <strong>800 万美元种子轮</strong>（Cota Capital 领投，General Catalyst 等跟投），并在 OpenRouter 登顶第一，宣称用户超 <strong>150 万</strong>。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">Kilo-Org/kilocode</div></div>
+      <div class="meta"><div class="k">⭐ Stars</div><div class="v">~23.5k</div></div>
+      <div class="meta"><div class="k">🍴 Forks</div><div class="v">~2.7k</div></div>
+      <div class="meta"><div class="k">📜 License</div><div class="v">MIT（开源）</div></div>
+      <div class="meta"><div class="k">💻 主语言</div><div class="v">TypeScript</div></div>
+      <div class="meta"><div class="k">👥 用户</div><div class="v">150 万+</div></div>
+      <div class="meta"><div class="k">💰 种子轮</div><div class="v">$8M（2025-12）</div></div>
+      <div class="meta"><div class="k">🔄 最近活跃</div><div class="v">2026-06</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">8.8<small>/10</small></div>
+      <div class="score-label">综合评分</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">功能完整度</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">9.2</span></div>
+      <div class="bar-row"><span class="name">技术架构</span><span class="bar-track"><span class="bar-fill" style="width:85%"></span></span><span class="num">8.5</span></div>
+      <div class="bar-row"><span class="name">社区活跃度</span><span class="bar-track"><span class="bar-fill" style="width:94%"></span></span><span class="num">9.4</span></div>
+      <div class="bar-row"><span class="name">创新能力</span><span class="bar-track"><span class="bar-fill" style="width:82%"></span></span><span class="num">8.2</span></div>
+      <div class="bar-row"><span class="name">文档生态</span><span class="bar-track"><span class="bar-fill" style="width:88%"></span></span><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">商业前景</span><span class="bar-track"><span class="bar-fill" style="width:88%"></span></span><span class="num">8.8</span></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <section>
+    <h2><span class="ico">📋</span>项目概述</h2>
+    <p>Kilo Code 把自己定义为<strong>"无处不在的 AI 编程 Agent"</strong>（an AI coding agent that meets you everywhere you work）。核心理念是：开发者无需在不同工具间切换——同一个 Agent 同时覆盖 <strong>VS Code 扩展、JetBrains 插件、命令行（CLI）和云端（Cloud）</strong>四条工作线，并能在它们之间保持一致的行为与配置。</p>
+    <p>它的产品哲学可以浓缩为三个"<strong>全</strong>"：<strong>全模型</strong>（接入 500+ AI 模型/供应商，支持自带 API Key，零加价 <em>BYOK</em>）、<strong>全平台</strong>（多 IDE + CLI + Cloud 统一体验）、<strong>全能力</strong>（从自然语言生成代码、自动化任务、执行终端命令，到行内补全、并行多 Agent、MCP 工具调用一站式覆盖）。代码始终留在本地，隐私可控。</p>
+    <p>在技术血统上，Kilo Code 并非从零造轮子，而是站在<strong>开源编程 Agent 三大分支</strong>的肩膀上：它融合了 <strong>Cline</strong>（最早的 VS Code 开源 Agent，约 140 万下载，奠定 Plan/Act 模式与 MCP）、<strong>Roo Code</strong>（Cline 的分支，扩展为多模式与项目感知）以及 <strong>Continue</strong>（行内补全代表）的精华，并补齐了它们各自缺失的部分。这种"集大成 + 补短板"的策略，使其迅速成为 Roo Code 用户的<strong>官方升级路径</strong>。</p>
+    <h3>核心定位标签</h3>
+    <span class="pill c">AI 编程 Agent</span>
+    <span class="pill p">Vibe Coding / Agentic</span>
+    <span class="pill g">500+ 模型 · BYOK 零加价</span>
+    <span class="pill">VS Code 扩展</span>
+    <span class="pill">JetBrains</span>
+    <span class="pill">CLI（基于 OpenCode）</span>
+    <span class="pill o">Cloud 云端</span>
+    <span class="pill c">MCP 工具协议</span>
+    <span class="pill p">并行多 Agent</span>
+    <span class="pill g">行内补全</span>
+  </section>
+
+  <!-- 技术血统 -->
+  <section>
+    <h2><span class="ico">🧬</span>技术血统：Cline → Roo Code → Kilo Code</h2>
+    <p>理解 Kilo Code 的关键，是理解它的<strong>血统演进</strong>。开源 VS Code 编程 Agent 形成了一条清晰的继承链，Kilo Code 处于这条链的最新一环，并把前几代的能力整合升级：</p>
+    <div class="lineage">
+      <div class="node">
+        <div class="nn">Cline</div>
+        <div class="nd">开源 VS Code Agent 的"祖师"。Plan/Act 双模式、MCP 集成、约 140 万下载。受限于仅两种模式、可配置性较弱。</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="node">
+        <div class="nn">Roo Code</div>
+        <div class="nd">Cline 的社区分支。加入项目感知、多种专属模式（Code/Architect/Debug/Ask），可配置性大幅提升。</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="node" style="border-color:rgba(188,140,255,.5);background:rgba(188,140,255,.06)">
+        <div class="nn" style="color:var(--purple)">Kilo Code</div>
+        <div class="nd">融合 Cline + Roo Code + Continue。补齐<strong>行内补全、多 IDE、CLI、Cloud</strong>，并新增并行多 Agent、new_task 子任务等能力。</div>
+      </div>
+    </div>
+    <p>正如社区评测所述：<em>"Kilo Code is built on a foundation that combines the best features from Cline, RooCode, and Continue into one powerful extension."</em> 它不仅是合并，更针对三者各自的短板做了补全——Cline 缺多模式与补全，Roo Code 缺多 IDE 与补全，Continue 缺 Agentic 能力——Kilo 试图用一套扩展把它们全部覆盖。</p>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>技术架构</h2>
+    <p>Kilo Code 的架构核心是<strong>"一个 Agent 内核，四条交付通道"</strong>。统一的 Agent 引擎负责意图理解、规划、工具调用与代码编辑，再分别对接 VS Code / JetBrains / CLI / Cloud 四个前端。主语言为 <strong>TypeScript</strong>，作为 IDE 扩展天然契合；其 CLI 形态建立在开源项目 <strong>OpenCode</strong> 之上。</p>
+
+    <h3>🔧 架构分层</h3>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">Agent 内核 / Core</div><div class="fd">统一的规划-执行引擎，负责理解自然语言意图、分解任务、调用工具、生成与编辑代码。多模式（Mode）切换决定 Agent 的行为风格。</div></div>
+      <div class="feat"><div class="ft">四模式 / Modes</div><div class="fd"><strong>Code</strong>（实现）、<strong>Architect</strong>（规划/设计）、<strong>Debug</strong>（诊断排错）、<strong>Ask</strong>（问答解释）。每模式有专属系统提示，专注不同任务。</div></div>
+      <div class="feat"><div class="ft">工具层 / Tools</div><div class="fd">内置 <code>read/write/edit_file</code>、<code>execute_command</code>（运行终端命令）、<code>use_mcp_tool</code>（MCP）、<code>new_task</code>（子任务）等工具，构成 Agent 的"手脚"。</div></div>
+      <div class="feat"><div class="ft">模型层 / Models</div><div class="fd">接入 <strong>500+ 模型/供应商</strong>（Anthropic、OpenAI、Google、本地 Ollama 等），<strong>BYOK 自带密钥、零加价</strong>，按用量直付，代码不经第三方中转。</div></div>
+      <div class="feat"><div class="ft">多端交付 / Surfaces</div><div class="fd">同一套能力通过 <strong>VS Code 扩展、JetBrains 插件、CLI（OpenCode）、Cloud</strong> 四端交付，配置与行为跨端一致。</div></div>
+      <div class="feat"><div class="ft">扩展生态 / Marketplace</div><div class="fd"><strong>Kilo Marketplace</strong> 提供可共享的 Skills（技能）、MCP Servers（工具服务）与 Modes（模式），社区共建能力库。</div></div>
+    </div>
+
+    <h3>📐 架构亮点</h3>
+    <ul>
+      <li><strong>new_task 子任务编排：</strong>通过 <code>new_task</code> 工具，主 Agent 可<strong>派生子任务</strong>并指定专属模式，维持父子关系，把复杂工程拆成可管理的片段——这是相比 Cline 单线程的重大跃迁。</li>
+      <li><strong>并行多 Agent：</strong>可同时拉起多个 Agent（分别负责实现、测试、文档等）并行推进，而非排队等待单一线程，显著提升复杂任务吞吐。</li>
+      <li><strong>MCP（Model Context Protocol）原生：</strong>通过 <code>use_mcp_tool</code> 接入任意 MCP Server，把数据库、浏览器、API、知识库等外部能力"插拔"进 Agent，扩展性接近无限。</li>
+      <li><strong>行内补全（Inline Autocomplete）：</strong>在 Cline / Roo Code 都不原生具备的能力上补齐，让 Agent 式编辑与 Copilot 式补全在同一扩展内统一。</li>
+      <li><strong>跨端一致性：</strong>VS Code、JetBrains、CLI、Cloud 共享同一内核与配置，开发者切换 IDE 体验不割裂。</li>
+      <li><strong>隐私优先：</strong>BYOK 直连模型供应商，代码不出本地，无第三方数据中转，符合企业合规诉求。</li>
+    </ul>
+
+    <div class="quote">"Kilo is an AI coding agent that meets you everywhere you work: VS Code, JetBrains, and the CLI. It's open source with open pricing." —— Kilo Code 官方仓库</div>
+  </section>
+
+  <!-- 核心创新点 -->
+  <section>
+    <h2><span class="ico">💡</span>核心创新点</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="ft">1. 开源谱系的"集大成"整合</div><div class="fd">把 Cline（Agent + MCP）、Roo Code（多模式）、Continue（行内补全）三条开源线融为一体，一站式补齐各自短板，是开源编程 Agent 走向"统一标准"的代表作。</div></div>
+      <div class="feat"><div class="ft">2. 子任务 + 并行多 Agent</div><div class="fd"><code>new_task</code> 派生带专属模式的子任务，多个 Agent 并行推进实现/测试/文档，把"单线程对话"升级为"工程化流水线"，复杂项目吞吐倍增。</div></div>
+      <div class="feat"><div class="ft">3. 四端统一交付</div><div class="fd">VS Code + JetBrains + CLI + Cloud 同源内核，是少有的真正打通"IDE 插件 / 命令行 / 云端"的开源 Agent，摆脱单一 IDE 绑定。</div></div>
+      <div class="feat"><div class="ft">4. 500+ 模型 · 零加价 BYOK</div><div class="fd">自带密钥直连供应商、无中间加价、代码不经第三方——把"模型自由度 + 成本可控 + 隐私"三者同时拉满，对标闭源订阅制。</div></div>
+      <div class="feat"><div class="ft">5. Agentic + 补全双形态合一</div><div class="fd">既能像 Cursor/Copilot 那样行内补全，又能像 Claude Code 那样全自主 Agent 编辑，一个扩展覆盖两种主流 AI 编程范式。</div></div>
+      <div class="feat"><div class="ft">6. 开放的能力市场</div><div class="fd">Kilo Marketplace 让 Skills / MCP Servers / Modes 可被社区共享复用，把"单个扩展"演化为"可组合的 Agent 能力生态"。</div></div>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section>
+    <h2><span class="ico">🎯</span>应用场景</h2>
+    <ul>
+      <li><strong>自然语言驱动的功能开发：</strong>用一句话描述需求，Agent 自动规划架构、读写多文件、运行验证，把"想法 → 可运行代码"的链路压缩到分钟级。</li>
+      <li><strong>大型重构与多文件改造：</strong>借助项目感知与并行多 Agent，对跨文件、跨模块的大规模重构、API 迁移、依赖升级进行协同处理。</li>
+      <li><strong>自动化排错与调试：</strong>切换到 <strong>Debug 模式</strong>，让 Agent 读取报错、定位根因、提出并应用修复，自动执行测试验证。</li>
+      <li><strong>多模型 / 成本敏感团队：</strong>BYOK + 500+ 模型让团队按任务自由选模型（贵模型用于规划、廉价模型用于补全），零加价直付，成本透明可控。</li>
+      <li><strong>隐私优先 / 合规场景：</strong>代码不出本地、密钥自带，适合金融、医疗、政企等对数据外发敏感的场景，亦可对接本地 Ollama 离线模型。</li>
+      <li><strong>从 Roo Code / Cline 平滑升级：</strong>作为两者的"官方维护升级路径"，既有用户配置与工作流可低成本迁移，立即获得补全、多 IDE、并行 Agent 等新能力。</li>
+      <li><strong>CLI / 云端自动化流水线：</strong>CLI 形态（基于 OpenCode）与 Cloud 端让 Agent 能嵌入 CI/CD、批处理、远程任务，实现脱离 IDE 的自动化编程。</li>
+    </ul>
+  </section>
+
+  <!-- 竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>竞品对比</h2>
+    <p>AI 编程赛道分为<strong>闭源订阅派</strong>（GitHub Copilot、Cursor、Claude Code）与<strong>开源 BYOK 派</strong>（Cline、Roo Code、Kilo Code、Continue）。Kilo Code 在开源派中以"全平台 + 全能力"突围，与闭源派则在成本与隐私上形成差异化。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th class="center">Kilo Code</th>
+          <th class="center">GitHub Copilot</th>
+          <th class="center">Cursor</th>
+          <th class="center">Cline</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>开源协议</td><td class="center yes">MIT 开源</td><td class="center no">闭源</td><td class="center no">闭源</td><td class="center yes">Apache-2.0 开源</td></tr>
+        <tr><td>模型接入</td><td class="center yes">500+ · BYOK 零加价</td><td class="center mid">限定模型套餐</td><td class="center mid">多家但需订阅</td><td class="center yes">BYOK</td></tr>
+        <tr><td>运行平台</td><td class="center yes">VS Code + JetBrains + CLI + Cloud</td><td class="center mid">多 IDE（插件）</td><td class="center mid">自有 IDE（VS Code 分支）</td><td class="center mid">VS Code 为主</td></tr>
+        <tr><td>Agent 模式</td><td class="center yes">Code/Architect/Debug/Ask 四模式</td><td class="center mid">Copilot Agent（演进中）</td><td class="center mid">Agent / Composer</td><td class="center mid">两种模式（受限）</td></tr>
+        <tr><td>并行多 Agent</td><td class="center yes">原生支持</td><td class="center no">较弱</td><td class="center mid">逐步支持</td><td class="center no">单线程</td></tr>
+        <tr><td>行内补全</td><td class="center yes">原生</td><td class="center yes">原生</td><td class="center yes">原生</td><td class="center no">不具备</td></tr>
+        <tr><td>MCP 支持</td><td class="center yes">原生（use_mcp_tool）</td><td class="center no">较弱 / 预览</td><td class="center mid">支持</td><td class="center yes">原生</td></tr>
+        <tr><td>隐私 / 数据外发</td><td class="center yes">代码留本地</td><td class="center mid">经 GitHub 云</td><td class="center mid">经 Cursor 云</td><td class="center yes">代码留本地</td></tr>
+        <tr><td>定价</td><td class="center yes">开源 / 按用量</td><td class="center mid">~$10/月 起</td><td class="center mid">~$20/月</td><td class="center yes">开源 / 按用量</td></tr>
+        <tr><td>最适合</td><td class="center">全平台 BYOK + 全能力</td><td class="center">个人低成本入门</td><td class="center">沉浸式 IDE 体验</td><td class="center">轻量 VS Code Agent</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px">一句话定位：<strong>Kilo Code</strong> 以"开源 + 全平台 + 全能力 + 零加价 BYOK"形成最完整组合，是多模型、重隐私、跨 IDE 团队的强力选项；<strong>GitHub Copilot</strong> 胜在价格亲民与生态广度；<strong>Cursor</strong> 胜在沉浸式编辑器体验；<strong>Cline / Roo Code</strong> 则是更轻量、更聚焦 VS Code 的开源选择。开源派内部，Kilo Code 正成为继 Cline/Roo 之后的事实"升级之选"。</p>
+  </section>
+
+  <!-- 公司与融资 -->
+  <section>
+    <h2><span class="ico">🏢</span>公司背景与融资</h2>
+    <p>Kilo Code 背后的公司 <strong>Kilo（kilo.ai）</strong>由前 <strong>GitLab CEO Sid Sijbrandij</strong> 联合创立。Sid 在企业级 DevOps 与开发者工具领域积累了深厚的运营与生态经验（GitLab 为全球主要的 DevOps 上市公司），这一背景为 Kilo Code 进入企业市场、构建工程化 Agent 提供了天然背书。</p>
+    <ul>
+      <li><strong>融资：</strong>2025 年 12 月 10 日宣布完成 <strong>800 万美元种子轮</strong>。</li>
+      <li><strong>领投：</strong>Cota Capital。</li>
+      <li><strong>跟投：</strong>Breakers、General Catalyst、Quiet Capital、Tokyo Black。</li>
+      <li><strong>市场表现：</strong>开源 AI 编程 Agent 在 <strong>OpenRouter 登顶第一</strong>；宣称用户超 <strong>150 万</strong>；GitHub Stars 约 <strong>23.5k</strong>。</li>
+      <li><strong>战略方向：</strong>主打"<strong>Kilo Speed</strong>"与 <em>Agentic Engineering</em> / <em>Vibe Coding</em>，定位为"让 AI 真正承担工程化编程"的下一代生产力工具。</li>
+    </ul>
+    <div class="quote">"Former GitLab CEO raises $8 million for Kilo to compete in vibe coding." —— CNBC（2025-12-10）</div>
+  </section>
+
+  <!-- 优劣势 -->
+  <section>
+    <h2><span class="ico">⚖️</span>优势与挑战</h2>
+    <div class="two-col">
+      <div class="pc pro">
+        <h4>✓ 核心优势</h4>
+        <ul>
+          <li>开源 MIT 协议，社区驱动，可自由审计与定制</li>
+          <li>500+ 模型 + 零加价 BYOK，模型自由度与成本可控兼得</li>
+          <li>四端统一交付（VS Code / JetBrains / CLI / Cloud），无单一 IDE 绑定</li>
+          <li>四模式 + new_task 子任务 + 并行多 Agent，工程化能力领先</li>
+          <li>原生 MCP，工具生态可无限扩展</li>
+          <li>补齐行内补全，Agentic 与 Copilot 范式二合一</li>
+          <li>代码留本地、隐私优先，契合企业合规</li>
+          <li>明星团队（前 GitLab CEO）+ 顶级 VC 背书，融资与生态健康</li>
+        </ul>
+      </div>
+      <div class="pc con">
+        <h4>⚠ 主要挑战</h4>
+        <ul>
+          <li>核心能力多继承自 Cline / Roo Code，原生原创性创新有限</li>
+          <li>四模式 + MCP + 并行 Agent 配置项丰富，新手上手曲线较陡</li>
+          <li>BYOK 要求用户自行管理与多家供应商的密钥/计费，有一定运维负担</li>
+          <li>开源 Agent 赛道高度内卷（Cline/Roo/Continue/Augment），差异化需持续拉大</li>
+          <li>闭源对手（Cursor/Copilot/Claude Code）迭代极快，编辑器级体验仍有差距</li>
+          <li>JetBrains / Cloud / CLI 形态相对 VS Code 主线成熟度略低</li>
+          <li>商业化路径（Cloud 计费、企业版）仍在建立中，长期盈利模型待验证</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展时间线 -->
+  <section>
+    <h2><span class="ico">🕒</span>发展时间线</h2>
+    <div class="tl">
+      <div class="ev"><div class="yr">背景</div><div class="ds"><strong>Cline</strong> 作为 VS Code 开源编程 Agent 兴起，确立 Plan/Act 模式与 MCP 集成，下载量约 140 万；随后 <strong>Roo Code</strong> 分支扩展多模式与项目感知。</div></div>
+      <div class="ev"><div class="yr">2024-2025</div><div class="ds"><strong>Kilo Code</strong> 立项，融合 Cline + Roo Code + Continue 精华，补齐行内补全与多 IDE 支持，定位为 Roo Code 的"维护升级路径"。</div></div>
+      <div class="ev"><div class="yr">2025-12-10</div><div class="ds">宣布完成 <strong>800 万美元种子轮</strong>，Cota Capital 领投，General Catalyst 等跟投；前 GitLab CEO Sid Sijbrandij 联合创立身份曝光。</div></div>
+      <div class="ev"><div class="yr">2025 年底</div><div class="ds">开源 AI 编程 Agent 在 <strong>OpenRouter 登顶第一</strong>；宣称用户突破 <strong>150 万</strong>；GitHub Stars 攀升至约 <strong>23.5k</strong>。</div></div>
+      <div class="ev"><div class="yr">2026</div><div class="ds">四端（VS Code / JetBrains / CLI / Cloud）持续完善，Kilo Marketplace 生态扩张，登上 GitHub Trending，活跃维护中。</div></div>
+    </div>
+  </section>
+
+  <!-- 综合评价 -->
+  <section>
+    <h2><span class="ico">🏁</span>综合评价</h2>
+    <p>Kilo Code 是<strong>开源 AI 编程 Agent 走向"大一统"的当前代表</strong>。它没有重新发明轮子，而是选择了一条务实的整合路线：把 Cline、Roo Code、Continue 三条开源分支最被认可的能力熔于一炉，再补上它们共同的短板（多 IDE、CLI、Cloud、行内补全、并行 Agent），最终交付了一个"全平台、全模型、全能力"的工程化 Agent。这种"集大成"策略在产品层面效果显著——它迅速成为 Roo Code 用户事实上的升级之选，并在 OpenRouter 登顶、收获超百万用户。</p>
+    <p>它真正的差异化在于<strong>"开源 + 零加价 BYOK + 四端统一 + Agent/补全合一"的组合稀缺性</strong>。闭源对手里，Copilot 胜在低价、Cursor 胜在编辑器体验，但都不开源、模型受限于套餐、数据需经云端；开源阵营里，Cline/Roo 聚焦 VS Code、缺补全与多端。Kilo Code 几乎是<strong>唯一一个同时把"模型自由、成本可控、隐私优先、跨 IDE、双形态合一"全部拉满</strong>的选项。</p>
+    <p>挑战同样现实：核心能力多为继承，原创护城河需靠子任务编排、并行 Agent、能力市场等差异化持续加固；BYOK 对普通用户有一定密钥/计费运维负担；闭源竞品迭代凶猛。综合来看，<strong>Kilo Code 是多模型、重隐私、跨平台团队当下最值得认真投入的开源 AI 编程 Agent</strong>——尤其当你已使用 Cline/Roo Code 并渴望补全、多 IDE 与更强的工程化编排时，它几乎是顺理成章的下一步。</p>
+    <div class="quote">推荐指数：★★★★½ —— 开源谱系集大成、全平台全模型、团队与融资背景扎实；若你追求极致编辑器沉浸体验或零配置开箱即用，可对比 Cursor / GitHub Copilot。</div>
+  </section>
+
+  <div class="footer">
+    🔗 仓库：<a href="https://github.com/Kilo-Org/kilocode" style="color:var(--accent)">github.com/Kilo-Org/kilocode</a> &nbsp;|&nbsp;
+    官网：<a href="https://kilo.ai/" style="color:var(--accent)">kilo.ai</a> &nbsp;|&nbsp;
+    文档：<a href="https://kilo.ai/docs" style="color:var(--accent)">kilo.ai/docs</a><br>
+    报告生成日期：2026-06-21 &nbsp;|&nbsp; 数据来源：Kilo Code 官方/博客、GitHub、CNBC/BusinessWire、社区评测 &nbsp;|&nbsp; GitHub Trending 深度分析
+  </div>
+
+</div>
+</body>
+</html>
