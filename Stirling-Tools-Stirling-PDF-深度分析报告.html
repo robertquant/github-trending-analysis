@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stirling-PDF 深度分析报告</title>
+<style>
+  :root {
+    --primary: #DC2626;
+    --primary-dark: #991B1B;
+    --accent: #F59E0B;
+    --bg: #0F172A;
+    --bg-soft: #1E293B;
+    --card: #FFFFFF;
+    --text: #1E293B;
+    --text-light: #64748B;
+    --border: #E2E8F0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    color: var(--text);
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+  .hero {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 50%, #F59E0B 100%);
+    border-radius: 24px;
+    padding: 50px 40px;
+    color: white;
+    margin-bottom: 32px;
+    box-shadow: 0 20px 60px rgba(220, 38, 38, 0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "PDF";
+    position: absolute;
+    right: -20px;
+    top: -40px;
+    font-size: 200px;
+    font-weight: 900;
+    opacity: 0.1;
+    letter-spacing: -8px;
+  }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+  }
+  .hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 12px; letter-spacing: -1px; }
+  .hero .subtitle { font-size: 17px; opacity: 0.95; max-width: 700px; }
+  .hero .repo-link { display: inline-block; margin-top: 20px; background: rgba(255,255,255,0.95); color: var(--primary-dark); padding: 10px 22px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14px; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px 18px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .stat-card .num { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .stat-card .label { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+  .section {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 34px 36px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  .section h2 {
+    font-size: 24px;
+    color: var(--bg);
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h2 .icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px; font-weight: 800;
+  }
+  .section h3 { font-size: 17px; color: var(--primary-dark); margin: 20px 0 10px; }
+  .section p { color: #334155; margin-bottom: 12px; }
+  .section ul { list-style: none; margin-left: 0; }
+  .section ul li { padding: 8px 0 8px 28px; position: relative; color: #334155; }
+  .section ul li::before {
+    content: "▸";
+    color: var(--primary);
+    position: absolute;
+    left: 8px;
+    font-weight: 800;
+  }
+
+  .tech-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .tech-item {
+    background: linear-gradient(135deg, #FEF2F2, #FFFFFF);
+    border: 1px solid #FECACA;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .tech-item .name { font-weight: 700; color: var(--primary-dark); font-size: 15px; }
+  .tech-item .role { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .feature-item {
+    background: #F8FAFC;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .feature-item .title { font-weight: 700; color: var(--bg); margin-bottom: 4px; }
+  .feature-item .desc { font-size: 13px; color: var(--text-light); }
+
+  .compare-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .compare-table th {
+    background: var(--bg);
+    color: white;
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 14px;
+  }
+  .compare-table th:first-child { border-radius: 8px 0 0 0; }
+  .compare-table th:last-child { border-radius: 0 8px 0 0; }
+  .compare-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; color: #334155; }
+  .compare-table tr:hover td { background: #FEF2F2; }
+  .pill-yes { color: #16A34A; font-weight: 700; }
+  .pill-no { color: #DC2626; font-weight: 700; }
+  .pill-mid { color: #D97706; font-weight: 700; }
+
+  .score-board {
+    background: linear-gradient(135deg, #1E293B, #0F172A);
+    border-radius: 18px;
+    padding: 34px 36px;
+    color: white;
+  }
+  .score-board h2 { color: white; border-bottom-color: var(--accent); }
+  .score-board h2 .icon { background: linear-gradient(135deg, var(--accent), var(--primary)); }
+  .score-item { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .score-item .name { width: 130px; font-size: 14px; opacity: 0.9; }
+  .score-bar { flex: 1; height: 12px; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden; }
+  .score-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--primary)); border-radius: 6px; }
+  .score-val { width: 50px; text-align: right; font-weight: 700; font-size: 15px; }
+  .total-score {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .total-score .label { font-size: 18px; opacity: 0.9; }
+  .total-score .big { font-size: 40px; font-weight: 800; color: var(--accent); }
+
+  .callout {
+    background: #FFFBEB;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 14px;
+  }
+  .callout strong { color: var(--primary-dark); }
+  .warn {
+    background: #FEF2F2;
+    border-left: 4px solid var(--primary);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 14px;
+  }
+  .warn strong { color: var(--primary-dark); }
+
+  .footer { text-align: center; color: #94A3B8; font-size: 13px; padding: 24px 0 10px; }
+  @media (max-width: 700px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .feature-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 30px; }
+    .section { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <span class="badge">🔥 GitHub Trending · 文档工具</span>
+    <h1>Stirling-PDF</h1>
+    <p class="subtitle">GitHub 上排名第一的开源 PDF 平台，一个能在桌面、浏览器、自有服务器上编辑、签名、涂抹、转换并自动化 PDF 的全能工具——全程不向任何外部服务发送文档。</p>
+    <a class="repo-link" href="https://github.com/Stirling-Tools/Stirling-PDF" target="_blank">→ 访问 GitHub 仓库</a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="num">50K+</div><div class="label">GitHub Stars</div></div>
+    <div class="stat-card"><div class="num">29M+</div><div class="label">Docker 下载量</div></div>
+    <div class="stat-card"><div class="num">60+</div><div class="label">PDF 工具</div></div>
+    <div class="stat-card"><div class="num">40+</div><div class="label">界面语言</div></div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2><span class="icon">①</span>项目概述</h2>
+    <p><strong>Stirling-PDF</strong> 是由 <strong>Stirling-Tools</strong> 团队开发维护的开源 PDF 处理平台，自称为「GitHub 上排名第一的开源 PDF 应用」。它的核心定位是一个<strong>本地化、私有化部署</strong>的 PDF 全功能工具集，目标是成为 Adobe Acrobat 与 iLovePDF / Smallpdf 等在线服务的开源替代品。</p>
+    <p>区别于传统桌面 PDF 编辑器，Stirling-PDF 提供<strong>三种使用形态</strong>：个人桌面客户端、浏览器端 Web 应用、以及可自托管的服务端（含私有 REST API）。所有文档处理都在用户自己的基础设施上完成，<strong>不向外部发送任何文件，也不做任何出站调用或数据追踪</strong>，这一点对注重隐私的企业与个人极具吸引力。</p>
+    <div class="callout">
+      <strong>💡 一句话定位：</strong> 把 iLovePDF / Smallpdf 约 90% 的功能打包进一个 Docker 容器，跑在你自己的服务器上，数据永远不出域。
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2><span class="icon">②</span>技术架构</h2>
+    <p>Stirling-PDF 采用<strong>经典的 Java 服务端架构</strong>，以 Spring Boot 为后端核心，结合多个成熟的 PDF 处理开源库，整体架构清晰、易于自托管与扩展。</p>
+    <div class="tech-stack">
+      <div class="tech-item"><div class="name">Spring Boot</div><div class="role">Java 后端主框架，提供 REST API 与 Web 服务</div></div>
+      <div class="tech-item"><div class="name">Apache PDFBox</div><div class="role">核心 PDF 解析/生成/操作引擎</div></div>
+      <div class="tech-item"><div class="name">LibreOffice (headless)</div><div class="role">高级文档格式互转（Word/PPT↔PDF）</div></div>
+      <div class="tech-item"><div class="name">OCRmyPDF</div><div class="role">扫描件 PDF 的 OCR 文字识别</div></div>
+      <div class="tech-item"><div class="name">Thymeleaf</div><div class="role">服务端模板渲染（V2.0+ 含新版前端）</div></div>
+      <div class="tech-item"><div class="name">Docker</div><div class="role">单容器化部署，开箱即用</div></div>
+      <div class="tech-item"><div class="name">Task (统一命令)</div><div class="role">构建/开发/测试/Lint 的统一运行器</div></div>
+      <div class="tech-item"><div class="name">OpenSSF Scorecard</div><div class="role">开源供应链安全评分体系</div></div>
+    </div>
+    <h3>部署方式</h3>
+    <ul>
+      <li><strong>一行 Docker 启动：</strong> <code>docker run -p 8080:8080 docker.stirlingpdf.com/stirlingtools/stirling-pdf</code></li>
+      <li>支持桌面客户端（Windows/Mac/Linux 可执行文件）</li>
+      <li>支持 Kubernetes 集群化部署（面向企业级吞吐）</li>
+      <li>启动预热约 90 秒（Spring Boot + LibreOffice 初始化）</li>
+    </ul>
+    <div class="warn">
+      <strong>⚠️ 安全提示：</strong> 2025 年披露 <strong>CVE-2025-55150（SSRF 漏洞）</strong>，攻击者可在 HTML→PDF 转换时绕过安全过滤进行服务端请求伪造。生产部署务必升级至已修复版本，并对不需要外部 URL 的实例限制出站网络。
+    </div>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2><span class="icon">③</span>核心创新点与功能</h2>
+    <div class="feature-grid">
+      <div class="feature-item"><div class="title">60+ PDF 操作</div><div class="desc">合并、拆分、压缩（最高压缩 90%）、旋转、重组、加签名、涂抹、水印、表单填写等</div></div>
+      <div class="feature-item"><div class="title">全本地处理</div><div class="desc">文档永不上传第三方，零出站调用，无任何数据追踪</div></div>
+      <div class="feature-item"><div class="title">无代码自动化工作流</div><div class="desc">UI 内拖拽构建处理流水线，配合 API 可批量处理百万级 PDF</div></div>
+      <div class="feature-item"><div class="title">开发者 REST API</div><div class="desc">几乎所有工具都暴露 API，便于集成进既有业务系统</div></div>
+      <div class="feature-item"><div class="title">企业级特性</div><div class="desc">支持 SSO 单点登录、操作审计、灵活的本地化部署</div></div>
+      <div class="feature-item"><div class="title">40+ 多语言界面</div><div class="desc">全球化 UI，社区持续贡献翻译</div></div>
+      <div class="feature-item"><div class="title">OCR 文字识别</div><div class="desc">基于 OCRmyPDF，将扫描件转为可检索文本</div></div>
+      <div class="feature-item"><div class="title">Open-core 商业模式</div><div class="desc">核心开源免费；企业增强功能（SSO/审计等）位于 app/proprietary 目录</div></div>
+    </div>
+    <div class="callout">
+      <strong>🔑 关键差异化：</strong> 大多数 PDF 工具要么是「本地桌面软件」要么是「云端 SaaS」。Stirling-PDF 同时提供桌面 + 浏览器 + 自托管 API 三态，且<strong>开源核心 + 企业增值</strong>的开核（open-core）模式平衡了社区与商业化。
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2><span class="icon">④</span>应用场景</h2>
+    <ul>
+      <li><strong>隐私敏感企业 / 政府：</strong> 合同、票据、人事档案等机密文件需在本地完成合并、签章、转换，绝不能上传至公有云</li>
+      <li><strong>自托管爱好者 (r/selfhosted)：</strong> 在 Homelab 中部署一个容器，替代多个在线 PDF 网站</li>
+      <li><strong>开发团队自动化：</strong> 通过 REST API 把 PDF 压缩、转换、水印嵌入 CI/CD 与业务流水线，批量处理海量文档</li>
+      <li><strong>中小型企业 (SME)：</strong> 以极低成本（一台服务器）获得接近 Adobe Acrobat 的功能集合，避免高昂订阅费</li>
+      <li><strong>法律 / 金融行业：</strong> 涂抹敏感信息、文件审计、合规留存等场景</li>
+      <li><strong>多语言团队：</strong> 40+ 界面语言，跨国协作无障碍</li>
+    </ul>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2><span class="icon">⑤</span>竞品对比</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>维度</th><th>Stirling-PDF</th><th>iLovePDF / Smallpdf</th><th>LibreOffice Draw</th><th>Adobe Acrobat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>类型</td><td>开源自托管 Web/App</td><td>云端 SaaS</td><td>桌面套件模块</td><td>商业桌面/云</td></tr>
+        <tr><td>隐私（本地处理）</td><td class="pill-yes">✅ 全本地无外传</td><td class="pill-no">❌ 需上传云端</td><td class="pill-yes">✅ 全本地</td><td class="pill-mid">⚠️ 部分云功能</td></tr>
+        <tr><td>部署方式</td><td>Docker / 桌面 / API</td><td>仅网页</td><td>本地安装</td><td>本地 + 云</td></tr>
+        <tr><td>功能数量</td><td>60+ 工具</td><td>~30+</td><td>偏编辑</td><td>最全</td></tr>
+        <tr><td>批处理 / 自动化</td><td class="pill-yes">✅ API + 工作流</td><td class="pill-mid">⚠️ 受限</td><td class="pill-no">❌ 弱</td><td class="pill-yes">✅ 强（付费）</td></tr>
+        <tr><td>成本</td><td class="pill-yes">免费（开核）</td><td>免费有限/订阅</td><td class="pill-yes">免费</td><td class="pill-no">高订阅费</td></tr>
+        <tr><td>OCR 支持</td><td class="pill-yes">✅ OCRmyPDF</td><td class="pill-yes">✅</td><td class="pill-no">❌ 无</td><td class="pill-yes">✅</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>📌 小结：</strong> 相比 iLovePDF/Smallpdf，Stirling-PDF 胜在<strong>隐私与可控性</strong>；相比 LibreOffice，胜在<strong>批量自动化与 API 集成</strong>；相比 Adobe Acrobat，胜在<strong>零成本与开源自托管</strong>。其最大短板是<strong>深度可视化排版编辑</strong>能力不及 Acrobat 专业版。
+    </div>
+  </div>
+
+  <!-- 综合评分 -->
+  <div class="section score-board">
+    <h2><span class="icon">⑥</span>综合评分</h2>
+    <div class="score-item">
+      <span class="name">项目活跃度</span>
+      <div class="score-bar"><div class="score-fill" style="width:95%"></div></div>
+      <span class="score-val">9.5</span>
+    </div>
+    <div class="score-item">
+      <span class="name">实用性</span>
+      <div class="score-bar"><div class="score-fill" style="width:96%"></div></div>
+      <span class="score-val">9.6</span>
+    </div>
+    <div class="score-item">
+      <span class="name">部署便利性</span>
+      <div class="score-bar"><div class="score-fill" style="width:92%"></div></div>
+      <span class="score-val">9.2</span>
+    </div>
+    <div class="score-item">
+      <span class="name">社区生态</span>
+      <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+      <span class="score-val">9.0</span>
+    </div>
+    <div class="score-item">
+      <span class="name">文档质量</span>
+      <div class="score-bar"><div class="score-fill" style="width:88%"></div></div>
+      <span class="score-val">8.8</span>
+    </div>
+    <div class="score-item">
+      <span class="name">技术创新</span>
+      <div class="score-bar"><div class="score-fill" style="width:82%"></div></div>
+      <span class="score-val">8.2</span>
+    </div>
+    <div class="score-item">
+      <span class="name">安全性</span>
+      <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+      <span class="score-val">8.0</span>
+    </div>
+    <div class="total-score">
+      <span class="label">综合加权评分</span>
+      <span class="big">9.0 / 10</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2><span class="icon">★</span>总结</h2>
+    <p>Stirling-PDF 是当前开源世界里<strong>最成熟、最全面</strong>的私有化 PDF 处理平台之一。它以 Spring Boot + PDFBox + LibreOffice 的经典技术栈，把 60+ 个常用 PDF 操作收敛进一个 Docker 容器，凭借「数据不出域 + 全平台形态 + 开发者 API + 无代码自动化」的组合，精准击中了<strong>隐私合规、自托管、批量自动化</strong>三大痛点。开核（open-core）商业模式让社区与企业需求得以兼顾，29M+ 下载量与 50K+ Stars 印证了其强大的市场认可度。对于任何需要可控、可自动化、可扩展 PDF 能力的团队或个人，它都是<strong>首选的开源方案</strong>。唯一需要注意的是持续关注安全公告（如 CVE-2025-55150）并及时升级。</p>
+  </div>
+
+  <div class="footer">
+    报告生成时间：2026-06-23 · 数据来源：GitHub / 官方文档 / 社区评测 · 由 GitHub Trending 深度分析师生成
+  </div>
+
+</div>
+</body>
+</html>

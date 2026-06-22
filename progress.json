@@ -2,7 +2,6 @@
   "date": "2026-06-23",
   "fetched_at": "2026-06-23",
   "pending": [
-    "Stirling-Tools/Stirling-PDF",
     "heygen-com/hyperframes",
     "firecrawl/firecrawl",
     "JCodesMore/ai-website-cloner-template",
@@ -20,7 +19,9 @@
     "DeusData/codebase-memory-mcp",
     "ZhuLinsen/daily_stock_analysis"
   ],
-  "done": [],
+  "done": [
+    "Stirling-Tools/Stirling-PDF"
+  ],
   "projects": [
     {
       "name": "calesthio/OpenMontage",
@@ -44,7 +45,7 @@
     },
     {
       "name": "Stirling-Tools/Stirling-PDF",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "garrytan/gstack",
@@ -85,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 5,
+    "pending": 4,
     "skipped": 10,
-    "done": 0
+    "done": 1
   }
 }
