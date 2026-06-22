@@ -1,41 +1,41 @@
 {
-  "date": "2026-06-22",
-  "fetched_at": "2026-06-22",
-  "pending": [],
+  "date": "2026-06-23",
+  "fetched_at": "2026-06-23",
+  "pending": [
+    "Stirling-Tools/Stirling-PDF",
+    "heygen-com/hyperframes",
+    "firecrawl/firecrawl",
+    "JCodesMore/ai-website-cloner-template",
+    "lyogavin/airllm"
+  ],
   "skipped_already_analyzed": [
-    "palmier-io/palmier-pro",
     "calesthio/OpenMontage",
-    "chopratejas/headroom",
-    "tursodatabase/turso",
+    "palmier-io/palmier-pro",
+    "jamiepine/voicebox",
+    "mukul975/Anthropic-Cybersecurity-Skills",
     "penpot/penpot",
-    "ZhuLinsen/daily_stock_analysis",
-    "koala73/worldmonitor",
+    "garrytan/gstack",
+    "tursodatabase/turso",
     "bytedance/deer-flow",
     "DeusData/codebase-memory-mcp",
-    "mukul975/Anthropic-Cybersecurity-Skills",
-    "tw93/Pake",
-    "byoungd/English-level-up-tips"
+    "ZhuLinsen/daily_stock_analysis"
   ],
-  "done": [
-    "mikumifa/biliTickerBuy",
-    "smicallef/spiderfoot",
-    "topoteretes/cognee"
-  ],
+  "done": [],
   "projects": [
-    {
-      "name": "palmier-io/palmier-pro",
-      "status": "skipped"
-    },
     {
       "name": "calesthio/OpenMontage",
       "status": "skipped"
     },
     {
-      "name": "chopratejas/headroom",
+      "name": "palmier-io/palmier-pro",
       "status": "skipped"
     },
     {
-      "name": "tursodatabase/turso",
+      "name": "jamiepine/voicebox",
+      "status": "skipped"
+    },
+    {
+      "name": "mukul975/Anthropic-Cybersecurity-Skills",
       "status": "skipped"
     },
     {
@@ -43,11 +43,19 @@
       "status": "skipped"
     },
     {
-      "name": "ZhuLinsen/daily_stock_analysis",
+      "name": "Stirling-Tools/Stirling-PDF",
+      "status": "pending"
+    },
+    {
+      "name": "garrytan/gstack",
       "status": "skipped"
     },
     {
-      "name": "koala73/worldmonitor",
+      "name": "heygen-com/hyperframes",
+      "status": "pending"
+    },
+    {
+      "name": "tursodatabase/turso",
       "status": "skipped"
     },
     {
@@ -59,34 +67,26 @@
       "status": "skipped"
     },
     {
-      "name": "mukul975/Anthropic-Cybersecurity-Skills",
+      "name": "ZhuLinsen/daily_stock_analysis",
       "status": "skipped"
     },
     {
-      "name": "tw93/Pake",
-      "status": "skipped"
+      "name": "firecrawl/firecrawl",
+      "status": "pending"
     },
     {
-      "name": "mikumifa/biliTickerBuy",
-      "status": "done"
+      "name": "JCodesMore/ai-website-cloner-template",
+      "status": "pending"
     },
     {
-      "name": "smicallef/spiderfoot",
-      "status": "done"
-    },
-    {
-      "name": "topoteretes/cognee",
-      "status": "done"
-    },
-    {
-      "name": "byoungd/English-level-up-tips",
-      "status": "skipped"
+      "name": "lyogavin/airllm",
+      "status": "pending"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 0,
-    "skipped": 12,
-    "done": 3
+    "pending": 5,
+    "skipped": 10,
+    "done": 0
   }
 }
