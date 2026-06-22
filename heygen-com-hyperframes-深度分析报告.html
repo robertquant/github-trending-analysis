@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperFrames 深度分析报告 | heygen-com/hyperframes</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent2:#7ee787;
+    --purple:#bc8cff; --pink:#f778ba; --orange:#ffa657; --red:#ff7b72;
+    --gold:#e3b341; --cyan:#39d0d8; --magenta:#ff5d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",-apple-system,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);
+    color:var(--text); line-height:1.75; min-height:100vh;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    background:radial-gradient(1200px 400px at 10% -20%, rgba(88,166,255,.22), transparent),
+               radial-gradient(900px 500px at 100% 0%, rgba(188,140,255,.18), transparent),
+               var(--card);
+    border:1px solid var(--border); border-radius:20px; padding:44px 40px; margin-bottom:28px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--muted);margin:0 6px 8px 0;
+  }
+  .badge.os{color:var(--accent2);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.07)}
+  .badge.video{color:var(--orange);border-color:rgba(255,166,87,.4);background:rgba(255,166,87,.08)}
+  .badge.ai{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
+  .badge.tool{color:var(--cyan);border-color:rgba(57,208,216,.4);background:rgba(57,208,216,.08)}
+  .badge.web{color:var(--accent);border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.08)}
+  h1{font-size:38px;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;
+     background:linear-gradient(90deg,#fff,#58a6ff 55%,#bc8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:17px;color:var(--accent);font-weight:600;margin-bottom:20px}
+  .hero p.lead{color:var(--muted);font-size:15.5px;max-width:840px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:24px}
+  .meta{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:14.5px;font-weight:600}
+  /* SCORE */
+  .score-card{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(188,140,255,.10));
+    border:1px solid var(--border);border-radius:18px;padding:26px 32px;margin-bottom:28px;
+  }
+  .score-big{font-size:64px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:13px;color:var(--muted);margin-top:2px}
+  .bars{flex:1;min-width:280px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .bar-row .name{width:96px;color:var(--text);flex-shrink:0}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--purple))}
+  .bar-row .num{width:34px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* SECTIONS */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px;
+     border-bottom:1px solid var(--border);padding-bottom:14px}
+  h2 .ico{font-size:24px}
+  h3{font-size:16.5px;color:var(--accent);margin:22px 0 12px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul{margin:8px 0 14px 4px;list-style:none}
+  ul li{position:relative;padding-left:24px;margin-bottom:8px;color:#c9d1d9}
+  ul li::before{content:"▸";position:absolute;left:4px;color:var(--cyan)}
+  code{background:rgba(110,118,129,.25);padding:2px 7px;border-radius:6px;font-size:13px;
+       font-family:"SF Mono","Fira Code",Consolas,monospace;color:var(--accent2)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;margin:2px;
+        background:rgba(88,166,255,.10);border:1px solid rgba(88,166,255,.3);color:var(--accent)}
+  .pill.g{background:rgba(126,231,135,.08);border-color:rgba(126,231,135,.3);color:var(--accent2)}
+  .pill.p{background:rgba(188,140,255,.10);border-color:rgba(188,140,255,.3);color:var(--purple)}
+  .pill.o{background:rgba(255,166,87,.10);border-color:rgba(255,166,87,.3);color:var(--orange)}
+  .pill.c{background:rgba(57,208,216,.10);border-color:rgba(57,208,216,.3);color:var(--cyan)}
+  /* feature cards */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .feat .ft{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:5px}
+  .feat .fd{font-size:13px;color:var(--muted);line-height:1.6}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--accent);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.02)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  td.center,th.center{text-align:center}
+  .yes{color:var(--accent2);font-weight:700}
+  .no{color:var(--red);font-weight:700}
+  /* arch diagram */
+  .arch{
+    background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:22px;margin:14px 0;
+    font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:13px;color:#c9d1d9;overflow-x:auto;line-height:1.9;
+  }
+  .arch .hl{color:var(--purple)}
+  .arch .hl2{color:var(--accent2)}
+  .arch .hl3{color:var(--cyan)}
+  .arch .hl4{color:var(--orange)}
+  /* code block */
+  .code{
+    background:#010409;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:14px 0;
+    font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:12.5px;color:#c9d1d9;overflow-x:auto;line-height:1.7;
+    white-space:pre;
+  }
+  .code .tag{color:var(--red)}
+  .code .attr{color:var(--orange)}
+  .code .val{color:var(--accent2)}
+  .code .cmt{color:var(--muted)}
+  /* highlight box */
+  .hl-box{background:linear-gradient(135deg,rgba(88,166,255,.08),rgba(188,140,255,.06));
+          border:1px solid rgba(88,166,255,.25);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .hl-box h4{color:var(--accent);font-size:15px;margin-bottom:8px}
+  .quote{border-left:3px solid var(--accent);padding:6px 0 6px 16px;color:var(--muted);
+         font-style:italic;margin:14px 0;background:rgba(88,166,255,.04);border-radius:0 8px 8px 0}
+  .src{font-size:12.5px;color:var(--muted)}
+  .src a{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--accent)}
+  .src a:hover{opacity:.8}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:30px;border-top:1px solid var(--border);padding-top:24px}
+  @media(max-width:640px){h1{font-size:28px}.bars{grid-template-columns:1fr}.score-big{font-size:52px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <span class="badge os">🟢 开源 Apache 2.0</span>
+      <span class="badge web">🌐 Write HTML</span>
+      <span class="badge video">🎬 Render Video</span>
+      <span class="badge ai">🤖 Built for Agents</span>
+      <span class="badge tool">⚙️ 确定性逐帧渲染</span>
+      <span class="badge">🏢 HeyGen 出品</span>
+    </div>
+    <h1>HyperFrames —— 用写网页的方式生成视频</h1>
+    <div class="tagline">"Write HTML. Render video. Built for agents."</div>
+    <p class="lead">由 AI 视频巨头 HeyGen 开源的视频渲染框架。它把 <strong>HTML / CSS / JavaScript 当成视频的"源代码"</strong>：你（或 AI Agent）像写网页一样写一段 HTML，框架通过无头 Chrome 逐帧捕获像素，确定性地产出广播级 MP4。无需 React 打包器、无需专业时间线软件，一句 prompt + 一条命令即可完成从脚本到成片的全流程——这正是"vibe-coding 视频"的核心范式。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">仓库</div><div class="v">heygen-com/hyperframes</div></div>
+      <div class="meta"><div class="k">出品方</div><div class="v">HeyGen</div></div>
+      <div class="meta"><div class="k">官网</div><div class="v">hyperframes.heygen.com</div></div>
+      <div class="meta"><div class="k">许可证</div><div class="v">Apache 2.0（完全开放）</div></div>
+      <div class="meta"><div class="k">核心栈</div><div class="v">HTML/CSS/JS + 无头Chrome + FFmpeg</div></div>
+      <div class="meta"><div class="k">动画</div><div class="v">GSAP 可 seek 时间线</div></div>
+      <div class="meta"><div class="k">定位</div><div class="v">面向 Agent 的"视频即代码"框架</div></div>
+      <div class="meta"><div class="k">对标</div><div class="v">Remotion（React 派）</div></div>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-card">
+    <div>
+      <div class="score-big">8.4<small>/10</small></div>
+      <div class="score-label">综合评分</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row"><span class="name">技术架构</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="num">8.8</span></div>
+      <div class="bar-row"><span class="name">创新性</span><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><span class="num">9.0</span></div>
+      <div class="bar-row"><span class="name">产品定位</span><div class="bar-track"><div class="bar-fill" style="width:89%"></div></div><span class="num">8.9</span></div>
+      <div class="bar-row"><span class="name">Agent 友好度</span><div class="bar-track"><div class="bar-fill" style="width:93%"></div></div><span class="num">9.3</span></div>
+      <div class="bar-row"><span class="name">生态/成熟度</span><div class="bar-track"><div class="bar-fill" style="width:70%"></div></div><span class="num">7.0</span></div>
+      <div class="bar-row"><span class="name">背景背书</span><div class="bar-track"><div class="bar-fill" style="width:85%"></div></div><span class="num">8.5</span></div>
+    </div>
+  </div>
+
+  <!-- 一、项目概述 -->
+  <section>
+    <h2><span class="ico">📖</span>一、项目概述</h2>
+    <p>程序化视频（programmatic video）正在经历一场范式转移：传统视频生产高度依赖<strong>时间线编辑软件 + 专业设计人力</strong>，而 2024 年以来，<strong>"用代码定义视频、用 AI 生成代码"</strong>的路线迅速崛起。Remotion 率先验证了"无头 Chrome 作为确定性视频渲染器"在大规模场景下可行，这条技术路线已被业界接受。</p>
+    <p><strong>HyperFrames 正是站在 Remotion 肩膀上的下一代实现，但它做出了一个关键决策：把"媒介"从 React 组件换成了纯 HTML。</strong> 这不是小修小补——React 组件需要打包器、需要理解 JSX/状态/钩子，对 AI Agent 而言"心智负担"重且易出错；而 HTML 是<strong>所有大模型最熟悉的格式</strong>。HyperFrames 让 Agent 直接写它在预训练里见过百万次的 HTML/CSS，再由渲染器把网页变成视频。这种"降低 Agent 写代码门槛"的设计，正是其 "Built for agents" 标语的本质。</p>
+    <p>项目由全球领先的 AI 视频公司 <strong>HeyGen</strong> 开源（Apache 2.0，无渲染点数、无席位限制、无商业分级），其官方 Launch 视频本身就是用 HyperFrames 构建的（见 <code>hyperframes-launch-video</code> 仓库）——"用自己的产品做自己的发布物料"，是少见的 dogfooding 诚意。</p>
+    <div class="quote">"Remotion treats video as React components; HyperFrames treats it as HTML. Both drive headless Chrome, both are deterministic, both ship agent skills — they differ on one decision: what the medium is." —— 技术评论</div>
+    <h3>关键定位</h3>
+    <ul>
+      <li><strong>不是视频编辑器</strong>，而是<strong>渲染引擎</strong>：它把 HTML 里的每一个元素当作一个"clip"，用 <code>data-*</code> 属性声明时间/时长。</li>
+      <li><strong>不是 SaaS</strong>，而是<strong>可自托管的本地框架</strong>：Apache 2.0 完全免费，确定性本地渲染，同一输入永远产出同一输出。</li>
+      <li><strong>不是给人拖拽的工具</strong>，而是<strong>给 Agent 写代码的工具</strong>：内置 skills 教会 Agent 完整生产闭环。</li>
+    </ul>
+  </section>
+
+  <!-- 二、技术架构 -->
+  <section>
+    <h2><span class="ico">🏗️</span>二、技术架构（HTML 为源 + CDP 逐帧确定性渲染）</h2>
+    <p>HyperFrames 的精髓在于一句话：<strong>HTML 是唯一真相（single source of truth）</strong>。一个 composition 就是一个 HTML 文件，其 DOM 用 <code>data-*</code> 属性声明时间线，动画运行时是<strong>可 seek 的（seekable）</strong>——这是确定性渲染的前提。</p>
+
+    <div class="arch">
+<span class="hl">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl">│</span>  <span class="hl4">① 编写层 (Authoring) — HTML / CSS / JS，Agent 友好</span>          <span class="hl">│</span>
+<span class="hl">│</span>   • composition = 一个 HTML 文件（HTML 即真相）                <span class="hl">│</span>
+<span class="hl">│</span>   • 用 <span class="hl3">data-* 属性</span>在 DOM 上声明 clip 的时间 / 时长 / 行为     <span class="hl">│</span>
+<span class="hl">│</span>   • 动画用 <span class="hl2">GSAP 时间线</span>，运行时 <span class="hl2">可 seek</span>（可定位到任意帧）   <span class="hl">│</span>
+<span class="hl">│</span>   • 可嵌入媒体：图片 / 视频 / 音频 / Lottie / SVG …            <span class="hl">│</span>
+<span class="hl">│</span>   • 纯 HTML/CSS/JS —— <span class="hl4">无需 React / 无打包器 / 无专有时间线</span>   <span class="hl">│</span>
+<span class="hl">└──────────────────────────────┬──────────────────────────────┘</span>
+                       <span class="hl3">Lint → Preview（可拖动 scrub 预览）</span>
+<span class="hl">┌──────────────────────────────┴──────────────────────────────┐</span>
+<span class="hl">│</span>  <span class="hl4">② 渲染引擎 (Rendering) — 无头 Chrome + CDP 确定性捕获</span>       <span class="hl">│</span>
+<span class="hl">│</span>   • 启动无头 Chrome，经 <span class="hl3">Chrome DevTools Protocol (CDP)</span> 驱动   <span class="hl">│</span>
+<span class="hl">│</span>   • <span class="hl2">暂停</span>页面合成，逐帧发出 <span class="hl2">BeginFrame</span> 指令              <span class="hl">│</span>
+<span class="hl">│</span>   • seek 到第 N 帧 → <span class="hl2">捕获像素缓冲 (pixel buffer)</span>            <span class="hl">│</span>
+<span class="hl">│</span>   • 帧与帧之间 <strong>确定性</strong>：同一输入 → 完全一致的输出         <span class="hl">│</span>
+<span class="hl">│</span>   • <span class="hl4">HDR 输出</span>：两遍渲染 (two-pass) 方案，突破 Chrome 仅输出 sRGB  <span class="hl">│</span>
+<span class="hl">└───────────────────────────────┬─────────────────────────────┘</span>
+                  <span class="hl3">FFmpeg 编码</span>
+<span class="hl">┌───────────────────────────────┴─────────────────────────────┐</span>
+<span class="hl">│</span>  <span class="hl4">③ 输出 (Output) — 生产级 MP4</span>                                 <span class="hl">│</span>
+<span class="hl">│</span>   • 广播级 MP4，支持 HDR / 多分辨率 / 帧率                     <span class="hl">│</span>
+<span class="hl">│</span>   • 可集成旁白 / 配音 / 字幕轨道                                <span class="hl">│</span>
+<span class="hl">└─────────────────────────────────────────────────────────────┘</span>
+    </div>
+
+    <h3>① 编写层：HTML 即真相</h3>
+    <ul>
+      <li><strong>Composition = HTML 文件</strong>：DOM 中每个元素就是一个"clip"，用 <code>data-*</code> 属性声明它的入场时间、持续时长、行为。</li>
+      <li><strong>动画运行时可 seek</strong>：底层用 <strong>GSAP 时间线</strong>，渲染器能把动画指针定位到任意第 N 帧——这是逐帧确定性捕获的基础（不可 seek 的动画无法做到帧级一致）。</li>
+      <li><strong>媒体融合</strong>：可直接嵌入图片、视频片段、音频、SVG、Lottie 等，与网页开发体验完全一致。</li>
+      <li><strong>零额外心智负担</strong>：纯 HTML/CSS/JS，<strong>不需要 React、不需要打包器、不需要学习专有时间线 DSL</strong>——这对人类友好，对 Agent 尤其友好。</li>
+    </ul>
+
+    <h3>② 渲染引擎：CDP 逐帧确定性捕获</h3>
+    <ul>
+      <li>渲染器启动一个<strong>无头 Chrome</strong>实例，通过 <strong>Chrome DevTools Protocol (CDP)</strong> 精确控制其合成过程。</li>
+      <li>核心技巧：<strong>暂停页面合成，逐帧发出 <code>BeginFrame</code> 指令，seek 到目标帧后捕获像素缓冲</strong>——绕开了浏览器"实时播放"带来的不确定时序，保证<strong>帧级确定性</strong>。</li>
+      <li><strong>HDR 突破</strong>：无头 Chrome 默认只输出 sRGB，Remotion 把 HDR 列为"不支持"。HyperFrames 用<strong>两遍渲染（two-pass）</strong>方案实现了 HDR 输出，这是相对 Remotion 的明确技术优势。</li>
+      <li>捕获的帧经 <strong>FFmpeg</strong> 编码为最终 MP4。</li>
+    </ul>
+
+    <h3>③ Agent Skills 系统（"Built for agents" 的关键）</h3>
+    <p>这是 HyperFrames 最有"工程品味"的部分：它<strong>不是只给你一个库，而是附带一套 skills，专门教 AI Agent 如何使用它</strong>。Skills 描述了完整的生产闭环：</p>
+    <ul>
+      <li><strong>规划视频（plan）</strong> → <strong>写合法 HTML（write）</strong> → <strong>接入可 seek 动画（wire）</strong> → <strong>添加媒体（add media）</strong> → <strong>Lint 校验</strong> → <strong>Preview 预览</strong> → <strong>Render 渲染</strong>。</li>
+      <li>这种"把领域最佳实践编码成 Agent 可读的 skills"的思路，让<strong>一句自然语言 prompt 就能驱动 Agent 走完全流程</strong>，无需人写一行代码。</li>
+      <li>官方甚至给出 <strong>"网站转视频"</strong>的 Agent 流水线示例：抓取 → 设计 → 脚本 → 分镜 → 配音 → 构建 → 校验。</li>
+    </ul>
+
+    <div class="hl-box">
+      <h4>💡 为什么是这个架构？</h4>
+      <p>程序化视频的本质难题是<strong>"如何让视频像网页一样可版本化、可复现、可生成"</strong>。Remotion 用 React 解决了"可代码化"，但 React 对 Agent 仍偏重。HyperFrames 的洞察是：<strong>既然所有大模型都"原生会写 HTML/CSS"，那就把视频的源码格式直接对齐到 HTML</strong>，再辅以 CDP 逐帧捕获保证确定性、用 GSAP 可 seek 时间线保证帧级一致。三层叠加，把"AI 自动生成视频"的工程门槛降到接近"AI 自动生成网页"。</p>
+    </div>
+  </section>
+
+  <!-- 三、核心创新点 -->
+  <section>
+    <h2><span class="ico">✨</span>三、核心创新点</h2>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="ft">🌐 媒介即 HTML</div>
+        <div class="fd">把视频源码格式定为<strong>纯 HTML/CSS/JS</strong>而非 React 组件——对齐大模型最熟悉的格式，<strong>Agent 写代码出错率更低</strong>。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🎯 帧级确定性</div>
+        <div class="fd">CDP 驱动 + 可 seek 动画时间线，<strong>同一输入永远产出完全一致的输出</strong>，告别实时播放的随机抖动。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🤖 原生 Agent Skills</div>
+        <div class="fd">附带 skills 编码完整生产闭环（plan→write→lint→preview→render），<strong>一句 prompt 即可全自动产片</strong>。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🎬 HDR 两遍渲染</div>
+        <div class="fd">突破无头 Chrome 仅 sRGB 的限制，用 two-pass 实现 <strong>HDR 输出</strong>——明确领先 Remotion（其文档标注 HDR 不支持）。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🔗 HTML 即真相</div>
+        <div class="fd"><code>data-*</code> 属性在 DOM 上声明时间/时长，<strong>没有专有时间线 DSL</strong>，所见即所得、可 diff、可版本控制。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🏷️ 零成本 + 全开放</div>
+        <div class="fd">Apache 2.0，<strong>无渲染点数、无席位限制、无商业分级</strong>，可完全自托管，与 Remotion 的付费分级形成对比。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🏢 HeyGen 工程背书</div>
+        <div class="fd">由全球头部 AI 视频公司开源，自带<strong>生产级视频渲染的真实工程经验</strong>，非实验性玩具。</div>
+      </div>
+      <div class="feat">
+        <div class="ft">🐾 Self-dogfooding</div>
+        <div class="fd">官方 Launch 视频本身就是用 HyperFrames 构建的（<code>hyperframes-launch-video</code>），<strong>吃自己的狗粮</strong>。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <h2><span class="ico">🎯</span>四、应用场景</h2>
+    <ul>
+      <li>🤖 <strong>AI 全自动产片（核心场景）</strong>：一句 prompt，Agent 自动完成规划→写 HTML→加动画→加媒体→渲染，<strong>prompt 进、MP4 出</strong>。这是 vibe-coding 时代的视频生产范式。</li>
+      <li>🌐 <strong>网站 / 产品介绍视频</strong>：官方 "website-to-video" 流水线——抓取内容→设计→脚本→分镜→配音→构建→校验，<strong>把落地页自动转成介绍片</strong>。</li>
+      <li>📣 <strong>营销 / 社媒批量内容</strong>：商品上新、活动推广，用模板 + 数据驱动<strong>批量、确定性</strong>生成不同版本短视频（每个 SKU 一条）。</li>
+      <li>📊 <strong>数据可视化视频</strong>：把图表、数字看板的 HTML 动效直接渲染成动态报告视频，适合财报、周报、数据故事。</li>
+      <li>📚 <strong>教程 / 解释性动画</strong>：技术讲解、产品教程，用代码精确控制每一步动画时序，比手剪更可控、可复用。</li>
+      <li>🏢 <strong>企业自动化视频流水线</strong>：自托管、零许可成本、确定性输出，适合需要<strong>大量、稳定、可复现</strong>视频产出的企业（电商、媒体、教育）。</li>
+      <li>🎨 <strong>创意 / 实验性视频</strong>：前端/设计师用熟悉的网页技术做动态视觉作品，<strong>降低视频创作门槛</strong>。</li>
+      <li>🔌 <strong>嵌入工作流自动化</strong>：作为渲染后端接入 n8n / Agent 框架，实现"事件触发→自动生成视频→分发"。</li>
+    </ul>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <h2><span class="ico">⚔️</span>五、竞品对比</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th class="center">Remotion</th>
+          <th class="center">Motion Canvas</th>
+          <th class="center">Revideo</th>
+          <th class="center">传统编辑器(AE等)</th>
+          <th class="center">HyperFrames</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>渲染后端</td>
+          <td class="center">无头Chrome+FFmpeg</td>
+          <td class="center">自有动画引擎</td>
+          <td class="center">无头Chrome</td>
+          <td class="center">本地GPU/时间线</td>
+          <td class="center"><strong>无头Chrome+FFmpeg</strong></td>
+        </tr>
+        <tr>
+          <td>编写媒介</td>
+          <td class="center">React 组件</td>
+          <td class="center">TypeScript 场景图</td>
+          <td class="center">React</td>
+          <td class="center no">GUI 拖拽</td>
+          <td class="center"><strong>纯 HTML/CSS/JS</strong></td>
+        </tr>
+        <tr>
+          <td>是否确定性</td>
+          <td class="center yes">是</td>
+          <td class="center yes">是</td>
+          <td class="center yes">是</td>
+          <td class="center no">否</td>
+          <td class="center yes">✅ 是</td>
+        </tr>
+        <tr>
+          <td>HDR 输出</td>
+          <td class="center no">不支持(文档标注)</td>
+          <td class="center no">—</td>
+          <td class="center no">—</td>
+          <td class="center yes">支持</td>
+          <td class="center yes">✅ 两遍渲染</td>
+        </tr>
+        <tr>
+          <td>需打包器/框架</td>
+          <td class="center yes">需 React/打包</td>
+          <td class="center yes">需 TS 框架</td>
+          <td class="center yes">需 React</td>
+          <td class="center no">无需</td>
+          <td class="center yes">✅ 无需</td>
+        </tr>
+        <tr>
+          <td>原生 Agent Skills</td>
+          <td class="center yes">有</td>
+          <td class="center">弱</td>
+          <td class="center">弱</td>
+          <td class="center no">无</td>
+          <td class="center yes">✅ 完整闭环</td>
+        </tr>
+        <tr>
+          <td>对 Agent 写码友好</td>
+          <td class="center">中(React)</td>
+          <td class="center">低</td>
+          <td class="center">中</td>
+          <td class="center no">无代码</td>
+          <td class="center yes">✅ 高(HTML)</td>
+        </tr>
+        <tr>
+          <td>许可/成本</td>
+          <td class="center">商业分级/付费</td>
+          <td class="center">MIT(开源)</td>
+          <td class="center">开源</td>
+          <td class="center">付费软件</td>
+          <td class="center yes">✅ Apache 2.0 零成本</td>
+        </tr>
+        <tr>
+          <td>出品方</td>
+          <td class="center">Remotion 公司</td>
+          <td class="center">社区</td>
+          <td class="center">社区</td>
+          <td class="center">Adobe等</td>
+          <td class="center"><strong>HeyGen</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hl-box">
+      <h4>🔑 差异化护城河</h4>
+      <p>HyperFrames 不与 After Effects 争"专业特效与复杂合成"，也不与 Motion Canvas 争"动画师的精细场景图"。它切的是<strong>"让 AI Agent 用最熟悉的 HTML 自动、确定性、零成本地产片"</strong>这个新兴细分。相对最直接对手 Remotion，它的三重差异是：<strong>① 媒介用 HTML 而非 React（Agent 更易写）、② HDR 两遍渲染（技术领先点）、③ Apache 2.0 全开放零成本（许可更友好）</strong>。其背靠 HeyGen 的生产级工程经验，是社区项目难以短期复制的壁垒。</p>
+    </div>
+    <p><strong>潜在风险</strong>：① Remotion 先发优势明显、生态成熟（插件/模板/企业案例多），HyperFrames 作为后起之秀生态尚浅；② 无头 Chrome 渲染对<strong>本地资源有要求</strong>，长视频/高分辨率耗时；③ "视频即代码"仍是相对小众范式，需市场教育；④ 依赖 Chrome/CDP 上游行为稳定性；⑤ 与 HeyGen 自家 SaaS 存在微妙竞合（开源引流 vs 付费云服务）。</p>
+  </section>
+
+  <!-- 六、优势与局限 -->
+  <section>
+    <h2><span class="ico">⚖️</span>六、优势 / 局限</h2>
+    <h3 style="color:var(--accent2)">✅ 优势</h3>
+    <ul>
+      <li><strong>媒介对齐 HTML</strong>：把视频源码定为 Agent 最熟悉的格式，<strong>自动生成门槛与出错率双降</strong>，这是相对 React 派的根本优势。</li>
+      <li><strong>帧级确定性</strong>：CDP 逐帧捕获 + 可 seek 动画，输出可复现、可版本化、可 diff。</li>
+      <li><strong>HDR 技术领先</strong>：two-pass 方案突破 Chrome sRGB 限制，明确胜过 Remotion。</li>
+      <li><strong>完整 Agent Skills 闭环</strong>：把领域最佳实践编码进 skills，prompt→MP4 一气呵成。</li>
+      <li><strong>全开放零成本</strong>：Apache 2.0，无点数/席位/分级，企业可安心自托管。</li>
+      <li><strong>HeyGen 工程背书</strong>：头部 AI 视频公司出品，非实验玩具，生产可用性强。</li>
+      <li><strong>自托管可控</strong>：本地确定性渲染，数据不出域，适合隐私/合规场景。</li>
+      <li><strong>前端友好</strong>：会用网页技术就会做视频，降低创作者门槛。</li>
+    </ul>
+    <h3 style="color:var(--red)">⚠️ 局限</h3>
+    <ul>
+      <li><strong>生态较新</strong>：模板、插件、社区案例、企业落地故事远不及 Remotion 丰富。</li>
+      <li><strong>渲染资源依赖</strong>：无头 Chrome 逐帧捕获，长片/高分辨率渲染耗时与算力成本不低。</li>
+      <li><strong>范式仍小众</strong>："视频即代码"需市场教育，非技术用户接受度待培养。</li>
+      <li><strong>上游耦合</strong>：依赖 Chrome/CDP 行为，浏览器版本升级可能影响确定性表现。</li>
+      <li><strong>竞合张力</strong>：与 HeyGen 自家付费 SaaS 存在"开源引流 vs 云服务营收"的长期平衡问题。</li>
+      <li><strong>复杂合成上限</strong>：面对 AE 级粒子/3D/高级特效，HTML 路线仍有天花板。</li>
+    </ul>
+  </section>
+
+  <!-- 七、综合评分 -->
+  <section>
+    <h2><span class="ico">🏆</span>七、综合评分：8.4 / 10</h2>
+    <p><strong>定位精准、洞察深刻、背书扎实的"视频即代码"新范式框架</strong>——在 Remotion 验证的技术路线上，以"媒介换 HTML + Agent Skills 闭环 + HDR 突破 + 全开放许可"切出清晰差异化。它抓住了"Agent 时代视频生产自动化"的时间窗口，由头部 AI 视频公司 HeyGen 出品，工程品味与生产可用性兼备。最大变量在于能否快速补齐生态、对抗 Remotion 的先发优势。</p>
+    <ul>
+      <li>🏗 <strong>技术架构 8.8</strong>：CDP 逐帧确定性渲染 + 可 seek GSAP 时间线 + HDR two-pass，方案成熟且有领先点。</li>
+      <li>💡 <strong>创新性 9.0</strong>："媒介即 HTML""原生 Agent Skills"是对程序化视频的有力再定义。</li>
+      <li>🎯 <strong>产品定位 8.9</strong>：精准卡位"Agent 自动产片"细分，叙事清晰。</li>
+      <li>🤖 <strong>Agent 友好度 9.3</strong>：HTML 格式 + 完整 skills 闭环，同类中对 Agent 最友好。</li>
+      <li>🌱 <strong>生态/成熟度 7.0</strong>：项目较新，模板/案例/社区尚需积累，落后于 Remotion。</li>
+      <li>🏢 <strong>背景背书 8.5</strong>：HeyGen 出品提供生产级可信度，但开源与 SaaS 的竞合是长期看点。</li>
+    </ul>
+    <div class="hl-box">
+      <h4>👥 推荐人群</h4>
+      <p>想用 AI Agent <strong>自动、批量、确定性地产片</strong>的开发者与团队；需要把<strong>网站/数据/模板自动转成视频</strong>的电商、媒体、教育企业；追求<strong>零许可成本、可自托管、可复现</strong>的视频流水线工程师；以及任何"会写网页就想做视频"的前端创作者。若你已经在用 Remotion，HyperFrames 值得作为 HDR/Agent 场景的补充评估；若你是 Agent 工作流搭建者，它几乎是当前最对味的视频渲染后端。</p>
+    </div>
+    <p class="src">
+      📅 生成日期：2026-06-23 ｜ 资料来源：
+      <a href="https://github.com/heygen-com/hyperframes">GitHub: heygen-com/hyperframes</a> ·
+      <a href="https://hyperframes.heygen.com/">hyperframes.heygen.com 官网</a> ·
+      <a href="https://hyperframes.heygen.com/introduction">Introduction 文档</a> ·
+      <a href="https://hyperframes.heygen.com/quickstart">Quickstart</a> ·
+      <a href="https://hyperframes.heygen.com/guides/hyperframes-vs-remotion">官方：HyperFrames vs Remotion</a> ·
+      <a href="https://hyperframes.heygen.com/guides/website-to-video">Website-to-Video 流水线</a> ·
+      <a href="https://github.com/heygen-com/hyperframes/issues/318">Issue #318 与 Remotion 关系</a> ·
+      <a href="https://blog.nidhin.dev/video-as-code-a-deep-dive-into-heygen-s-hyperframes">深度技术博客(blog.nidhin.dev)</a> ·
+      <a href="https://www.reddit.com/r/ClaudeAI/comments/1snkiti/hyperframes_oss_framework_for_ai_agents_to_author/">Reddit 架构讨论(CDP/BeginFrame)</a> ·
+      <a href="https://bestofjs.org/projects/hyperframes">Best of JS</a> ·
+      <a href="https://medium.com/data-science-in-your-pocket/heygen-hyperframes-open-source-video-generation-framework-bcb9c447b444">Medium 详解</a>
+      ｜ ⚠️ 项目处于活跃开发期，能力、生态与对比结论可能随版本演进。
+    </p>
+  </section>
+
+  <footer>
+    HyperFrames 深度分析报告 · GitHub Trending 分析 · 生成于 2026-06-23
+  </footer>
+</div>
+</body>
+</html>
