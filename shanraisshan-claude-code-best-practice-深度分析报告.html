@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告 · shanraisshan/claude-code-best-practice</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg-soft: #171a23;
+    --card: #1c2030;
+    --border: #2a2f42;
+    --text: #e8eaf2;
+    --muted: #9aa0b4;
+    --accent: #d97757;
+    --accent-2: #c89666;
+    --claude: #cc785c;
+    --green: #7ee787;
+    --blue: #79c0ff;
+    --purple: #d2a8ff;
+    --yellow: #f0c674;
+    --red: #ff7b72;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1d2a 0%, #221a16 60%, #1a1410 100%);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 40px 36px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(217,119,87,0.18), transparent 70%);
+    border-radius: 50%;
+  }
+  .repo-path {
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    color: var(--accent);
+    font-size: 15px;
+    margin-bottom: 14px;
+    word-break: break-all;
+  }
+  .repo-path .sep { color: var(--muted); margin: 0 2px; }
+  h1 {
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 14px;
+    letter-spacing: -0.5px;
+  }
+  .tagline {
+    font-size: 17px;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 24px;
+  }
+  .tagline strong { color: var(--text); font-style: normal; }
+  .badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 13px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .badge.green { border-color: rgba(126,231,135,0.35); color: var(--green); }
+  .badge.blue  { border-color: rgba(121,192,255,0.35); color: var(--blue); }
+  .badge.yellow{ border-color: rgba(240,198,116,0.35); color: var(--yellow); }
+  .badge.purple{ border-color: rgba(210,168,255,0.35); color: var(--purple); }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 22px; font-size: 14px; color: var(--muted); }
+  .hero-meta span strong { color: var(--text); }
+
+  /* Score */
+  .score-box {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 32px;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(217,119,87,0.10), rgba(217,119,87,0.02));
+    border: 1px solid rgba(217,119,87,0.30);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+  }
+  .score-num {
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    text-align: center;
+  }
+  .score-num small { font-size: 22px; color: var(--muted); font-weight: 600; }
+  .score-label { text-align: center; color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: 1px; }
+  .score-bars .bar-row { margin-bottom: 11px; }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-row-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+  .bar-row-top .name { color: var(--text); }
+  .bar-row-top .val { color: var(--accent); font-weight: 600; }
+  .bar-bg { height: 7px; background: var(--bg-soft); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--claude), var(--accent)); border-radius: 4px; }
+
+  /* Section */
+  section { margin-bottom: 38px; }
+  h2 {
+    font-size: 23px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .icon { font-size: 22px; }
+  h3 { font-size: 17px; font-weight: 700; margin: 22px 0 12px; color: var(--accent-2); }
+  p { margin-bottom: 13px; color: #d4d7e3; }
+  p strong { color: var(--text); }
+  ul, ol { margin: 0 0 14px 22px; color: #d4d7e3; }
+  li { margin-bottom: 7px; }
+  li strong { color: var(--text); }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Cards */
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card h4 { font-size: 15px; margin-bottom: 8px; color: var(--text); }
+  .card p { font-size: 14px; margin-bottom: 0; color: var(--muted); }
+  .card .tag {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 5px; margin-bottom: 8px;
+    background: rgba(217,119,87,0.15); color: var(--accent);
+  }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-soft); color: var(--accent-2); font-weight: 600; font-size: 13px; white-space: nowrap; }
+  td { color: #d4d7e3; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .star { color: var(--yellow); font-weight: 600; }
+
+  /* Flow */
+  .flow {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 24px; margin: 8px 0 20px;
+  }
+  .flow .step {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 14px;
+    color: var(--text);
+  }
+  .flow .arrow { color: var(--accent); font-weight: 700; font-size: 18px; }
+
+  /* highlight box */
+  .hl {
+    background: rgba(217,119,87,0.06);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .hl strong { color: var(--accent); }
+
+  code {
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    background: var(--bg-soft);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 13px;
+    color: var(--green);
+  }
+
+  .foot {
+    margin-top: 50px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="repo-path">github.com<span class="sep">/</span>shanraisshan<span class="sep">/</span>claude-code-best-practice</div>
+    <h1>claude-code-best-practice</h1>
+    <div class="tagline">"From vibe coding to agentic engineering — <strong>practice makes claude perfect.</strong>"</div>
+    <div class="badges">
+      <span class="badge">★ 58.6k Stars</span>
+      <span class="badge green">HTML · 知识库</span>
+      <span class="badge yellow">GitHub Trending #1 当日</span>
+      <span class="badge blue">Boris Cherny 背书</span>
+      <span class="badge purple">Claude Community Ambassador</span>
+    </div>
+    <div class="hero-meta">
+      <span>👤 作者：<strong>Shayan Rais</strong></span>
+      <span>📅 爆火：<strong>2026 年 3 月</strong></span>
+      <span>🏷️ 类型：<strong>开发实践 / Agentic Engineering</strong></span>
+      <span>🤖 维护：<strong>100% 由 Claude Code 自治更新</strong></span>
+    </div>
+  </div>
+
+  <!-- SCORE -->
+  <div class="score-box">
+    <div>
+      <div class="score-num">9.3<small>/10</small></div>
+      <div class="score-label">综合评分</div>
+    </div>
+    <div class="score-bars">
+      <div class="bar-row"><div class="bar-row-top"><span class="name">内容深度与权威性</span><span class="val">9.8</span></div><div class="bar-bg"><div class="bar-fill" style="width:98%"></div></div></div>
+      <div class="bar-row"><div class="bar-row-top"><span class="name">社区影响力</span><span class="val">9.7</span></div><div class="bar-bg"><div class="bar-fill" style="width:97%"></div></div></div>
+      <div class="bar-row"><div class="bar-row-top"><span class="name">实用性与可落地</span><span class="val">9.5</span></div><div class="bar-bg"><div class="bar-fill" style="width:95%"></div></div></div>
+      <div class="bar-row"><div class="bar-row-top"><span class="name">时效性与维护</span><span class="val">9.6</span></div><div class="bar-bg"><div class="bar-fill" style="width:96%"></div></div></div>
+      <div class="bar-row"><div class="bar-row-top"><span class="name">文档组织与可读性</span><span class="val">8.9</span></div><div class="bar-bg"><div class="bar-fill" style="width:89%"></div></div></div>
+      <div class="bar-row"><div class="bar-row-top"><span class="name">原创技术贡献</span><span class="val">7.8</span></div><div class="bar-bg"><div class="bar-fill" style="width:78%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- 1. 项目概述 -->
+  <section>
+    <h2><span class="icon">📘</span>一、项目概述</h2>
+    <p><strong>claude-code-best-practice</strong> 是目前社区中<strong>最具系统性、被引用最多</strong>的 Claude Code 最佳实践知识库。它将 Claude Code 创始人 <strong>Boris Cherny</strong> 及其团队（Thariq、Cat Lydia、Dex 等）散落在推文、播客、博客中的零散经验，重新整理、归纳、去重，形成一份结构化、可检索、可持续更新的"权威操作手册"。</p>
+    <p>项目核心理念非常鲜明：<strong>不要把 Claude 当聊天机器人（chatbot）用</strong>。读者应当先掌握 agents（子智能体）、commands（命令）、skills（技能）、hooks（钩子）这几类"原语（primitives）"，再像搭积木一样组合成属于自己的工程化工作流。这正是副标题"<em>from vibe coding to agentic engineering</em>"（从随性编码到智能体工程）所要表达的范式跃迁。</p>
+    <div class="hl"><strong>独特之处：</strong>作者 Shayan Rais 宣称该仓库 <strong>100% 使用 Claude Code 开发与维护</strong>——每天由自治化的 Claude 工作流（/workflows）自动追踪 12+ 个社区工作流仓库、抓取最新特性并更新表格与报告，作者本人只负责审查（review）。这让它既是"最佳实践指南"，也是"Claude Code 自治维护"的一个活体范例。</p></div>
+    <p>截至分析日，该项目已收获 <strong>约 5.86 万 Stars</strong>，于 2026 年 3 月登顶 GitHub Trending <strong>当日 #1</strong>（最高到达过第 3 名），并获得了 <strong>Disrupt.com Ventures</strong> 与 <strong>ClaudeKit</strong> 的赞助支持。Claude Code 创始人 Boris Cherny 本人也在 X 上多次背书转发。</p>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="icon">🏗️</span>二、技术架构</h2>
+    <p>项目本身并非传统软件代码库，而是以 <strong>HTML/Markdown</strong> 为主体的<strong>知识资产 + 可运行配置</strong>的混合体。它同时提供两样东西：① 一套完整的知识文档；② 一套可直接落地的 <code>.claude/</code> 配置实现。</p>
+
+    <h3>2.1 Claude Code 扩展原语全景</h3>
+    <p>项目系统梳理了 Claude Code 全部核心扩展机制及其在文件系统中的落点：</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>特性</th><th>落点（路径）</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Subagents 子智能体</strong></td><td><code>.claude/agents/&lt;name&gt;.md</code></td><td>隔离上下文、委派专门任务</td></tr>
+          <tr><td><strong>Commands 命令</strong></td><td><code>.claude/commands/&lt;name&gt;.md</code></td><td>封装高频"内循环"工作流</td></tr>
+          <tr><td><strong>Skills 技能</strong></td><td><code>.claude/skills/&lt;name&gt;/SKILL.md</code></td><td>渐进式披露、按需加载的专业能力</td></tr>
+          <tr><td><strong>Workflows 工作流</strong></td><td><code>.claude/commands/...</code></td><td>编排多智能体协同</td></tr>
+          <tr><td><strong>Hooks 钩子</strong></td><td><code>.claude/hooks/</code></td><td>生命周期事件自动执行</td></tr>
+          <tr><td><strong>MCP Servers</strong></td><td><code>.mcp.json</code> / <code>settings.json</code></td><td>接入外部工具/数据源</td></tr>
+          <tr><td><strong>Plugins 插件</strong></td><td>可分发包 + 市场</td><td>跨项目复用整套能力</td></tr>
+          <tr><td><strong>Settings 配置</strong></td><td><code>.claude/settings.json</code></td><td>权限、模型、沙箱、键位</td></tr>
+          <tr><td><strong>Memory 记忆</strong></td><td><code>CLAUDE.md</code> / <code>.claude/rules/</code></td><td>持久化项目规则与偏好</td></tr>
+          <tr><td><strong>Status Line</strong></td><td><code>settings.json</code></td><td>上下文/模型/Git 实时状态</td></tr>
+          <tr><td><strong>Checkpointing</strong></td><td>文件编辑自动追踪</td><td>回滚、版本快照</td></tr>
+          <tr><td><strong>CLI Flags</strong></td><td><code>claude [flags]</code></td><td>启动参数与环境变量</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>2.2 编排架构：Command → Agent → Skill</h3>
+    <p>项目提出并实现了一个清晰的<strong>三层编排模式</strong>，并以一个可运行的 <code>/weather-orchestrator</code> 命令作为完整示范：</p>
+    <div class="flow">
+      <span class="step">Command（命令）<br><small style="color:var(--muted)">入口 · 触发编排</small></span>
+      <span class="arrow">→</span>
+      <span class="step">Agent（智能体）<br><small style="color:var(--muted)">隔离上下文 · 推理</small></span>
+      <span class="arrow">→</span>
+      <span class="step">Skill（技能）<br><small style="color:var(--muted)">专业能力 · 渐进披露</small></span>
+    </div>
+    <p>这一模式回答了社区最常被问的"<em>command vs agent vs skill，到底何时用哪个？</em>"——命令是入口与编排者，智能体负责隔离上下文与委派，技能提供按需加载的领域知识。三者职责分明，避免把所有逻辑都塞进臃肿的 prompt。</p>
+
+    <h3>2.3 自治维护架构</h3>
+    <p>仓库 <code>.claude/workflows/</code> 下定义了 8 条自治工作流，分别负责：开发工作流表更新、技能集合表更新、智能体集合表更新、CONCEPTS 段更新，以及对 settings / subagents / commands / skills 报告的变更追踪。每条工作流都会<strong>并行</strong>调研多个目标仓库，自动产出跨工作流分析报告。</p>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="icon">💡</span>三、核心创新点</h2>
+    <div class="grid grid-2">
+      <div class="card">
+        <span class="tag">创新 1</span>
+        <h4>权威信息的"去噪与结构化"</h4>
+        <p>把 Boris 团队跨越半年的推文/播客/文章，提炼成 83 条带<strong>溯源标签</strong>的可检索 Tips，每条都标注来源（Boris / Thariq / Dex / Matt 等），杜绝"道听途说式"的最佳实践。</p>
+      </div>
+      <div class="card">
+        <span class="tag">创新 2</span>
+        <h4>"原语 + 组合"的方法论</h4>
+        <p>不直接给僵化模板，而是教读者理解 4 大原语，自主拼装工作流。配套 <code>/weather-orchestrator</code> 作为可克隆的"参考实现"，可推广到任意从计划到发布的开发流程。</p>
+      </div>
+      <div class="card">
+        <span class="tag">创新 3</span>
+        <h4>横向对比矩阵（行业首创）</h4>
+        <p>首次把 12 大主流开发工作流方法论（Superpowers、ECC、Spec Kit、BMAD 等）放在同一张表里，按 <strong>★ 星标</strong>排序，逐条对比其 Research→Plan→Execute→Review→Ship 链路，并统计子循环数。</p>
+      </div>
+      <div class="card">
+        <span class="tag">创新 4</span>
+        <h4>跨模型协同工作流</h4>
+        <p>系统总结 Claude 与 Codex / Gemini / GPT / Kimi / DeepSeek 协作的三种机制——<strong>Plugin、MCP、Router</strong>，并给出每个方向的代表性项目（claude-code-router、codex-plugin-cc 等），让"多模型流水线"有章可循。</p>
+      </div>
+      <div class="card">
+        <span class="tag">创新 5</span>
+        <h4>"狗粮式"自治维护</h4>
+        <p>仓库本身就是 Claude Code 能力的展示——用 /workflows 每日自动追踪十几个上游仓库、抓取新特性、更新表格与报告。作者只做 review，形成"产品即文档、文档即产品"的闭环。</p>
+      </div>
+      <div class="card">
+        <span class="tag">创新 6</span>
+        <h4>覆盖最前沿 Beta 特性</h4>
+        <p>对 Ultrareview、Ultraplan、Auto Mode、Fast Mode、Advisor、Agent Teams、Channels、Ralph Wiggum 自进化循环等大量 Beta 特性都给出"最佳实践 + 实现"双标签，跟进速度甚至快于官方文档。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="icon">🎯</span>四、应用场景</h2>
+    <div class="grid grid-2">
+      <div class="card"><h4>🧑‍💻 个人开发者提效</h4><p>把每天重复执行 N 次的"内循环"（code review、tech-debt 扫描、上下文转储）固化为 <code>/命令</code> 或 skill，减少重复 prompt，保持主上下文干净。</p></div>
+      <div class="card"><h4>🏢 团队工程标准化</h4><p>统一团队的 CLAUDE.md 规范、权限策略、PR 体量（p50 = 118 行）、squash merge 习惯，让"新人能开箱即用 <code>run the tests</code>"。</p></div>
+      <div class="card"><h4>🧠 复杂任务编排</h4><p>用 Agent Teams + tmux + git worktrees 做并行开发；用 <code>/loop</code>、<code>/schedule</code> 做本地/云端定时监控；用 Ralph Wiggum 跑长周期自治任务。</p></div>
+      <div class="card"><h4>📚 学习与培训</h4><p>作者明确建议"<strong>把它当一门课程来读，而不是一个工作流</strong>"。是 Claude Code 进阶者、AI 工程化培训的优质教材。</p></div>
+      <div class="card"><h4>🔄 多模型流水线</h4><p>Claude 出方案 + Codex 做 QA 审查的双终端流程；或通过 router 把 Claude Code 后端切到 DeepSeek/Gemini 等高性价比模型。</p></div>
+      <div class="card"><h4>🛠️ 选型与对标</h4><p>团队选型 Skill/Agent/Workflow 生态时，可直接参考其横向矩阵；维护自己的 <code>.claude/</code> 配置时可逐条对照最佳实践自查。</p></div>
+    </div>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="icon">⚔️</span>五、竞品对比</h2>
+    <p>该领域的"竞品"主要是其他 Claude Code 生态的优秀实践仓库。它们大多<strong>各擅一隅</strong>，而本仓库的差异化在于<strong>横向整合 + 溯源权威</strong>。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>项目</th><th>★</th><th>定位</th><th>与本项目关系</th></tr></thead>
+        <tbody>
+          <tr><td><strong>本仓库</strong> claude-code-best-practice</td><td class="star">58.6k</td><td>横向整合的权威最佳实践手册</td><td>— · 整合者</td></tr>
+          <tr><td>obra/superpowers</td><td class="star">236k</td><td>完整开发工作流方法论（脑暴→worktree→TDD→评审）</td><td>被收录对比 · 垂直深度更强</td></tr>
+          <tr><td>affaan-m/ECC (Everything Claude Code)</td><td class="star">220k</td><td>命令式工作流集合（/ecc:plan、/tdd、/code-review）</td><td>被收录对比 · 偏命令实现</td></tr>
+          <tr><td>mattpocock/skills</td><td class="star">136k</td><td>高质量 SKILL.md 技能库</td><td>被收录为技能集合</td></tr>
+          <tr><td>anthropics/skills</td><td class="star">153k</td><td>Anthropic 官方技能</td><td>权威来源之一</td></tr>
+          <tr><td>github/spec-kit</td><td class="star">115k</td><td>规格驱动开发（specify→plan→tasks→implement）</td><td>被收录对比</td></tr>
+          <tr><td>garrytan/gstack</td><td class="star">113k</td><td>多角色评审工作流（CEO/Eng/Design 评审）</td><td>被收录对比</td></tr>
+          <tr><td>msitarzewski/agency-agents</td><td class="star">115k</td><td>子智能体定义库（271 个）</td><td>被收录为智能体集合</td></tr>
+          <tr><td>anthropics/claude-code (官方)</td><td class="star">—</td><td>官方文档</td><td>权威但分散，本仓库做整合去噪</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="hl"><strong>差异化总结：</strong>其他高星仓库多为"<strong>单点深度</strong>"（要么是工作流、要么是技能库、要么是智能体库），而本仓库的价值是"<strong>广度整合 + 权威溯源 + 持续自治更新</strong>"——它是各仓库之上的<strong>元知识层（meta-layer）</strong>，帮助读者在海量生态中快速建立全局认知。</div>
+  </section>
+
+  <!-- 6. 综合评分 -->
+  <section>
+    <h2><span class="icon">⭐</span>六、综合评分与总结</h2>
+    <h3>评分细项</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>评价维度</th><th>评分</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>内容深度与权威性</td><td class="star">9.8</td><td>每条实践均有 Boris 团队一手溯源，权威性极高</td></tr>
+          <tr><td>社区影响力</td><td class="star">9.7</td><td>58.6k★、Trending #1、创始人背书、被广泛引用</td></tr>
+          <tr><td>实用性与可落地</td><td class="star">9.5</td><td>提供完整可运行的 <code>.claude/</code> 配置与示范命令</td></tr>
+          <tr><td>时效性与维护</td><td class="star">9.6</td><td>自治工作流每日更新，跟进 Beta 特性极快</td></tr>
+          <tr><td>文档组织与可读性</td><td>8.9</td><td>表格信息密度极高，对新手略门槛，但结构清晰</td></tr>
+          <tr><td>原创技术贡献</td><td>7.8</td><td>本身为整合/归纳型项目，原创算法/代码较少</td></tr>
+          <tr><td><strong>综合</strong></td><td class="star"><strong>9.3 / 10</strong></td><td><strong>强烈推荐 · Claude Code 进阶必读</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>优势</h3>
+    <ul>
+      <li><strong>权威溯源</strong>：所有结论可追溯至 Claude Code 创始团队一手言论，可信度远超二手转载。</li>
+      <li><strong>持续自治</strong>：用 Claude Code 维护 Claude Code 知识，更新频率与官方特性发布几乎同步。</li>
+      <li><strong>方法论清晰</strong>：Command→Agent→Skill 编排范式 + Research→Plan→Execute→Review→Ship 收敛模型，可迁移性强。</li>
+      <li><strong>生态全景</strong>：一张表覆盖 12 大工作流、10+ 技能库、跨模型协作，是生态选型的最佳入口。</li>
+    </ul>
+
+    <h3>局限</h3>
+    <ul>
+      <li><strong>信息密度偏高</strong>：大量表格与标签对零基础用户有学习曲线，作者自己也强调要"当课程读"。</li>
+      <li><strong>归纳型项目</strong>：核心价值在于整合而非原创技术，对寻求"新算法/新框架"的读者吸引力有限。</li>
+      <li><strong>强绑定 Anthropic 生态</strong>：高度聚焦 Claude Code，对 Cursor / Copilot 等其他智能编码工具覆盖较少。</li>
+    </ul>
+
+    <h3>适合人群</h3>
+    <p>已入门 Claude Code、希望从"随性编码（vibe coding）"进阶到"工程化智能体（agentic engineering）"的<strong>中高级开发者与团队</strong>；以及需要为团队制定 AI 编码规范的<strong>技术负责人 / 架构师</strong>。</p>
+  </section>
+
+  <div class="foot">
+    <p>📊 本报告由 GitHub 项目深度分析流程自动生成 · 数据截至 2026-06-24</p>
+    <p>🔗 原项目地址：<a href="https://github.com/shanraisshan/claude-code-best-practice" target="_blank">github.com/shanraisshan/claude-code-best-practice</a></p>
+  </div>
+
+</div>
+</body>
+</html>
