@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firecrawl 深度分析报告 — AI 时代的 Web 数据基础设施</title>
+<style>
+  :root{
+    --bg:#0b0f17; --bg2:#111827; --card:#151c2b; --card2:#1b2435;
+    --border:#243049; --text:#e6edf7; --muted:#9aa7bd;
+    --accent:#ff6b35; --accent2:#ff8f5e; --green:#34d399; --blue:#60a5fa;
+    --purple:#a78bfa; --yellow:#fbbf24; --red:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0b0f17 0%,#0e1422 100%);
+    color:var(--text);line-height:1.75;min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;padding:72px 24px 56px;border-radius:0 0 28px 28px;
+    background:
+      radial-gradient(900px 380px at 80% -10%, rgba(255,107,53,.25), transparent 60%),
+      radial-gradient(700px 320px at 10% 0%, rgba(96,165,250,.18), transparent 55%),
+      linear-gradient(135deg,#0d1320,#141d31);
+    border-bottom:1px solid var(--border);overflow:hidden;
+  }
+  .hero-inner{max-width:1032px;margin:0 auto}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+    background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.35);
+    color:var(--accent2);font-size:13px;font-weight:600;letter-spacing:.3px;margin-bottom:22px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  h1{font-size:46px;line-height:1.15;font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+  h1 .grad{background:linear-gradient(90deg,#ff6b35,#ff8f5e 40%,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:19px;color:var(--muted);max-width:780px;margin-bottom:30px}
+  .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:840px}
+  .meta{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .meta .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:19px;font-weight:700;color:#fff}
+  .meta .v small{font-size:12px;color:var(--muted);font-weight:500}
+
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .sec-num{
+    width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+    font-weight:800;font-size:15px;color:#0b0f17;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+  }
+  h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  p{margin-bottom:14px;color:#d3dbe8}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:18px;
+  }
+  ul{margin:6px 0 6px 22px}li{margin-bottom:8px;color:#d3dbe8}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;background:rgba(255,107,53,.12);color:#ffb088;padding:2px 7px;border-radius:6px;font-size:13.5px}
+  .pill{display:inline-block;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);color:#9ec5ff;padding:3px 10px;border-radius:6px;font-size:13px;margin:3px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.grid2,.grid3,.meta-grid{grid-template-columns:1fr}h1{font-size:32px}}
+
+  .feature{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:20px}
+  .feature h3{font-size:17px;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:9px}
+  .feature .ic{font-size:21px}
+  .feature p{font-size:14px;color:var(--muted);margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:rgba(255,107,53,.08);color:#fff;font-weight:700;font-size:13.5px}
+  tr:last-child td{border-bottom:none}
+  td{color:#d3dbe8}
+  .check{color:var(--green);font-weight:700}
+  .cross{color:var(--red);font-weight:700}
+  .partial{color:var(--yellow);font-weight:700}
+
+  .score-wrap{background:linear-gradient(135deg,#151c2b,#1b2435);border:1px solid var(--border);border-radius:18px;padding:28px}
+  .score-top{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-bottom:24px}
+  .score-ring{
+    width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0deg 338deg, rgba(255,255,255,.08) 338deg 360deg);
+    position:relative;
+  }
+  .score-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#111a2b}
+  .score-ring .num{position:relative;font-size:34px;font-weight:800;color:#fff}
+  .score-ring .num small{font-size:15px;color:var(--muted);font-weight:600}
+  .score-verdict h3{font-size:22px;margin-bottom:6px}
+  .score-verdict p{color:var(--muted);font-size:14.5px;margin:0}
+  .score-bars .bar{margin-bottom:13px}
+  .score-bars .lbl{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
+  .score-bars .lbl b{color:#fff}
+  .score-bars .track{height:9px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden}
+  .score-bars .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+  .arch-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:14px 0}
+  .arch-node{flex:1;min-width:130px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .arch-node .step{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.5px}
+  .arch-node .nm{font-size:14.5px;font-weight:700;color:#fff;margin:4px 0 3px}
+  .arch-node .tech{font-size:11.5px;color:var(--muted)}
+  .arrow{display:grid;place-items:center;color:var(--accent);font-size:22px;align-self:center}
+
+  .quote{border-left:3px solid var(--accent);padding:6px 0 6px 18px;color:#cfd8e6;font-style:italic;margin:14px 0}
+  .note{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:12px;padding:14px 18px;font-size:14px;color:#bcd2f3}
+  .src{font-size:13px;color:var(--muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+  .src a{color:var(--blue);text-decoration:none}
+  .src a:hover{text-decoration:underline}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="badge"><span class="dot"></span> GitHub 项目深度分析 · 2026.06.23</div>
+    <h1>🔥 Firecrawl <span class="grad">深度分析报告</span></h1>
+    <p class="tagline">AI 时代的 Web 数据基础设施 — 把整个互联网变成 LLM 可直接消费的清洁数据。从单一爬虫进化为"搜索 + 抓取 + 交互"三位一体的 Web Context API。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">GitHub Stars</div><div class="v">130K+ <small>· 全球 Top 100</small></div></div>
+      <div class="meta"><div class="k">所属公司</div><div class="v">Mendable <small>· YC S22</small></div></div>
+      <div class="meta"><div class="k">开源协议</div><div class="v">AGPL-3.0 <small>· SDK 为 MIT</small></div></div>
+      <div class="meta"><div class="k">最新融资</div><div class="v">$14.5M <small>· A 轮 (2025.08)</small></div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 一、项目概述 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">1</div><h2>项目概述</h2></div>
+    <div class="card">
+      <p><b>Firecrawl</b> 是由 Mendable AI 团队推出的开源 Web 数据抓取与转换 API，定位是"AI 系统的 Web Context 基础设施层"。它并非传统意义的爬虫，而是一个把<b>实时互联网内容</b>转化为 <b>LLM 可直接消费的清洁数据</b>（Markdown / 结构化 JSON / 截图）的全栈式平台。</p>
+      <p>该项目由三位联合创始人 <b>Caleb Peffer (CEO)</b>、<b>Nicolas Silberstein Camara (CTO)</b>、<b>Eric Ciarla (CMO)</b> 主导，团队此前打造过面向 Dropbox、MongoDB、Snap 等企业的早期 RAG 平台 <b>Mendable.ai</b>。Firecrawl 正是他们在为企业构建 RAG 系统时，深感"把 Web 数据喂给 LLM"这一环极度痛苦而衍生出的产品。Firecrawl 本身于 <b>2024 年正式独立</b>，是 Y Combinator S22 批次孵化项目。</p>
+      <div class="quote">"Firecrawl is not just a scraper or a search API — it's the infrastructure layer that helps AI systems find, read, and act on information across the live web."</div>
+      <p>凭借出色的开发者体验与精准的"AI 数据入口"定位，Firecrawl 在约一年内 GitHub Star 从 ~20K 飙升至 130K+，跻身全球 Top 100 仓库，成为 Web 数据 / 爬虫赛道<b>规模最大的开源项目</b>。2025 年 8 月完成由 Nexus Venture Partners 等领投的 1450 万美元 A 轮融资，并同步发布 Firecrawl v2，累计融资约 1620 万美元。</p>
+    </div>
+  </section>
+
+  <!-- 二、技术架构 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">2</div><h2>技术架构</h2></div>
+
+    <div class="card">
+      <p>Firecrawl 采用经典的 <b>生产者-消费者（Producer-Consumer）异步任务队列架构</b>，将高并发的抓取请求与耗时的浏览器渲染解耦，从而支撑横向扩展与百万级页面吞吐。</p>
+      <div class="arch-flow">
+        <div class="arch-node"><div class="step">STEP 1</div><div class="nm">API 服务</div><div class="tech">REST · v2 端点<br>Node.js / TS</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 2</div><div class="nm">任务入队</div><div class="tech">BullMQ<br>Redis</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 3</div><div class="nm">Worker 渲染</div><div class="tech">Playwright<br>Headless Chromium</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 4</div><div class="nm">清洗 / 提取</div><div class="tech">Markdown 化<br>LLM 结构化提取</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 5</div><div class="nm">返回结果</div><div class="tech">异步轮询<br>多语言 SDK</div></div>
+      </div>
+      <table>
+        <tr><th>层级</th><th>技术选型</th><th>作用</th></tr>
+        <tr><td>后端服务</td><td>Node.js / TypeScript</td><td>提供 REST API（<code>/v2/search</code>、<code>/scrape</code>、<code>/crawl</code>、<code>/map</code>、<code>/agent</code>）</td></tr>
+        <tr><td>浏览器自动化</td><td>Playwright (Headless Chromium)</td><td>渲染 JS 密集页面、执行交互动作（点击/滚动/输入）</td></tr>
+        <tr><td>任务队列</td><td>BullMQ</td><td>管理异步抓取任务的状态机与重试</td></tr>
+        <tr><td>消息/存储</td><td>Redis</td><td>队列存储、状态读取（如 most-recent-success）</td></tr>
+        <tr><td>反爬基础设施</td><td>旋转代理 / 限速编排</td><td>绕过 IP 封锁、处理速率限制、JS 拦截内容（云端版内置）</td></tr>
+        <tr><td>结构化提取</td><td>LLM + JSON Schema</td><td>用大模型从页面抽取符合 schema 的结构化数据</td></tr>
+        <tr><td>部署</td><td>Docker / Docker Compose</td><td>支持本地自托管；Railway / Zeabur / Dokploy 一键部署</td></tr>
+      </table>
+      <div class="note">☁️ <b>开源版 vs 云端版：</b>核心抓取能力以 AGPL-3.0 开源；云端版（firecrawl.dev）额外内置旋转代理池、企业级编排、Spark 模型（<code>spark-1-mini</code> / <code>spark-1-pro</code>）等增值能力，并承诺覆盖 96% 的网页、P95 延迟 3.4 秒。</div>
+    </div>
+  </section>
+
+  <!-- 三、核心创新点 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">3</div><h2>核心创新点</h2></div>
+    <div class="grid2">
+      <div class="feature"><h3><span class="ic">🤖</span> Agent：用自然语言驱动抓取</h3><p>从早期 <code>/extract</code> 端点进化而来的 <code>/agent</code> 是最大亮点。无需提供 URL，仅用一句话描述需求（如"找出 Notion 的定价方案"），AI Agent 自主搜索、导航、取数并返回结果，彻底颠覆"必须先知道地址才能爬"的传统模式。</p></div>
+      <div class="feature"><h3><span class="ic">🖱️</span> Interact：抓取后可继续操作</h3><p>抓取页面后返回 scrapeId，可继续用自然语言或代码对该页面执行点击、滚动、输入、等待、按键等动作，再提取内容。把"抓取"升级为"可交互的浏览器会话"，适合登录、搜索、翻页等动态场景。</p></div>
+      <div class="feature"><h3><span class="ic">🧹</span> LLM-Ready 清洁输出</h3><p>原生输出干净的 Markdown / 结构化 JSON / 截图，自动剔除导航栏、广告等噪声，<b>显著降低 token 消耗</b>。这是它相对传统爬虫最关键的产品化差异——输出即为 RAG 索引输入。</p></div>
+      <div class="feature"><h3><span class="ic">🗺️</span> Map + Crawl 全站感知</h3><p><code>/map</code> 可瞬时发现某站点全部 URL 并按相关性排序；<code>/crawl</code> 一次请求抓取整站所有页面。<b>Map→Crawl→Extract</b> 形成完整的全站数据流水线。</p></div>
+      <div class="feature"><h3><span class="ic">🔌</span> Agent / MCP 原生集成</h3><p>一行命令 <code>npx firecrawl-cli init --all --browser</code> 即可为 Claude Code、Antigravity、OpenCode 等 AI Agent 装上"实时联网"能力；并提供官方 MCP Server，秒级接入任意 MCP 客户端。</p></div>
+      <div class="feature"><h3><span class="ic">📄</span> 多模态媒体解析</h3><p>除网页外，可直接解析抓取 Web 托管的 PDF、DOCX 等文档，覆盖企业知识库、研报等非结构化来源。</p></div>
+    </div>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">4</div><h2>应用场景</h2></div>
+    <div class="card">
+      <ul>
+        <li><b>RAG 知识库构建：</b>作为数据采集层，抓取/爬取网页返回干净 Markdown，再切块、向量化存入向量库（如 Milvus），供 LLM 检索增强生成。<span class="pill">最核心场景</span></li>
+        <li><b>AI Agent 联网能力：</b>为自主 Agent 提供实时 Web 上下文，让 Agent 能"上网查资料"完成任务（竞品调研、信息核实）。</li>
+        <li><b>结构化数据抽取：</b>用 JSON Schema + LLM 从任意页面抽取商品、招聘、公司、人物等结构化信息，构建垂直数据集。</li>
+        <li><b>价格 / 舆情监控：</b>结合 Interact 动作能力，定时抓取电商价格、评论、社媒舆情。</li>
+        <li><b>全站文档站迁移：</b>用 Crawl 一次性把整个文档站转为 Markdown，便于本地知识化或迁移。</li>
+        <li><b>竞品与市场研究：</b>Agent 模式跨多站点对比企业功能/定价，输出结构化对比报告。</li>
+      </ul>
+      <div class="quote">Firecrawl 已被超过 100 万开发者使用，集成至 Lovable、Zapier、n8n 等主流平台，是当下 AI 应用数据管道的事实标准之一。</div>
+    </div>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">5</div><h2>竞品对比</h2></div>
+    <div class="card" style="padding:8px">
+      <table>
+        <tr>
+          <th>维度</th><th>🔥 Firecrawl</th><th>Crawl4AI</th><th>Jina Reader</th><th>ScrapeGraphAI</th>
+        </tr>
+        <tr><td><b>定位</b></td><td>商业级 Web Context API</td><td>纯开源爬取框架</td><td>URL→Markdown 轻量 API</td><td>图驱动抓取框架</td></tr>
+        <tr><td><b>开源协议</b></td><td>AGPL-3.0</td><td>Apache-2.0</td><td>Apache-2.0</td><td>MIT</td></tr>
+        <tr><td><b>自托管</b></td><td class="check">✓ 可行</td><td class="check">✓ 主打</td><td class="check">✓ 可行</td><td class="check">✓ 主打</td></tr>
+        <tr><td><b>Agent / MCP</b></td><td class="check">✓ 官方原生</td><td class="partial">△ 社区</td><td class="partial">△ 部分</td><td class="partial">△ 部分</td></tr>
+        <tr><td><b>页面交互(Interact)</b></td><td class="check">✓ 强</td><td class="partial">△ 有限</td><td class="cross">✗ 弱</td><td class="partial">△ 有限</td></tr>
+        <tr><td><b>LLM 提取</b></td><td class="check">✓ 内置 Spark</td><td class="check">✓ 接自有 LLM</td><td class="partial">△ 基础</td><td class="check">✓ 图编排</td></tr>
+        <tr><td><b>成本(规模化)</b></td><td class="cross">较高</td><td class="check">低(自托+自有LLM)</td><td class="check">最低</td><td class="partial">中等</td></tr>
+        <tr><td><b>生产成熟度</b></td><td class="check">★★★★★ 最成熟</td><td class="partial">★★★</td><td class="partial">★★★★</td><td class="partial">★★★</td></tr>
+      </table>
+      <div style="padding:16px">
+        <p><b>定位差异小结：</b></p>
+        <ul>
+          <li><b>Firecrawl</b> — 最商业化、最成熟，适合<b>生产级 RAG 与企业数据管道</b>，代价是规模化成本较高、AGPL 对商用自托管有合规约束。</li>
+          <li><b>Crawl4AI</b> — 最佳<b>免费/自托管</b>方案，搭配自有 LLM API 成本约 $150/月，是预算敏感者的首选。</li>
+          <li><b>Jina Reader</b> — 最<b>轻量、最具性价比</b>，能覆盖 ~90% 常见场景，许多从业者将其作主力、Firecrawl 作兜底。</li>
+          <li><b>ScrapeGraphAI</b> — 以<b>图（Graph）编排</b>抓取流程见长，定价在规模化时与 Firecrawl 差距不大。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 六、综合评分 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">6</div><h2>综合评分</h2></div>
+    <div class="score-wrap">
+      <div class="score-top">
+        <div class="score-ring"><div class="num">9.3<small>/10</small></div></div>
+        <div class="score-verdict">
+          <h3>🏆 强烈推荐 · 优秀 (Excellent)</h3>
+          <p>AI Web 数据赛道的标杆级项目。技术成熟、产品完成度高、生态繁荣，是构建 RAG / AI Agent 数据层的首选基础设施。</p>
+        </div>
+      </div>
+      <div class="score-bars">
+        <div class="bar"><div class="lbl"><b>技术创新</b><span>9.5 / 10</span></div><div class="track"><div class="fill" style="width:95%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>产品完成度</b><span>9.5 / 10</span></div><div class="track"><div class="fill" style="width:95%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>开发者体验 / DX</b><span>9.7 / 10</span></div><div class="track"><div class="fill" style="width:97%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>社区活跃度</b><span>9.8 / 10</span></div><div class="track"><div class="fill" style="width:98%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>生态与集成</b><span>9.4 / 10</span></div><div class="track"><div class="fill" style="width:94%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>开源友好度 (许可/自托管)</b><span>7.8 / 10</span></div><div class="track"><div class="fill" style="width:78%;background:linear-gradient(90deg,#fbbf24,#ff8f5e)"></div></div></div>
+        <div class="bar"><div class="lbl"><b>规模化成本经济性</b><span>7.5 / 10</span></div><div class="track"><div class="fill" style="width:75%;background:linear-gradient(90deg,#fbbf24,#ff8f5e)"></div></div></div>
+        <div class="bar"><div class="lbl"><b>市场与商业化前景</b><span>9.4 / 10</span></div><div class="track"><div class="fill" style="width:94%"></div></div></div>
+      </div>
+      <div class="note" style="margin-top:22px">⚖️ <b>减分项说明：</b>AGPL-3.0 协议对企业商用自托管存在合规审查需求（需法务介入）；云端版规模化成本相对开源替代品偏高——这也是 Crawl4AI / Jina Reader 能切入市场的关键空间。但综合其成熟度、生态与产品力，仍稳居该赛道头部。</div>
+    </div>
+  </section>
+
+  <div class="src">
+    <b>📎 参考来源：</b><br>
+    · <a href="https://github.com/firecrawl/firecrawl">GitHub - firecrawl/firecrawl</a><br>
+    · <a href="https://www.firecrawl.dev/">Firecrawl 官网</a> · <a href="https://www.ycombinator.com/companies/firecrawl">YC Profile</a><br>
+    · <a href="https://www.firecrawl.dev/blog/firecrawl-v2-series-a-announcement">Firecrawl v2 & Series A 公告</a><br>
+    · <a href="https://www.digitalapplied.com/blog/ai-web-scraping-tools-firecrawl-guide-2025">AI Web Scraping Tools 2025 - Digital Applied</a><br>
+    · <a href="https://scrapegraphai.com/blog/firecrawl-pricing">Firecrawl Pricing Breakdown - ScrapeGraphAI</a><br>
+    · <a href="https://milvus.io/docs/build_RAG_with_milvus_and_firecrawl.md">Build RAG with Milvus & Firecrawl</a><br>
+    · <a href="https://scrapegraphai.com/blog/jina-alternatives">Jina Reader Alternatives</a> · <a href="https://www.reddit.com/r/LocalLLaMA/comments/1jw4yqv/what_is_the_best_scraper_tool_right_now_firecrawl/">Reddit 讨论</a>
+  </div>
+
+  <footer>本报告由 GitHub 项目深度分析器 自动生成 · 数据截至 2026-06-23</footer>
+</div>
+</body>
+</html>
