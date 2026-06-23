@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirLLM 深度分析报告 — 在 4GB 显存上跑 70B 大模型</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg2:#0f1524; --card:#141c2f; --card2:#1a2440;
+    --border:#26314f; --text:#e6edf7; --muted:#93a1bd;
+    --accent:#7c5cff; --accent2:#a78bfa; --green:#34d399; --blue:#38bdf8;
+    --cyan:#22d3ee; --yellow:#fbbf24; --red:#f87171; --pink:#f472b6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0a0e1a 0%,#0d1322 100%);
+    color:var(--text);line-height:1.75;min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;padding:72px 24px 56px;border-radius:0 0 28px 28px;
+    background:
+      radial-gradient(900px 380px at 80% -10%, rgba(124,92,255,.28), transparent 60%),
+      radial-gradient(700px 320px at 10% 0%, rgba(34,211,238,.18), transparent 55%),
+      linear-gradient(135deg,#0c1120,#161f38);
+    border-bottom:1px solid var(--border);overflow:hidden;
+  }
+  .hero-inner{max-width:1032px;margin:0 auto}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+    background:rgba(124,92,255,.13);border:1px solid rgba(124,92,255,.38);
+    color:var(--accent2);font-size:13px;font-weight:600;letter-spacing:.3px;margin-bottom:22px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  h1{font-size:46px;line-height:1.15;font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+  h1 .grad{background:linear-gradient(90deg,#7c5cff,#a78bfa 40%,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:19px;color:var(--muted);max-width:820px;margin-bottom:30px}
+  .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:840px}
+  .meta{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .meta .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:19px;font-weight:700;color:#fff}
+  .meta .v small{font-size:12px;color:var(--muted);font-weight:500}
+
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .sec-num{
+    width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+    font-weight:800;font-size:15px;color:#0a0e1a;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--cyan));
+  }
+  h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  p{margin-bottom:14px;color:#d3dbe8}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:18px;
+  }
+  ul{margin:6px 0 6px 22px}li{margin-bottom:8px;color:#d3dbe8}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;background:rgba(124,92,255,.15);color:#c4b5fd;padding:2px 7px;border-radius:6px;font-size:13.5px}
+  .pill{display:inline-block;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#9ec5ff;padding:3px 10px;border-radius:6px;font-size:13px;margin:3px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.grid2,.grid3,.meta-grid{grid-template-columns:1fr}h1{font-size:32px}}
+
+  .feature{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:20px}
+  .feature h3{font-size:17px;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:9px}
+  .feature .ic{font-size:21px}
+  .feature p{font-size:14px;color:var(--muted);margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:rgba(124,92,255,.1);color:#fff;font-weight:700;font-size:13.5px}
+  tr:last-child td{border-bottom:none}
+  td{color:#d3dbe8}
+  .check{color:var(--green);font-weight:700}
+  .cross{color:var(--red);font-weight:700}
+  .partial{color:var(--yellow);font-weight:700}
+
+  .score-wrap{background:linear-gradient(135deg,#141c2f,#1a2440);border:1px solid var(--border);border-radius:18px;padding:28px}
+  .score-top{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-bottom:24px}
+  .score-ring{
+    width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0deg 295deg, rgba(255,255,255,.08) 295deg 360deg);
+    position:relative;
+  }
+  .score-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#0f1524}
+  .score-ring .num{position:relative;font-size:34px;font-weight:800;color:#fff}
+  .score-ring .num small{font-size:15px;color:var(--muted);font-weight:600}
+  .score-verdict h3{font-size:22px;margin-bottom:6px}
+  .score-verdict p{color:var(--muted);font-size:14.5px;margin:0}
+  .score-bars .bar{margin-bottom:13px}
+  .score-bars .lbl{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
+  .score-bars .lbl b{color:#fff}
+  .score-bars .track{height:9px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden}
+  .score-bars .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+  .arch-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:14px 0}
+  .arch-node{flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .arch-node .step{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.5px}
+  .arch-node .nm{font-size:14px;font-weight:700;color:#fff;margin:4px 0 3px}
+  .arch-node .tech{font-size:11.5px;color:var(--muted)}
+  .arrow{display:grid;place-items:center;color:var(--accent);font-size:22px;align-self:center}
+
+  .quote{border-left:3px solid var(--accent);padding:6px 0 6px 18px;color:#cfd8e6;font-style:italic;margin:14px 0}
+  .note{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:12px;padding:14px 18px;font-size:14px;color:#b8e7f3}
+  .warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:14px 18px;font-size:14px;color:#f5e2a8;margin-top:14px}
+  .src{font-size:13px;color:var(--muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+  .src a{color:var(--blue);text-decoration:none}
+  .src a:hover{text-decoration:underline}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="badge"><span class="dot"></span> GitHub 项目深度分析 · 2026.06.23</div>
+    <h1>💨 AirLLM <span class="grad">深度分析报告</span></h1>
+    <p class="tagline">在一张 4GB 显存的消费级显卡上运行 70B 参数大模型，8GB 跑 405B Llama3.1 —— 无需量化、无需剪枝、无需蒸馏。用"逐层加载"的极致内存工程，把大模型推理的硬件门槛打到地板。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">GitHub Stars</div><div class="v">21K+ <small>· 持续增长</small></div></div>
+      <div class="meta"><div class="k">作者</div><div class="v">Gavin Li <small>· Anima AI 创始人</small></div></div>
+      <div class="meta"><div class="k">开源协议</div><div class="v">Apache-2.0 <small>· 商用友好</small></div></div>
+      <div class="meta"><div class="k">最新版本</div><div class="v">v2.11.0 <small>· 支持 Qwen2.5</small></div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 一、项目概述 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">1</div><h2>项目概述</h2></div>
+    <div class="card">
+      <p><b>AirLLM</b> 是一个专注于<b>极致显存优化</b>的开源大模型推理库，由 <b>Gavin Li（GitHub: lyogavin）</b>创建并维护。它的核心理念极其大胆：让你不必拥有 A100、H100 这类动辄数万美元的专业显卡，也能在<b>消费级硬件</b>上跑起 70B 甚至 405B 参数级别的超大模型。</p>
+      <p>要理解 AirLLM 的价值，先看一组残酷的现实数据：一个 70B 参数的大模型，权重文件本身约 <b>130GB</b>，<b>光是把它加载进显存就需要 2 张各 100GB 显存的 A100</b>；而推理时还要额外计算注意力机制，显存随输入长度呈二次方增长。这意味着绝大多数开发者与研究者，被硬件成本挡在了 70B+ 模型的大门之外。</p>
+      <p>AirLLM 给出的答案是：无需任何会牺牲精度的模型压缩手段（量化 / 剪枝 / 蒸馏），仅靠<b>"逐层推理 + 内存工程"</b>，就能把 70B 模型的显存占用压到 <b>4GB 以内</b>。项目于 <b>2023 年 11 月</b>首次发布，随后快速迭代，相继支持 Llama3 70B、Llama3.1 <b>405B</b>（8GB 显存）、Mixtral、ChatGLM、Qwen、Baichuan、InternLM、Mistral 等几乎所有主流开源模型，并扩展到 macOS（Apple Silicon + MLX）与纯 CPU 推理。</p>
+      <div class="quote">"AirLLM optimizes inference memory usage, allowing 70B large language models to run inference on a single 4GB GPU card without quantization, distillation and pruning." — 官方 README</div>
+      <p>作者 <b>Gavin Li</b> 是 AI 创业公司 <b>Anima AI 的创始人兼 CEO</b>，此前曾任 Airbnb、阿里巴巴的高级 AI 负责人，学术上与斯坦福大学有合作署名，长期深耕大模型与 RAG 方向。AirLLM 也是其 <b>Anima</b> 开源生态（中文 LLM 微调项目）的衍生作品。</p>
+    </div>
+  </section>
+
+  <!-- 二、技术架构 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">2</div><h2>技术架构</h2></div>
+
+    <div class="card">
+      <p>AirLLM 的精髓不在某个单点突破，而是把一组<b>成熟的显存优化技术</b>组合到了极致。它的核心执行流是"分而治之"的<b>逐层推理（Layer-wise Inference）</b>：</p>
+      <div class="arch-flow">
+        <div class="arch-node"><div class="step">STEP 1</div><div class="nm">Meta Device 加载</div><div class="tech">HuggingFace Accelerate<br>init_empty_weights()<br>显存占用 = 0</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 2</div><div class="nm">按层分片读取</div><div class="tech">safetensors<br>内存映射 mmap<br>每层仅 ~1.6GB</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 3</div><div class="nm">单层 GPU 计算</div><div class="tech">Flash Attention<br>O(n) 显存</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 4</div><div class="nm">立即释放显存</div><div class="tech">free memory<br>仅留 KV cache</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">STEP 5</div><div class="nm">载入下一层</div><div class="tech">prefetch 预取<br>重叠 IO 与计算</div></div>
+      </div>
+      <table>
+        <tr><th>技术手段</th><th>原理</th><th>带来的收益</th></tr>
+        <tr><td><b>逐层推理</b><br>(Layer-wise)</td><td>大模型由 80 层结构相同的 Transformer 堆叠而成，层间串行执行。任何时刻只需把<b>当前那一层</b>放进显存，算完即释放。</td><td>每层显存仅约 1.6GB（1/80），整体占用 <b>&lt; 4GB</b></td></tr>
+        <tr><td><b>Flash Attention</b></td><td>将自注意力的 O(n²) 中间结果分块计算，边算边更新、丢弃中间态，并深度优化 CUDA 显存访问。</td><td>注意力显存从 O(n²) 降到 O(n)，<b>多倍加速</b></td></tr>
+        <tr><td><b>模型分片</b><br>(按层 Shard)</td><td>原始 HF 模型常切成 10GB 的大块；AirLLM 预处理时<b>按层重新分片</b>，使每片正好对齐单层大小。</td><td>避免每层都重读 10GB 大文件，<b>把磁盘 IO 压到最低</b></td></tr>
+        <tr><td><b>Meta Device</b></td><td>用 HuggingFace Accelerate 的虚拟设备，加载时<b>只读代码不读权重</b>，运行时再动态搬运到真实设备。</td><td>初始显存占用 <b>0 字节</b>，支持超大模型</td></tr>
+        <tr><td><b>Prefetch 预取</b></td><td>在当前层计算的同时，后台并行预载下一层，重叠"加载"与"计算"。</td><td>v2.5 起带来约 <b>10% 速度提升</b></td></tr>
+        <tr><td><b>分块量化压缩</b></td><td>v2.0 引入基于 block-wise quantization 的<b>仅权重量化</b>（4bit/8bit），只压权重不压激活。</td><td>推理速度再提升 <b>最高 3 倍</b>，精度损失几乎可忽略</td></tr>
+      </table>
+      <div class="note">💡 <b>关键洞察 —— 显存 vs 速度的极限权衡：</b>传统推理要"又快又准"地把整个模型塞进显存；AirLLM 选择"只要能跑起来"，用<b>惊人的延迟</b>换取<b>极端的内存可及性</b>。它的瓶颈从来不是算力，而是<b>磁盘/内存读取速度</b>——每个 token 都要把全部 70B 参数逐层流过磁盘→CPU→GPU 的管道。</div>
+    </div>
+  </section>
+
+  <!-- 三、核心创新点 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">3</div><h2>核心创新点</h2></div>
+    <div class="grid2">
+      <div class="feature"><h3><span class="ic">🎯</span> 零压缩的极致内存压缩</h3><p>最大卖点：不靠任何会损伤精度的量化/剪枝/蒸馏，纯靠"逐层加载 + 内存工程"把 70B 模型压进 4GB 显存。<b>模型能力与原版完全一致</b>，这是它区别于 llama.cpp 量化的根本路线。</p></div>
+      <div class="feature"><h3><span class="ic">🏔️</span> 405B 巨兽也能跑</h3><p>2024 年 7 月率先支持 Llama3.1 <b>405B</b>（在 8GB 显存上推理），把"能不能跑"的门槛推向了消费级硬件的天花板，几乎无人能及。</p></div>
+      <div class="feature"><h3><span class="ic">🖥️</span> 极低硬件门槛</h3><p>MacBook（Apple Silicon + MLX）、纯 CPU、入门级 4GB 显卡均可运行。<b>把大模型推理从机房带回了桌面</b>，对教学、实验、贫困地区研究者意义重大。</p></div>
+      <div class="feature"><h3><span class="ic">🔌</span> HuggingFace 生态无缝衔接</h3><p>API 设计与原生 <code>transformers</code> 几乎一致：<code>AutoModel.from_pretrained("...")</code> 一行加载，<code>model.generate()</code> 像普通模型一样推理，<b>几乎零迁移成本</b>。</p></div>
+      <div class="feature"><h3><span class="ic">⚡</span> 分块量化加速（可选）</h3><p>v2.0 加入"仅权重的 block-wise 量化"——由于瓶颈在加载而非计算，只压权重就能既<b>缩小加载体积</b>又<b>几乎不掉精度</b>，最高提速 3 倍。是量化路线的巧妙折中。</p></div>
+      <div class="feature"><h3><span class="ic">🌐</span> 全主流模型覆盖</h3><p>支持 Llama2/3/3.1、Mixtral(MoE)、ChatGLM、Qwen/Qwen2.5、Baichuan、InternLM、Mistral 等，并通过 AutoModel 自动识别模型类型，无需手动指定类。</p></div>
+    </div>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">4</div><h2>应用场景</h2></div>
+    <div class="card">
+      <p style="margin-bottom:18px">⚠️ 首先必须明确：<b>AirLLM 速度极慢，不适合任何实时交互场景</b>（聊天机器人、实时问答）。它的价值在"对延迟不敏感、但希望本地跑大模型"的离线任务。</p>
+      <ul>
+        <li><b>离线批量数据处理：</b>对延迟不敏感的批量推理——用社区 batching 原型可获约 7 倍吞吐提升，适合大规模文本处理、标注。<span class="pill">最契合场景</span></li>
+        <li><b>RAG / 文档分析：</b>在本地对 PDF、长文档做抽取、总结、问答，无需调用昂贵的云端 API，<b>数据不出本机</b>。</li>
+        <li><b>教育与实验：</b>让学生、研究者在普通笔记本上亲手跑通 70B 级模型，理解 Transformer 内部机制，<b>降低大模型的教学门槛</b>。</li>
+        <li><b>贫困/受限环境的模型评估：</b>在买不起 A100 的高校、个人开发者手中，对开源大模型做基准评测、能力探查。</li>
+        <li><b>隐私敏感的本地推理：</b>医疗、法律、金融等不能把数据上云的场景，用大模型在本地跑离线分析。</li>
+        <li><b>大模型能力探索：</b>"我只是想看看 405B 模型回答这个问题是什么样"——满足好奇心与原型验证。</li>
+      </ul>
+      <div class="quote">作者本人坦言：低端 GPU（如 T4）推理会相当慢，更适合 RAG、PDF 分析这类<b>离线数据分析</b>，而非聊天机器人等交互场景。</div>
+    </div>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">5</div><h2>竞品对比</h2></div>
+    <div class="card" style="padding:8px">
+      <table>
+        <tr>
+          <th>维度</th><th>💨 AirLLM</th><th>llama.cpp</th><th>PowerInfer</th><th>DeepSpeed ZeRO-Inference</th>
+        </tr>
+        <tr><td><b>核心路线</b></td><td>逐层加载，无压缩</td><td>GGUF 量化为主</td><td>CPU+GPU 混合热点激活</td><td>权重卸载到 NVMe/CPU</td></tr>
+        <tr><td><b>是否保留原精度</b></td><td class="check">✓ 完全无损</td><td class="partial">△ 量化有损</td><td class="partial">△ 视配置</td><td class="check">✓ 无损</td></tr>
+        <tr><td><b>显存门槛</b></td><td class="check">✓ 极低(4GB)</td><td class="check">✓ 低(量化)</td><td class="check">✓ 低</td><td class="partial">△ 中等</td></tr>
+        <tr><td><b>推理速度</b></td><td class="cross">✗ 极慢(秒级/token)</td><td class="check">✓ 快(主流)</td><td class="check">✓ 较快</td><td class="partial">△ 中</td></tr>
+        <tr><td><b>交互可用性</b></td><td class="cross">✗ 不适合</td><td class="check">✓ 适合</td><td class="check">✓ 适合</td><td class="partial">△ 部分适合</td></tr>
+        <tr><td><b>模型覆盖</b></td><td class="check">✓ 主流开源</td><td class="check">✓ 最广</td><td class="partial">△ 聚焦部分</td><td class="check">✓ 较广</td></tr>
+        <tr><td><b>易用性</b></td><td class="check">✓ HF 生态原生</td><td class="check">✓ 极高</td><td class="partial">△ 中</td><td class="cross">✗ 配置复杂</td></tr>
+        <tr><td><b>生态成熟度</b></td><td class="partial">★★★</td><td class="check">★★★★★</td><td class="partial">★★★</td><td class="partial">★★★★</td></tr>
+      </table>
+      <div style="padding:16px">
+        <p><b>定位差异小结：</b></p>
+        <ul>
+          <li><b>AirLLM</b> — "<b>零压缩 + 极低内存</b>"的极致路线。最大优势是<b>模型完全无损</b>、门槛最低；致命短板是<b>慢到无法交互</b>。适合"我能跑就行"的离线与教学场景。</li>
+          <li><b>llama.cpp</b> — 当前<b>最流行</b>的本地推理方案。靠 GGUF 量化在速度与内存间取得平衡，<b>实际可用</b>，是大多数人的首选——代价是量化带来一定精度损失。</li>
+          <li><b>PowerInfer</b> — 利用大模型"稀疏激活"特性，把热点层放 GPU、冷层放 CPU，<b>速度比纯 offload 快得多</b>，是 AirLLM 在"小内存跑大模型"上的强力竞品。</li>
+          <li><b>DeepSpeed ZeRO-Inference</b> — 微软出品的企业级 offload 方案，把权重卸载到 NVMe/内存，适合<b>有专业多卡服务器</b>但显存仍不够的场景，配置门槛较高。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn">⚖️ <b>关键认知：</b>AirLLM 与 llama.cpp 等并非直接竞争，而是<b>不同权衡点</b>。AirLLM 在"零精度损失"和"最低内存门槛"这两个维度上几乎没有对手，但在"推理速度/实用性"上是最弱的。它的真正价值是<b>打破了"大模型必须配大显存"的心理与经济门槛</b>，是一次成功的概念验证与教育工程。</div>
+  </section>
+
+  <!-- 六、综合评分 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">6</div><h2>综合评分</h2></div>
+    <div class="score-wrap">
+      <div class="score-top">
+        <div class="score-ring"><div class="num">8.2<small>/10</small></div></div>
+        <div class="score-verdict">
+          <h3>🧪 值得关注 · 优秀工程 (Worth Exploring)</h3>
+          <p>一个<b>技术思路极其精巧、门槛革命性低</b>的项目。把"零压缩跑 70B"做到了极致，教育与离线场景价值突出；但推理速度的硬伤使其难以进入生产/交互级使用。定位是"大模型民主化的概念验证"，而非日常推理工具。</p>
+        </div>
+      </div>
+      <div class="score-bars">
+        <div class="bar"><div class="lbl"><b>技术创新 / 思路</b><span>9.0 / 10</span></div><div class="track"><div class="fill" style="width:90%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>内存门槛突破</b><span>9.7 / 10</span></div><div class="track"><div class="fill" style="width:97%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>模型精度保留</b><span>9.5 / 10</span></div><div class="track"><div class="fill" style="width:95%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>易用性 / DX</b><span>8.8 / 10</span></div><div class="track"><div class="fill" style="width:88%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>社区活跃度</b><span>8.0 / 10</span></div><div class="track"><div class="fill" style="width:80%"></div></div></div>
+        <div class="bar"><div class="lbl"><b>推理速度 / 实用性</b><span>5.0 / 10</span></div><div class="track"><div class="fill" style="width:50%;background:linear-gradient(90deg,#f87171,#fbbf24)"></div></div></div>
+        <div class="bar"><div class="lbl"><b>生产可用性</b><span>5.5 / 10</span></div><div class="track"><div class="fill" style="width:55%;background:linear-gradient(90deg,#f87171,#fbbf24)"></div></div></div>
+        <div class="bar"><div class="lbl"><b>文档与生态</b><span>7.8 / 10</span></div><div class="track"><div class="fill" style="width:78%"></div></div></div>
+      </div>
+      <div class="note" style="margin-top:22px">🏆 <b>核心价值：</b>开源协议 Apache-2.0 高度友好；"零压缩 + 4GB 跑 70B"的思路是<b>教科书级的内存工程示范</b>，对大模型民主化、教育普及、贫困环境研究有<b>不可替代的意义</b>。</div>
+      <div class="warn">⚠️ <b>减分项说明：</b>推理速度是其阿喀琉斯之踵——批量场景下约 <b>4.85 秒/token</b>，极端情况单句耗时数十分钟，<b>比正常推理慢 1-2 个数量级</b>，无法支撑任何交互式应用。这使其更适合"概念验证 / 离线批处理 / 教学"，而非生产级推理工具。社区也有人直问"这项目到底有什么实际用途"。</div>
+    </div>
+  </section>
+
+  <div class="src">
+    <b>📎 参考来源：</b><br>
+    · <a href="https://github.com/lyogavin/airllm">GitHub - lyogavin/airllm</a> · <a href="https://pypi.org/project/airllm/">PyPI - airllm</a><br>
+    · <a href="https://huggingface.co/blog/lyogavin/airllm">Hugging Face 博客：Run 70B LLM Inference on a Single 4GB GPU（作者 Gavin Li）</a><br>
+    · <a href="https://pub.towardsai.net/i-ran-a-70b-language-model-on-my-4gb-gpu-and-it-actually-worked-here-is-what-i-found-795185975f3b">Towards AI：Run 70B LLMs on 4GB GPU With AirLLM</a><br>
+    · <a href="https://rohit-shirke.medium.com/airllm-and-70b-on-a-4gb-gpu-whats-actually-going-on-3bf0e102252e">Medium 深度解析：AirLLM 究竟在做什么</a><br>
+    · <a href="https://www.reddit.com/r/LocalLLaMA/comments/1ckxzi3/airllm_batching_ram_size_doesnt_limit_throughput/">Reddit：AirLLM + Batching 吞吐量讨论</a><br>
+    · <a href="https://www.linkedin.com/posts/lioralex_you-can-now-run-70b-llms-on-a-4gb-gpu-airllm-activity-7415709234442588160-wMVi">LinkedIn：逐层加载机制说明</a>
+  </div>
+
+  <footer>本报告由 GitHub 项目深度分析器 自动生成 · 数据截至 2026-06-23</footer>
+</div>
+</body>
+</html>
