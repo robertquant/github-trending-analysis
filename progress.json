@@ -1,10 +1,8 @@
 {
-  "date": "2026-06-24",
-  "fetched_at": "2026-06-24",
+  "date": "2026-06-25",
+  "fetched_at": "2026-06-25",
   "pending": [],
-  "done": [
-    "shanraisshan/claude-code-best-practice"
-  ],
+  "done": [],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
     "ZhuLinsen/daily_stock_analysis",
@@ -14,6 +12,7 @@
     "koala73/worldmonitor",
     "palmier-io/palmier-pro",
     "anthropics/claude-plugins-official",
+    "shanraisshan/claude-code-best-practice",
     "revfactory/harness",
     "jamiepine/voicebox",
     "JCodesMore/ai-website-cloner-template",
@@ -21,7 +20,6 @@
     "DeusData/codebase-memory-mcp",
     "NousResearch/hermes-agent"
   ],
-  "done": [],
   "projects": [
     {
       "name": "calesthio/OpenMontage",
@@ -57,7 +55,7 @@
     },
     {
       "name": "shanraisshan/claude-code-best-practice",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "revfactory/harness",
@@ -87,7 +85,7 @@
   "counts": {
     "total_today": 15,
     "pending": 0,
-    "skipped": 14,
-    "done": 1
+    "skipped": 15,
+    "done": 0
   }
 }
