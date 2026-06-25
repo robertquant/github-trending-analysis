@@ -2,7 +2,6 @@
   "date": "2026-06-26",
   "fetched_at": "2026-06-26",
   "pending": [
-    "xbtlin/ai-berkshire",
     "mauriceboe/TREK",
     "aws/agent-toolkit-for-aws",
     "alibaba/page-agent",
@@ -11,7 +10,8 @@
     "NanmiCoder/MediaCrawler"
   ],
   "done": [
-    "google-labs-code/design.md"
+    "google-labs-code/design.md",
+    "xbtlin/ai-berkshire"
   ],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
@@ -33,7 +33,7 @@
     },
     {
       "name": "xbtlin/ai-berkshire",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "mauriceboe/TREK",
@@ -86,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 7,
+    "pending": 6,
     "skipped": 7,
-    "done": 1
+    "done": 2
   }
 }

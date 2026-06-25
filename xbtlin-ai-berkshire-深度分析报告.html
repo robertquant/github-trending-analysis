@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xbtlin/ai-berkshire 深度分析报告</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --card: #1a2029;
+    --card-2: #222b38;
+    --border: #2d3748;
+    --text: #e6edf3;
+    --muted: #9ca3af;
+    --accent: #d4a055;
+    --accent-2: #4a9eff;
+    --green: #4ade80;
+    --red: #f87171;
+    --orange: #fb923c;
+    --gold: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f1419 0%, #161b22 100%);
+    color: var(--text);
+    line-height: 1.75;
+    padding: 0;
+    min-height: 100vh;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1a2029 0%, #2d2519 50%, #1a2029 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "💰";
+    position: absolute;
+    font-size: 280px;
+    opacity: 0.04;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
+  .hero h1 {
+    font-size: 2.6em;
+    background: linear-gradient(90deg, var(--gold), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .hero .subtitle { font-size: 1.15em; color: var(--muted); position: relative; }
+  .hero .tagline {
+    margin-top: 18px;
+    font-style: italic;
+    color: var(--accent);
+    position: relative;
+    font-size: 1.05em;
+  }
+  .meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 28px;
+    position: relative;
+  }
+  .badge {
+    background: rgba(212,160,85,0.12);
+    border: 1px solid rgba(212,160,85,0.35);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.88em;
+  }
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .section h2 {
+    color: var(--accent);
+    font-size: 1.55em;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h3 { color: var(--text); font-size: 1.2em; margin: 22px 0 12px; }
+  .section p { margin-bottom: 14px; color: #c9d1d9; }
+  .section ul, .section ol { margin: 12px 0 14px 24px; }
+  .section li { margin-bottom: 8px; color: #c9d1d9; }
+  strong { color: var(--gold); }
+  code {
+    background: #0d1117;
+    color: #79c0ff;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  pre code { background: none; color: #c9d1d9; padding: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95em;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  th { background: var(--card-2); color: var(--accent); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+  .stat-card {
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .num { font-size: 1.9em; font-weight: 700; color: var(--accent); }
+  .stat-card .label { color: var(--muted); font-size: 0.88em; margin-top: 4px; }
+  .quote {
+    border-left: 4px solid var(--accent);
+    background: rgba(212,160,85,0.06);
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #d4d4d4;
+  }
+  .score-box {
+    background: linear-gradient(135deg, var(--card-2), var(--card));
+    border: 2px solid var(--accent);
+    border-radius: 14px;
+    padding: 28px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .score-big { font-size: 3.4em; font-weight: 800; color: var(--gold); line-height: 1; }
+  .score-label { color: var(--muted); margin-top: 8px; }
+  .score-dims { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin-top: 20px; }
+  .dim { text-align: center; min-width: 100px; }
+  .dim .bar-wrap { background: #0d1117; border-radius: 6px; height: 8px; width: 100px; margin: 6px auto 0; overflow: hidden; }
+  .dim .bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+  .dim .v { color: var(--accent); font-weight: 700; }
+  .dim .k { color: var(--muted); font-size: 0.82em; margin-top: 4px; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
+  .pill-green { background: rgba(74,222,128,0.15); color: var(--green); }
+  .pill-orange { background: rgba(251,146,60,0.15); color: var(--orange); }
+  .pill-red { background: rgba(248,113,113,0.15); color: var(--red); }
+  .arch-box {
+    background: #0d1117; border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin: 14px 0; font-family: monospace; font-size: 0.82em;
+    color: #8b949e; white-space: pre; overflow-x: auto;
+  }
+  .master-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; margin: 16px 0; }
+  .master {
+    background: var(--card-2); border-top: 3px solid var(--accent);
+    border-radius: 8px; padding: 16px;
+  }
+  .master .name { color: var(--gold); font-weight: 700; font-size: 1.05em; }
+  .master .role { color: var(--accent-2); font-size: 0.85em; margin: 4px 0 8px; }
+  .footer { text-align: center; color: var(--muted); padding: 30px; font-size: 0.88em; border-top: 1px solid var(--border); margin-top: 20px; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .pro { color: var(--green); }
+  .con { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>AI Berkshire</h1>
+  <div class="subtitle">AI 时代的价值投资研究框架 · xbtlin/ai-berkshire</div>
+  <div class="tagline">"一个人 + Claude = 一个投研团队" —— 巴菲特、芒格、段永平、李录四大师方法论 + 多 Agent 对抗分析</div>
+  <div class="meta-bar">
+    <span class="badge">⭐ 1.8k Stars</span>
+    <span class="badge">🍴 292 Forks</span>
+    <span class="badge">📝 1,128 Commits</span>
+    <span class="badge">🐍 Python 98%</span>
+    <span class="badge">📜 MIT License</span>
+    <span class="badge">🚀 v1.0.0 (2026-04-07)</span>
+    <span class="badge">🤖 基于 Claude Code</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 综合评分 -->
+  <div class="score-box">
+    <div class="score-big">9.0<span style="font-size:0.5em;color:var(--muted)">/10</span></div>
+    <div class="score-label">综合评分 · 顶级创意 × 落地工程 × 实盘验证</div>
+    <div class="score-dims">
+      <div class="dim"><div class="v">9.5</div><div class="k">创意独特性</div><div class="bar-wrap"><div class="bar" style="width:95%"></div></div></div>
+      <div class="dim"><div class="v">8.5</div><div class="k">技术深度</div><div class="bar-wrap"><div class="bar" style="width:85%"></div></div></div>
+      <div class="dim"><div class="v">9.5</div><div class="k">实用价值</div><div class="bar-wrap"><div class="bar" style="width:95%"></div></div></div>
+      <div class="dim"><div class="v">9.0</div><div class="k">文档质量</div><div class="bar-wrap"><div class="bar" style="width:90%"></div></div></div>
+      <div class="dim"><div class="v">8.5</div><div class="k">社区热度</div><div class="bar-wrap"><div class="bar" style="width:85%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2>📋 一、项目概述</h2>
+    <p><strong>AI Berkshire</strong>（AI 时代的伯克希尔）是一套基于 Anthropic <strong>Claude Code</strong> 的投资研究 Skill 合集。它把 <strong>巴菲特（Warren Buffett）、芒格（Charlie Munger）、段永平、李录</strong> 四位价值投资大师的方法论系统化、结构化，通过多 AI Agent 协作实现专业级投资研究。</p>
+    <div class="quote">
+      普通人问 AI 得到的是"看起来对的分析"，用 AI Berkshire 得到的是"可以拿来做决策的投研报告"。
+    </div>
+    <p>项目作者 <strong>xbtlin</strong> 用这套框架进行真实实盘交易，并公开了收益截图：2024 全年收益 <strong>+69.29%</strong>，2025 年至今收益 <strong>+66.38%</strong>，连续两年大幅跑赢全球主要指数。这种"以真金白银背书"的透明度，在 AI 工具项目中极为罕见。</p>
+
+    <div class="grid">
+      <div class="stat-card"><div class="num">16</div><div class="label">投资研究 Skills</div></div>
+      <div class="stat-card"><div class="num">4</div><div class="label">大师视角 Agent</div></div>
+      <div class="stat-card"><div class="num">+69%</div><div class="label">2024 实盘收益</div></div>
+      <div class="stat-card"><div class="num">5</div><div class="label">防骗/反偏见机制</div></div>
+    </div>
+
+    <h3>核心理念：四大师对抗式分析</h3>
+    <div class="master-grid">
+      <div class="master"><div class="name">段永平</div><div class="role">"对的生意"</div>商业模式本质、能力圈、本分</div>
+      <div class="master"><div class="name">巴菲特</div><div class="role">护城河 · 安全边际</div>财务估值、管理层、内在价值</div>
+      <div class="master"><div class="name">芒格</div><div class="role">逆向思考</div>失败情景、风险清单、偏误自查</div>
+      <div class="master"><div class="name">李录</div><div class="role">文明趋势</div>长期确定性、范式转移、产业价值</div>
+    </div>
+    <p>四大师并非简单分工，而是被设计为<strong>互相挑战</strong>：段永平说"好生意"，芒格就问"怎么会死"；巴菲特说"够便宜"，李录就问"10 年后还在吗"。这种多视角张力是避免决策盲点的关键。</p>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2>⚙️ 二、技术架构</h2>
+    <p>项目采用经典的<strong>三层设计哲学</strong>，运行在 Claude Code（Anthropic 官方 CLI Agent）之上，主语言为 Python（占比 98%）。</p>
+    <div class="arch-box">┌─────────────────────────────────────────────┐
+│              Skill 层（16 个入口）             │
+│   深度研究 · 财报分析 · 行业筛选 · 持仓管理     │
+├─────────────────────────────────────────────┤
+│              Agent 层（每 Skill 内 4 Agent）   │
+│    段永平视角 │ 巴菲特视角 │ 芒格视角 │ 李录视角 │
+│    各自独立搜索 · 独立判断 · 互相挑战          │
+├─────────────────────────────────────────────┤
+│              工具层（financial_rigor.py）      │
+│  精确计算 · 实时检索 · 多源交叉验证 · 报告抽检   │
+└─────────────────────────────────────────────┘</div>
+
+    <h3>1. Skill 层 —— 场景化入口（16 个）</h3>
+    <table>
+      <tr><th>类别</th><th>Skill</th><th>用途</th></tr>
+      <tr><td rowspan="5">🔬 深度研究</td><td><code>/investment-research</code></td><td>四大师综合深度分析（七模块流程）</td></tr>
+      <tr><td><code>/investment-team</code></td><td>4 Agent 并行投研团队（最快速全面）</td></tr>
+      <tr><td><code>/management-deep-dive</code></td><td>管理层纵深研究（"买股即买人"）</td></tr>
+      <tr><td><code>/private-company-research</code></td><td>未上市公司侦探式研究（如 SpaceX）</td></tr>
+      <tr><td><code>/deep-company-series</code></td><td>8 篇 12 万字长文系列拆解</td></tr>
+      <tr><td rowspan="2">📊 财报分析</td><td><code>/earnings-review</code></td><td>财报精读（仅读一手资料，拒依赖研报）</td></tr>
+      <tr><td><code>/earnings-team</code></td><td>四大师并行解读 → 编辑润色 → 可发布文章</td></tr>
+      <tr><td rowspan="4">🏭 行业筛选</td><td><code>/industry-research</code></td><td>产业链全景扫描（按环节切片）</td></tr>
+      <tr><td><code>/industry-funnel</code></td><td>全市场 → ≤10 家 → 终选 3 家漏斗</td></tr>
+      <tr><td><code>/quality-screen</code></td><td>7 条硬指标去劣快速筛选</td></tr>
+      <tr><td><code>/investment-checklist</code></td><td>巴菲特买入前六关 Checklist（10 分钟）</td></tr>
+      <tr><td rowspan="3">📈 持仓管理</td><td><code>/portfolio-review</code></td><td>组合仓位、集中度、再平衡</td></tr>
+      <tr><td><code>/thesis-tracker</code></td><td>买入后投资论文追踪与证伪</td></tr>
+      <tr><td><code>/news-pulse</code></td><td>股价异动 10 分钟快速归因</td></tr>
+      <tr><td rowspan="2">🧠 思维工具</td><td><code>/dyp-ask</code></td><td>段永平式问答（商业/投资/人生）</td></tr>
+      <tr><td><code>/financial-data</code></td><td>财务数据获取与交叉验证规范</td></tr>
+    </table>
+
+    <h3>2. Agent 层 —— 多智能体对抗</h3>
+    <p>以 <code>/investment-team</code> 为例，Team Lead（用户）统筹下，4 个独立 Agent <strong>同时</strong>研究一家公司，各自搜索网络、交叉验证数据、独立给出结论，最后综合。这等于 4 倍搜索量、4 倍信息源、4 个独立视角，从根本上突破单 prompt 的上下文局限。</p>
+
+    <h3>3. 工具层 —— 金融严谨性（<code>tools/financial_rigor.py</code>）</h3>
+    <p>这是项目工程严谨性的核心体现。LLM 心算不可靠，PE 算错小数点就可能导致错误决策。该工具集解决此痛点：</p>
+    <table>
+      <tr><th>功能</th><th>命令</th><th>解决的问题</th></tr>
+      <tr><td>市值验算</td><td><code>verify-market-cap</code></td><td>股价 × 总股本 精确计算，检测单位错误</td></tr>
+      <tr><td>估值验算</td><td><code>verify-valuation</code></td><td>PE/PB/ROE/FCF Yield 精确十进制</td></tr>
+      <tr><td>多源交叉验证</td><td><code>cross-validate</code></td><td>N 来源同数据比对，超容差告警</td></tr>
+      <tr><td>三情景估值</td><td><code>three-scenario</code></td><td>乐观/中性/悲观目标价</td></tr>
+      <tr><td>Benford 定律检测</td><td><code>benford</code></td><td>财务数据首位数字分布异常识别</td></tr>
+      <tr><td>精确计算器</td><td><code>calc</code></td><td>替代 LLM 心算的任意财务表达式</td></tr>
+    </table>
+    <div class="quote">
+      设计原则：所有计算使用 Python <code>decimal.Decimal</code>（精确十进制），非 <code>float</code>。"0.1 + 0.2 = 0.3" 在金融场景中不允许失败。
+    </div>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2>💡 三、核心创新点</h2>
+
+    <h3>① 强制给结论，不打太极</h3>
+    <p>直接问 AI"拼多多值不值得买"，得到的是"一方面…另一方面…投资有风险"的两面讨好分析，<strong>没法拿来做决策</strong>。AI Berkshire 强制输出 <strong>通过/不通过/灰色地带</strong>，带具体价格区间和分层（激进/稳健/保守）建议。"镜子测试"：5 句话说不完整 = 不买，没有例外。</p>
+
+    <h3>② 四大师视角对抗，制造真实矛盾</h3>
+    <p>以拼多多为例，四视角会产生真实张力：</p>
+    <table>
+      <tr><th>大师</th><th>视角</th><th>判断</th><th>评分</th></tr>
+      <tr><td>段永平</td><td>商业模式</td><td>好生意，C2M 难复制</td><td>3.7/5</td></tr>
+      <tr><td>巴菲特</td><td>财务估值</td><td>扣现金 PE 仅 6.3x，印钞机</td><td>4.4/5</td></tr>
+      <tr><td>芒格</td><td>逆向思考</td><td>护城河比想象浅，抖音 3 年做到 4 万亿 GMV</td><td>3.5/5</td></tr>
+      <tr><td>李录</td><td>长期确定性</td><td>管理层文化隐患，10 年后不确定</td><td>2.0/5</td></tr>
+    </table>
+    <p><strong>巴菲特说"真便宜"，李录说"不确定就不买"</strong>——这种冲突才是投资决策的真实状态，单一 prompt 无法制造。</p>
+
+    <h3>③ 结构化反偏见机制（5 层"防骗"）</h3>
+    <p>AI 最危险的不是给错答案，而是给一个<strong>看起来很对但经不起推敲</strong>的答案。项目内置五重防护：</p>
+    <ul>
+      <li><strong>信息丰富度评级（A/B/C）</strong>：防止"资料多=确定性高"幻觉</li>
+      <li><strong>芒格式逆向检验</strong>：强制思考失败场景（"什么情况下拼多多会死？"）</li>
+      <li><strong>快速否决清单</strong>：8 条红线一票否决（管理层诚信污点 → 直接否决）</li>
+      <li><strong>反共识检查</strong>："聪明人为什么在做空？"发现被忽视风险</li>
+      <li><strong>留白原则</strong>：数据不足标注"灰色地带"，不用推测伪装确定性</li>
+    </ul>
+
+    <h3>④ 金融数据精确性 + 可复现流程</h3>
+    <p>通过 <code>decimal.Decimal</code> 精确算术 + 多源交叉验证，杜绝 LLM 心算误差。同时保证<strong>同样输入 → 结构一致、深度一致输出</strong>，使 7 家公司横向对比、同公司半年后重测成为可能。</p>
+
+    <h3>⑤ 多 Agent 并行 = 研究深度倍增</h3>
+    <p>4 个"分析师"各自做完整研究而非拆分单 prompt，等于 4 倍信息量与独立判断，再由 Team Lead 综合。</p>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2>🎯 四、应用场景</h2>
+    <div class="grid">
+      <div class="stat-card"><div class="num">💼</div><div class="label"><strong>个人价值投资者</strong><br>把研究深度提升到机构投研团队水平</div></div>
+      <div class="stat-card"><div class="num">📈</div><div class="label"><strong>港股/A股散户</strong><br>专注 china-stock，含腾讯、美团、茅台等</div></div>
+      <div class="stat-card"><div class="num">🏦</div><div class="label"><strong>小型私募/投研团队</strong><br>统一研究标准，结果可对齐、可复现</div></div>
+      <div class="stat-card"><div class="num">📰</div><div class="label"><strong>财经自媒体</strong><br><code>/earnings-team</code> 一键生成可发布文章</div></div>
+      <div class="stat-card"><div class="num">🎓</div><div class="label"><strong>投资教育</strong><br>用四大师框架学习系统化价值投资</div></div>
+      <div class="stat-card"><div class="num">⚡</div><div class="label"><strong>持仓盯盘</strong><br><code>/news-pulse</code> 异动 10 分钟归因，避免焦虑</div></div>
+    </div>
+    <p>典型使用流程示例：</p>
+    <pre><code># 深度研究
+/investment-team 美团
+
+# 行业漏斗：从全市场筛选 AI 算力终选 3 家
+/industry-funnel AI算力
+
+# 巴菲特六关快速筛选多标的
+/investment-checklist 腾讯, 阿里巴巴, 美团, 拼多多
+
+# 股价异动归因
+/news-pulse 腾讯</code></pre>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2>⚔️ 五、竞品对比</h2>
+    <p>AI 投资工具赛道可分为三类，AI Berkshire 在"研究框架深度 + 实盘透明度"维度几乎无直接对手。</p>
+    <table>
+      <tr><th>项目/工具</th><th>定位</th><th>核心差异</th><th>对比评价</th></tr>
+      <tr><td><strong>AI Berkshire（本项目）</strong></td><td>Claude Code 价值投资研究框架</td><td>四大师对抗 + 5 层反偏见 + 实盘背书</td><td><span class="pill pill-green">标杆</span></td></tr>
+      <tr><td>Munger Perspective / Buffett Review</td><td>单大师视角 Claude Skill</td><td>仅单一视角，无对抗张力</td><td><span class="pill pill-orange">功能子集</span></td></tr>
+      <tr><td>TauricResearch/TradingAgents</td><td>多 Agent 交易决策框架</td><td>偏量化/交易信号，非价值投资</td><td><span class="pill pill-orange">赛道不同</span></td></tr>
+      <tr><td>Fincept Terminal / 专业终端</td><td>数据终端 + 分析</td><td>数据全但缺方法论结构化</td><td><span class="pill pill-orange">互补</span></td></tr>
+      <tr><td>HKUDS/AI-Trader / ZhuLinsen/daily_stock</td><td>A 股每日 AI 选股</td><td>日级推荐，缺深度研究流程</td><td><span class="pill pill-red">浅层</span></td></tr>
+      <tr><td>Anthropic Financial Services Skills</td><td>官方金融领域 Skill</td><td>通用金融，无四大师体系</td><td><span class="pill pill-orange">官方基线</span></td></tr>
+    </table>
+    <div class="quote">
+      独特定位：AI Berkshire 是少有的"思想方法论 + 工程严谨性 + 真实业绩"三者兼备的项目。它不预测股价，而是<strong>结构化提升研究质量与决策纪律</strong>。
+    </div>
+  </div>
+
+  <!-- 优劣势 -->
+  <div class="section">
+    <h2>⚖️ 六、优势与局限</h2>
+    <h3 class="pro">✅ 核心优势</h3>
+    <ul>
+      <li><strong>实盘透明背书</strong>：2024 +69.29%、2025 至今 +66.38%，富途账户截图公开，可信度极高</li>
+      <li><strong>方法论结构化</strong>：四大师 + 5 层反偏见机制，直击 LLM 投资分析的核心痛点</li>
+      <li><strong>工程严谨</strong>：<code>decimal.Decimal</code> 精确算术、多源交叉验证、Benford 检测</li>
+      <li><strong>场景完整</strong>：16 个 Skill 覆盖从筛选、研究、财报、持仓到异动归因全链路</li>
+      <li><strong>文档极佳</strong>：README 含大量真实输出示例、表格对比、可复现命令</li>
+    </ul>
+    <h3 class="con">⚠️ 潜在局限</h3>
+    <ul>
+      <li><strong>Token 消耗高</strong>：4 Agent 并行研究成本不菲（社区反映用 qwen 等替代降本）</li>
+      <li><strong>依赖 Claude Code</strong>：强绑定 Anthropic 生态，迁移成本高</li>
+      <li><strong>数据接入有限</strong>：路线图显示实时 Wind/Bloomberg/Yahoo MCP 接入仍在规划中</li>
+      <li><strong>历史业绩 ≠ 未来</strong>：2024-2025 多为港股科技牛市，超额收益部分源于 Beta</li>
+      <li><strong>不构成投资建议</strong>：研究框架而非自动交易，仍需用户自主决策</li>
+    </ul>
+  </div>
+
+  <!-- 综合评分总结 -->
+  <div class="section">
+    <h2>🏆 七、综合评价</h2>
+    <p>AI Berkshire 是 2026 年 GitHub 上最具<strong>原创性与完成度</strong>的 AI + 金融项目之一。它没有走"AI 选股/预测涨跌"的浮躁路线，而是回归价值投资本质，用 Agent 编排把大师智慧与结构化决策纪律工程化。</p>
+    <table>
+      <tr><th>维度</th><th>评分</th><th>说明</th></tr>
+      <tr><td>创意独特性</td><td>9.5</td><td>"四大师对抗 + 实盘背书"组合几乎无同类</td></tr>
+      <tr><td>技术深度</td><td>8.5</td><td>多 Agent 编排 + 金融精确算术工程扎实</td></tr>
+      <tr><td>实用价值</td><td>9.5</td><td>对个人投资者直接可用，真金白银验证</td></tr>
+      <tr><td>文档质量</td><td>9.0</td><td>大量真实输出示例，可复现性强</td></tr>
+      <tr><td>社区热度</td><td>8.5</td><td>1.8k Star、被 Trendshift 收录</td></tr>
+      <tr><td><strong>综合</strong></td><td><strong>9.0</strong></td><td><strong>强烈推荐关注 · GitHub Trending 顶流</strong></td></tr>
+    </table>
+    <div class="quote">
+      "The best investment you can make is in yourself." —— AI Berkshire：让每个人都拥有自己的投研团队。
+    </div>
+    <p style="margin-top:16px; text-align:center;">
+      🔗 仓库地址：<a href="https://github.com/xbtlin/ai-berkshire" target="_blank">github.com/xbtlin/ai-berkshire</a>
+      &nbsp;|&nbsp; 📊 Trendshift：<a href="https://trendshift.io/repositories/63696" target="_blank">趋势追踪</a>
+    </p>
+    <p style="color:var(--muted); font-size:0.85em; margin-top:18px;">
+      ⚠️ 免责声明：本项目仅供学习研究，不构成投资建议。历史收益不代表未来表现。投资有风险，决策需谨慎（DYOR）。
+    </p>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>xbtlin/ai-berkshire 深度分析报告 · 生成于 2026-06-26 · GitHub Trending 项目深度分析</p>
+</div>
+
+</body>
+</html>
