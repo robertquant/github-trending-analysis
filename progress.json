@@ -1,68 +1,45 @@
 {
-  "date": "2026-06-25",
-  "fetched_at": "2026-06-25",
-  "pending": [],
+  "date": "2026-06-26",
+  "fetched_at": "2026-06-26",
+  "pending": [
+    "google-labs-code/design.md",
+    "xbtlin/ai-berkshire",
+    "mauriceboe/TREK",
+    "aws/agent-toolkit-for-aws",
+    "alibaba/page-agent",
+    "IceWhaleTech/CasaOS",
+    "opendatalab/MinerU",
+    "NanmiCoder/MediaCrawler"
+  ],
   "done": [],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
-    "ZhuLinsen/daily_stock_analysis",
-    "mukul975/Anthropic-Cybersecurity-Skills",
-    "garrytan/gstack",
-    "bytedance/deer-flow",
-    "koala73/worldmonitor",
-    "palmier-io/palmier-pro",
-    "anthropics/claude-plugins-official",
-    "shanraisshan/claude-code-best-practice",
-    "revfactory/harness",
-    "jamiepine/voicebox",
+    "apple/container",
     "JCodesMore/ai-website-cloner-template",
-    "byoungd/English-level-up-tips",
-    "DeusData/codebase-memory-mcp",
-    "NousResearch/hermes-agent"
+    "garrytan/gstack",
+    "mukul975/Anthropic-Cybersecurity-Skills",
+    "Free-TV/IPTV",
+    "shanraisshan/claude-code-best-practice"
   ],
   "projects": [
+    {
+      "name": "google-labs-code/design.md",
+      "status": "pending"
+    },
     {
       "name": "calesthio/OpenMontage",
       "status": "skipped"
     },
     {
-      "name": "ZhuLinsen/daily_stock_analysis",
-      "status": "skipped"
+      "name": "xbtlin/ai-berkshire",
+      "status": "pending"
     },
     {
-      "name": "mukul975/Anthropic-Cybersecurity-Skills",
-      "status": "skipped"
+      "name": "mauriceboe/TREK",
+      "status": "pending"
     },
     {
-      "name": "garrytan/gstack",
-      "status": "skipped"
-    },
-    {
-      "name": "bytedance/deer-flow",
-      "status": "skipped"
-    },
-    {
-      "name": "koala73/worldmonitor",
-      "status": "skipped"
-    },
-    {
-      "name": "palmier-io/palmier-pro",
-      "status": "skipped"
-    },
-    {
-      "name": "anthropics/claude-plugins-official",
-      "status": "skipped"
-    },
-    {
-      "name": "shanraisshan/claude-code-best-practice",
-      "status": "skipped"
-    },
-    {
-      "name": "revfactory/harness",
-      "status": "skipped"
-    },
-    {
-      "name": "jamiepine/voicebox",
+      "name": "apple/container",
       "status": "skipped"
     },
     {
@@ -70,22 +47,46 @@
       "status": "skipped"
     },
     {
-      "name": "byoungd/English-level-up-tips",
+      "name": "garrytan/gstack",
       "status": "skipped"
     },
     {
-      "name": "DeusData/codebase-memory-mcp",
+      "name": "aws/agent-toolkit-for-aws",
+      "status": "pending"
+    },
+    {
+      "name": "mukul975/Anthropic-Cybersecurity-Skills",
       "status": "skipped"
     },
     {
-      "name": "NousResearch/hermes-agent",
+      "name": "alibaba/page-agent",
+      "status": "pending"
+    },
+    {
+      "name": "IceWhaleTech/CasaOS",
+      "status": "pending"
+    },
+    {
+      "name": "opendatalab/MinerU",
+      "status": "pending"
+    },
+    {
+      "name": "Free-TV/IPTV",
       "status": "skipped"
+    },
+    {
+      "name": "shanraisshan/claude-code-best-practice",
+      "status": "skipped"
+    },
+    {
+      "name": "NanmiCoder/MediaCrawler",
+      "status": "pending"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 0,
-    "skipped": 15,
+    "pending": 8,
+    "skipped": 7,
     "done": 0
   }
 }
