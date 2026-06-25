@@ -2,7 +2,6 @@
   "date": "2026-06-26",
   "fetched_at": "2026-06-26",
   "pending": [
-    "google-labs-code/design.md",
     "xbtlin/ai-berkshire",
     "mauriceboe/TREK",
     "aws/agent-toolkit-for-aws",
@@ -11,7 +10,9 @@
     "opendatalab/MinerU",
     "NanmiCoder/MediaCrawler"
   ],
-  "done": [],
+  "done": [
+    "google-labs-code/design.md"
+  ],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
     "apple/container",
@@ -24,7 +25,7 @@
   "projects": [
     {
       "name": "google-labs-code/design.md",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "calesthio/OpenMontage",
@@ -85,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 8,
+    "pending": 7,
     "skipped": 7,
-    "done": 0
+    "done": 1
   }
 }

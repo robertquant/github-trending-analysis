@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DESIGN.md 深度分析报告 — 让 AI 编码 Agent 真正"看懂"设计系统的开放标准</title>
+<style>
+  :root{
+    --bg:#0b0f17; --bg2:#111827; --card:#151c2b; --card2:#1b2435;
+    --border:#243049; --text:#e6edf7; --muted:#9aa7bd;
+    --accent:#4285f4; --accent2:#5e9eff; --green:#34d399; --blue:#60a5fa;
+    --purple:#a78bfa; --yellow:#fbbf24; --red:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0b0f17 0%,#0e1422 100%);
+    color:var(--text);line-height:1.75;min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+  /* HERO */
+  .hero{
+    position:relative;padding:72px 24px 56px;border-radius:0 0 28px 28px;
+    background:
+      radial-gradient(900px 380px at 80% -10%, rgba(66,133,244,.28), transparent 60%),
+      radial-gradient(700px 320px at 10% 0%, rgba(167,139,250,.20), transparent 55%),
+      linear-gradient(135deg,#0d1320,#141d31);
+    border-bottom:1px solid var(--border);overflow:hidden;
+  }
+  .hero-inner{max-width:1032px;margin:0 auto}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+    background:rgba(66,133,244,.14);border:1px solid rgba(66,133,244,.38);
+    color:var(--accent2);font-size:13px;font-weight:600;letter-spacing:.3px;margin-bottom:22px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  h1{font-size:46px;line-height:1.15;font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+  h1 .grad{background:linear-gradient(90deg,#4285f4,#5e9eff 45%,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{font-size:19px;color:var(--muted);max-width:820px;margin-bottom:30px}
+  .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:860px}
+  .meta{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .meta .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .meta .v{font-size:19px;font-weight:700;color:#fff}
+  .meta .v small{font-size:12px;color:var(--muted);font-weight:500}
+
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .sec-num{
+    width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+    font-weight:800;font-size:15px;color:#0b0f17;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+  }
+  h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  p{margin-bottom:14px;color:#d3dbe8}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:18px;
+  }
+  ul{margin:6px 0 6px 22px}li{margin-bottom:8px;color:#d3dbe8}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;background:rgba(66,133,244,.14);color:#9ec5ff;padding:2px 7px;border-radius:6px;font-size:13.5px}
+  .pill{display:inline-block;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);color:#9ec5ff;padding:3px 10px;border-radius:6px;font-size:13px;margin:3px}
+
+  pre{
+    background:#0a0f1c;border:1px solid var(--border);border-radius:12px;padding:16px 18px;
+    overflow-x:auto;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.8px;
+    color:#c8d4ea;line-height:1.6;margin:14px 0;
+  }
+  pre .k{color:#82aaff}pre .s{color:#c3e88d}pre .c{color:#5b6b88;font-style:italic}pre .v{color:#f78c6c}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.grid2,.grid3,.meta-grid{grid-template-columns:1fr}h1{font-size:32px}}
+
+  .feature{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:20px}
+  .feature h3{font-size:17px;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:9px}
+  .feature .ic{font-size:21px}
+  .feature p{font-size:14px;color:var(--muted);margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:rgba(66,133,244,.10);color:#fff;font-weight:700;font-size:13.5px}
+  tr:last-child td{border-bottom:none}
+  td{color:#d3dbe8}
+  .check{color:var(--green);font-weight:700}
+  .cross{color:var(--red);font-weight:700}
+  .partial{color:var(--yellow);font-weight:700}
+
+  .score-wrap{background:linear-gradient(135deg,#151c2b,#1b2435);border:1px solid var(--border);border-radius:18px;padding:28px}
+  .score-top{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-bottom:24px}
+  .score-ring{
+    width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0deg 338deg, rgba(255,255,255,.08) 338deg 360deg);
+    position:relative;
+  }
+  .score-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#111a2b}
+  .score-ring .num{position:relative;font-size:34px;font-weight:800;color:#fff}
+  .score-ring .num small{font-size:15px;color:var(--muted);font-weight:600}
+  .score-verdict h3{font-size:22px;margin-bottom:6px}
+  .score-verdict p{color:var(--muted);font-size:14.5px;margin:0}
+  .score-bars .bar{margin-bottom:13px}
+  .score-bars .lbl{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
+  .score-bars .lbl b{color:#fff}
+  .score-bars .track{height:9px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden}
+  .score-bars .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+  .arch-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:14px 0}
+  .arch-node{flex:1;min-width:130px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .arch-node .step{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.5px}
+  .arch-node .nm{font-size:14.5px;font-weight:700;color:#fff;margin:4px 0 3px}
+  .arch-node .tech{font-size:11.5px;color:var(--muted)}
+  .arrow{display:grid;place-items:center;color:var(--accent);font-size:22px;align-self:center}
+
+  .quote{border-left:3px solid var(--accent);padding:6px 0 6px 18px;color:#cfd8e6;font-style:italic;margin:14px 0}
+  .note{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:12px;padding:14px 18px;font-size:14px;color:#bcd2f3}
+  .warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.28);border-radius:12px;padding:14px 18px;font-size:14px;color:#f5d98a}
+  .src{font-size:13px;color:var(--muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+  .src a{color:var(--blue);text-decoration:none}
+  .src a:hover{text-decoration:underline}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="badge"><span class="dot"></span> GitHub 项目深度分析 · 2026.06.26</div>
+    <h1>🎨 DESIGN.md <span class="grad">深度分析报告</span></h1>
+    <p class="tagline">让 AI 编码 Agent 真正"看懂"设计系统的开放标准 — 由 Google Labs 推出，把"机器可读的设计 Token"与"人类可读的设计意图"统一进一个可版本化的 Markdown 文件，正在悄然重定义设计到代码（Design-to-Code）的交接边界。</p>
+    <div class="meta-grid">
+      <div class="meta"><div class="k">GitHub Stars</div><div class="v">18.8K+ <small>· 上榜即爆火</small></div></div>
+      <div class="meta"><div class="k">出品方</div><div class="v">Google Labs <small>· 源自 Stitch</small></div></div>
+      <div class="meta"><div class="k">开源协议</div><div class="v">Apache-2.0 <small>· 完全开放</small></div></div>
+      <div class="meta"><div class="k">格式版本</div><div class="v">alpha <small>· 规范演进中</small></div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 一、项目概述 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">1</div><h2>项目概述</h2></div>
+    <div class="card">
+      <p><b>DESIGN.md</b> 是 Google Labs（<code>google-labs-code</code> 组织）推出的一个<b>格式规范（format specification）</b>项目，其核心目标是：<b>为编码 Agent（coding agents）描述一套视觉识别系统（visual identity）的开放文件格式</b>。换句话说，它定义了一种结构化的 Markdown 文件，让 Claude Code、Cursor 等 AI 编码工具能够获得对设计系统（design system）的<b>持久化、结构化理解</b>。</p>
+      <p>该项目脱胎于 Google 的 AI UI 设计工具 <b>Stitch</b>（前身为 Galileo AI）。Stitch 是一款 Gemini 驱动的"AI 原生 UI 设计工具"，能从文本、图像或草图生成多屏响应式界面。在实践过程中，Google 团队发现：<b>"如何把设计系统的规则稳定地传递给下游编码 Agent"</b> 是设计到代码流程中最大的痛点。于是他们把 Stitch 内部使用的 <code>DESIGN.md</code> 文件格式抽离、规范化，于 2025 年底以 Apache-2.0 协议正式开源，并配套发布了 TypeScript 编写的校验 / 导出 CLI（<code>@google/design.md</code>）。</p>
+      <div class="quote">"DESIGN.md gives agents a persistent, structured understanding of a design system. Tokens give agents exact values. Prose tells them why those values exist and how to apply them." —— Google Labs</div>
+      <p>凭借 Google 的背书、直击"AI 生成 UI 千篇一律（AI-looking slop）"痛点的定位，以及与 Claude Code、Cursor、Stitch 等主流工具的无缝衔接，<b>DESIGN.md 在极短时间内 GitHub Star 飙升至 1.8 万+</b>，并被多家行业媒体称为"正走向行业标准化的开放格式"。它本质上不是一款产品，而是一份<b>约定 + 一套工具链</b>——一种让设计系统能像代码一样被 AI 读懂、被 Git 版本化、被多工具互操作的"通用语言"。</p>
+    </div>
+  </section>
+
+  <!-- 二、技术架构 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">2</div><h2>技术架构</h2></div>
+
+    <div class="card">
+      <p>DESIGN.md 的设计哲学是 <b>"一份文件、两层结构"</b>：上半部分是<b>机器可读的设计 Token</b>（YAML front matter），下半部分是<b>人类可读的设计理念</b>（Markdown 正文）。Token 给 Agent 提供精确的数值，正文告诉它这些数值<b>为什么存在以及如何应用</b>。</p>
+
+      <pre><span class="c">---  YAML front matter：机器可读的 token（规范性数值）---</span>
+<span class="k">name:</span> <span class="s">Heritage</span>
+<span class="k">colors:</span>
+  <span class="k">primary:</span> <span class="s">"#1A1C1E"</span>
+  <span class="k">secondary:</span> <span class="s">"#6C7278"</span>
+  <span class="k">tertiary:</span> <span class="s">"#B8422E"</span>      <span class="c"># "Boston Clay" 唯一交互色</span>
+<span class="k">typography:</span>
+  <span class="k">h1:</span> { <span class="k">fontFamily:</span> <span class="s">Public Sans</span>, <span class="k">fontSize:</span> <span class="v">3rem</span> }
+<span class="k">rounded:</span> { <span class="k">sm:</span> <span class="v">4px</span>, <span class="k">md:</span> <span class="v">8px</span> }
+<span class="k">spacing:</span> { <span class="k">sm:</span> <span class="v">8px</span>, <span class="k">md:</span> <span class="v">16px</span> }
+<span class="c">---</span>
+
+<span class="c">## Overview  ← Markdown 正文：人类可读的"为什么"</span>
+Architectural Minimalism meets Journalistic Gravitas. The UI evokes
+a premium matte finish — a high-end broadsheet or contemporary gallery.</pre>
+
+      <div class="arch-flow">
+        <div class="arch-node"><div class="step">LAYER 1</div><div class="nm">YAML Token</div><div class="tech">colors / typography<br>rounded / spacing</div></div>
+        <div class="arrow">+</div>
+        <div class="arch-node"><div class="step">LAYER 2</div><div class="nm">Markdown 正文</div><div class="tech">Overview / Colors<br>Do's & Don'ts</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">LINT</div><div class="nm">9 条校验规则</div><div class="tech">WCAG 对比度<br>断链引用</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">EXPORT</div><div class="nm">多格式互操作</div><div class="tech">Tailwind / DTCG<br>CSS @theme</div></div>
+        <div class="arrow">→</div>
+        <div class="arch-node"><div class="step">CONSUME</div><div class="nm">Agent 读取</div><div class="tech">Claude Code<br>Cursor / Stitch</div></div>
+      </div>
+
+      <table>
+        <tr><th>组成层</th><th>技术选型</th><th>作用</th></tr>
+        <tr><td>规范文档</td><td><code>docs/spec.md</code>（纯文本规范）</td><td>定义文件结构、Token Schema、章节顺序、消费端容错行为</td></tr>
+        <tr><td>实现语言</td><td>TypeScript</td><td>Lint 引擎、Diff 比对、格式导出工具</td></tr>
+        <tr><td>CLI 工具</td><td><code>@google/design.md</code> (npm)</td><td>提供 <code>lint</code> / <code>diff</code> / <code>export</code> / <code>spec</code> 四个子命令</td></tr>
+        <tr><td>编程 API</td><td><code>@google/design.md/linter</code></td><td>可作为库被工具链内嵌调用，返回结构化 JSON findings</td></tr>
+        <tr><td>Token 类型</td><td>Color / Dimension / Token Reference / Typography</td><td>覆盖颜色、尺寸、引用关系、字体对象，支持 <code>oklch()</code> 等现代色彩</td></tr>
+        <tr><td>互操作目标</td><td>Tailwind v3/v4、W3C DTCG</td><td>导出为 Tailwind 主题、CSS 自定义属性、W3C 设计 Token 标准格式</td></tr>
+        <tr><td>分发与协议</td><td>Apache-2.0 · GitHub · npm</td><td>完全开放、可商用，规范与工具链均可自由采用</td></tr>
+      </table>
+
+      <h3 style="font-size:17px;color:#fff;margin:20px 0 10px">📐 Token Schema（规范性字段）</h3>
+      <pre><span class="k">version:</span> <span class="s">"alpha"</span>          <span class="c"># 可选，当前版本</span>
+<span class="k">name:</span> <span class="s">&lt;string&gt;</span>
+<span class="k">colors:</span>     <span class="c"># 任意 CSS 颜色：hex / rgb() / oklch() / 命名色</span>
+  <span class="k">&lt;token&gt;:</span> <span class="s">&lt;Color&gt;</span>
+<span class="k">typography:</span> <span class="c"># 对象：fontFamily / fontSize / fontWeight / lineHeight ...</span>
+  <span class="k">&lt;token&gt;:</span> <span class="s">&lt;Typography&gt;</span>
+<span class="k">components:</span> <span class="c"># 组件 = 一组子 token（可用 {path.to.token} 引用）</span>
+  <span class="k">button-primary:</span>
+    <span class="k">backgroundColor:</span> <span class="s">"{colors.tertiary}"</span>
+    <span class="k">textColor:</span> <span class="s">"{colors.on-tertiary}"</span>
+    <span class="k">rounded:</span> <span class="s">"{rounded.sm}"</span></pre>
+
+      <div class="note">⚙️ <b>章节顺序约定：</b>正文 <code>##</code> 标题须按 Overview → Colors → Typography → Layout → Elevation & Depth → Shapes → Components → Do's and Don'ts 的规范顺序排列，可省略但顺序不可乱。消费端对未知内容采取<b>宽容策略</b>（未知色名/排版名视为有效，仅未知组件属性给出 warning），只有重复章节标题才报错拒绝。</div>
+    </div>
+  </section>
+
+  <!-- 三、核心创新点 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">3</div><h2>核心创新点</h2></div>
+    <div class="grid2">
+      <div class="feature"><h3><span class="ic">🧬</span> "Token + 意图"双层数据模型</h3><p>传统 Design Token 只有冰冷的数值，AI 仍不懂"为何如此"。DESIGN.md 把<b>规范性 Token</b>与<b>解释性散文</b>装进同一文件——Agent 既拿到精确值，也理解设计意图与边界条件，从而生成<b>有灵魂、有取舍依据</b>的 UI。</p></div>
+      <div class="feature"><h3><span class="ic">📄</span> 用 Markdown 对抗二进制锁定</h3><p>整个设计系统压缩进<b>一个纯文本 .md 文件</b>，天然可 Git 版本化、可 Diff、可 Code Review。彻底摆脱 Figma 二进制文件难以 diff、Token 散落各处的治理痛点，让设计系统首次成为"代码资产"。</p></div>
+      <div class="feature"><h3><span class="ic">🔍</span> 9 条内建 Lint 规则</h3><p>配套 linter 自动检查<b>断链引用（broken-ref）</b>、<b>WCAG AA 对比度（4.5:1）</b>、孤立 Token、缺失 primary 色、章节顺序错乱等 9 类问题，输出结构化 JSON 供 Agent 直接消费——把可访问性与一致性前移到"写设计系统"的环节。</p></div>
+      <div class="feature"><h3><span class="ic">🔀</span> diff 命令做"设计回归检测"</h3><p><code>diff</code> 子命令对比两版 DESIGN.md，报告 Token 级增删改与 prose 变化，并判定是否构成<b>设计回归</b>。相当于给设计系统加了"CI"，防止改版无意破坏既有视觉规范。</p></div>
+      <div class="feature"><h3><span class="ic">🔄</span> 一键导出主流生态</h3><p><code>export</code> 可输出 Tailwind v3 <code>theme.extend</code>、Tailwind v4 <code>@theme</code> CSS 变量、以及 <b>W3C Design Tokens Format Module（DTCG）</b>标准格式。一份 DESIGN.md → 任意前端框架，跨工具互操作零摩擦。</p></div>
+      <div class="feature"><h3><span class="ic">🤖</span> spec 命令直注 Agent 上下文</h3><p><code>spec</code> 可输出规范本身，便于把 spec 上下文<b>注入 Agent 提示词</b>，让任意模型按统一规范生成 / 校验 DESIGN.md。配合 Stitch 导出、Claude Code 消费，形成完整闭环。</p></div>
+    </div>
+  </section>
+
+  <!-- 四、应用场景 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">4</div><h2>应用场景</h2></div>
+    <div class="card">
+      <ul>
+        <li><b>Stitch → Claude Code 设计到代码交接：</b>在 Stitch 中设计后，右侧 Design Systems 面板一键导出 DESIGN.md，丢进项目根目录或写入 CLAUDE.md，<b>每个 Claude Code 会话都自动加载</b>一致的设计规范，彻底修复"设计稿到代码"的割裂。<span class="pill">最核心场景</span></li>
+        <li><b>消除 AI 生成 UI 的"千篇一律"：</b>把品牌色板、字体、间距、组件规则锁进 DESIGN.md 作为护栏，AI 生成的界面不再是通用模板风（AI slop），而是<b>严格符合品牌识别</b>的定制 UI。</li>
+        <li><b>设计系统的版本化与协作：</b>用单一 Markdown 文件作为设计系统 SSOT（单一事实来源），团队通过 Git PR 评审设计变更，<code>diff</code> 追踪改版、<code>lint</code> 守护可访问性。</li>
+        <li><b>跨设计工具互操作：</b>导出 W3C DTCG 标准格式，让 Token 在 Figma、Penpot、Style Dictionary 等工具间<b>无损流转</b>，打破单一设计软件的锁定。</li>
+        <li><b>设计令牌治理与回归保护：</b>在 CI 中接入 linter 与 diff，自动拦截低对比度、断链 Token、违规改版，将设计质量保障自动化。</li>
+        <li><b>AI 代码生成器 / IDE 集成：</b>Cursor、Windsurf、各类 Agent Skills 可直接读取 DESIGN.md 生成前端代码；社区已有将其接入 Anthropic frontend-design Skill 的提案。</li>
+      </ul>
+      <div class="quote">DESIGN.md 正成为"设计系统的 README"——设计师写意图，AI 编码 Agent 读规范，二者在同一份文件上对齐，让 Vibe Design 真正能交付一致的产品级 UI。</div>
+    </div>
+  </section>
+
+  <!-- 五、竞品对比 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">5</div><h2>竞品对比</h2></div>
+    <div class="card" style="padding:8px">
+      <table>
+        <tr>
+          <th>维度</th><th>🎨 DESIGN.md</th><th>W3C Design Tokens</th><th>Figma Variables</th><th>Style Dictionary</th>
+        </tr>
+        <tr><td><b>形态</b></td><td>单一 Markdown 规范 + CLI</td><td>JSON 规范标准</td><td>设计工具内变量系统</td><td>代码转换引擎</td></tr>
+        <tr><td><b>AI 原生</b></td><td class="check">✓ 为 Agent 而生</td><td class="cross">✗ 非为 AI 设计</td><td class="partial">△ 需 MCP/插件</td><td class="cross">✗ 纯构建工具</td></tr>
+        <tr><td><b>人类可读性</b></td><td class="check">✓ Markdown 散文</td><td class="cross">✗ 纯 JSON</td><td class="partial">△ GUI 内</td><td class="cross">✗ 配置文件</td></tr>
+        <tr><td><b>设计意图(why)</b></td><td class="check">✓ 内建 prose</td><td class="cross">✗ 仅 $description</td><td class="cross">✗ 无</td><td class="cross">✗ 无</td></tr>
+        <tr><td><b>版本化/Diff</b></td><td class="check">✓ 纯文本 Git</td><td class="check">✓ JSON Git</td><td class="cross">✗ 二进制难 diff</td><td class="check">✓ 配置可 Git</td></tr>
+        <tr><td><b>WCAG/可访问性</b></td><td class="check">✓ 内建对比度检查</td><td class="cross">✗ 不涉及</td><td class="partial">△ 插件</td><td class="cross">✗ 不涉及</td></tr>
+        <tr><td><b>生态成熟度</b></td><td class="partial">★★★ 新生(alpha)</td><td class="check">★★★★ 标准</td><td class="check">★★★★★ 主流</td><td class="check">★★★★ 成熟</td></tr>
+      </table>
+      <div style="padding:16px">
+        <p><b>定位差异小结：</b></p>
+        <ul>
+          <li><b>DESIGN.md</b> — 唯一<b>从 AI Agent 视角出发</b>的格式，"Token + 意图 + Lint"三合一，最适合当下<b>AI 编码工作流</b>；劣势是处于 alpha、生态尚在起步。</li>
+          <li><b>W3C Design Tokens</b> — <b>业界标准</b>、最严谨，DESIGN.md 的 Token 模型正是受其启发并支持导出为 DTCG。强在标准化、弱在"无灵魂"。</li>
+          <li><b>Figma Variables</b> — 设计师<b>最熟悉的主场</b>，但锁定在 Figma 内，需借助 MCP / 插件才能喂给 AI，治理与 diff 是短板。</li>
+          <li><b>Style Dictionary</b> — 老牌<b>构建期转换引擎</b>，擅长把 Token 转成各平台代码，但不提供"设计规范"语义，是 DESIGN.md 的互补而非替代。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 六、综合评分 -->
+  <section>
+    <div class="sec-head"><div class="sec-num">6</div><h2>综合评分</h2></div>
+    <div class="score-wrap">
+      <div class="score-top">
+        <div class="score-ring"><div class="num">8.4<small>/10</small></div></div>
+        <div class="score-verdict">
+          <h3>评分：8.4 / 10 —— 潜力巨大的"AI 设计系统标准雏形"</h3>
+          <p>战略眼光与时机极佳（直击 AI 生成 UI 的核心痛点），格式设计简洁优雅、工程配套完善；唯一短板是仍处 alpha，生态采用度与规范稳定性有待时间检验。值得重点关注与早期采用。</p>
+        </div>
+      </div>
+      <div class="score-bars">
+        <div class="bar"><div class="lbl"><span>战略定位与时机</span><b>9.5 / 10</b></div><div class="track"><div class="fill" style="width:95%"></div></div></div>
+        <div class="bar"><div class="lbl"><span>格式设计优雅度</span><b>9.0 / 10</b></div><div class="track"><div class="fill" style="width:90%"></div></div></div>
+        <div class="bar"><div class="lbl"><span>工具链完整度</span><b>8.5 / 10</b></div><div class="track"><div class="fill" style="width:85%"></div></div></div>
+        <div class="bar"><div class="lbl"><span>实际应用价值</span><b>8.5 / 10</b></div><div class="track"><div class="fill" style="width:85%"></div></div></div>
+        <div class="bar"><div class="lbl"><span>社区热度与背书</span><b>8.5 / 10</b></div><div class="track"><div class="fill" style="width:85%"></div></div></div>
+        <div class="bar"><div class="lbl"><span>生态成熟度（短期）</span><b>6.5 / 10</b></div><div class="track"><div class="fill" style="width:65%"></div></div></div>
+      </div>
+
+      <div class="warn" style="margin-top:22px">
+        ⚠️ <b>风险提示：</b>DESIGN.md 格式当前为 <code>alpha</code> 版本，官方明确表示"spec、token schema 与 CLI 仍在积极开发中，格式会随成熟而变化"。早期采用需接受<b>破坏性变更</b>风险；同时该项目声明<b>不纳入 Google 开源软件漏洞奖励计划</b>。建议在非生产关键路径上先行试用，待格式趋于稳定后再大规模标准化。
+      </div>
+
+      <div class="note" style="margin-top:16px">
+        💡 <b>总评：</b>DESIGN.md 不是一个"又一个 Token 库"，而是一次<b>范式提案</b>——它把"设计系统是为人类设计师服务"的旧假设，翻转成"设计系统是为 AI Agent 服务"的新契约。在 Vibe Coding / Vibe Design 成为主流的 2026 年，它极有可能与 W3C DTCG 互补，成为 AI 时代设计到代码交接的事实标准之一。Google 的背书 + Stitch 的产品闭环 + Claude Code 的消费端，构成了极强的早期势能。
+      </div>
+
+      <div class="src">
+        <b>参考来源：</b><br>
+        · <a href="https://github.com/google-labs-code/design.md">GitHub: google-labs-code/design.md（官方仓库与 README）</a><br>
+        · <a href="https://github.com/google-labs-code/design.md/blob/main/docs/spec.md">DESIGN.md 官方规范 spec.md</a><br>
+        · <a href="https://blog.google/innovation-and-ai/models-and-research/google-labs/stitch-design-md/">Google Blog: Stitch app's DESIGN.md format is now open-source</a><br>
+        · <a href="https://www.designsystemscollective.com/the-design-md-workflow-how-google-stitch-claude-code-quietly-changed-the-design-to-code-handoff-c4213f97ed8f">Design Systems Collective: DESIGN.md 工作流深度解析</a><br>
+        · <a href="https://wavespeed.ai/blog/posts/design-md-vs-design-tokens-ai-workflows/">WaveSpeed: design.md vs Design Tokens for AI UI Workflows</a><br>
+        · <a href="https://designmd.app/what-is-design-md/">designmd.app: What is DESIGN.md?</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    📊 本报告由 GitHub 项目深度分析师自动生成 · 数据截至 2026.06.26 · 仅供参考
+  </footer>
+
+</div>
+</body>
+</html>
