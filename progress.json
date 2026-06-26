@@ -2,7 +2,6 @@
   "date": "2026-06-26",
   "fetched_at": "2026-06-26",
   "pending": [
-    "alibaba/page-agent",
     "IceWhaleTech/CasaOS",
     "opendatalab/MinerU",
     "NanmiCoder/MediaCrawler"
@@ -11,7 +10,8 @@
     "google-labs-code/design.md",
     "xbtlin/ai-berkshire",
     "mauriceboe/TREK",
-    "aws/agent-toolkit-for-aws"
+    "aws/agent-toolkit-for-aws",
+    "alibaba/page-agent"
   ],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
@@ -61,7 +61,7 @@
     },
     {
       "name": "alibaba/page-agent",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "IceWhaleTech/CasaOS",
@@ -86,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 4,
+    "pending": 3,
     "skipped": 7,
-    "done": 4
+    "done": 5
   }
 }
