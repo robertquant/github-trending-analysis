@@ -1,9 +1,7 @@
 {
   "date": "2026-06-26",
   "fetched_at": "2026-06-26",
-  "pending": [
-    "NanmiCoder/MediaCrawler"
-  ],
+  "pending": [],
   "done": [
     "google-labs-code/design.md",
     "xbtlin/ai-berkshire",
@@ -11,7 +9,8 @@
     "aws/agent-toolkit-for-aws",
     "alibaba/page-agent",
     "IceWhaleTech/CasaOS",
-    "opendatalab/MinerU"
+    "opendatalab/MinerU",
+    "NanmiCoder/MediaCrawler"
   ],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
@@ -81,13 +80,13 @@
     },
     {
       "name": "NanmiCoder/MediaCrawler",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "counts": {
     "total_today": 15,
-    "pending": 1,
+    "pending": 0,
     "skipped": 7,
-    "done": 7
+    "done": 8
   }
 }
