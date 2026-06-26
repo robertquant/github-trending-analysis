@@ -1,30 +1,30 @@
 {
-  "date": "2026-06-26",
-  "fetched_at": "2026-06-26",
+  "date": "2026-06-27",
+  "fetched_at": "2026-06-27",
   "pending": [],
   "done": [
-    "google-labs-code/design.md",
-    "xbtlin/ai-berkshire",
-    "mauriceboe/TREK",
-    "aws/agent-toolkit-for-aws",
-    "alibaba/page-agent",
-    "IceWhaleTech/CasaOS",
-    "opendatalab/MinerU",
-    "NanmiCoder/MediaCrawler"
+    "every-app/open-seo"
   ],
   "skipped_already_analyzed": [
+    "google-labs-code/design.md",
     "calesthio/OpenMontage",
+    "xbtlin/ai-berkshire",
+    "mauriceboe/TREK",
     "apple/container",
     "JCodesMore/ai-website-cloner-template",
     "garrytan/gstack",
+    "aws/agent-toolkit-for-aws",
     "mukul975/Anthropic-Cybersecurity-Skills",
+    "alibaba/page-agent",
+    "IceWhaleTech/CasaOS",
+    "opendatalab/MinerU",
     "Free-TV/IPTV",
     "shanraisshan/claude-code-best-practice"
   ],
   "projects": [
     {
       "name": "google-labs-code/design.md",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "calesthio/OpenMontage",
@@ -32,11 +32,11 @@
     },
     {
       "name": "xbtlin/ai-berkshire",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "mauriceboe/TREK",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "apple/container",
@@ -47,12 +47,16 @@
       "status": "skipped"
     },
     {
+      "name": "every-app/open-seo",
+      "status": "done"
+    },
+    {
       "name": "garrytan/gstack",
       "status": "skipped"
     },
     {
       "name": "aws/agent-toolkit-for-aws",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "mukul975/Anthropic-Cybersecurity-Skills",
@@ -60,15 +64,15 @@
     },
     {
       "name": "alibaba/page-agent",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "IceWhaleTech/CasaOS",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "opendatalab/MinerU",
-      "status": "done"
+      "status": "skipped"
     },
     {
       "name": "Free-TV/IPTV",
@@ -77,16 +81,12 @@
     {
       "name": "shanraisshan/claude-code-best-practice",
       "status": "skipped"
-    },
-    {
-      "name": "NanmiCoder/MediaCrawler",
-      "status": "done"
     }
   ],
   "counts": {
     "total_today": 15,
     "pending": 0,
-    "skipped": 7,
-    "done": 8
+    "skipped": 14,
+    "done": 1
   }
 }

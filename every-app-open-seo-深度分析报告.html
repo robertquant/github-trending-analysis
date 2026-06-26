@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度分析报告 · every-app/open-seo — 开源版 Semrush / Ahrefs</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --dim:#6e7681;
+    --accent:#58a6ff; --green:#3fb950; --yellow:#d29922; --orange:#db6d28; --red:#f85149; --purple:#bc8cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0a0e14 0%,#0d1117 100%);color:var(--text);line-height:1.75;
+    -webkit-font-smoothing:antialiased;padding:0;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 80px}
+  /* Hero */
+  .hero{
+    background:radial-gradient(1200px 400px at 10% -10%,rgba(88,166,255,.18),transparent),
+               radial-gradient(900px 400px at 90% 0%,rgba(63,185,80,.12),transparent),
+               var(--card);
+    border:1px solid var(--border);border-radius:18px;padding:42px 40px;margin-bottom:28px;position:relative;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg,var(--accent),var(--green),var(--purple))}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(88,166,255,.12);
+    color:var(--accent);border:1px solid rgba(88,166,255,.3);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.3px;margin-bottom:18px}
+  .hero h1{font-size:34px;line-height:1.25;font-weight:800;margin-bottom:10px;letter-spacing:-.5px}
+  .hero h1 .muted{color:var(--muted);font-weight:500;font-size:21px;display:block;margin-top:6px}
+  .hero .tagline{font-size:16px;color:var(--muted);max-width:760px}
+  .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:28px}
+  .meta-box{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .meta-box .k{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+  .meta-box .v{font-size:19px;font-weight:700;color:var(--text)}
+  .meta-box .v.green{color:var(--green)}
+  .meta-box .v.accent{color:var(--accent)}
+  .meta-box .v.lang{color:var(--purple)}
+  /* Section */
+  section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 32px;margin-bottom:22px}
+  h2{font-size:23px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;letter-spacing:-.3px}
+  h2 .num{background:var(--accent);color:#0d1117;font-size:14px;font-weight:800;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+  .lead{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+  h3{font-size:17px;font-weight:700;color:var(--accent);margin:24px 0 10px}
+  p{margin-bottom:12px;color:#c9d1d9}
+  ul,ol{margin:6px 0 16px 4px;padding-left:22px}
+  li{margin-bottom:7px;color:#c9d1d9}
+  li strong{color:var(--text)}
+  code{background:#21262d;color:#79c0ff;padding:2px 7px;border-radius:5px;font-family:"SF Mono",Consolas,Menlo,monospace;font-size:13px}
+  pre{background:#010409;border:1px solid var(--border);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:12px 0}
+  pre code{background:none;color:#c9d1d9;padding:0;font-size:12.5px;line-height:1.6}
+  .cmt{color:var(--dim)} .kw{color:#ff7b72} .str{color:#a5d6ff}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px dotted rgba(88,166,255,.4)}
+  a:hover{border-bottom-style:solid}
+  .quote{border-left:3px solid var(--green);background:rgba(63,185,80,.06);padding:14px 20px;border-radius:0 10px 10px 0;margin:16px 0;color:#b3e0bb;font-style:italic}
+  /* Grid cards */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  .card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+  .card .ic{font-size:22px;margin-bottom:8px}
+  .card .t{font-weight:700;margin-bottom:6px;color:var(--text)}
+  .card .d{font-size:13.5px;color:var(--muted);line-height:1.6}
+  /* Table */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:var(--card2);color:var(--accent);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+  td{color:#c9d1d9}
+  tr:hover td{background:rgba(88,166,255,.04)}
+  td.center{text-align:center}
+  .yes{color:var(--green);font-weight:700} .no{color:var(--red);font-weight:700} .partial{color:var(--yellow);font-weight:700}
+  /* Score */
+  .score-overall{display:flex;align-items:center;gap:28px;background:linear-gradient(135deg,rgba(88,166,255,.1),rgba(188,140,255,.08));border:1px solid var(--border);border-radius:14px;padding:26px 30px;margin-bottom:22px}
+  .score-big{font-size:64px;font-weight:800;color:var(--green);line-height:1;letter-spacing:-2px}
+  .score-big small{font-size:22px;color:var(--muted);font-weight:500}
+  .score-label{font-size:15px;color:var(--muted)}
+  .score-label b{display:block;font-size:19px;color:var(--text);margin-bottom:2px}
+  .bar-row{margin-bottom:13px}
+  .bar-row .lbl{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
+  .bar-row .lbl .name{color:#c9d1d9;font-weight:600}
+  .bar-row .lbl .val{font-weight:700}
+  .bar{height:9px;background:#21262d;border-radius:6px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--green))}
+  .bar > i.y{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+  .bar > i.r{background:linear-gradient(90deg,var(--orange),var(--red))}
+  /* SWOT */
+  .swot{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  .swot .sw{background:var(--card2);border-radius:12px;padding:20px;border:1px solid var(--border)}
+  .swot .sw.s{border-top:3px solid var(--green)} .swot .sw.w{border-top:3px solid var(--yellow)}
+  .swot .sw.o{border-top:3px solid var(--accent)} .swot .sw.t{border-top:3px solid var(--red)}
+  .swot h4{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .swot ul{margin:0;padding-left:18px} .swot li{font-size:13.5px;margin-bottom:6px;color:#c9d1d9}
+  .footer{text-align:center;color:var(--dim);font-size:13px;margin-top:30px;padding-top:24px;border-top:1px solid var(--border)}
+  .pill{display:inline-block;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:3px 10px;border-radius:999px;margin:2px}
+  @media(max-width:760px){.meta-grid,.grid2,.grid3,.swot,.score-overall{grid-template-columns:1fr;display:block}.score-overall{display:block}.meta-box,.card,.sw{margin-bottom:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="badge">🔥 GitHub Trending · 2026-06-27 · AI-Native SEO</span>
+    <h1>every-app / open-seo
+      <span class="muted">开源版 Semrush 与 Ahrefs —— 一个属于「人民」的 SEO 工具</span>
+    </h1>
+    <p class="tagline">"Own your SEO. Research keywords and competitors on your terms. 100% open source." —— 一个按量付费（pay-as-you-go）、可自托管、且原生为 AI Agent 设计的全流程 SEO 平台。</p>
+    <div class="meta-grid">
+      <div class="meta-box"><div class="k">⭐ Stars</div><div class="v green">2,852</div></div>
+      <div class="meta-box"><div class="k">📈 今日新增</div><div class="v accent">+57</div></div>
+      <div class="meta-box"><div class="k">🧑‍💻 主语言</div><div class="v lang">TypeScript</div></div>
+      <div class="meta-box"><div class="k">🏢 作者</div><div class="v" style="font-size:15px">Ben Senescu</div></div>
+    </div>
+    <div style="margin-top:18px">
+      <span class="pill">关键词研究</span>
+      <span class="pill">排名追踪</span>
+      <span class="pill">外链分析</span>
+      <span class="pill">站点审计</span>
+      <span class="pill">AI 可见性</span>
+      <span class="pill">MCP Server</span>
+      <span class="pill">Agent Skills</span>
+      <span class="pill">Cloudflare / Docker 自托管</span>
+    </div>
+  </div>
+
+  <!-- 1. 项目概述 -->
+  <section>
+    <h2><span class="num">1</span>项目概述</h2>
+    <p class="lead">OpenSEO 是一个 100% 开源的全流程 SEO 平台，明确定位为 <strong>Semrush 与 Ahrefs 的开源替代品</strong>。它不是又一个小工具的拼凑，而是试图用「按量付费 + 自托管 + AI 原生」三张牌，去正面挑战动辄每月上百美元订阅的商业 SEO 巨头。</p>
+
+    <div class="quote">"If tools like Semrush or Ahrefs are too expensive or bloated, OpenSEO is a pay-as-you-go alternative that you actually control." —— 项目 README</div>
+
+    <h3>核心理念</h3>
+    <ul>
+      <li><strong>为人民而生（for the people）：</strong>打破 SEO 数据被少数昂贵 SaaS 垄断的局面，让独立开发者、小团队、内容创作者都能负担得起专业级 SEO 数据。</li>
+      <li><strong>按量付费，没有订阅：</strong>软件本身 <code>$0</code>，用户自带 <strong>DataForSEO</strong> API Key，只为实际查询的数据付费 —— 一次关键词研究约 <code>$0.035</code>，一次站点审计约 <code>$0.01</code>。</li>
+      <li><strong>给你和你的 AI Agent 用：</strong>不止是给人用的图形界面，更是首个把 <strong>MCP（Model Context Protocol）</strong>与 <strong>Agent Skills</strong>作为一等公民的 SEO 工具。</li>
+      <li><strong>真正可控：</strong>支持 Docker 与 Cloudflare 完整自托管，可 fork 后用自己的方式「vibe code」定制专属 SEO 工具。</li>
+    </ul>
+
+    <h3>解决的核心痛点</h3>
+    <div class="grid3">
+      <div class="card"><div class="ic">💸</div><div class="t">订阅太贵</div><div class="d">Semrush / Ahrefs 起步价约 $120/月，对小站长是沉重负担。OpenSEO 把成本压到「按 API 调用量」付费，月均可能仅几美元。</div></div>
+      <div class="card"><div class="ic">🤖</div><div class="t">不会用 AI</div><div class="d">传统 SEO 工具是封闭黑盒。OpenSEO 暴露 MCP Server，让 Claude Code / Codex 等 Agent 直接读取并决策 SEO 策略。</div></div>
+      <div class="card"><div class="ic">🧩</div><div class="t">工具臃肿</div><div class="d">商业套件功能庞杂、学习曲线陡峭。OpenSEO 主打聚焦式工作流，UI 现代简洁，专注「该做的事」。</div></div>
+    </div>
+  </section>
+
+  <!-- 2. 技术架构 -->
+  <section>
+    <h2><span class="num">2</span>技术架构</h2>
+    <p class="lead">OpenSEO 采用 TypeScript 全栈 + Serverless Edge 的现代架构，核心思路是「前端应用 + MCP 服务 + 第三方数据 API」的分层解耦。</p>
+
+    <h3>整体分层</h3>
+    <pre><code><span class="cmt">┌──────────────────────────────────────────────────────────┐</span>
+<span class="cmt">│  用户层  │  Web UI (现代简洁)  /  AI Agent (MCP 客户端)      │</span>
+├──────────────────────────────────────────────────────────┤
+<span class="cmt">│  应用层  │  Next.js + TypeScript  (聚焦式 SEO 工作流)        │</span>
+├──────────────────────────────────────────────────────────┤
+<span class="cmt">│  接口层  │  OpenSEO MCP Server  (HTTP transport, /mcp)      │</span>
+│          │  + Agent Skills (可复用工作流包)                    │
+├──────────────────────────────────────────────────────────┤
+<span class="cmt">│  数据层  │  DataForSEO API (关键词/SERP/外链/域名 数据源)    │</span>
+│          │  + Google Search Console (自有 OAuth, 可选)        │
+├──────────────────────────────────────────────────────────┤
+<span class="cmt">│  部署层  │  Cloudflare Workers (Edge, 免费套餐) / Docker     │</span>
+└──────────────────────────────────────────────────────────┘</code></pre>
+
+    <h3>关键技术选型</h3>
+    <table>
+      <tr><th>层级</th><th>技术 / 方案</th><th>设计意图</th></tr>
+      <tr><td>语言 / 框架</td><td>TypeScript（pnpm 管理）</td><td>全栈统一类型，便于 Agent 集成与社区贡献</td></tr>
+      <tr><td>AI 接口</td><td>MCP（HTTP transport）</td><td>让 Claude Code / Codex / Claude Desktop 直接调用 SEO 数据</td></tr>
+      <tr><td>Agent 工作流</td><td>Agent Skills（npx skills add）</td><td>预置 SEO 任务流，可被任意 AI 编码助手复用</td></tr>
+      <tr><td>数据后端</td><td>DataForSEO API</td><td>专业的 SEO 数据供应商，按调用计费，避免自建爬虫</td></tr>
+      <tr><td>云部署</td><td>Cloudflare Workers</td><td>免费套餐可用、Edge 加速、自动数据库备份、SaaS 级体验</td></tr>
+      <tr><td>本地部署</td><td>Docker（GHCR 镜像）</td><td><code>docker compose up -d</code> 一键起，适合个人测试</td></tr>
+      <tr><td>容器镜像</td><td>ghcr.io/every-app/open-seo:latest</td><td>官方维护的发布镜像，<code>--pull always</code> 即可升级</td></tr>
+      <tr><td>认证（可选）</td><td>Google OAuth（自有客户端）</td><td>Search Console 集成，数据完全归用户所有</td></tr>
+    </table>
+
+    <h3>部署方式对比</h3>
+    <div class="grid2">
+      <div class="card"><div class="ic">🐳</div><div class="t">Docker 自托管（推荐入门）</div><div class="d">面向个人本地使用，默认<strong>单用户、无认证</strong>模式。三步启动：<code>cp .env.example .env</code> → 填 <code>DATAFORSEO_API_KEY</code> → <code>docker compose up -d</code>。官方<strong>明确警告</strong>不要直接暴露到公网。</div></div>
+      <div class="card"><div class="ic">☁️</div><div class="t">Cloudflare 自托管（多端/团队）</div><div class="d">面向跨设备、团队协作场景，提供类 SaaS 体验，含<strong>自动数据库备份</strong>等便利功能，免费套餐即可运行。一键 Deploy to Cloudflare 按钮，适合不熟悉 CF 的用户对照文档部署。</div></div>
+    </div>
+
+    <h3>典型集成：连接 AI Agent</h3>
+    <pre><code><span class="cmt"># 让 Claude Code 接入 OpenSEO（托管版）</span>
+<span class="kw">claude</span> mcp add --transport http --scope user openseo https://app.openseo.so/mcp
+
+<span class="cmt"># 让 OpenAI Codex 接入</span>
+<span class="kw">codex</span> mcp add openseo --url https://app.openseo.so/mcp
+
+<span class="cmt"># 本地 Docker 实例</span>
+<span class="kw">codex</span> mcp add openseo --url http://localhost:3001/mcp</code></pre>
+  </section>
+
+  <!-- 3. 核心创新点 -->
+  <section>
+    <h2><span class="num">3</span>核心创新点</h2>
+    <p class="lead">OpenSEO 的真正护城河不在「又一个 SEO 界面」，而在于它对「AI 时代 SEO 工具应该长什么样」的前瞻性回答。</p>
+
+    <div class="grid2">
+      <div class="card" style="border-left:3px solid var(--accent)">
+        <div class="t">① 原生 MCP Server —— SEO 数据成为 Agent 的「工具箱」</div>
+        <div class="d">这是 OpenSEO 区别于所有传统 SEO 工具的<strong>最大亮点</strong>。通过暴露标准化的 MCP 接口，AI Agent 可在编辑器/对话框里直接：跑关键词研究、检查 SERP、对比域名、审查外链。SEO 从「打开网页手动操作」变成「一句话驱动 Agent 完成」。</div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <div class="t">② Agent Skills —— 可复用的 SEO 工作流包</div>
+        <div class="d">预置 7 个开箱即用的 Skill：<code>seo-project-setup</code>、<code>seo-coach</code>、<code>keyword-research</code>、<code>keyword-clustering</code>、<code>competitive-landscape</code>、<code>competitor-analysis</code>、<code>link-prospecting</code>。用 <code>npx skills add every-app/open-seo</code> 一键安装到 Claude Code / Codex。</div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--purple)">
+        <div class="t">③ AI 品牌可见性 & AI 搜索提示词探索</div>
+        <div class="d">面向 LLM 时代的<strong>前瞻功能</strong>：追踪你的品牌在 ChatGPT / Google AI Overview 等 AI 回答中的出现情况、竞品提及、被引用来源；并探索用户可能向 AI 工具提问的 prompt。传统 SEO 工具几乎都还停留在「Google 蓝色链接」时代。</div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--yellow)">
+        <div class="t">④ 透明到极致的「成本参考表」</div>
+        <div class="d">README 里直接给出每类操作的 DataForSEO 计费公式与示例（如 100 次关键词研究 ≈ $3.5）。这种把成本完全摊在阳光下的诚实态度，在 SaaS 世界里极其罕见，大幅降低了用户的决策焦虑。</div>
+      </div>
+    </div>
+
+    <h3>七大核心 SEO 工作流</h3>
+    <div class="grid3">
+      <div class="card"><div class="t">🔍 关键词研究</div><div class="d">发现值得做的主题、评估需求、优先级排序。</div></div>
+      <div class="card"><div class="t">📈 排名追踪</div><div class="d">桌面+移动端关键词排名变化，含 SERP 特性检测。</div></div>
+      <div class="card"><div class="t">🌐 域名洞察</div><div class="d">看清域名在哪里赢得/流失可见度。</div></div>
+      <div class="card"><div class="t">🔗 外链分析</div><div class="d">谁链向你、哪些页面吸引链接、新增/丢失链接。</div></div>
+      <div class="card"><div class="t">🛠️ 站点审计</div><div class="d">尽早发现技术问题，便于搜索引擎抓取排名。</div></div>
+      <div class="card"><div class="t">🤖 AI 品牌可见性</div><div class="d">追踪品牌在 AI 回答中的表现与竞品声量。</div></div>
+    </div>
+  </section>
+
+  <!-- 4. 应用场景 -->
+  <section>
+    <h2><span class="num">4</span>应用场景</h2>
+    <p class="lead">OpenSEO 的目标用户画像清晰：被商业 SEO 工具价格劝退、又渴望专业数据与 AI 工作流的「中小玩家」。</p>
+
+    <table>
+      <tr><th>场景</th><th>典型用户</th><th>OpenSEO 如何赋能</th></tr>
+      <tr><td>独立开发者 / 技术博主</td><td>个人站长、Side Project 作者</td><td>月均几美元即可获得专业级关键词与排名数据，告别 SaaS 订阅焦虑</td></tr>
+      <tr><td>内容创业团队</td><td>内容工作室、Newsletter 作者</td><td>用关键词聚类规划内容矩阵，用排名追踪衡量产出效果</td></tr>
+      <tr><td>AI 原生工作流</td><td>Claude Code / Codex 重度用户</td><td>把 SEO 决策交给 Agent：一句话「分析竞品并给我内容选题」</td></tr>
+      <tr><td>SEO 自由职业者</td><td>服务多个客户的顾问</td><td>自托管多项目，按量计费转嫁成本，自定义客户报告（路线图中）</td></tr>
+      <tr><td>关注 AI 时代品牌</td><td>DTC 品牌、SaaS 公司</td><td>追踪品牌在 ChatGPT / AI Overview 的可见度，抢占 LLM 时代的「心智份额」</td></tr>
+      <tr><td>数据隐私敏感场景</td><td>不愿数据上交第三方的企业</td><td>完全自托管，数据留在自己的 Cloudflare / 本地环境</td></tr>
+    </table>
+
+    <h3>真实成本测算（来自官方参考）</h3>
+    <ul>
+      <li>🔴 <strong>关键词研究</strong>：100 次查询（每次 150 结果）≈ <strong>$3.50</strong></li>
+      <li>🔴 <strong>站点审计</strong>：每 20 个页面 ≈ <strong>$0.01</strong>（极低）</li>
+      <li>🟡 <strong>排名追踪</strong>：50 个关键词 × 1 设备 × 5 页深度 ≈ <strong>$2/月</strong></li>
+      <li>🟠 <strong>AI 品牌可见性</strong>：每次查询 ≈ <strong>$0.85</strong>（24 小时缓存，重复免费）</li>
+      <li>👉 <strong>对比</strong>：Semrush Pro 起步 <strong>$119.95/月</strong>，而 OpenSEO 月活可能仅需 <strong>$5–20</strong></li>
+    </ul>
+  </section>
+
+  <!-- 5. 竞品对比 -->
+  <section>
+    <h2><span class="num">5</span>竞品对比</h2>
+    <p class="lead">从「商业巨头」「开源同行」两个维度审视 OpenSEO 的市场站位。</p>
+
+    <h3>横向能力对比</h3>
+    <table>
+      <tr>
+        <th>维度</th>
+        <th>OpenSEO</th>
+        <th>Semrush / Ahrefs</th>
+        <th>SerpBear</th>
+        <th>SEO Panel</th>
+      </tr>
+      <tr><td>开源</td><td class="yes">✅ 100%</td><td class="no">❌ 闭源</td><td class="yes">✅</td><td class="yes">✅</td></tr>
+      <tr><td>定价模式</td><td>按量付费 (API)</td><td class="no">$120+/月订阅</td><td>免费+爬虫</td><td>免费+爬虫</td></tr>
+      <tr><td>关键词研究</td><td class="yes">✅ 专业数据</td><td class="yes">✅ 行业标杆</td><td class="no">❌ 弱</td><td class="partial">⚠️ 基础</td></tr>
+      <tr><td>排名追踪</td><td class="yes">✅ 桌面+移动</td><td class="yes">✅</td><td class="yes">✅ 强项</td><td class="yes">✅</td></tr>
+      <tr><td>外链分析</td><td class="yes">✅</td><td class="yes">✅ 深度</td><td class="no">❌</td><td class="no">❌</td></tr>
+      <tr><td>站点审计</td><td class="yes">✅</td><td class="yes">✅</td><td class="no">❌</td><td class="partial">⚠️ 基础</td></tr>
+      <tr><td>AI 可见性</td><td class="yes">✅ <strong>独家亮点</strong></td><td class="partial">⚠️ 部分跟进</td><td class="no">❌</td><td class="no">❌</td></tr>
+      <tr><td>AI Agent / MCP</td><td class="yes">✅ <strong>核心特性</strong></td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td></tr>
+      <tr><td>数据来源</td><td>DataForSEO</td><td>自建数据库</td><td>自建爬虫</td><td>自建爬虫</td></tr>
+      <tr><td>社区成熟度</td><td class="partial">⚠️ 新兴 (2.8k★)</td><td class="yes">✅ 巨头</td><td class="yes">✅ 成熟</td><td class="yes">✅ 老牌</td></tr>
+    </table>
+
+    <h3>差异化定位</h3>
+    <div class="grid2">
+      <div class="card"><div class="t">vs Semrush / Ahrefs</div><div class="d">不是去比拼数据深度，而是用「开源 + 按量付费 + AI 原生」打<strong>成本与可编程性</strong>的差异化。适合预算敏感、技术能力强、想要 Agent 化的团队。</div></div>
+      <div class="card"><div class="t">vs SerpBear / SEO Panel</div><div class="d">这些开源前辈主要聚焦<strong>排名追踪</strong>，依赖自建爬虫、数据浅。OpenSEO 用付费但专业的 DataForSEO 数据，覆盖关键词/外链/审计/全流程，且<strong>独有 AI 能力</strong>，定位更接近「全功能套件」。</div></div>
+    </div>
+  </section>
+
+  <!-- 6. SWOT -->
+  <section>
+    <h2><span class="num">6</span>SWOT 分析</h2>
+    <div class="swot">
+      <div class="sw s"><h4>💪 优势 Strengths</h4><ul>
+        <li>AI 原生（MCP + Agent Skills）行业领先</li>
+        <li>按量付费，成本仅为商业工具的零头</li>
+        <li>100% 开源 + 双部署方案（Docker/CF）</li>
+        <li>面向 LLM 时代的 AI 可见性前瞻功能</li>
+        <li>极其透明的成本参考文档</li>
+      </ul></div>
+      <div class="sw w"><h4>⚠️ 劣势 Weaknesses</h4><ul>
+        <li>强依赖第三方 DataForSEO（议价权弱）</li>
+        <li>外链功能需 DataForSEO $100/月承诺</li>
+        <li>项目较新（2.8k★），社区规模尚小</li>
+        <li>Docker 版默认无认证，需手动加固</li>
+        <li>功能仍在追赶商业巨头（如本地 SEO 待补）</li>
+      </ul></div>
+      <div class="sw o"><h4>🚀 机会 Opportunities</h4><ul>
+        <li>AI Agent 生态爆发，MCP 成为事实标准</li>
+        <li>LLM 搜索崛起，AI 可见性成刚需</li>
+        <li>开源 + 自托管潮流持续走强</li>
+        <li>独立开发者/创作者群体快速扩大</li>
+        <li>路线图含本地 SEO、多项目、客户报告</li>
+      </ul></div>
+      <div class="sw t"><h4>⚡ 威胁 Threats</h4><ul>
+        <li>Semrush/Ahrefs 推出 AI 功能反击</li>
+        <li>DataForSEO 涨价或政策变动</li>
+        <li>同类开源项目（theshajha/OpenSEO 等）分流</li>
+        <li>大厂可能直接内置 SEO Agent</li>
+        <li>维护高度依赖单人开发者</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 7. 综合评分 -->
+  <section>
+    <h2><span class="num">7</span>综合评分</h2>
+    <p class="lead">基于创新性、技术架构、实用性、文档质量、社区活跃度、可扩展性六大维度的加权评估。</p>
+
+    <div class="score-overall">
+      <div class="score-big">8.2<small> / 10</small></div>
+      <div class="score-label"><b>综合评分：优秀（推荐关注）</b>
+        AI 时代的 SEO 工具范本：用开源与按量付费打破垄断，用 MCP 重新定义「人与工具」的协作方式。虽然生态尚浅，但战略眼光与执行方向都值得肯定。</div>
+    </div>
+
+    <div class="bar-row"><div class="lbl"><span class="name">🚀 创新性 Innovation</span><span class="val" style="color:var(--green)">9.0 / 10</span></div><div class="bar"><i style="width:90%"></i></div></div>
+    <div class="bar-row"><div class="lbl"><span class="name">🏗️ 技术架构 Architecture</span><span class="val" style="color:var(--green)">8.0 / 10</span></div><div class="bar"><i style="width:80%"></i></div></div>
+    <div class="bar-row"><div class="lbl"><span class="name">🛠️ 实用性 Utility</span><span class="val" style="color:var(--green)">8.5 / 10</span></div><div class="bar"><i style="width:85%"></i></div></div>
+    <div class="bar-row"><div class="lbl"><span class="name">📖 文档质量 Documentation</span><span class="val" style="color:var(--green)">8.5 / 10</span></div><div class="bar"><i style="width:85%"></i></div></div>
+    <div class="bar-row"><div class="lbl"><span class="name">🌱 社区活跃度 Community</span><span class="val" style="color:var(--yellow)">6.5 / 10</span></div><div class="bar"><i class="y" style="width:65%"></i></div></div>
+    <div class="bar-row"><div class="lbl"><span class="name">🔌 可扩展性 Extensibility</span><span class="val" style="color:var(--green)">8.7 / 10</span></div><div class="bar"><i style="width:87%"></i></div></div>
+
+    <h3>一句话总结</h3>
+    <div class="quote">OpenSEO 不只是「便宜版 Ahrefs」，它是第一个真正为「AI Agent + 独立开发者」时代而生的 SEO 工具 —— 把专业 SEO 数据变成了可被 LLM 调用的能力，用按量付费让数据民主化。如果你是技术驱动的创作者，它值得立刻加入工作流；如果你只想要开箱即用的海量数据，传统巨头仍是更稳的选择。</div>
+  </section>
+
+  <!-- 参考来源 -->
+  <section>
+    <h2>📎 参考来源</h2>
+    <ul>
+      <li><a href="https://github.com/every-app/open-seo" target="_blank">GitHub 仓库：every-app/open-seo</a></li>
+      <li><a href="https://openseo.so/" target="_blank">官网 openseo.so（托管版）</a></li>
+      <li><a href="https://openseo.so/features" target="_blank">功能总览页</a></li>
+      <li><a href="https://www.reddit.com/r/TechSEO/comments/1rvutuw/openseo_thank_you_for_the_support_also_i_added/" target="_blank">Reddit 社区讨论（r/TechSEO）</a></li>
+      <li><a href="https://dataforseo.com/" target="_blank">DataForSEO 数据源官网</a></li>
+      <li><a href="https://seobotai.com/blog/open-source-seo-tools/" target="_blank">SEObot：2026 开源 SEO 工具盘点</a></li>
+      <li><a href="https://github.com/every-app/open-seo/releases" target="_blank">项目 Releases 页</a></li>
+    </ul>
+  </section>
+
+  <div class="footer">
+    📊 GitHub Trending 深度分析报告 · 生成于 2026-06-27 · by Claude Code<br>
+    本报告基于公开信息与 WebSearch 检索综合生成，仅供技术评估参考。
+  </div>
+
+</div>
+</body>
+</html>
