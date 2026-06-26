@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mauriceboe/TREK 深度分析报告</title>
+<style>
+  :root {
+    --bg: #0b1620;
+    --card: #122030;
+    --card-2: #1a2c40;
+    --border: #2a4055;
+    --text: #e6edf3;
+    --muted: #94a3b8;
+    --accent: #2dd4bf;
+    --accent-2: #60a5fa;
+    --green: #4ade80;
+    --red: #f87171;
+    --orange: #fb923c;
+    --gold: #fbbf24;
+    --teal: #14b8a6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0b1620 0%, #0f1d2a 100%);
+    color: var(--text);
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+  .hero {
+    background: linear-gradient(135deg, #0d2a33 0%, #0f3d3a 50%, #0d2a33 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "🧭";
+    position: absolute;
+    font-size: 300px;
+    opacity: 0.05;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
+  .hero h1 {
+    font-size: 2.8em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+    position: relative;
+    letter-spacing: 2px;
+  }
+  .hero .subtitle { font-size: 1.15em; color: var(--muted); position: relative; }
+  .hero .tagline {
+    margin-top: 18px;
+    font-style: italic;
+    color: var(--accent);
+    position: relative;
+    font-size: 1.05em;
+  }
+  .meta-bar {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    justify-content: center; margin-top: 28px; position: relative;
+  }
+  .badge {
+    background: rgba(45,212,191,0.12);
+    border: 1px solid rgba(45,212,191,0.35);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.88em;
+  }
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  }
+  .section h2 {
+    color: var(--accent);
+    font-size: 1.55em;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h3 { color: var(--text); font-size: 1.18em; margin: 22px 0 12px; }
+  .section p { margin-bottom: 14px; color: #c9d1d9; }
+  .section ul, .section ol { margin: 12px 0 14px 24px; }
+  .section li { margin-bottom: 8px; color: #c9d1d9; }
+  strong { color: var(--gold); }
+  code {
+    background: #0d1726;
+    color: #79c0ff;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: #0d1726;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  pre code { background: none; color: #c9d1d9; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95em; }
+  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; vertical-align: top; }
+  th { background: var(--card-2); color: var(--accent); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+  .stat-card {
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .num { font-size: 1.9em; font-weight: 700; color: var(--accent); }
+  .stat-card .label { color: var(--muted); font-size: 0.88em; margin-top: 4px; }
+  .quote {
+    border-left: 4px solid var(--accent);
+    background: rgba(45,212,191,0.06);
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #d4d4d4;
+  }
+  .score-box {
+    background: linear-gradient(135deg, var(--card-2), var(--card));
+    border: 2px solid var(--accent);
+    border-radius: 14px;
+    padding: 28px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .score-big { font-size: 3.4em; font-weight: 800; color: var(--gold); line-height: 1; }
+  .score-label { color: var(--muted); margin-top: 8px; }
+  .score-dims { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin-top: 20px; }
+  .dim { text-align: center; min-width: 100px; }
+  .dim .bar-wrap { background: #0d1726; border-radius: 6px; height: 8px; width: 100px; margin: 6px auto 0; overflow: hidden; }
+  .dim .bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+  .dim .v { color: var(--accent); font-weight: 700; }
+  .dim .k { color: var(--muted); font-size: 0.82em; margin-top: 4px; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
+  .pill-green { background: rgba(74,222,128,0.15); color: var(--green); }
+  .pill-orange { background: rgba(251,146,60,0.15); color: var(--orange); }
+  .pill-red { background: rgba(248,113,113,0.15); color: var(--red); }
+  .pill-blue { background: rgba(96,165,250,0.15); color: var(--accent-2); }
+  .arch-box {
+    background: #0d1726; border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin: 14px 0; font-family: monospace; font-size: 0.82em;
+    color: #8b949e; white-space: pre; overflow-x: auto;
+  }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin: 16px 0; }
+  .feature {
+    background: var(--card-2); border-top: 3px solid var(--accent);
+    border-radius: 8px; padding: 18px;
+  }
+  .feature .name { color: var(--gold); font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+  .feature .desc { color: #c9d1d9; font-size: 0.92em; }
+  .footer { text-align: center; color: var(--muted); padding: 30px; font-size: 0.88em; border-top: 1px solid var(--border); margin-top: 20px; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .pro { color: var(--green); }
+  .con { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>TREK</h1>
+  <div class="subtitle">自托管 · 实时协作 · 全能旅行规划器 · mauriceboe/TREK</div>
+  <div class="tagline">"数据归你自己的 Wanderlog" —— 拖拽式行程 + 3D 地图 + 预算/打包/游记 + AI MCP，一行 Docker 拉起</div>
+  <div class="meta-bar">
+    <span class="badge">🔥 GitHub Trending</span>
+    <span class="badge">🐳 Docker / Helm / K8s</span>
+    <span class="badge">⚛️ React 18 + Node 22</span>
+    <span class="badge">🗄️ SQLite（零外部依赖）</span>
+    <span class="badge">📜 AGPL v3</span>
+    <span class="badge">🌐 15 种语言</span>
+    <span class="badge">🤖 内置 MCP Server</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 综合评分 -->
+  <div class="score-box">
+    <div class="score-big">8.6<span style="font-size:0.5em;color:var(--muted)">/10</span></div>
+    <div class="score-label">综合评分 · 完成度极高的自托管旅行套件 × 实时协作 × AI 原生</div>
+    <div class="score-dims">
+      <div class="dim"><div class="v">9.0</div><div class="k">功能完整度</div><div class="bar-wrap"><div class="bar" style="width:90%"></div></div></div>
+      <div class="dim"><div class="v">8.5</div><div class="k">技术架构</div><div class="bar-wrap"><div class="bar" style="width:85%"></div></div></div>
+      <div class="dim"><div class="v">9.0</div><div class="k">实用价值</div><div class="bar-wrap"><div class="bar" style="width:90%"></div></div></div>
+      <div class="dim"><div class="v">8.5</div><div class="k">部署与文档</div><div class="bar-wrap"><div class="bar" style="width:85%"></div></div></div>
+      <div class="dim"><div class="v">8.0</div><div class="k">社区热度</div><div class="bar-wrap"><div class="bar" style="width:80%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2>📋 一、项目概述</h2>
+    <p><strong>TREK</strong> 是开发者 <strong>mauriceboe</strong> 打造的一款<strong>自托管（self-hosted）旅行 / 行程规划应用</strong>。它的定位非常清晰——做一个<strong>"数据完全归你自己的 Wanderlog / TripIt"</strong>：你把行程、地图、预算、打包清单、游记、证件全部放在自己服务器上，多人实时协作，还能像原生 App 一样装到手机里离线使用。</p>
+    <div class="quote">
+      Google Trips 已死，TripIt 重在整理订单而非规划，Wanderlog 又把你的行程锁在云端。TREK 把"规划 + 管理 + 协作 + 记录"四件事一次性做齐，而且全部跑在你自己的 Docker 里。
+    </div>
+    <p>项目近期登上 GitHub Trending 与 Trendshift 榜单，被 Reddit <code>r/selfhosted</code> 社区广泛讨论，并在 <strong>v3.0.0</strong> 引入旅行游记（Journey）插件、把 <strong>Mapbox GL</strong> 作为与 Leaflet 并列的一等公民渲染引擎之后迎来跨越式更新，是 self-hosted 领域少见的"完成度接近商业产品"的旅行类应用。</p>
+
+    <div class="grid">
+      <div class="stat-card"><div class="num">9</div><div class="label">可切换插件模块</div></div>
+      <div class="stat-card"><div class="num">150+</div><div class="label">MCP 工具数</div></div>
+      <div class="stat-card"><div class="num">15</div><div class="label">支持语言</div></div>
+      <div class="stat-card"><div class="num">1 行</div><div class="label">Docker 即可启动</div></div>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2>🏗️ 二、技术架构</h2>
+    <p>TREK 走的是一条<strong>"单镜像 + 单文件数据库"</strong>的极简自托管路线：前端 React SPA 与后端 Node 服务打包进同一个 Docker 镜像，数据落在 SQLite，无需额外部署 Postgres / Redis / 消息队列。这种架构让部署成本极低，同时通过 WebSocket 实现了不简单的实时协作。</p>
+
+    <div class="arch-box">┌─────────────────────────────────────────────┐
+│                   浏览器 / PWA                 │
+│   React 18 · Vite · TypeScript · Tailwind      │
+│   Zustand（状态）· Workbox（Service Worker）    │
+└───────────────┬─────────────────────────────────┘
+                │  REST + WebSocket（/ws 实时同步）
+┌───────────────▼─────────────────────────────────┐
+│              Node.js 22 · Express 服务           │
+│  JWT + OAuth 2.1 / OIDC + TOTP 2FA 鉴权         │
+│  MCP Server（OAuth 2.1，27 scopes）             │
+│  WebSocket 实时广播 · 定时任务 · 自动备份        │
+└───────────────┬─────────────────────────────────┘
+                │
+┌───────────────▼─────────────────────────────────┐
+│        SQLite (./data/travel.db) + 文件存储      │
+│        ENCRYPTION_KEY 静态加密敏感凭据           │
+└─────────────────────────────────────────────┘
+   外部数据：Open-Meteo（天气）· OSM / Google Places · Mapbox</div>
+
+    <h3>🧱 核心技术栈</h3>
+    <table>
+      <tr><th>层级</th><th>技术选型</th><th>说明</th></tr>
+      <tr><td>前端框架</td><td>React 18 + Vite + TypeScript</td><td>组件化 SPA，类型安全，Vite 提供极速 HMR 与构建</td></tr>
+      <tr><td>样式</td><td>Tailwind CSS</td><td>原子化 CSS，配套完整暗色主题与状态栏</td></tr>
+      <tr><td>状态管理</td><td>Zustand</td><td>轻量全局状态，配合 WebSocket 同步</td></tr>
+      <tr><td>地图</td><td>Leaflet + Mapbox GL</td><td>双引擎可切换；Mapbox 支持 3D 建筑、地形、照片标记、聚合、路线可视化</td></tr>
+      <tr><td>后端</td><td>Node.js 22 + Express</td><td>REST API + WebSocket 实时通道</td></tr>
+      <tr><td>实时同步</td><td>WebSocket（<code>ws</code>）</td><td>多人编辑即时广播，所有在线用户变更秒级可见</td></tr>
+      <tr><td>数据库</td><td>SQLite</td><td>单文件 <code>./data/travel.db</code>，零运维，便于备份与迁移</td></tr>
+      <tr><td>鉴权</td><td>JWT + OAuth 2.1 + OIDC + TOTP</td><td>支持 Google/Apple/Authentik/Keycloak 等 OIDC SSO，TOTP 双因子 + 备份码</td></tr>
+      <tr><td>PWA</td><td>Workbox Service Worker</td><td>缓存地图瓦片、API、上传文件，支持离线使用与"安装到主屏幕"</td></tr>
+      <tr><td>AI 接口</td><td>内置 MCP Server（OAuth 2.1）</td><td>150+ 工具、30 资源、27 个 OAuth scope，供 AI 助手安全调用</td></tr>
+      <tr><td>部署</td><td>Docker / Compose / Helm</td><td>只读容器、<code>no-new-privileges</code>、最小 Linux capabilities，安全默认</td></tr>
+    </table>
+
+    <h3>🔐 安全设计亮点</h3>
+    <p>生产级 Compose 示例体现了较强的安全意识：容器以 <code>read_only: true</code> 运行、<code>cap_drop: ALL</code> 仅保留必要的 <code>CHOWN/SETUID/SETGID</code>、tmpfs 挂载 <code>/tmp</code> 带 <code>noexec,nosuid</code>。敏感凭据（第三方 API Key、MFA、SMTP、OIDC Secret）通过 <code>ENCRYPTION_KEY</code> 静态加密存储，并提供密钥轮换脚本（<code>migrate-encryption.ts</code>，变更前自动生成带时间戳的数据库备份）。</p>
+
+    <h3>🚀 30 秒启动</h3>
+    <pre><code>ENCRYPTION_KEY=$(openssl rand -hex 32) docker run -d -p 3000:3000 \
+  -e ENCRYPTION_KEY=$ENCRYPTION_KEY \
+  -v ./data:/app/data -v ./uploads:/app/uploads mauriceboe/trek</code></pre>
+    <p>首次启动自动播种管理员账号；反代方面同时给出 Nginx 与 Caddy 配置，并特别提醒 WebSocket 必须在 <code>/ws</code> 支持升级。</p>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2>💡 三、核心创新点</h2>
+
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="name">🧩 模块化插件（Addon）体系</div>
+        <div class="desc">Lists / Budget / Documents / Collab / Vacay / Atlas / Journey / Naver Import / MCP 九大插件，管理员按需开关。功能不再"全家桶"，小团队可只开核心，进阶玩家再解锁 Atlas 世界地图、Vacay 假期日历。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🤖 AI 原生：内置 MCP Server</div>
+        <div class="desc">这是同类项目里少见的配置——TREK 自带 OAuth 2.1 鉴权的 MCP 服务端，暴露 150+ 工具与 30 资源、27 个细粒度 scope。AI 助手可直接帮你建行程、排日程、生成打包清单、管理预算、标记已访问国家，内置 <code>trip-summary</code> / <code>packing-list</code> / <code>budget-overview</code> 等提示词。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🗺️ 双地图引擎 + 3D 可视化</div>
+        <div class="desc">Leaflet 与 Mapbox GL 并列一等公民。Mapbox 渲染 3D 建筑、地形、照片标记、聚合与路线，让"行程可视化"达到商业级表现力，而非平面的点位散点图。</div>
+      </div>
+      <div class="feature">
+        <div class="name">👥 实时多人协作</div>
+        <div class="desc">WebSocket 让多人编辑同一行程即时同步，配合角色权限、一次性 / 可复用邀请链接（可设过期）、群聊、共享笔记、投票、每日签到，把"一群人凑一个旅行计划"这件事工程化。</div>
+      </div>
+      <div class="feature">
+        <div class="name">📱 真正的离线 PWA</div>
+        <div class="desc">Workbox 缓存瓦片、API、上传文件，全屏独立窗口、主题化状态栏、启动屏、安全区适配——装到手机后体验接近原生 App，断网也能查看行程。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🔒 企业级身份与隐私</div>
+        <div class="desc">OIDC SSO（Google/Apple/Authentik/Keycloak）+ TOTP 2FA + SSO-only 模式；<code>ALLOW_INTERNAL_NETWORK</code> 受控放行内网（如访问局域网 Immich）；默认禁止出向访问私网 IP，防止 SSRF。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🎒 旅行管理闭环</div>
+        <div class="desc">预订（机票/住宿/餐厅，含确认号与附件）、多币种预算（饼图、按人按天分摊）、打包清单（模板/分配/进度，可选行李称重）、文档管理（≤50MB）、整行程 PDF 导出——把"规划→执行→归档"打通。</div>
+      </div>
+      <div class="feature">
+        <div class="name">✈️ Journey 游记 + Atlas 足迹</div>
+        <div class="desc">v3.0 引入杂志风游记（条目、照片、心情，可对接 Immich/Synology）；Atlas 用"液态玻璃"UI 绘制已访问国家世界地图、心愿单、旅行统计与连续打卡——既是规划器也是回忆录。</div>
+      </div>
+    </div>
+
+    <div class="quote">
+      最值得玩味的是 MCP 的接入思路：TREK 不是简单地"加个 AI 聊天框"，而是把整套旅行数据通过受 OAuth 保护的标准化协议交给 AI 助手。这意味着你的行程可以成为任意支持 MCP 的 AI 客户端的一等数据源——在 AI Agent 时代，这种"可被 Agent 调用的自托管服务"的设计前瞻性很强。
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2>🎯 四、应用场景</h2>
+    <table>
+      <tr><th>场景</th><th>典型用户</th><th>价值</th></tr>
+      <tr>
+        <td><strong>家庭 / 朋友结伴出行</strong></td>
+        <td>3–8 人小团</td>
+        <td>实时协作排行程，预算按人分摊，打包清单分工，邀请链接即开即用</td>
+      </tr>
+      <tr>
+        <td><strong>深度自由行 / 自驾</strong></td>
+        <td>资深旅行者</td>
+        <td>拖拽式日程、路线优化并导出 Google Maps、16 天天气、3D 地图预览路况</td>
+      </tr>
+      <tr>
+        <td><strong>数字游民 / 长期旅居</strong></td>
+        <td>远程工作者</td>
+        <td>Vacay 假期日历（100+ 国家节假日、结转追踪）、多币种预算、文档归档</td>
+      </tr>
+      <tr>
+        <td><strong>数据隐私敏感用户</strong></td>
+        <td>自托管玩家</td>
+        <td>行程 / 护照 / 票据全程不出自有服务器，告别 SaaS 数据锁定</td>
+      </tr>
+      <tr>
+        <td><strong>小企业团建 / 旅行社</strong></td>
+        <td>团队运营</td>
+        <td>OIDC SSO 对接企业身份、角色权限、群聊签到、PDF 行程交付客户</td>
+      </tr>
+      <tr>
+        <td><strong>AI Agent 爱好者</strong></td>
+        <td>开发者</td>
+        <td>把 TREK 作为 MCP 数据源，让 AI 助手自动整理行程、生成清单与预算概览</td>
+      </tr>
+      <tr>
+        <td><strong>旅行记录 / 回忆</strong></td>
+        <td>内容创作者</td>
+        <td>Journey 游记 + Atlas 足迹地图，把行程沉淀为可分享的杂志式游记</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2>⚔️ 五、竞品对比</h2>
+    <p>把 TREK 放进旅行规划赛道，对手主要分两类：<strong>商业 SaaS</strong>（Wanderlog、TripIt、Google Trips 已停）与<strong>自托管开源</strong>（AdventureLog 等）。</p>
+
+    <table>
+      <tr>
+        <th>维度</th>
+        <th>TREK（自托管）</th>
+        <th>Wanderlog（SaaS）</th>
+        <th>TripIt（SaaS）</th>
+        <th>AdventureLog（自托管）</th>
+      </tr>
+      <tr>
+        <td>数据归属</td>
+        <td><span class="pill pill-green">完全自有</span></td>
+        <td><span class="pill pill-orange">云端锁定</span></td>
+        <td><span class="pill pill-orange">云端锁定</span></td>
+        <td><span class="pill pill-green">完全自有</span></td>
+      </tr>
+      <tr>
+        <td>行程规划</td>
+        <td>拖拽日程 + 路线优化 + 3D 地图</td>
+        <td>强项，地图+笔记一体</td>
+        <td>弱（重在整理订单）</td>
+        <td>偏记录/足迹，规划较弱</td>
+      </tr>
+      <tr>
+        <td>实时协作</td>
+        <td><span class="pill pill-green">WebSocket 多人</span></td>
+        <td>支持</td>
+        <td>有限</td>
+        <td>有限</td>
+      </tr>
+      <tr>
+        <td>预算 / 打包 / 文档</td>
+        <td><span class="pill pill-green">全内置</span></td>
+        <td>部分需 Pro</td>
+        <td>无</td>
+        <td>较弱</td>
+      </tr>
+      <tr>
+        <td>AI / MCP</td>
+        <td><span class="pill pill-blue">内置 MCP Server</span></td>
+        <td>有 AI 助手</td>
+        <td>无</td>
+        <td>无</td>
+      </tr>
+      <tr>
+        <td>游记 / 足迹</td>
+        <td>Journey + Atlas</td>
+        <td>有</td>
+        <td>无</td>
+        <td>足迹地图（强项）</td>
+      </tr>
+      <tr>
+        <td>部署成本</td>
+        <td>1 行 Docker，零外部依赖</td>
+        <td>注册即用</td>
+        <td>注册即用</td>
+        <td>Docker 自托管</td>
+      </tr>
+      <tr>
+        <td>身份 / SSO</td>
+        <td>OIDC + 2FA</td>
+        <td>账号体系</td>
+        <td>账号体系</td>
+        <td>基础</td>
+      </tr>
+      <tr>
+        <td>许可 / 价格</td>
+        <td>AGPL v3，免费自托管</td>
+        <td>免费 + Pro 订阅</td>
+        <td>免费 + Pro</td>
+        <td>开源</td>
+      </tr>
+    </table>
+
+    <div class="quote">
+      <strong>差异化定位</strong>：相对 Wanderlog/TripIt，TREK 赢在"数据主权 + 不付费的全功能 + AI MCP"；相对 AdventureLog，TREK 胜在"规划能力远更完整 + 实时协作 + 企业级身份"。它的真正对手其实是"自托管 + 商业级体验"这条线上的综合完成度，而在这条线上 TREK 目前处于领先位置。
+    </div>
+  </div>
+
+  <!-- 优势与局限 -->
+  <div class="section">
+    <h2>⚖️ 六、优势与局限</h2>
+    <h3 class="pro">✅ 优势</h3>
+    <ul>
+      <li><strong>完成度极高</strong>：从规划、管理、协作、预算到游记足迹，一条龙且都做到了可用水平，不像早期开源项目"半成品"。</li>
+      <li><strong>部署极简</strong>：单镜像 + SQLite，1 行 Docker 或 Helm 一键起，无 Postgres/Redis 依赖，迁移与备份友好。</li>
+      <li><strong>AI 前瞻性</strong>：内置 OAuth 2.1 保护的 MCP Server，在 Agent 时代把"自托管数据 + AI 自动化"打通，同类罕见。</li>
+      <li><strong>安全默认</strong>：只读容器、最小权限、密钥加密、SSRF 防护、密钥轮换脚本，生产级意识到位。</li>
+      <li><strong>本地化优秀</strong>：15 种语言含中文 / 繁中 / 阿拉伯语（RTL），暗色主题与 PWA 体验接近原生。</li>
+    </ul>
+    <h3 class="con">⚠️ 局限</h3>
+    <ul>
+      <li><strong>单人维护</strong>：作者为个人开发者，长期可持续性与商业支持存在不确定性（社区已开始接入 Dokploy/Railway/Zeabur 等分发渠道）。</li>
+      <li><strong>SQLite 上限</strong>：单文件数据库对超大规模多租户或高并发写入场景并非最优，重度企业部署可能需要评估。</li>
+      <li><strong>地图 / Places 依赖</strong>：Mapbox GL 与 Google Places 需自备 API Key；免 Key 路径依赖 OSM，体验略降。</li>
+      <li><strong>AGPL v3 约束</strong>：若二次开发后作为网络服务对外提供，须同样开源，商业闭源 SaaS 化受限。</li>
+      <li><strong>生态尚浅</strong>：插件 / 主题等扩展生态刚起步，第三方集成主要靠官方推进。</li>
+    </ul>
+  </div>
+
+  <!-- 版本演进 -->
+  <div class="section">
+    <h2>📅 七、版本演进与生态</h2>
+    <ul>
+      <li><strong>v3.0.0（重大更新）</strong>：被作者称为"史上最大版本"，引入 <strong>Journey</strong> 旅行游记插件，并将 <strong>Mapbox GL</strong> 提升为与 Leaflet 并列的一等渲染引擎。</li>
+      <li><strong>AI / MCP</strong>：后续版本加入内置 MCP Server（OAuth 2.1，150+ 工具），让 AI 助手可安全操作行程数据。</li>
+      <li><strong>分发渠道</strong>：已入选 Dokploy Templates（#771）、Railway 一键部署、Zeabur、Hostinger VPS 一键安装等，自托管分发矩阵逐步成型。</li>
+      <li><strong>社区</strong>：活跃的 Discussions 与 Wiki，作者在 r/selfhosted 直接与用户互动，迭代节奏较快。</li>
+    </ul>
+  </div>
+
+  <!-- 结论 -->
+  <div class="section">
+    <h2>🏆 八、综合结论</h2>
+    <p>TREK 是 2026 年自托管生态中<strong>完成度最高、最"现代"的旅行规划应用</strong>。它没有走"开源 = 半成品"的老路，而是用商业级的产品力把规划、管理、协作、预算、游记、足迹一整套体验做齐，再用<strong>极简单镜像部署</strong>和<strong>内置 MCP</strong> 两招拉开身位。</p>
+    <p>对<strong>自托管爱好者、注重数据隐私的旅行者、小团队 / 家庭结伴出行、AI Agent 玩家</strong>来说，TREK 几乎是当下最优解。需要注意的主要是<strong>个人维护的可持续性</strong>与 <strong>AGPL 对商业闭源的限制</strong>。综合评分 <strong>8.6 / 10</strong>——<strong>强烈推荐自托管玩家上手体验</strong>。</p>
+
+    <div class="quote">
+      一行 Docker 拉起一个"数据归你、AI 能调用、朋友能协作、手机能离线"的旅行管家——这就是 TREK 给 self-hosted 社区的答卷。
+    </div>
+
+    <p style="margin-top:18px;">
+      🔗 仓库：<a href="https://github.com/mauriceboe/TREK" target="_blank">github.com/mauriceboe/TREK</a> ·
+      Wiki：<a href="https://github.com/mauriceboe/TREK/wiki" target="_blank">TREK Wiki</a> ·
+      趋势：<a href="https://trendshift.io/repositories/24392" target="_blank">Trendshift</a>
+    </p>
+  </div>
+
+  <div class="footer">
+    本报告由 AI 深度分析生成 · 数据截至 2026-06-26 · 仅供学习研究参考<br>
+    项目信息以官方仓库为准，部署前请阅读最新 README 与变更日志
+  </div>
+
+</div>
+</body>
+</html>
