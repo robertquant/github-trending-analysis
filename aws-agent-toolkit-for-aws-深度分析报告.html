@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aws/agent-toolkit-for-aws 深度分析报告</title>
+<style>
+  :root {
+    --bg: #0d1620;
+    --card: #131f2e;
+    --card-2: #1b2a3d;
+    --border: #2a3c52;
+    --text: #e6edf3;
+    --muted: #94a3b8;
+    --accent: #ff9900;
+    --accent-2: #4cb3ff;
+    --green: #4ade80;
+    --red: #f87171;
+    --orange: #fb923c;
+    --gold: #fbbf24;
+    --teal: #14b8a6;
+    --aws: #ff9900;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0d1620 0%, #111d2b 100%);
+    color: var(--text);
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1a1205 0%, #23202a 50%, #0d1f2d 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "☁";
+    position: absolute;
+    font-size: 320px;
+    opacity: 0.05;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
+  .hero h1 {
+    font-size: 2.8em;
+    background: linear-gradient(90deg, var(--aws), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+    position: relative;
+    letter-spacing: 1px;
+  }
+  .hero .subtitle { font-size: 1.12em; color: var(--muted); position: relative; }
+  .hero .tagline {
+    margin-top: 18px;
+    font-style: italic;
+    color: var(--aws);
+    position: relative;
+    font-size: 1.05em;
+  }
+  .meta-bar {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    justify-content: center; margin-top: 28px; position: relative;
+  }
+  .badge {
+    background: rgba(255,153,0,0.12);
+    border: 1px solid rgba(255,153,0,0.35);
+    color: var(--aws);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.88em;
+  }
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  }
+  .section h2 {
+    color: var(--aws);
+    font-size: 1.55em;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section h3 { color: var(--text); font-size: 1.18em; margin: 22px 0 12px; }
+  .section p { margin-bottom: 14px; color: #c9d1d9; }
+  .section ul, .section ol { margin: 12px 0 14px 24px; }
+  .section li { margin-bottom: 8px; color: #c9d1d9; }
+  strong { color: var(--gold); }
+  code {
+    background: #0a1320;
+    color: #ffb964;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: #0a1320;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  pre code { background: none; color: #c9d1d9; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95em; }
+  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; vertical-align: top; }
+  th { background: var(--card-2); color: var(--aws); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+  .stat-card {
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .num { font-size: 1.9em; font-weight: 700; color: var(--aws); }
+  .stat-card .label { color: var(--muted); font-size: 0.88em; margin-top: 4px; }
+  .quote {
+    border-left: 4px solid var(--aws);
+    background: rgba(255,153,0,0.06);
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #d4d4d4;
+  }
+  .score-box {
+    background: linear-gradient(135deg, var(--card-2), var(--card));
+    border: 2px solid var(--aws);
+    border-radius: 14px;
+    padding: 28px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .score-big { font-size: 3.4em; font-weight: 800; color: var(--gold); line-height: 1; }
+  .score-label { color: var(--muted); margin-top: 8px; }
+  .score-dims { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin-top: 20px; }
+  .dim { text-align: center; min-width: 100px; }
+  .dim .bar-wrap { background: #0a1320; border-radius: 6px; height: 8px; width: 100px; margin: 6px auto 0; overflow: hidden; }
+  .dim .bar { height: 100%; background: linear-gradient(90deg, var(--aws), var(--gold)); }
+  .dim .v { color: var(--aws); font-weight: 700; }
+  .dim .k { color: var(--muted); font-size: 0.82em; margin-top: 4px; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
+  .pill-green { background: rgba(74,222,128,0.15); color: var(--green); }
+  .pill-orange { background: rgba(251,146,60,0.15); color: var(--orange); }
+  .pill-red { background: rgba(248,113,113,0.15); color: var(--red); }
+  .pill-blue { background: rgba(76,179,255,0.15); color: var(--accent-2); }
+  .arch-box {
+    background: #0a1320; border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin: 14px 0; font-family: monospace; font-size: 0.82em;
+    color: #8b949e; white-space: pre; overflow-x: auto;
+  }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin: 16px 0; }
+  .feature {
+    background: var(--card-2); border-top: 3px solid var(--aws);
+    border-radius: 8px; padding: 18px;
+  }
+  .feature .name { color: var(--gold); font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+  .feature .desc { color: #c9d1d9; font-size: 0.92em; }
+  .footer { text-align: center; color: var(--muted); padding: 30px; font-size: 0.88em; border-top: 1px solid var(--border); margin-top: 20px; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .pro { color: var(--green); }
+  .con { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Agent Toolkit for AWS</h1>
+  <div class="subtitle">官方维护 · MCP 原生 · 让 AI 编程智能体安全地构建在 AWS 之上 · aws/agent-toolkit-for-aws</div>
+  <div class="tagline">"给 AI 编程智能体一套工具、知识与护栏，让它像资深 AWS 工程师一样在云上构建、部署与运维"</div>
+  <div class="meta-bar">
+    <span class="badge">🔥 GitHub Trending</span>
+    <span class="badge">🟠 AWS 官方支持</span>
+    <span class="badge">🔌 MCP 协议</span>
+    <span class="badge">🤖 Claude Code / Codex / Cursor / Kiro</span>
+    <span class="badge">☁️ 覆盖 300+ AWS 服务</span>
+    <span class="badge">📜 Apache-2.0</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 综合评分 -->
+  <div class="score-box">
+    <div class="score-big">8.9<span style="font-size:0.5em;color:var(--muted)">/10</span></div>
+    <div class="score-label">综合评分 · AWS 官方背书的"AI 智能体云上工程"标准件 · 工具×知识×护栏三位一体</div>
+    <div class="score-dims">
+      <div class="dim"><div class="v">9.2</div><div class="k">功能完整度</div><div class="bar-wrap"><div class="bar" style="width:92%"></div></div></div>
+      <div class="dim"><div class="v">9.0</div><div class="k">技术架构</div><div class="bar-wrap"><div class="bar" style="width:90%"></div></div></div>
+      <div class="dim"><div class="v">9.0</div><div class="k">实用价值</div><div class="bar-wrap"><div class="bar" style="width:90%"></div></div></div>
+      <div class="dim"><div class="v">8.5</div><div class="k">部署与文档</div><div class="bar-wrap"><div class="bar" style="width:85%"></div></div></div>
+      <div class="dim"><div class="v">8.8</div><div class="k">生态与背书</div><div class="bar-wrap"><div class="bar" style="width:88%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- 项目概述 -->
+  <div class="section">
+    <h2>📋 一、项目概述</h2>
+    <p><strong>Agent Toolkit for AWS</strong>（<code>aws/agent-toolkit-for-aws</code>）是 <strong>Amazon Web Services 官方维护、开源</strong>的一套 <strong>MCP（Model Context Protocol）服务器、智能体技能（Skills）与插件（Plugins）</strong>，目标是给 AI 编程智能体（AI coding agents）提供<strong>工具（tools）、知识（knowledge）与护栏（guardrails）</strong>，让它们能够<strong>可靠、安全、规范地在 AWS 上构建、部署和管理应用</strong>。</p>
+    <div class="quote">
+      过去一年 AI 编程智能体爆发，但"会写代码"与"能正确操作云"之间隔着巨大的鸿沟：选错服务、配置不合规、越权操作、用过时 API……Agent Toolkit for AWS 正是 AWS 对这道鸿沟给出的官方答案——把云厂商的专业知识封装成智能体可调用的标准化能力。
+    </div>
+    <p>该项目于 <strong>2026 年 5 月 6 日正式发布</strong>，是 AWS Labs 此前散落的 MCP 服务器、插件与技能的<strong>官方继承者（successor）</strong>。它与开发者已经在用的主流编程智能体深度集成——<strong>Claude Code、Codex、Cursor、Kiro</strong>，以及任何支持 MCP 的智能体客户端。近期登上 GitHub Trending，标志着"AI Agent × Cloud"赛道正式进入<strong>云厂商官方下场</strong>的新阶段。</p>
+
+    <div class="grid">
+      <div class="stat-card"><div class="num">4</div><div class="label">官方插件模块</div></div>
+      <div class="stat-card"><div class="num">300+</div><div class="label">AWS 服务 API 覆盖</div></div>
+      <div class="stat-card"><div class="num">20+</div><div class="label">端到端评估技能</div></div>
+      <div class="stat-card"><div class="num">4</div><div class="label">主流编程智能体</div></div>
+    </div>
+  </div>
+
+  <!-- 技术架构 -->
+  <div class="section">
+    <h2>🏗️ 二、技术架构</h2>
+    <p>整个 Toolkit 的设计哲学是 <strong>"三层封装 + 一个托管 MCP 服务"</strong>：底层是覆盖全部 AWS 服务的<strong>托管型 AWS MCP Server</strong>，中层是经过端到端评估的<strong>智能体技能（Skills）</strong>，上层是按场景打包、一键安装的<strong>插件（Plugins）</strong>，再辅以告诉智能体"如何正确使用"的<strong>规则文件（Rules）</strong>。</p>
+
+    <div class="arch-box">┌──────────────────────────────────────────────────────────┐
+│   AI 编程智能体（Claude Code / Codex / Cursor / Kiro / 任意 MCP 客户端） │
+└───────────────────────────┬──────────────────────────────────────────┘
+                            │  Model Context Protocol (MCP)
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐ ┌────────▼────────┐ ┌────────▼─────────┐
+│   插件 Plugins  │ │  技能 Skills     │ │  规则 Rules       │
+│ aws-core 等 4 个 │ │ 按需加载的指令+  │ │ 项目级配置，引导   │
+│ (MCP配置+技能包)│ │ 参考材料(20+)    │ │ 智能体正确使用 AWS │
+└───────┬────────┘ └────────┬────────┘ └──────────────────┘
+        │                   │
+        └─────────┬─────────┘
+                  │  统一通过 MCP 调用
+┌─────────────────▼────────────────────────────────────────┐
+│        托管型 AWS MCP Server（aws-mcp.us-east-1.api.aws）  │
+│  • 全 AWS API 覆盖（300+ 服务，单一鉴权端点）              │
+│  • 沙箱化脚本执行（Python 隔离环境，多步复杂操作）          │
+│  • 实时文档检索（API 参考 / 服务能力，免鉴权）             │
+│  • 企业控制：CloudWatch 指标 · IAM 条件键 · CloudTrail 审计│
+└──────────────────────────────────────────────────────────┘</div>
+
+    <h3>🧱 核心组件</h3>
+    <table>
+      <tr><th>组件</th><th>形态</th><th>作用</th></tr>
+      <tr><td><strong>AWS MCP Server</strong></td><td>托管服务</td><td>通过 MCP 暴露 AWS 全部能力：300+ 服务 API、沙箱脚本执行、实时文档检索、企业级监控审计</td></tr>
+      <tr><td><strong>Plugins（插件）</strong></td><td>打包分发</td><td>把"MCP Server 配置 + 一组技能"打包成单一安装单元，针对 Claude Code/Codex/Cursor 一键装</td></tr>
+      <tr><td><strong>Skills（技能）</strong></td><td>指令+参考</td><td>精心策划的指令包与参考材料，<strong>按需加载</strong>——智能体只检索当前任务相关的内容，避免上下文爆炸</td></tr>
+      <tr><td><strong>Rules（规则）</strong></td><td>项目配置</td><td>项目级配置文件，告诉智能体"如何最有效地使用 AWS"，例如优先用 MCP Server、先搜文档再动手</td></tr>
+    </table>
+
+    <h3>📦 四大官方插件</h3>
+    <table>
+      <tr><th>插件</th><th>覆盖范围</th></tr>
+      <tr><td><strong>aws-core</strong>（<em>从这里开始</em>）</td><td>服务选型、CDK / CloudFormation、Serverless、容器、存储、可观测性、计费、SDK 用法、部署——AWS 开发的核心全景</td></tr>
+      <tr><td><strong>aws-agents</strong></td><td>基于 Amazon Bedrock 与 AgentCore 在 AWS 上构建 AI 智能体</td></tr>
+      <tr><td><strong>aws-data-analytics</strong></td><td>数据湖、分析与 ETL 工作流：S3 Tables、AWS Glue、Athena</td></tr>
+      <tr><td><strong>aws-agents-for-devsecops</strong></td><td>事故调查、代码审查与发布就绪 UAT、漏洞扫描、用 AWS DevOps/Security Agent 做渗透测试</td></tr>
+    </table>
+
+    <h3>🔧 典型安装方式</h3>
+    <p><strong>Claude Code</strong>（官方 Anthropic 市场已内置）：</p>
+    <pre><code>/plugin install aws-core@claude-plugins-official
+/plugin install aws-agents@claude-plugins-official
+/plugin install aws-data-analytics@claude-plugins-official</code></pre>
+    <p><strong>Cursor</strong>：将仓库作为 Team Marketplace 导入（读取 <code>.cursor-plugin/marketplace.json</code>），再从 Plugins 面板安装。</p>
+    <p><strong>Codex</strong>：<code>codex plugin marketplace add aws/agent-toolkit-for-aws</code> 后 <code>/plugins</code> 浏览安装。</p>
+    <p><strong>Kiro / 其他 MCP 智能体</strong>：在 MCP 配置里加入 AWS MCP Server，并 <code>npx skills add aws/agent-toolkit-for-aws/skills</code> 装技能：</p>
+    <pre><code>{
+  "mcpServers": {
+    "aws": {
+      "command": "uvx",
+      "args": ["mcp-proxy-for-aws@1.6.2",
+               "https://aws-mcp.us-east-1.api.aws/mcp",
+               "--metadata", "AWS_REGION=us-west-2"]
+    }
+  }
+}</code></pre>
+    <p>官方建议<strong>固定版本号</strong>（如 <code>@1.6.2</code>）以保证可复现行为并防范供应链风险。前提条件：本地安装 <code>uv</code>、配置好 AWS 凭据（文档检索/技能发现不需要 AWS 账户，但 API 调用与脚本执行需要）。</p>
+  </div>
+
+  <!-- 核心创新点 -->
+  <div class="section">
+    <h2>💡 三、核心创新点</h2>
+
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="name">🔐 区分"智能体动作"与"人类动作"的 IAM 条件键</div>
+        <div class="desc">这是相对 AWS Labs 旧方案最大的飞跃。借助专门的 IAM 条件键，你可以写出"只对智能体生效"的策略——例如即使用户底层 IAM 角色有写权限，也<strong>只允许通过 MCP Server 执行只读操作</strong>。云权限治理首次原生支持 AI 智能体这一新主体。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🛡️ 全链路审计与可观测</div>
+        <div class="desc">每一次 MCP 请求都有 <strong>CloudWatch 指标</strong>与 <strong>CloudTrail 审计日志</strong>。企业可以监控、回溯智能体在云上做了什么——把"AI 在我的 AWS 账户里乱操作"从黑盒变成可审计、可告警、可追责的工程行为。</div>
+      </div>
+      <div class="feature">
+        <div class="name">📦 插件 = MCP 配置 + 技能，一键即装</div>
+        <div class="desc">插件把"如何连 MCP Server + 加载哪些技能"打包成一个安装单元。对 Claude Code/Codex/Cursor 用户而言，一条命令即可获得经过验证的 AWS 工程能力，极大降低了"让 AI 正确操作 AWS"的接入成本。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🧠 按需加载、端到端评估的 Skills</div>
+        <div class="desc">技能不是塞进上下文的死文档，而是<strong>按需检索</strong>——智能体只取与当前任务相关的内容，避免上下文膨胀。更重要的是每个技能都经过<strong>端到端评估</strong>，可以确信工作流能跑通，而非 AWS Labs 旧版"社区级、维护不稳定"的状态。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🐍 沙箱化脚本执行</div>
+        <div class="desc">智能体可在<strong>隔离环境</strong>中运行 Python 脚本，完成复杂的多步骤操作（编排、数据处理、批量资源操作）。把"一次性脚本"这种最灵活但最难安全治理的形态纳入了受控通道。</div>
+      </div>
+      <div class="feature">
+        <div class="name">📚 内置实时文档检索</div>
+        <div class="desc">提供原生工具搜索 AWS 文档、读取完整页面并取回内容——无需单独部署文档 MCP Server。智能体拿到的永远是<strong>当前最新的 API 参考与服务能力</strong>，告别训练截止日期导致的"幻觉式过时 API"。</div>
+      </div>
+      <div class="feature">
+        <div class="name">☁️ 单端点覆盖 300+ 服务</div>
+        <div class="desc">一个经过鉴权的 MCP 端点即可与<strong>全部 300+ AWS 服务</strong>交互，免去了为每个服务单独搭 MCP Server 的运维负担。统一入口 + 统一鉴权 + 统一审计。</div>
+      </div>
+      <div class="feature">
+        <div class="name">🔌 客户端中立，全主流智能体适配</div>
+        <div class="desc">不绑定单一智能体：Claude Code、Codex、Cursor、Kiro 开箱即用，任何支持 MCP 的客户端都能接。多云厂商工具中少见的<strong>"协议优先、生态开放"</strong>姿态。</div>
+      </div>
+    </div>
+
+    <div class="quote">
+      最值得关注的是"护栏"层面的设计哲学：Agent Toolkit 不是单纯给智能体更多权限，而是<strong>用 IAM 条件键 + CloudTrail 审计 + 沙箱执行，把"AI 操作云"这件高风险的事变成了可治理、可审计、可限制的受控工程</strong>。这正是企业敢不敢把 AI 智能体放进生产 AWS 账户的"最后一公里"，也是它相对一切社区方案的核心壁垒。
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <div class="section">
+    <h2>🎯 四、应用场景</h2>
+    <table>
+      <tr><th>场景</th><th>典型用户</th><th>价值</th></tr>
+      <tr>
+        <td><strong>"一句话部署到 AWS"</strong></td>
+        <td>全栈 / 应用开发者</td>
+        <td>对智能体说"deploy to AWS"，自动生成 CDK/CloudFormation 并部署，从代码到云一条龙</td>
+      </tr>
+      <tr>
+        <td><strong>企业级 AI 编程合规</strong></td>
+        <td>平台 / SRE / 安全团队</td>
+        <td>IAM 条件键限制智能体只读、CloudTrail 全审计，让 AI 智能体合规进入生产账户</td>
+      </tr>
+      <tr>
+        <td><strong>构建 AWS 原生 AI 智能体</strong></td>
+        <td>AI 应用工程师</td>
+        <td>用 aws-agents 插件 + Bedrock / AgentCore 快速搭建生产级智能体应用</td>
+      </tr>
+      <tr>
+        <td><strong>数据湖 / ETL 自动化</strong></td>
+        <td>数据工程师</td>
+        <td>aws-data-analytics 插件引导智能体正确编排 S3 Tables、Glue、Athena 工作流</td>
+      </tr>
+      <tr>
+        <td><strong>DevSecOps 流水线</strong></td>
+        <td>安全 / DevOps 工程师</td>
+        <td>aws-agents-for-devsecops 做事故调查、漏洞扫描、代码审查 UAT、渗透测试</td>
+      </tr>
+      <tr>
+        <td><strong>迁移自 AWS Labs 旧 MCP</strong></td>
+        <td>已用 awslabs 方案团队</td>
+        <td>统一升级到官方受支持版本，获得 IAM、审计与技能评估</td>
+      </tr>
+      <tr>
+        <td><strong>多智能体团队标准化</strong></td>
+        <td>企业工具链负责人</td>
+        <td>用同一套官方插件统一 Claude Code / Cursor / Codex 的 AWS 行为规范</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 竞品对比 -->
+  <div class="section">
+    <h2>⚔️ 五、竞品对比</h2>
+    <p>在这个赛道里，对手主要分三类：<strong>自家前身 AWS Labs</strong>（社区级 MCP/插件）、<strong>其他云厂商的官方 MCP</strong>（Azure、Google Cloud 等）、以及<strong>第三方/社区 AWS MCP Server</strong>。</p>
+
+    <table>
+      <tr>
+        <th>维度</th>
+        <th>Agent Toolkit for AWS（官方）</th>
+        <th>AWS Labs 旧 MCP/插件</th>
+        <th>第三方社区 AWS MCP</th>
+      </tr>
+      <tr>
+        <td>维护方</td>
+        <td><span class="pill pill-green">AWS 官方支持</span></td>
+        <td><span class="pill pill-orange">AWS Labs 社区级</span></td>
+        <td><span class="pill pill-orange">个人 / 社区</span></td>
+      </tr>
+      <tr>
+        <td>智能体 vs 人类 IAM 区分</td>
+        <td><span class="pill pill-green">原生条件键</span></td>
+        <td><span class="pill pill-red">无官方 IAM 支持</span></td>
+        <td><span class="pill pill-red">通常无</span></td>
+      </tr>
+      <tr>
+        <td>CloudTrail 审计 / CloudWatch</td>
+        <td><span class="pill pill-green">全请求覆盖</span></td>
+        <td><span class="pill pill-red">无</span></td>
+        <td><span class="pill pill-red">通常无</span></td>
+      </tr>
+      <tr>
+        <td>技能端到端评估</td>
+        <td><span class="pill pill-green">有</span></td>
+        <td><span class="pill pill-red">无</span></td>
+        <td><span class="pill pill-red">无</span></td>
+      </tr>
+      <tr>
+        <td>AWS 服务覆盖</td>
+        <td><span class="pill pill-blue">300+，单端点</span></td>
+        <td>分散多个 Server</td>
+        <td>按服务零散</td>
+      </tr>
+      <tr>
+        <td>沙箱脚本执行</td>
+        <td><span class="pill pill-green">Python 隔离环境</span></td>
+        <td>部分支持</td>
+        <td>通常无</td>
+      </tr>
+      <tr>
+        <td>客户端适配</td>
+        <td>Claude Code/Codex/Cursor/Kiro/MCP</td>
+        <td>多为通用 MCP</td>
+        <td>通用 MCP</td>
+      </tr>
+      <tr>
+        <td>许可</td>
+        <td>Apache-2.0</td>
+        <td>Apache-2.0</td>
+        <td>不一</td>
+      </tr>
+    </table>
+
+    <h3>🌐 跨云厂商视角</h3>
+    <p>放更大视野看，各大云厂商都在 2025–2026 推出面向 AI 智能体的官方接入方案（如 Azure、Google Cloud 的 MCP 集成）。Agent Toolkit for AWS 的差异化在于：<strong>它把"护栏（IAM 条件键 + 全链路审计 + 沙箱）"提升到一等公民</strong>，而非仅仅"暴露 API 给智能体"。在企业最关心的"AI 能不能安全地碰生产云账户"这件事上，AWS 给出了目前最完整的治理框架。</p>
+
+    <div class="quote">
+      <strong>差异化定位</strong>：相对 AWS Labs 旧方案，它是"从社区级升级到企业级 + 官方维护"；相对第三方社区方案，它是"原生 IAM 治理 + 全审计 + 官方背书"。它的真正对手并非某个开源项目，而是"企业是否信任 AI 智能体操作生产 AWS"这道心理与合规门槛——而这套工具正是 AWS 用来拆解这道门槛的官方武器。
+    </div>
+  </div>
+
+  <!-- 优势与局限 -->
+  <div class="section">
+    <h2>⚖️ 六、优势与局限</h2>
+    <h3 class="pro">✅ 优势</h3>
+    <ul>
+      <li><strong>官方背书，长期可靠</strong>：AWS 一等公民项目，取代分散的 AWS Labs 方案，维护与迭代有保障。</li>
+      <li><strong>护栏即设计</strong>：IAM 条件键区分智能体/人类动作、CloudTrail 全审计、CloudWatch 监控、沙箱执行——直击企业合规痛点，同类最全。</li>
+      <li><strong>技能经端到端评估</strong>：可确信工作流能跑通，首次为"AI 操作 AWS"提供了官方质量基线。</li>
+      <li><strong>客户端中立</strong>：Claude Code / Codex / Cursor / Kiro 及任意 MCP 客户端通用，不绑死单一工具。</li>
+      <li><strong>体验顺滑</strong>：插件把 MCP 配置 + 技能打包，一键安装；技能按需加载避免上下文爆炸。</li>
+      <li><strong>开源 Apache-2.0</strong>：可二次开发、可贡献回流，AWS Labs 精华会持续迁入。</li>
+    </ul>
+    <h3 class="con">⚠️ 局限</h3>
+    <ul>
+      <li><strong>强绑定 AWS 生态</strong>：天然只服务 AWS 用户；多云团队需配合其他云的官方方案。</li>
+      <li><strong>上手仍有前置条件</strong>：需安装 <code>uv</code>、配置 AWS 凭据/账户，对纯前端或非云开发者略有门槛。</li>
+      <li><strong>较新、生态仍在成型</strong>：2026 年 5 月才正式发布，第三方技能/插件生态、最佳实践社区尚在积累。</li>
+      <li><strong>托管 MCP 依赖网络与区域</strong>：单一托管端点（<code>aws-mcp.us-east-1.api.aws</code>）模式对离线/气隙环境不友好。</li>
+      <li><strong>企业治理仍需自身功力</strong>：工具提供了 IAM/审计能力，但"写好策略、配好边界"仍是平台团队的责任，工具不能替代治理流程。</li>
+    </ul>
+  </div>
+
+  <!-- 版本演进 -->
+  <div class="section">
+    <h2>📅 七、版本演进与生态</h2>
+    <ul>
+      <li><strong>2025 — AWS Labs 阶段</strong>：AWS 以社区级形式陆续发布多个 MCP Server、技能与插件（含 <code>deploy-on-aws</code>），有用但维护不稳定、缺乏端到端评估与官方 IAM。</li>
+      <li><strong>2026-05-06 — 正式发布 Agent Toolkit for AWS</strong>：作为 AWS Labs 方案的官方继承者亮相，统一为官方维护的开源项目，补齐 IAM 条件键、CloudTrail/CloudWatch、技能评估与企业控制。</li>
+      <li><strong>四大插件矩阵</strong>：首发 <code>aws-core</code>（核心）、<code>aws-agents</code>（Bedrock/AgentCore）、<code>aws-data-analytics</code>（数据湖/ETL）、<code>aws-agents-for-devsecops</code>（安全/运维），覆盖开发、AI、数据、安全四条主线。</li>
+      <li><strong>多市场分发</strong>：已进入 Anthropic 官方 Claude Code 插件市场（<code>claude-plugins-official</code>），并支持 Cursor Team Marketplace、Codex marketplace、Kiro MCP 配置。</li>
+      <li><strong>平滑迁移</strong>：AWS Labs 旧方案继续可用并接受贡献，精华逐步迁入官方 Toolkit，保证客户平滑过渡。</li>
+    </ul>
+  </div>
+
+  <!-- 结论 -->
+  <div class="section">
+    <h2>🏆 八、综合结论</h2>
+    <p><strong>Agent Toolkit for AWS</strong> 是 AWS 在"AI 智能体 × 云"赛道上打出的<strong>官方标准件</strong>。它用 <strong>MCP 协议</strong>统一了智能体访问 AWS 的入口，用 <strong>插件 + 技能 + 规则</strong>三层封装把"资深 AWS 工程师的经验"产品化，更关键的是用 <strong>IAM 条件键、CloudTrail 审计、CloudWatch 监控、沙箱执行</strong>把"AI 操作生产云账户"从风险黑盒变成了可治理的受控工程。</p>
+    <p>对 <strong>AWS 开发者、平台/SRE 团队、企业安全与合规岗位、AI 应用工程师</strong>来说，这是目前让 AI 编程智能体"既好用、又敢用、还管得住"的<strong>最优官方方案</strong>，尤其适合正在从 AWS Labs 旧 MCP 迁移、或希望让 Claude Code/Cursor/Codex 安全进入生产 AWS 账户的团队。综合评分 <strong>8.9 / 10</strong>——<strong>强烈推荐 AWS 技术栈团队上手接入</strong>。</p>
+
+    <div class="quote">
+      当 AI 智能体开始接管云上的构建与运维，"护栏"比"能力"更稀缺。Agent Toolkit for AWS 给出的答案很清晰：把云厂商的权威知识与治理能力，通过 MCP 原生地交给智能体——让 AI 不仅能写代码，更能<strong>可信地、合规地、可审计地</strong>在 AWS 上落地。
+    </div>
+
+    <p style="margin-top:18px;">
+      🔗 仓库：<a href="https://github.com/aws/agent-toolkit-for-aws" target="_blank">github.com/aws/agent-toolkit-for-aws</a> ·
+      产品页：<a href="https://aws.amazon.com/products/developer-tools/agent-toolkit-for-aws/" target="_blank">Agent Toolkit for AWS</a> ·
+      发布公告：<a href="https://aws.amazon.com/about-aws/whats-new/2026/05/agent-toolkit/" target="_blank">What's New</a> ·
+      用户指南：<a href="https://docs.aws.amazon.com/agent-toolkit/latest/userguide/quick-start.html" target="_blank">Quick Start</a>
+    </p>
+  </div>
+
+  <div class="footer">
+    本报告由 AI 深度分析生成 · 数据截至 2026-06-26 · 仅供学习研究参考<br>
+    项目信息以官方仓库与 AWS 文档为准，使用前请阅读最新 README 与用户指南
+  </div>
+
+</div>
+</body>
+</html>

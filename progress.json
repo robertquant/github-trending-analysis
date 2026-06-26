@@ -2,7 +2,6 @@
   "date": "2026-06-26",
   "fetched_at": "2026-06-26",
   "pending": [
-    "aws/agent-toolkit-for-aws",
     "alibaba/page-agent",
     "IceWhaleTech/CasaOS",
     "opendatalab/MinerU",
@@ -11,7 +10,8 @@
   "done": [
     "google-labs-code/design.md",
     "xbtlin/ai-berkshire",
-    "mauriceboe/TREK"
+    "mauriceboe/TREK",
+    "aws/agent-toolkit-for-aws"
   ],
   "skipped_already_analyzed": [
     "calesthio/OpenMontage",
@@ -53,7 +53,7 @@
     },
     {
       "name": "aws/agent-toolkit-for-aws",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "mukul975/Anthropic-Cybersecurity-Skills",
@@ -86,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 5,
+    "pending": 4,
     "skipped": 7,
-    "done": 3
+    "done": 4
   }
 }
