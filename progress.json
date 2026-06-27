@@ -2,13 +2,14 @@
   "date": "2026-06-28",
   "fetched_at": "2026-06-28",
   "pending": [
-    "simplex-chat/simplex-chat",
     "commaai/openpilot",
     "ripienaar/free-for-dev",
     "hugohe3/ppt-master",
     "dbt-labs/dbt-core"
   ],
-  "done": [],
+  "done": [
+    "simplex-chat/simplex-chat"
+  ],
   "skipped_already_analyzed": [
     "xbtlin/ai-berkshire",
     "IceWhaleTech/CasaOS",
@@ -24,7 +25,7 @@
   "projects": [
     {
       "name": "simplex-chat/simplex-chat",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "xbtlin/ai-berkshire",
@@ -85,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 5,
+    "pending": 4,
     "skipped": 10,
-    "done": 0
+    "done": 1
   }
 }
