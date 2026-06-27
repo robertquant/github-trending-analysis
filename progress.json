@@ -2,13 +2,13 @@
   "date": "2026-06-28",
   "fetched_at": "2026-06-28",
   "pending": [
-    "commaai/openpilot",
     "ripienaar/free-for-dev",
     "hugohe3/ppt-master",
     "dbt-labs/dbt-core"
   ],
   "done": [
-    "simplex-chat/simplex-chat"
+    "simplex-chat/simplex-chat",
+    "commaai/openpilot"
   ],
   "skipped_already_analyzed": [
     "xbtlin/ai-berkshire",
@@ -33,7 +33,7 @@
     },
     {
       "name": "commaai/openpilot",
-      "status": "pending"
+      "status": "done"
     },
     {
       "name": "IceWhaleTech/CasaOS",
@@ -86,8 +86,8 @@
   ],
   "counts": {
     "total_today": 15,
-    "pending": 4,
+    "pending": 3,
     "skipped": 10,
-    "done": 1
+    "done": 2
   }
 }
